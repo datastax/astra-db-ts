@@ -27,6 +27,49 @@ export const $SerializeForCollection: unique symbol;
 // @public (undocumented)
 export const $SerializeForTable: unique symbol;
 
+// @public (undocumented)
+export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
+    [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
+    // @internal
+    protected constructor(options: WithTimeout<'generalMethodTimeoutMs'>, mapping?: (doc: any) => T);
+    buffered(): number;
+    // (undocumented)
+    abstract clone(): this;
+    close(): void;
+    consumeBuffer(max?: number): TRaw[];
+    consumed(): number;
+    forEach(consumer: ((doc: T) => boolean | Promise<boolean>) | ((doc: T) => void | Promise<void>)): Promise<void>;
+    hasNext(): Promise<boolean>;
+    // (undocumented)
+    abstract map<R>(map: (doc: T) => R): AbstractCursor<R, TRaw>;
+    // @internal (undocumented)
+    protected readonly _mapping?: (doc: any) => T;
+    next(): Promise<T | null>;
+    // @internal (undocumented)
+    protected _next(peek: true, method: string, tm?: TimeoutManager): Promise<boolean>;
+    // @internal (undocumented)
+    protected _next(peek: false, method: string, tm?: TimeoutManager): Promise<T | null>;
+    // Warning: (ae-forgotten-export) The symbol "TimeoutManager" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    protected abstract _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]>;
+    // Warning: (ae-forgotten-export) The symbol "QueryState" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    protected _nextPageState: QueryState<string>;
+    // @internal (undocumented)
+    protected readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
+    rewind(): void;
+    get state(): CursorStatus;
+    // @internal (undocumented)
+    protected _state: CursorStatus;
+    // Warning: (ae-forgotten-export) The symbol "Timeouts" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    protected abstract _tm(): Timeouts;
+    toArray(): Promise<T[]>;
+}
+
 // @public
 export interface AddColumnOperation {
     columns: CreateTableColumnDefinitions;
@@ -367,10 +410,18 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<RSchema>)[Key]>[]>;
     drop(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<void>;
     estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
-    find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions & {
+    find(filter?: CollectionFilter<WSchema>, options?: CollectionFindOptions & {
         projection?: never;
     }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
     find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>;
+    // Warning: (ae-forgotten-export) The symbol "CollectionFindAndRerankCursor" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    findAndRerank(filter?: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & {
+        projection?: never;
+    }): CollectionFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>;
+    // (undocumented)
+    findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<TRaw, TRaw>;
     findOne(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions & {
         projection?: never;
     }): Promise<WithSim<RSchema> | null>;
@@ -530,9 +581,20 @@ export type CollectionFilterOps<Elem> = {
 } & (any[] extends Elem ? CollectionArrayFilterOps<Elem> : EmptyObj);
 
 // @public
+export type CollectionFindAndRerankOptions = GenericFindAndRerankOptions;
+
+// @public (undocumented)
 export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+    // (undocumented)
     get dataSource(): Collection;
-    filter(filter: CollectionFilter<TRaw>): FindCursor<T, TRaw>;
+    // (undocumented)
+    filter(filter: CollectionFilter<TRaw>): this;
+    // (undocumented)
+    includeSimilarity: (includeSimilarity?: boolean) => CollectionFindCursor<WithSim<TRaw>, WithSim<TRaw>>;
+    // (undocumented)
+    map: <R>(map: (doc: T) => R) => CollectionFindCursor<R, TRaw>;
+    // (undocumented)
+    project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => CollectionFindCursor<RRaw, RRaw>;
 }
 
 // @public
@@ -822,10 +884,13 @@ export abstract class CumulativeOperationError extends DataAPIResponseError {
 // @public
 export class CursorError extends DataAPIError {
     // @internal
-    constructor(message: string, cursor: FindCursor<unknown>);
-    readonly cursor: FindCursor<unknown>;
-    readonly state: FindCursorStatus;
+    constructor(message: string, cursor: AbstractCursor<unknown>);
+    readonly cursor: AbstractCursor<unknown>;
+    readonly status: CursorStatus;
 }
+
+// @public
+export type CursorStatus = 'idle' | 'started' | 'closed';
 
 // @public (undocumented)
 export type CustomCodecOpts<SerCtx, DesCtx> = CustomCodecSerOpts<SerCtx> & ({
@@ -1443,39 +1508,66 @@ export class FetchNative implements Fetcher {
 // @public
 export type Filter = Record<string, any>;
 
-// @public
-export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
-    [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
+// @public (undocumented)
+export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
+    // @internal
+    [$CustomInspect](): string;
     // Warning: (ae-forgotten-export) The symbol "SerDes" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "SerializedFilter" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: [SerializedFilter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
-    buffered(): number;
-    clone(): FindCursor<TRaw, TRaw>;
-    close(): void;
-    consumeBuffer(max?: number): TRaw[];
-    consumed(): number;
+    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
+    // (undocumented)
+    clone(): this;
     get dataSource(): Table<SomeRow> | Collection;
-    filter(filter: Filter): FindCursor<T, TRaw>;
-    forEach(consumer: ((doc: T) => boolean | Promise<boolean>) | ((doc: T) => void | Promise<void>)): Promise<void>;
-    getSortVector(): Promise<DataAPIVector | null>;
-    hasNext(): Promise<boolean>;
-    includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>>;
-    includeSortVector(includeSortVector?: boolean): FindCursor<T, TRaw>;
-    limit(limit: number): FindCursor<T, TRaw>;
-    map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
-    next(): Promise<T | null>;
-    project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw>;
-    rewind(): void;
-    skip(skip: number): FindCursor<T, TRaw>;
-    sort(sort: Sort): FindCursor<T, TRaw>;
-    get state(): FindCursorStatus;
-    toArray(): Promise<T[]>;
+    filter(filter: Filter): this;
+    // (undocumented)
+    hybridLimits(hybridLimits: number | Record<string, number>): this;
+    // (undocumented)
+    hybridProjection(hybridProjection: HybridProjection): this;
+    limit(limit: number): this;
+    // (undocumented)
+    map<R>(map: (doc: T) => R): FindAndRerankCursor<R, TRaw>;
+    // @internal (undocumented)
+    protected _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]>;
+    // @internal (undocumented)
+    protected readonly _options: GenericFindAndRerankOptions;
+    project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RRaw, RRaw>;
+    // (undocumented)
+    rerankField(rerankField: string): this;
+    sort(sort: HybridSort): this;
+    // @internal (undocumented)
+    protected _tm(): Timeouts;
 }
 
-// @public
-export type FindCursorStatus = 'idle' | 'started' | 'closed';
+// @public (undocumented)
+export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
+    // @internal
+    [$CustomInspect](): string;
+    // Warning: (ae-forgotten-export) The symbol "SerializedFilter_2" needs to be exported by the entry point index.d.ts
+    //
+    // @internal
+    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter_2, options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
+    // (undocumented)
+    clone(): this;
+    get dataSource(): Table<SomeRow> | Collection;
+    filter(filter: Filter): this;
+    getSortVector(): Promise<DataAPIVector | null>;
+    includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>>;
+    includeSortVector(includeSortVector?: boolean): this;
+    limit(limit: number): this;
+    // (undocumented)
+    map<R>(map: (doc: T) => R): FindCursor<R, TRaw>;
+    // @internal (undocumented)
+    protected _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]>;
+    // @internal (undocumented)
+    protected readonly _options: GenericFindOptions;
+    project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw>;
+    skip(skip: number): this;
+    sort(sort: Sort): this;
+    // @internal (undocumented)
+    protected _tm(): Timeouts;
+}
 
 // @public
 export interface FindEmbeddingProvidersResult {
@@ -1516,6 +1608,19 @@ export interface GenericDeleteOneOptions extends WithTimeout<'generalMethodTimeo
 export interface GenericDeleteOneResult {
     // (undocumented)
     deletedCount: 0 | 1;
+}
+
+// @public
+export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+    // (undocumented)
+    hybridLimits?: number | Record<string, number>;
+    // (undocumented)
+    hybridProjection: HybridProjection;
+    limit?: number;
+    projection?: Projection;
+    // (undocumented)
+    rerankField?: string;
+    sort?: HybridSort;
 }
 
 // @public
@@ -1618,6 +1723,14 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
 
 // @public
 export type HttpOptions = FetchH2HttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
+
+// @public (undocumented)
+export type HybridProjection = 'none' | 'passage' | 'scores';
+
+// @public (undocumented)
+export type HybridSort = Sort & {
+    $hybrid: string | Record<string, unknown>;
+};
 
 // @public
 export type IdOf<Doc> = Doc extends {
@@ -1979,10 +2092,19 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     deleteMany(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
     deleteOne(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
     drop(options?: Omit<DropTableOptions, 'keyspace'>): Promise<void>;
-    find(filter: TableFilter<WSchema>, options?: TableFindOptions & {
+    find(filter?: TableFilter<WSchema>, options?: TableFindOptions & {
         projection?: never;
     }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
     find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
+    // Warning: (ae-forgotten-export) The symbol "TableFindAndRerankOptions" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "TableFindAndRerankCursor" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    findAndRerank(filter?: TableFilter<WSchema>, options?: TableFindAndRerankOptions & {
+        projection?: never;
+    }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>;
+    // (undocumented)
+    findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>;
     findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions & {
         projection?: never;
     }): Promise<WithSim<RSchema> | null>;
@@ -2112,10 +2234,18 @@ export interface TableFilterOps<Elem> {
     $nin?: Elem[];
 }
 
-// @public
+// @public (undocumented)
 export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCursor<T, TRaw> {
+    // (undocumented)
     get dataSource(): Table<SomeRow>;
-    filter(filter: TableFilter<TRaw>): FindCursor<T, TRaw>;
+    // (undocumented)
+    filter(filter: TableFilter<TRaw>): this;
+    // (undocumented)
+    includeSimilarity: (includeSimilarity?: boolean) => TableFindCursor<WithSim<TRaw>, WithSim<TRaw>>;
+    // (undocumented)
+    map: <R>(map: (doc: T) => R) => TableFindCursor<R, TRaw>;
+    // (undocumented)
+    project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindCursor<RRaw, RRaw>;
 }
 
 // @public
