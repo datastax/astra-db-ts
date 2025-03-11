@@ -22,7 +22,7 @@ import type {
   FindCursor,
   GenericDeleteManyResult,
   GenericDeleteOneOptions,
-  GenericDeleteOneResult,
+  GenericDeleteOneResult, GenericFindAndRerankOptions,
   GenericFindOneAndDeleteOptions,
   GenericFindOneAndReplaceOptions,
   GenericFindOneAndUpdateOptions,
@@ -241,7 +241,7 @@ export class CommandImpls<ID> {
     return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
   }
 
-  public findAndRerank<Cursor extends FindAndRerankCursor<SomeDoc>>(filter: Filter | undefined, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindAndRerankCursor<SomeDoc>>) => Cursor): Cursor {
+  public findAndRerank<Cursor extends FindAndRerankCursor<SomeDoc>>(filter: Filter | undefined, options: GenericFindAndRerankOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindAndRerankCursor<SomeDoc>>) => Cursor): Cursor {
     return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
   }
 
