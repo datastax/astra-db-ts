@@ -15,6 +15,7 @@
 import { BigNumber } from 'bignumber.js';
 import type { Decoder } from 'decoders';
 import { array, define, either, instanceOf } from 'decoders';
+import type { EmptyObj, nullish } from '@/src/lib/types.js';
 
 /**
  * @internal
@@ -122,8 +123,16 @@ export const numDigits = (n: number) => {
   return (n !== 0) ? Math.floor(Math.log10(Math.abs(n))) + 1 : 1;
 };
 
+/**
+ * @internal
+ */
 export function findLast<T>(predicate: (value: T, index: number) => boolean): (arr: readonly T[]) => T | undefined
+
+/**
+ * @internal
+ */
 export function findLast<T>(predicate: (value: T, index: number) => boolean, orElse: T): (arr: readonly T[]) => T
+
 export function findLast<T>(predicate: (value: T, index: number) => boolean, orElse?: T) {
   return (arr: readonly T[]): T | undefined => {
     for (let i = arr.length - 1; i >= 0; i--) {
@@ -133,4 +142,46 @@ export function findLast<T>(predicate: (value: T, index: number) => boolean, orE
     }
     return orElse;
   };
+}
+
+/**
+ * @internal
+ */
+const enum QueryStateState {
+  Unattempted,
+  Found,
+  NotFound,
+}
+
+/**
+ * @internal
+ */
+export class QueryState<T extends EmptyObj> {
+  private _state = QueryStateState.Unattempted;
+  private _value: T | null = null;
+
+  public isUnattempted(): this is { get unwrap(): null } {
+    return this._state === QueryStateState.Unattempted;
+  }
+
+  public isFound(): this is { get unwrap(): T } {
+    return this._state === QueryStateState.Found;
+  }
+
+  public isNotFound(): this is { get unwrap(): null } {
+    return this._state === QueryStateState.NotFound;
+  }
+
+  public swap(value: T | nullish) {
+    if (isNullish(value)) {
+      this._state = QueryStateState.NotFound;
+    } else {
+      this._state = QueryStateState.Found;
+      this._value = value;
+    }
+  }
+
+  public get unwrap() {
+    return this._value;
+  }
 }

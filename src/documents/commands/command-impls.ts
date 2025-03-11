@@ -18,7 +18,7 @@ import type {
   Collection,
   CollectionInsertManyOptions,
   DataAPIDetailedErrorDescriptor,
-  Filter,
+  Filter, FindAndRerankCursor,
   FindCursor,
   GenericDeleteManyResult,
   GenericDeleteOneOptions,
@@ -237,7 +237,11 @@ export class CommandImpls<ID> {
     };
   }
 
-  public find<Cursor extends FindCursor<SomeDoc>>(filter: Filter, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
+  public find<Cursor extends FindCursor<SomeDoc>>(filter: Filter | undefined, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
+    return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
+  }
+
+  public findAndRerank<Cursor extends FindAndRerankCursor<SomeDoc>>(filter: Filter | undefined, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindAndRerankCursor<SomeDoc>>) => Cursor): Cursor {
     return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
   }
 

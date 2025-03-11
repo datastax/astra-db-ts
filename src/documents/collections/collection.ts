@@ -48,9 +48,12 @@ import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { CommandEventMap, WithSim } from '@/src/documents/index.js';
-import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents/index.js';
+import {
+  CollectionFindCursor,
+  CollectionInsertManyError,
+  TooManyDocumentsToCountError,
+} from '@/src/documents/index.js';
 import JBI from 'json-bigint';
-import { CollectionFindCursor } from '@/src/documents/collections/cursor.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 
@@ -731,7 +734,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns a {@link FindCursor} which can be iterated over.
    */
-  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions & { projection?: never }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>
+  public find(filter?: CollectionFilter<WSchema>, options?: CollectionFindOptions & { projection?: never }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>
 
   /**
    * ##### Overview
@@ -875,7 +878,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    */
   public find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>
 
-  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc, any> {
+  public find(filter?: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc, any> {
     return this.#commands.find(filter, options, CollectionFindCursor);
   }
 
