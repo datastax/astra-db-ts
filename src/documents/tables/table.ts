@@ -17,7 +17,6 @@ import type {
   CreateTableIndexOptions,
   CreateTableVectorIndexOptions,
   FoundRow,
-  SomeDoc,
   SomeRow,
   TableFilter,
   TableFindOneOptions,
@@ -46,6 +45,8 @@ import JBI from 'json-bigint';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
+import { TableFindAndRerankCursor } from '@/src/documents/tables/cursors/rerank-cursor.js';
+import { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -765,7 +766,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns a {@link FindCursor} which can be iterated over.
    */
-  public find(filter: TableFilter<WSchema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
+  public find(filter?: TableFilter<WSchema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
 
   /**
    * ##### Overview
@@ -909,10 +910,18 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    */
   public find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
 
-  public find(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
+  public find(filter?: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<SomeRow> {
     return this.#commands.find(filter, options, TableFindCursor);
   }
-  
+
+  public findAndRerank(filter?: TableFilter<WSchema>, options?: TableFindAndRerankOptions & { projection?: never }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
+
+  public findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>
+
+  public findAndRerank(filter?: TableFilter<WSchema>, options?: TableFindAndRerankOptions): TableFindAndRerankCursor<SomeRow> {
+    return this.#commands.findAndRerank(filter, options, TableFindAndRerankCursor);
+  }
+
   /**
    * ##### Overview
    *
@@ -1120,7 +1129,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    */
   public async findOne<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOneOptions): Promise<TRaw | null>;
 
-  public async findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<SomeDoc | null> {
+  public async findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<SomeRow | null> {
     return this.#commands.findOne(filter, options);
   }
 
