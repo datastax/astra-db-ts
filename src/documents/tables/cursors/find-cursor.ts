@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Projection, SomeDoc, SomeRow, Table, TableFilter, WithSim } from '@/src/documents/index.js';
+import type { Projection, SomeRow, Table, TableFilter, WithSim } from '@/src/documents/index.js';
 import { FindCursor } from '@/src/documents/cursors/find-cursor.js';
 
-export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCursor<T, TRaw> {
     public get dataSource(): Table<SomeRow> {
         return super.dataSource as Table<SomeRow>;
     }
@@ -24,7 +24,7 @@ export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCurs
         return super.filter(filter);
     }
 
-    declare public project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => TableFindCursor<RRaw, RRaw>;
+    declare public project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindCursor<RRaw, RRaw>;
 
     declare public includeSimilarity: (includeSimilarity?: boolean) => TableFindCursor<WithSim<TRaw>, WithSim<TRaw>>;
 

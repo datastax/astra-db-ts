@@ -16,7 +16,7 @@ import type {
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
   CollectionDeleteOneResult,
-  CollectionFilter,
+  CollectionFilter, CollectionFindAndRerankOptions,
   CollectionFindOneAndDeleteOptions,
   CollectionFindOneAndReplaceOptions,
   CollectionFindOneAndUpdateOptions,
@@ -56,6 +56,7 @@ import {
 import JBI from 'json-bigint';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
+import { CollectionFindAndRerankCursor } from '@/src/documents/collections/cursors/rerank-cursor.js';
 
 const jbi = JBI;
 
@@ -878,8 +879,16 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    */
   public find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>
 
-  public find(filter?: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc, any> {
+  public find(filter?: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc> {
     return this.#commands.find(filter, options, CollectionFindCursor);
+  }
+
+  public findAndRerank(filter?: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
+
+  public findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<TRaw, TRaw>
+
+  public findAndRerank(filter?: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<SomeDoc> {
+    return this.#commands.findAndRerank(filter, options, CollectionFindAndRerankCursor);
   }
 
   /**
