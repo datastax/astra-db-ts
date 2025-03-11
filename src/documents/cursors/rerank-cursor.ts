@@ -32,7 +32,10 @@ import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
-type SerializedFilter = [unknown, boolean];
+/**
+ * @internal
+ */
+type SerializedFilter = [filter: unknown, bigNumsPresent: boolean];
 
 export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
   /**

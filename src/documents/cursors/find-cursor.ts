@@ -33,7 +33,10 @@ import { $CustomInspect } from '@/src/lib/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 import { QueryState } from '@/src/lib/utils.js';
 
-type SerializedFilter = [unknown, boolean];
+/**
+ * @internal
+ */
+type SerializedFilter = [filter: unknown, bigNumsPresent: boolean];
 
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
   /**
