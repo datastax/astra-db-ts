@@ -17,5 +17,5 @@
  */
 export interface CollectionLexicalOptions {
   enabled: boolean,
-  analyzer?: 'STANDARD' | Record<string, unknown>,
+  analyzer?: string | Record<string, unknown>,
 }

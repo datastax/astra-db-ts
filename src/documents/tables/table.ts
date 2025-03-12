@@ -14,8 +14,8 @@
 
 import type {
   CommandEventMap,
-  CreateTableIndexOptions,
-  CreateTableVectorIndexOptions,
+  TableCreateIndexOptions,
+  TableCreateVectorIndexOptions,
   FoundRow,
   SomeRow,
   TableFilter,
@@ -25,7 +25,7 @@ import type {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateFilter,
-  WithSim,
+  WithSim, TableCreateIndexColumn,
 } from '@/src/documents/index.js';
 import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
@@ -47,6 +47,7 @@ import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tabl
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import { TableFindAndRerankCursor } from '@/src/documents/tables/cursors/rerank-cursor.js';
 import type { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
+import type { TableCreateTextIndexOptions } from '@/src/documents/tables/types/indexes/create-text-index.js';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -1245,11 +1246,11 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
   /**
    * ##### Overview
    *
-   * Creates a secondary non-vector index on the table.
+   * Creates a secondary index on the table.
    *
    * The operation blocks until the index is created and ready to use.
    *
-   * See {@link Table.createVectorIndex} for creating vector indexes.
+   * See {@link Table.createVectorIndex} for creating vector indexes, and {@link Table.createTextIndex} for creating lexical indexes.
    *
    * ##### Text indexes
    *
@@ -1267,7 +1268,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns A promise which resolves once the index is created.
    */
-  public async createIndex(name: string, column: WSchema | string, options?: CreateTableIndexOptions): Promise<void> {
+  public async createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
@@ -1289,6 +1290,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
   }
 
   /**
+   * ##### Overview
+   *
    * Creates an index on an existing vector column in the table.
    *
    * The operation blocks until the index is created and ready to use.
@@ -1301,7 +1304,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns A promise which resolves once the index is created.
    */
-  public async createVectorIndex(name: string, column: WSchema | string, options?: CreateTableVectorIndexOptions): Promise<void> {
+  public async createVectorIndex(name: string, column: keyof WSchema, options?: TableCreateVectorIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createVectorIndex: {
         name: name,
@@ -1310,6 +1313,40 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
           options: {
             sourceModel: options?.options?.sourceModel,
             metric: options?.options?.metric,
+          },
+        },
+        options: {
+          ifNotExists: options?.ifNotExists,
+        },
+      },
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+    });
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Creates a lexical index on an existing text column in the table.
+   *
+   * The operation blocks until the index is created and ready to use.
+   *
+   * See {@link Table.createIndex} for creating non-lexical indexes.
+   *
+   * @param name - The name of the index
+   * @param column - The text column to index
+   * @param options - Options for this operation
+   *
+   * @returns A promise which resolves once the index is created.
+   */
+  public async createTextIndex(name: string, column: keyof WSchema, options?: TableCreateTextIndexOptions): Promise<void> {
+    await this.#httpClient.executeCommand({
+      createTextIndex: {
+        name: name,
+        definition: {
+          column,
+          options: {
+            analyzer: options?.options?.analyzer,
           },
         },
         options: {
