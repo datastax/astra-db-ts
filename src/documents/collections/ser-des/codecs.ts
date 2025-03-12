@@ -103,6 +103,9 @@ export class CollectionCodecs {
     }];
   }
 
+  /**
+   * @deprecated
+   */
   public static forPath(path: readonly PathSegment[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs {
     validateIfCodecClass(optsOrClass);
 

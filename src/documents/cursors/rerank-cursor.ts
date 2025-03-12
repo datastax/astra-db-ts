@@ -150,8 +150,8 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     return buildFLCOption(this, 'hybridLimits', hybridLimits);
   }
 
-  public rerankField(rerankField: string): this {
-    return buildFLCOption(this, 'rerankField', rerankField);
+  public rerankOn(rerankOn: string): this {
+    return buildFLCOption(this, 'rerankOn', rerankOn);
   }
 
   /**
@@ -217,7 +217,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
         options: {
           limit: this._options.limit,
           hybridLimits: this._options.hybridLimits,
-          rerankField: this._options.rerankField,
+          rerankOn: this._options.rerankOn,
         },
       },
     };
