@@ -38,7 +38,14 @@ import {
   cloneFLC,
 } from '@/src/documents/cursors/common.js';
 
-export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
+class RerankResult<TRaw> {
+  constructor(
+    public readonly document: TRaw,
+    public readonly scores: Record<string, number>,
+  ) {}
+}
+
+export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankResult<TRaw>> {
   /**
    * @internal
    */
@@ -201,7 +208,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   /**
    * @internal
    */
-  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]> {
+  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankResult<TRaw>[]> {
     const command = {
       findAndRerank: {
         filter: this._filter[0],

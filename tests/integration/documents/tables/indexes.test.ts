@@ -28,7 +28,7 @@ parallel('integration.documents.tables.indexes', { drop: 'colls:after' }, ({ db 
       },
     });
 
-    await table.createIndex('val_index', { val: '$value' }, {
+    await table.createIndex('val_index', 'val', {
       options: {
         caseSensitive: false,
       },
