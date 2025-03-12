@@ -146,6 +146,9 @@ export class TableCodecs {
     }];
   }
 
+  /**
+   * @deprecated
+   */
   public static forPath(path: readonly PathSegment[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
     validateIfCodecClass(optsOrClass);
 

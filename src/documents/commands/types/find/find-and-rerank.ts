@@ -52,5 +52,5 @@ export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodT
    */
   limit?: number,
   hybridLimits?: number | Record<string, number>,
-  rerankField?: string,
+  rerankOn?: string,
 }
