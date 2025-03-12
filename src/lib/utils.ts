@@ -91,7 +91,7 @@ export const forJSEnv = (typeof process !== 'undefined' && typeof process.env ==
  * @internal
  */
 export function isBigNumber(value: object): value is BigNumber {
-  return BigNumber.isBigNumber(value) && value.constructor?.name === 'BigNumber';
+  return BigNumber.isBigNumber(value);
 }
 
 /**
