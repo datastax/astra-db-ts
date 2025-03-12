@@ -20,6 +20,7 @@ import {
   GLOBAL_FIXTURES,
   RUNNING_INT_TESTS,
 } from '@/tests/testlib/index.js';
+import type { InferTableSchema } from '@/src/db/index.js';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
 
@@ -61,7 +62,7 @@ before(async () => {
       });
 
       if (keyspace === DEFAULT_KEYSPACE) {
-        await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector', { options: { metric: 'dot_product' }, ifNotExists: true });
+        await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector' as keyof InferTableSchema<typeof table>, { options: { metric: 'dot_product' }, ifNotExists: true });
       }
       await table.createIndex(`bigint_idx_${keyspace}`, 'bigint', { ifNotExists: true });
     })
