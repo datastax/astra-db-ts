@@ -18,7 +18,7 @@ import type {
   CreateTableDefinition,
   CreateTablePrimaryKeyDefinition,
   FullCreateTablePrimaryKeyDefinition,
-} from '@/src/db/types/tables/create-table.js';
+} from '@/src/db/types/tables/create.js';
 import type { EmptyObj } from '@/src/lib/types.js';
 import type {
   DataAPIBlob,

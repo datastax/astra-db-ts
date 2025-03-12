@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { SomeRow } from '@/src/documents/tables/types/row.js';
-import type { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema.js';
+import type { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/infer.js';
 import type { Table } from '@/src/documents/tables/table.js';
 import type { Db } from '@/src/db/index.js';
 import type { TypeErr } from '@/src/documents/utils.js';

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { RerankingServiceOptions } from '@/src/db/index.js';
+
 /**
  * @public
  */
-export interface RerankingServiceOptions {
-  provider: string,
-  modelName: string,
-  authentication?: Record<string, unknown>,
-  parameters?: Record<string, unknown>,
+export interface CollectionRerankingOptions {
+  enabled?: boolean,
+  service: RerankingServiceOptions,
 }

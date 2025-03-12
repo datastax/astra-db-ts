@@ -434,7 +434,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     insertOne(document: MaybeId<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<RSchema>>;
     readonly keyspace: string;
     readonly name: string;
-    options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>>;
+    options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<Definition<SomeDoc>>;
     replaceOne(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<RSchema>>;
     updateMany(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<RSchema>>;
     updateOne(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<RSchema>>;
@@ -518,7 +518,7 @@ export interface CollectionDefaultIdOptions {
 }
 
 // @public
-export interface CollectionDefinition<Schema extends SomeDoc> {
+export interface Definition<Schema extends SomeDoc> {
     defaultId?: CollectionDefaultIdOptions;
     indexing?: CollectionIndexingOptions<Schema>;
     vector?: CollectionVectorOptions;
@@ -543,7 +543,7 @@ export interface CollectionDeleteOneResult {
 
 // @public
 export interface CollectionDescriptor {
-    definition: CollectionDefinition<SomeDoc>;
+    definition: Definition<SomeDoc>;
     name: string;
 }
 
@@ -839,7 +839,7 @@ export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout
 };
 
 // @public
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends CollectionDefinition<Schema>, CollectionOptions {
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends Definition<Schema>, CollectionOptions {
     // (undocumented)
     timeout?: number | Pick<Partial<TimeoutDescriptor>, 'collectionAdminTimeoutMs'>;
 }
