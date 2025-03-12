@@ -29,3 +29,5 @@ export type * from './tables/spawn-table.js';
 
 export type { WithKeyspace } from './common.js';
 export type * from './command.js';
+export type * from './vector.js';
+export type * from './reranking.js';

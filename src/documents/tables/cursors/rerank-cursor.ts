@@ -17,7 +17,7 @@ import { FindAndRerankCursor } from '@/src/documents/index.js';
 
 export class TableFindAndRerankCursor<T, TRaw extends SomeRow = SomeRow> extends FindAndRerankCursor<T, TRaw> {
   public get dataSource(): Table<SomeRow> {
-      return super.dataSource as Table<SomeRow>;
+    return super.dataSource as Table<SomeRow>;
   }
 
   public override filter(filter: TableFilter<TRaw>): this {
