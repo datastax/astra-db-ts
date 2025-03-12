@@ -26,7 +26,6 @@ export type * from './collections/vector.js';
 export type * from './tables/alter.js';
 export type * from './tables/create.js';
 export type * from './tables/drop.js';
-export type * from './tables/list-indexes.js';
 export type * from './tables/list-tables.js';
 export type * from './tables/infer.js';
 export type * from './tables/spawn.js';
