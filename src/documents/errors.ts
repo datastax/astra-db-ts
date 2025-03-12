@@ -129,6 +129,91 @@ export interface DataAPIErrorDescriptor {
 export type DataAPIWarningDescriptor = DataAPIErrorDescriptor & { scope: 'WARNING'; };
 
 /**
+ * ##### Overview
+ *
+ * An object representing a *complete* error response from the Data API, including the original command that was sent,
+ * and the raw API response from the server.
+ *
+ * ##### Disclaimer
+ *
+ * This is *not* used for "hard" (4XX, 5XX, timeout) errors, which are rarer and would be thrown directly by the underlying
+ * code.
+ *
+ * @example
+ * ```ts
+ * [{
+ *   errorDescriptors: [
+ *     {
+ *       family: 'REQUEST',
+ *       scope: 'DOCUMENT',
+ *       errorCode: 'DOCUMENT_ALREADY_EXISTS',
+ *       id: 'e4be94b6-e8b5-4652-961b-5c9fe12d2f1a',
+ *       title: 'Document already exists with the given _id',
+ *       message: 'Document already exists with the given _id',
+ *     },
+ *   ],
+ *   command: { insertOne: { document: { _id: '123213123kj21lj' } } },
+ *   rawResponse: {
+ *     status: { insertedIds: [] },
+ *     errors: [...],
+ *   },
+ * }]
+ * ```
+ *
+ * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
+ * @field command - The raw command send to the API
+ * @field rawResponse - The raw response from the API
+ *
+ * @public
+ */
+export interface DataAPIDetailedErrorDescriptor {
+  /**
+   * A list of error descriptors representing the individual errors returned by the API.
+   *
+   * This will likely be a singleton list in many cases, such as for `insertOne` or `deleteOne` commands, but may be
+   * longer for bulk operations like `insertMany` which may have multiple insertion errors.
+   */
+  readonly errorDescriptors: readonly DataAPIErrorDescriptor[],
+  /**
+   * The original command that was sent to the API, as a plain object. This is the *raw* command, not necessarily in
+   * the exact format the client may use, in some rare cases.
+   *
+   * @example
+   * ```typescript
+   * {
+   *   insertOne: {
+   *     document: { _id: 'doc10', name: 'Document 10' },
+   *   },
+   * }
+   * ```
+   */
+  readonly command: Record<string, any>,
+  /**
+   * The raw response from the API
+   *
+   * @example
+   * ```typescript
+   * {
+   *   status: {
+   *     insertedIds: [ 'id1', 'id2', 'id3']
+   *   },
+   *   errors: [
+   *     {
+   *       family: 'REQUEST',
+   *       scope: 'DOCUMENT',
+   *       errorCode: 'DOCUMENT_ALREADY_EXISTS',
+   *       id: 'e4be94b6-e8b5-4652-961b-5c9fe12d2f1a',
+   *       title: 'Document already exists with the given _id',
+   *       message: 'Document already exists with the given _id',
+   *     },
+   *   ]
+   * }
+   * ```
+   */
+  readonly rawResponse: RawDataAPIResponse,
+}
+
+/**
  * An abstract class representing *some* exception that occurred related to the Data API. This is the base class for all
  * Data API errors, and will never be thrown directly.
  *
@@ -198,10 +283,7 @@ export class DataAPITimeoutError extends DataAPIError {
    */
   public readonly timeout: Partial<TimeoutDescriptor>;
 
-  /**
-   * Represents which timeouts timed out (e.g. `'requestTimeoutMs'`, `'tableAdminTimeoutMs'`, the provided timeout, etc.)
-   */
-  public readonly timedOutCategories: TimedOutCategories;
+  public readonly timedOutTypes: TimedOutCategories;
 
   /**
    * Should not be instantiated by the user.
@@ -211,7 +293,7 @@ export class DataAPITimeoutError extends DataAPIError {
   constructor(info: HTTPRequestInfo, types: TimedOutCategories) {
     super(Timeouts.fmtTimeoutMsg(info.timeoutManager, types));
     this.timeout = info.timeoutManager.initial();
-    this.timedOutCategories = types;
+    this.timedOutTypes = types;
     this.name = 'DataAPITimeoutError';
   }
 
@@ -379,7 +461,10 @@ export class DataAPIResponseError extends DataAPIError {
    * @internal
    */
   public withTransientDupesForEvents() {
-    return { name: this.name };
+    return {
+      name: this.name,
+      message: `${this.name} fields not separately serialized; all context already in the CommandFailed event`,
+    };
   }
 }
 
@@ -432,11 +517,6 @@ export class CollectionInsertManyError extends DataAPIError {
   readonly #partialResult: CollectionInsertManyResult<SomeDoc>;
   readonly #causes: DataAPIResponseError[];
 
-  /**
-   * Should not be instantiated by the user.
-   *
-   * @internal
-   */
   public constructor(causes: DataAPIResponseError[], partRes: CollectionInsertManyResult<SomeDoc>) {
     super('');
     this.#partialResult = partRes;
@@ -477,11 +557,6 @@ export class TableInsertManyError extends DataAPIError {
   readonly #partialResult: TableInsertManyResult<SomeRow>;
   readonly #causes: DataAPIResponseError[];
 
-  /**
-   * Should not be instantiated by the user.
-   *
-   * @internal
-   */
   public constructor(causes: DataAPIResponseError[], partRes: TableInsertManyResult<SomeRow>) {
     super('');
     this.#partialResult = partRes;
@@ -533,7 +608,7 @@ export class CollectionUpdateManyError extends DataAPIError {
   public constructor(cause: unknown, partRes: CollectionUpdateManyResult<SomeDoc>) {
     super('');
     this.partialResult = partRes;
-    this.cause = NonErrorError.asError(cause);
+    this.cause = NonErrorError.toError(cause);
   }
 }
 
@@ -560,7 +635,7 @@ export class CollectionDeleteManyError extends DataAPIError {
    * The partial result of the `DeleteMany` operation that was performed. This is *always* defined, and is the result
    * of the operation up to the point of the first error.
    */
-  public readonly partialResult: CollectionDeleteManyResult;
+  public readonly partialResult!: CollectionDeleteManyResult;
 
   /**
    * The error that caused the operation to fail.
@@ -573,6 +648,6 @@ export class CollectionDeleteManyError extends DataAPIError {
   public constructor(cause: unknown, partRes: CollectionDeleteManyResult) {
     super('');
     this.partialResult = partRes;
-    this.cause = NonErrorError.asError(cause);
+    this.cause = NonErrorError.toError(cause);
   }
 }

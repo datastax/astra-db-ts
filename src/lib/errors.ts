@@ -31,7 +31,7 @@ export class NonErrorError extends Error {
     this.value = value;
   }
 
-  public static asError(e: unknown): Error {
+  public static toError(e: unknown): Error {
     if (e instanceof Error) {
       return e;
     }
