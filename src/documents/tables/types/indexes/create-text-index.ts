@@ -13,18 +13,17 @@
 // limitations under the License.
 
 import type { WithTimeout } from '@/src/lib/index.js';
-import type { LitUnion } from '@/src/lib/types.js';
 
 /**
- * Options for creating a new index via {@link Table.createVectorIndex}
+ * Options for creating a new index via {@link Table.createTextIndex}
  *
  * @public
  */
-export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableCreateTextIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
   /**
-   * Options available for the vector index.
+   * Options available for `text` and `ascii` indexes
    */
-  options?: TableVectorIndexOptions,
+  options?: TableIndexOptions,
   /**
    * If `true`, no error will be thrown if the index already exists.
    *
@@ -35,17 +34,10 @@ export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTi
 }
 
 /**
- * Options aviailable for the vector index
+ * Options available for `text` and `ascii` indexes
  *
  * @public
  */
-export interface TableVectorIndexOptions {
-  /**
-   * The similarity metric to use for the index.
-   */
-  metric?: 'cosine' | 'euclidean' | 'dot_product',
-  /**
-   * Enable certain vector optimizations on the index by specifying the source model for your vectors, such as (not exhaustive) `'openai_v3_large'`, `'openai_v3_small'`, `'ada002'`, `'gecko'`, `'bert'`, or `'other'` (default).
-   */
-  sourceModel?: LitUnion<'other'>,
+export interface TableIndexOptions {
+  analyzer?: string | Record<string, unknown>,
 }
