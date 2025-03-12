@@ -31,7 +31,7 @@ export class CursorError extends DataAPIError {
   /**
    * The status of the cursor when the error occurred.
    */
-  public readonly status: CursorStatus;
+  public readonly state: CursorState;
 
   /**
    * Should not be instantiated directly.
@@ -42,7 +42,7 @@ export class CursorError extends DataAPIError {
     super(message);
     this.name = 'CursorError';
     this.cursor = cursor;
-    this.status = cursor.state;
+    this.state = cursor.state;
   }
 }
 
@@ -59,7 +59,7 @@ export class CursorError extends DataAPIError {
  *
  * @see FindCursor.state
  */
-export type CursorStatus = 'idle' | 'started' | 'closed';
+export type CursorState = 'idle' | 'started' | 'closed';
 
 export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
@@ -75,7 +75,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal
    */
-  protected _state: CursorStatus = 'idle';
+  protected _state: CursorState = 'idle';
 
   /**
    * @internal
@@ -105,7 +105,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * The current status of the cursor.
    */
-  public get state(): CursorStatus {
+  public get state(): CursorState {
     return this._state;
   }
 
@@ -231,7 +231,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   public async forEach(consumer: ((doc: T) => boolean | Promise<boolean>) | ((doc: T) => void | Promise<void>)): Promise<void> {
     for await (const doc of this._iterator('.forEach')) {
       const resp = consumer(doc);
-      const stop = resp instanceof Promise ? await resp : resp;
+      const stop = (resp === undefined) ? resp : await resp;
 
       if (stop === false) {
         break;
