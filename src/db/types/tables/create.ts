@@ -14,7 +14,7 @@
 
 import type { VectorizeServiceOptions } from '@/src/db/index.js';
 import type { WithTimeout } from '@/src/lib/index.js';
-import type { TableOptions } from '@/src/db/types/tables/spawn-table.js';
+import type { TableOptions } from '@/src/db/types/tables/spawn.js';
 
 /**
  * Options for creating a new table (via {@link Db.createTable}).

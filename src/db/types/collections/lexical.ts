@@ -15,9 +15,7 @@
 /**
  * @public
  */
-export interface RerankingServiceOptions {
-  provider: string,
-  modelName: string,
-  authentication?: Record<string, unknown>,
-  parameters?: Record<string, unknown>,
+export interface CollectionLexicalOptions {
+  enabled: boolean,
+  analyzer?: 'STANDARD' | Record<string, unknown>,
 }

@@ -13,7 +13,12 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/collections/index.js';
-import type { CollectionDefaultIdOptions, CollectionIndexingOptions, CollectionVectorOptions } from '@/src/db/index.js';
+import type {
+  CollectionDefaultIdOptions,
+  CollectionIndexingOptions,
+  CollectionLexicalOptions, CollectionRerankingOptions,
+  CollectionVectorOptions,
+} from '@/src/db/index.js';
 
 /**
  * Represents the options for the createCollection command.
@@ -37,4 +42,12 @@ export interface CollectionDefinition<Schema extends SomeDoc> {
    * Options related to the default ID.
    */
   defaultId?: CollectionDefaultIdOptions,
+  /**
+   * Options related to lexical (bm25) search.
+   */
+  lexical?: CollectionLexicalOptions,
+  /**
+   * Options related to reranking.
+   */
+  reranking?: CollectionRerankingOptions,
 }
