@@ -43,7 +43,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
     // (undocumented)
     abstract map<R>(map: (doc: T) => R): AbstractCursor<R, TRaw>;
     // @internal (undocumented)
-    protected readonly _mapping?: (doc: any) => T;
+    readonly _mapping?: (doc: any) => T;
     next(): Promise<T | null>;
     // @internal (undocumented)
     protected _next(peek: true, method: string, tm?: TimeoutManager): Promise<boolean>;
@@ -58,11 +58,11 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
     // @internal (undocumented)
     protected _nextPageState: QueryState<string>;
     // @internal (undocumented)
-    protected readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
+    readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
     rewind(): void;
-    get state(): CursorStatus;
+    get state(): CursorState;
     // @internal (undocumented)
-    protected _state: CursorStatus;
+    protected _state: CursorState;
     // Warning: (ae-forgotten-export) The symbol "Timeouts" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
@@ -73,6 +73,12 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
 // @public
 export interface AddColumnOperation {
     columns: CreateTableColumnDefinitions;
+}
+
+// @public (undocumented)
+export interface AddRerankingOperation {
+    // (undocumented)
+    service: RerankingServiceOptions;
 }
 
 // @public
@@ -179,9 +185,13 @@ export interface AlterTableOperations<Schema extends SomeRow> {
     // (undocumented)
     add?: AddColumnOperation;
     // (undocumented)
+    addReranking?: AddRerankingOperation;
+    // (undocumented)
     addVectorize?: AddVectorizeOperation<Schema>;
     // (undocumented)
     drop?: DropColumnOperation<Schema>;
+    // (undocumented)
+    dropReranking?: DropRerankingOperation;
     // (undocumented)
     dropVectorize?: DropVectorizeOperation<Schema>;
 }
@@ -434,7 +444,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     insertOne(document: MaybeId<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<RSchema>>;
     readonly keyspace: string;
     readonly name: string;
-    options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<Definition<SomeDoc>>;
+    options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>>;
     replaceOne(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<RSchema>>;
     updateMany(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<RSchema>>;
     updateOne(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<RSchema>>;
@@ -518,14 +528,19 @@ export interface CollectionDefaultIdOptions {
 }
 
 // @public
-export interface Definition<Schema extends SomeDoc> {
+export interface CollectionDefinition<Schema extends SomeDoc> {
     defaultId?: CollectionDefaultIdOptions;
     indexing?: CollectionIndexingOptions<Schema>;
+    lexical?: CollectionLexicalOptions;
+    reranking?: CollectionRerankingOptions;
     vector?: CollectionVectorOptions;
 }
 
 // @public
-export class CollectionDeleteManyError extends CumulativeOperationError {
+export class CollectionDeleteManyError extends DataAPIError {
+    // @internal
+    constructor(cause: unknown, partRes: CollectionDeleteManyResult);
+    readonly cause: Error;
     name: string;
     readonly partialResult: CollectionDeleteManyResult;
 }
@@ -543,7 +558,7 @@ export interface CollectionDeleteOneResult {
 
 // @public
 export interface CollectionDescriptor {
-    definition: Definition<SomeDoc>;
+    definition: CollectionDefinition<SomeDoc>;
     name: string;
 }
 
@@ -622,9 +637,13 @@ export type CollectionIndexingOptions<Schema extends SomeDoc> = {
 };
 
 // @public
-export class CollectionInsertManyError extends CumulativeOperationError {
+export class CollectionInsertManyError extends DataAPIError {
+    constructor(causes: DataAPIResponseError[], partRes: CollectionInsertManyResult<SomeDoc>);
+    // (undocumented)
+    errors(): Error[];
+    // (undocumented)
+    insertedIds(): SomeId[];
     name: string;
-    readonly partialResult: CollectionInsertManyResult<SomeDoc>;
 }
 
 // @public
@@ -639,6 +658,14 @@ export interface CollectionInsertManyResult<RSchema> {
 // @public
 export interface CollectionInsertOneResult<RSchema> {
     insertedId: IdOf<RSchema>;
+}
+
+// @public (undocumented)
+export interface CollectionLexicalOptions {
+    // (undocumented)
+    analyzer?: string | Record<string, unknown>;
+    // (undocumented)
+    enabled: boolean;
 }
 
 // Warning: (ae-forgotten-export) The symbol "IsNum" needs to be exported by the entry point index.d.ts
@@ -677,6 +704,14 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
 export type CollectionReplaceOneResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, 0 | 1>;
 
 // @public (undocumented)
+export interface CollectionRerankingOptions {
+    // (undocumented)
+    enabled?: boolean;
+    // (undocumented)
+    service: RerankingServiceOptions;
+}
+
+// @public (undocumented)
 export interface CollectionSerCtx extends BaseSerCtx<CollectionSerCtx> {
     // (undocumented)
     bigNumsEnabled: boolean;
@@ -711,7 +746,10 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
 }
 
 // @public
-export class CollectionUpdateManyError extends CumulativeOperationError {
+export class CollectionUpdateManyError extends DataAPIError {
+    // @internal
+    constructor(cause: unknown, partRes: CollectionUpdateManyResult<SomeDoc>);
+    readonly cause: Error;
     name: string;
     readonly partialResult: CollectionUpdateManyResult<SomeDoc>;
 }
@@ -733,7 +771,8 @@ export interface CollectionVectorOptions {
     dimension?: number;
     metric?: 'cosine' | 'euclidean' | 'dot_product';
     service?: VectorizeServiceOptions;
-    sourceModel?: string;
+    // Warning: (ae-forgotten-export) The symbol "LitUnion" needs to be exported by the entry point index.d.ts
+    sourceModel?: LitUnion<'other'>;
 }
 
 // @public (undocumented)
@@ -839,7 +878,7 @@ export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout
 };
 
 // @public
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends Definition<Schema>, CollectionOptions {
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends CollectionDefinition<Schema>, CollectionOptions {
     // (undocumented)
     timeout?: number | Pick<Partial<TimeoutDescriptor>, 'collectionAdminTimeoutMs'>;
 }
@@ -854,12 +893,6 @@ export interface CreateTableDefinition<Def extends CreateTableDefinition<Def>> {
 }
 
 // @public
-export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-    ifNotExists?: boolean;
-    options?: TableIndexOptions;
-}
-
-// @public
 export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition<any>> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
     // (undocumented)
     definition: Def;
@@ -871,26 +904,15 @@ export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = Cre
 export type CreateTablePrimaryKeyDefinition<PKCols extends string> = PKCols | FullCreateTablePrimaryKeyDefinition<PKCols>;
 
 // @public
-export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-    ifNotExists?: boolean;
-    options?: TableVectorIndexOptions;
-}
-
-// @public
-export abstract class CumulativeOperationError extends DataAPIResponseError {
-    readonly partialResult: unknown;
-}
-
-// @public
 export class CursorError extends DataAPIError {
     // @internal
     constructor(message: string, cursor: AbstractCursor<unknown>);
     readonly cursor: AbstractCursor<unknown>;
-    readonly status: CursorStatus;
+    readonly state: CursorState;
 }
 
 // @public
-export type CursorStatus = 'idle' | 'started' | 'closed';
+export type CursorState = 'idle' | 'started' | 'closed';
 
 // @public (undocumented)
 export type CustomCodecOpts<SerCtx, DesCtx> = CustomCodecSerOpts<SerCtx> & ({
@@ -1093,7 +1115,6 @@ export abstract class DataAPIError extends Error {
 // @public
 export interface DataAPIErrorDescriptor {
     readonly errorCode: string;
-    // Warning: (ae-forgotten-export) The symbol "LitUnion" needs to be exported by the entry point index.d.ts
     readonly family: LitUnion<'REQUEST' | 'SERVER'>;
     readonly id: string;
     readonly message: string;
@@ -1126,10 +1147,12 @@ export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
 // @public
 export class DataAPIResponseError extends DataAPIError {
     // @internal
-    constructor(detailedErrDescriptors: DataAPIDetailedErrorDescriptor[]);
-    readonly detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[];
-    readonly errorDescriptors: DataAPIErrorDescriptor[];
+    constructor(command: Record<string, any>, rawResponse: RawDataAPIResponse);
+    readonly command: Record<string, any>;
+    get errorDescriptors(): readonly DataAPIErrorDescriptor[];
     readonly message: string;
+    readonly rawResponse: RawDataAPIResponse;
+    get warnings(): readonly DataAPIWarningDescriptor[];
     // @internal (undocumented)
     withTransientDupesForEvents(): {
         name: string;
@@ -1202,6 +1225,11 @@ export class DataAPIVector implements DataAPICodec<typeof DataAPIVector> {
 export type DataAPIVectorLike = number[] | {
     $binary: string;
 } | Float32Array | DataAPIVector;
+
+// @public (undocumented)
+export type DataAPIWarningDescriptor = DataAPIErrorDescriptor & {
+    scope: 'WARNING';
+};
 
 // @public
 export const date: ((...params: [string] | [Date] | [number, number, number]) => DataAPIDate) & {
@@ -1348,6 +1376,9 @@ export interface DropCollectionOptions extends WithTimeout<'collectionAdminTimeo
 export interface DropColumnOperation<Schema extends SomeRow> {
     columns: (keyof Schema)[];
 }
+
+// @public (undocumented)
+export type DropRerankingOperation = Record<never, never>;
 
 // @public
 export interface DropTableOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
@@ -1508,33 +1539,40 @@ export class FetchNative implements Fetcher {
 // @public
 export type Filter = Record<string, any>;
 
+// Warning: (ae-forgotten-export) The symbol "RerankResult" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
+export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankResult<TRaw>> {
     // @internal
     [$CustomInspect](): string;
-    // Warning: (ae-forgotten-export) The symbol "SerDes" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-forgotten-export) The symbol "SerializedFilter" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
     // (undocumented)
     clone(): this;
     get dataSource(): Table<SomeRow> | Collection;
     filter(filter: Filter): this;
+    // Warning: (ae-forgotten-export) The symbol "SerializedFilter" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    readonly _filter: SerializedFilter;
     // (undocumented)
     hybridLimits(hybridLimits: number | Record<string, number>): this;
-    // (undocumented)
-    hybridProjection(hybridProjection: HybridProjection): this;
     limit(limit: number): this;
     // (undocumented)
     map<R>(map: (doc: T) => R): FindAndRerankCursor<R, TRaw>;
     // @internal (undocumented)
-    protected _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]>;
+    protected _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankResult<TRaw>[]>;
     // @internal (undocumented)
-    protected readonly _options: GenericFindAndRerankOptions;
+    readonly _options: GenericFindAndRerankOptions;
+    // @internal (undocumented)
+    readonly _parent: Table<SomeRow> | Collection;
     project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RRaw, RRaw>;
     // (undocumented)
     rerankField(rerankField: string): this;
+    // Warning: (ae-forgotten-export) The symbol "SerDes" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    readonly _serdes: SerDes;
     sort(sort: HybridSort): this;
     // @internal (undocumented)
     protected _tm(): Timeouts;
@@ -1544,14 +1582,14 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
     // @internal
     [$CustomInspect](): string;
-    // Warning: (ae-forgotten-export) The symbol "SerializedFilter_2" needs to be exported by the entry point index.d.ts
-    //
     // @internal
-    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter_2, options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
+    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
     // (undocumented)
     clone(): this;
     get dataSource(): Table<SomeRow> | Collection;
     filter(filter: Filter): this;
+    // @internal (undocumented)
+    readonly _filter: SerializedFilter;
     getSortVector(): Promise<DataAPIVector | null>;
     includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>>;
     includeSortVector(includeSortVector?: boolean): this;
@@ -1561,8 +1599,12 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
     // @internal (undocumented)
     protected _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]>;
     // @internal (undocumented)
-    protected readonly _options: GenericFindOptions;
+    readonly _options: GenericFindOptions;
+    // @internal (undocumented)
+    readonly _parent: Table<SomeRow> | Collection;
     project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw>;
+    // @internal (undocumented)
+    readonly _serdes: SerDes;
     skip(skip: number): this;
     sort(sort: Sort): this;
     // @internal (undocumented)
@@ -1614,8 +1656,6 @@ export interface GenericDeleteOneResult {
 export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     hybridLimits?: number | Record<string, number>;
-    // (undocumented)
-    hybridProjection: HybridProjection;
     limit?: number;
     projection?: Projection;
     // (undocumented)
@@ -1725,12 +1765,21 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
 export type HttpOptions = FetchH2HttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
 
 // @public (undocumented)
-export type HybridProjection = 'none' | 'passage' | 'scores';
+export type HybridSort = Sort & {
+    $hybrid: string | HybridSortObject;
+};
 
 // @public (undocumented)
-export type HybridSort = Sort & {
-    $hybrid: string | Record<string, unknown>;
-};
+export interface HybridSortObject {
+    // (undocumented)
+    $lexical?: string;
+    // (undocumented)
+    $vector?: number[] | DataAPIVector;
+    // (undocumented)
+    $vectorize?: string;
+    // (undocumented)
+    [col: string]: string | number[] | DataAPIVector | undefined;
+}
 
 // @public
 export type IdOf<Doc> = Doc extends {
@@ -1991,8 +2040,21 @@ export type RawCodec<SerCtx = any, DesCtx = any> = {
 // @public
 export interface RawDataAPIResponse {
     readonly data?: Record<string, any>;
-    readonly errors?: any[];
+    readonly errors?: DataAPIErrorDescriptor[];
     readonly status?: Record<string, any>;
+    readonly warnings?: DataAPIWarningDescriptor[];
+}
+
+// @public (undocumented)
+export interface RerankingServiceOptions {
+    // (undocumented)
+    authentication?: Record<string, unknown>;
+    // (undocumented)
+    modelName: string;
+    // (undocumented)
+    parameters?: Record<string, unknown>;
+    // (undocumented)
+    provider: string;
 }
 
 // @public
@@ -2065,9 +2127,7 @@ export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId
 export type SomeRow = Record<string, any>;
 
 // @public
-export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string | {
-    $binary: string;
-}>;
+export type Sort = Record<string, SortDirection | string | number[] | DataAPIVector>;
 
 // @public
 export type SortDirection = 1 | -1;
@@ -2086,8 +2146,10 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions | undefined);
     alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>>;
-    createIndex(name: string, column: WSchema | string, options?: CreateTableIndexOptions): Promise<void>;
-    createVectorIndex(name: string, column: WSchema | string, options?: CreateTableVectorIndexOptions): Promise<void>;
+    createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void>;
+    // Warning: (ae-forgotten-export) The symbol "TableCreateTextIndexOptions" needs to be exported by the entry point index.d.ts
+    createTextIndex(name: string, column: keyof WSchema, options?: TableCreateTextIndexOptions): Promise<void>;
+    createVectorIndex(name: string, column: keyof WSchema, options?: TableCreateVectorIndexOptions): Promise<void>;
     definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
     deleteMany(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
     deleteOne(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
@@ -2180,6 +2242,21 @@ export class TableCodecs {
     //
     // (undocumented)
     static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts | TableCodecClass): RawTableCodecs;
+}
+
+// @public (undocumented)
+export type TableCreateIndexColumn<WSchema> = keyof WSchema | Partial<Record<(keyof WSchema & string), `$${string}`>>;
+
+// @public
+export interface TableCreateIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    ifNotExists?: boolean;
+    options?: TableIndexOptions;
+}
+
+// @public
+export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    ifNotExists?: boolean;
+    options?: TableVectorIndexOptions;
 }
 
 // @public
@@ -2280,9 +2357,13 @@ export interface TableIndexUnsupportedColumnApiSupport {
 }
 
 // @public
-export class TableInsertManyError extends CumulativeOperationError {
+export class TableInsertManyError extends DataAPIError {
+    constructor(causes: DataAPIResponseError[], partRes: TableInsertManyResult<SomeRow>);
+    // (undocumented)
+    errors(): Error[];
+    // (undocumented)
+    insertedIds(): SomeRow[];
     name: string;
-    readonly partialResult: TableInsertManyResult<SomeDoc>;
 }
 
 // @public
@@ -2358,7 +2439,7 @@ export interface TableVectorIndexDescriptor {
 // @public
 export interface TableVectorIndexOptions {
     metric?: 'cosine' | 'euclidean' | 'dot_product';
-    sourceModel?: (string & Record<never, never>) | 'other';
+    sourceModel?: LitUnion<'other'>;
 }
 
 // @public
@@ -2481,8 +2562,8 @@ export interface VectorizeDoc extends VectorDoc {
 
 // @public
 export interface VectorizeServiceOptions {
-    authentication?: Record<string, string | undefined>;
-    modelName: string | nullish;
+    authentication?: Record<string, unknown>;
+    modelName: LitUnion<'endpoint-defined-model'>;
     parameters?: Record<string, unknown>;
     provider: string;
 }
