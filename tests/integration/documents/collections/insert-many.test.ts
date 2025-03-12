@@ -15,7 +15,7 @@
 
 import {
   CollectionInsertManyError,
-  DataAPIError,
+  DataAPIError, DataAPIResponseError,
   DataAPITimeoutError,
   DataAPIVector,
   ObjectId,
@@ -118,39 +118,45 @@ parallel('integration.documents.collections.insert-many', { truncate: 'colls:bef
     const docs = Array.from({ length: 20 }, (_, i) => ({ _id: key + i }));
     docs[10] = docs[9];
     let error: unknown;
+
     try {
       await collection.insertMany(docs, { ordered: true });
       assert.fail('Should have thrown an error');
     } catch (e) {
       error = e;
     }
+
     assert.ok(error);
     assert.ok(error instanceof CollectionInsertManyError);
-    assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
-    assert.strictEqual(error.partialResult.insertedCount, 10);
-    // assert.strictEqual(error.failedCount, 10); TODO
-    docs.slice(0, 10).forEach((doc, index) => {
-      assert.strictEqual(error.partialResult.insertedIds[index], doc._id);
-    });
+    assert.strictEqual(error.errors().length, 1);
+
+    const firstError = error.errors()[0];
+    assert.ok(firstError instanceof DataAPIResponseError);
+    assert.strictEqual(firstError.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
+
+    assert.deepStrictEqual(error.insertedIds().sort(), docs.slice(0, 10).map((doc) => doc._id).sort());
   });
 
   it('should error out when one of the docs in insertMany is invalid with ordered false', async (key) => {
     const docs = Array.from({ length: 20 }, (_, i) => ({ _id: key + i }));
     docs[10] = docs[9];
     let error: unknown;
+
     try {
       await collection.insertMany(docs, { ordered: false });
     } catch (e) {
       error = e;
     }
+
     assert.ok(error);
     assert.ok(error instanceof CollectionInsertManyError);
-    assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
-    assert.strictEqual(error.partialResult.insertedCount, 19);
-    // assert.strictEqual(error.failedCount, 1); TODO
-    docs.slice(0, 9).concat(docs.slice(10)).forEach((doc) => {
-      assert.ok(error.partialResult.insertedIds.includes(doc._id));
-    });
+    assert.strictEqual(error.errors().length, 1);
+
+    const firstError = error.errors()[0];
+    assert.ok(firstError instanceof DataAPIResponseError);
+    assert.strictEqual(firstError.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
+
+    assert.deepStrictEqual(error.insertedIds().sort(), docs.slice(0, 9).concat(docs.slice(10)).map((doc) => doc._id).sort());
   });
 
   it('fails fast on hard errors ordered', async () => {

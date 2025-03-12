@@ -73,7 +73,7 @@ node -i -e "
   let table = db.table('$default_table_name');
 
   if (process.env.LOG_ALL_TO_STDOUT) {
-    for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed']) {
+    for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed', /.*Warning/]) {
       client.on(event, (e) => console.dir(e, { depth: null }));
     }
   }

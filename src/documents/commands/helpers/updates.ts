@@ -19,8 +19,8 @@ import type { RawDataAPIResponse } from '@/src/lib/index.js';
  * @internal
  */
 export const mkUpdateResult = <N extends number>(resp?: RawDataAPIResponse) => ({
-  modifiedCount: resp?.status?.modifiedCount ?? 0 as N,
-  matchedCount: resp?.status?.matchedCount ?? 0 as N,
+  modifiedCount: (resp?.status?.modifiedCount ?? 0) as N,
+  matchedCount: (resp?.status?.matchedCount ?? 0) as N,
 });
 
 /**

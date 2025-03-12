@@ -27,6 +27,17 @@ export function isNullish(t: unknown): t is null | undefined {
 /**
  * @internal
  */
+export function jsonTryStringify(value: unknown, otherwise: string): string {
+  try {
+    return JSON.stringify(value);
+  } catch (_) {
+    return otherwise;
+  }
+}
+
+/**
+ * @internal
+ */
 export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: unknown, key: string, value: unknown) => unknown): T {
   try {
     return JSON.parse(json, reviver);

@@ -20,6 +20,4 @@ export * from './embedding-providers/index.js';
 export * from './datatypes/index.js';
 export type * from './commands/index.js';
 export type * from './types/index.js';
-
-export type { DataAPIDetailedErrorDescriptor, DataAPIErrorDescriptor } from './errors.js';
-export { DataAPIResponseError, DataAPIHttpError, DataAPITimeoutError, CumulativeOperationError, DataAPIError, CollectionDeleteManyError, CollectionInsertManyError, TableInsertManyError, TooManyDocumentsToCountError, CollectionUpdateManyError } from './errors.js';
+export * from './errors.js';
