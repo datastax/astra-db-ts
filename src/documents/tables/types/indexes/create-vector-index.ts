@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type { WithTimeout } from '@/src/lib/index.js';
+import type { LitUnion } from '@/src/lib/types.js';
 
 /**
  * Options for creating a new index via {@link Table.createVectorIndex}
@@ -46,5 +47,5 @@ export interface TableVectorIndexOptions {
   /**
    * Enable certain vector optimizations on the index by specifying the source model for your vectors, such as (not exhaustive) `'openai_v3_large'`, `'openai_v3_small'`, `'ada002'`, `'gecko'`, `'bert'`, or `'other'` (default).
    */
-  sourceModel?: (string & Record<never, never>) | 'other',
+  sourceModel?: LitUnion<'other'>,
 }

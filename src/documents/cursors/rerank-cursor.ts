@@ -17,25 +17,26 @@ import type {
   Filter,
   GenericFindAndRerankOptions,
   GenericFindOptions,
-  HybridProjection,
   HybridSort,
   Projection,
   SomeDoc,
   SomeRow,
   Table,
 } from '@/src/documents/index.js';
-import { CursorError } from '@/src/documents/index.js';
 import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
-
-/**
- * @internal
- */
-type SerializedFilter = [filter: unknown, bigNumsPresent: boolean];
+import type { SerializedFilter } from '@/src/documents/cursors/common.js';
+import {
+  buildFLCFilter,
+  buildFLCMap,
+  buildFLCOption,
+  buildFLCPreMapOption,
+  cloneFLC,
+} from '@/src/documents/cursors/common.js';
 
 export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
   /**
@@ -46,22 +47,22 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   /**
    * @internal
    */
-  private readonly _serdes: SerDes;
+  readonly _serdes: SerDes;
 
   /**
    * @internal
    */
-  private readonly _parent: Table<SomeRow> | Collection;
+  readonly _parent: Table<SomeRow> | Collection;
 
   /**
    * @internal
    */
-  declare protected readonly _options: GenericFindAndRerankOptions;
+  declare readonly _options: GenericFindAndRerankOptions;
 
   /**
    * @internal
    */
-  private readonly _filter: SerializedFilter;
+  readonly _filter: SerializedFilter;
 
   /**
    * Should not be instantiated directly.
@@ -105,10 +106,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new filter set.
    */
   public filter(filter: Filter): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new filter on a running/closed cursor', this);
-    }
-    return this._clone(this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), this._options, this._mapping);
+    return buildFLCFilter(this, filter);
   }
 
   /**
@@ -122,10 +120,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new sort set.
    */
   public sort(sort: HybridSort): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new sort on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, sort }, this._mapping);
+    return buildFLCOption(this, 'sort', sort);
   }
 
   /**
@@ -141,31 +136,15 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, limit: limit || Infinity }, this._mapping);
+    return buildFLCOption(this, 'limit', limit || Infinity);
   }
 
   public hybridLimits(hybridLimits: number | Record<string, number>): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, hybridLimits }, this._mapping);
-  }
-
-  public hybridProjection(hybridProjection: HybridProjection): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, hybridProjection }, this._mapping);
+    return buildFLCOption(this, 'hybridLimits', hybridLimits);
   }
 
   public rerankField(rerankField: string): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, rerankField }, this._mapping);
+    return buildFLCOption(this, 'rerankField', rerankField);
   }
 
   /**
@@ -208,35 +187,15 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new projection set.
    */
   public project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RRaw, RRaw> {
-    if (this._mapping) {
-      throw new CursorError('Cannot set a projection after already using cursor.map(...)', this);
-    }
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new projection on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, projection: structuredClone(projection) }, this._mapping);
+    return buildFLCPreMapOption(this, 'projection', projection);
   }
 
   public map<R>(map: (doc: T) => R): FindAndRerankCursor<R, TRaw> {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new mapping on a running/closed cursor', this);
-    }
-    if (this._mapping) {
-      return this._clone(this._filter, this._options, (doc: TRaw) => map(this._mapping!(doc)));
-    } else {
-      return this._clone(this._filter, this._options, map as any);
-    }
+    return buildFLCMap(this, map);
   }
 
   public override clone(): this {
-    return this._clone(this._filter, this._options, this._mapping);
-  }
-
-  /**
-   * @internal
-   */
-  private _clone<R, C = this>(filter: SerializedFilter, options: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => R): C {
-    return new (<any>this.constructor)(this._parent, this._serdes, filter, options, mapping);
+    return cloneFLC(this, this._filter, this._options, this._mapping);
   }
 
   /**
@@ -251,7 +210,6 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
         options: {
           limit: this._options.limit,
           hybridLimits: this._options.hybridLimits,
-          hybridProjection: this._options.hybridProjection,
           rerankField: this._options.rerankField,
         },
       },

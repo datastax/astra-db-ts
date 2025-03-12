@@ -24,7 +24,7 @@ import type {
   Table,
   WithSim,
 } from '@/src/documents/index.js';
-import { CursorError, vector } from '@/src/documents/index.js';
+import { vector } from '@/src/documents/index.js';
 import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
@@ -32,11 +32,14 @@ import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 import { QueryState } from '@/src/lib/utils.js';
-
-/**
- * @internal
- */
-type SerializedFilter = [filter: unknown, bigNumsPresent: boolean];
+import type { SerializedFilter } from '@/src/documents/cursors/common.js';
+import {
+  buildFLCFilter,
+  buildFLCMap,
+  buildFLCOption,
+  buildFLCPreMapOption,
+  cloneFLC,
+} from '@/src/documents/cursors/common.js';
 
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
   /**
@@ -47,22 +50,22 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   /**
    * @internal
    */
-  private readonly _serdes: SerDes;
+  readonly _serdes: SerDes;
 
   /**
    * @internal
    */
-  private readonly _parent: Table<SomeRow> | Collection;
+  readonly _parent: Table<SomeRow> | Collection;
 
   /**
    * @internal
    */
-  declare protected readonly _options: GenericFindOptions;
+  declare readonly _options: GenericFindOptions;
 
   /**
    * @internal
    */
-  private readonly _filter: SerializedFilter;
+  readonly _filter: SerializedFilter;
 
   /**
    * @internal
@@ -111,10 +114,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new filter set.
    */
   public filter(filter: Filter): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new filter on a running/closed cursor', this);
-    }
-    return this._clone(this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), this._options, this._mapping);
+    return buildFLCFilter(this, filter);
   }
 
   /**
@@ -128,10 +128,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new sort set.
    */
   public sort(sort: Sort): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new sort on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, sort }, this._mapping);
+    return buildFLCOption(this, 'sort', sort);
   }
 
   /**
@@ -147,10 +144,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, limit: limit || Infinity }, this._mapping);
+    return buildFLCOption(this, 'limit', limit || Infinity);
   }
 
   /**
@@ -164,10 +158,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new skip set.
    */
   public skip(skip: number): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new skip on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, skip }, this._mapping);
+    return buildFLCOption(this, 'skip', skip);
   }
 
   /**
@@ -182,10 +173,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new sort vector inclusion setting.
    */
   public includeSortVector(includeSortVector = true): this {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new sort vector on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, includeSortVector }, this._mapping);
+    return buildFLCOption(this, 'includeSortVector', includeSortVector);
   }
 
   /**
@@ -228,13 +216,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new projection set.
    */
   public project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw> {
-    if (this._mapping) {
-      throw new CursorError('Cannot set a projection after already using cursor.map(...)', this);
-    }
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new projection on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, projection: structuredClone(projection) }, this._mapping);
+    return buildFLCPreMapOption(this, 'projection', structuredClone(projection));
   }
 
   /**
@@ -248,24 +230,11 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new similarity setting.
    */
   public includeSimilarity(includeSimilarity = true): FindCursor<WithSim<TRaw>, WithSim<TRaw>> {
-    if (this._mapping) {
-      throw new CursorError('Cannot set include similarity after already using cursor.map(...)', this);
-    }
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new similarity on a running/closed cursor', this);
-    }
-    return this._clone(this._filter, { ...this._options, includeSimilarity }, this._mapping);
+    return buildFLCPreMapOption(this, 'includeSimilarity', includeSimilarity);
   }
-  
+
   public map<R>(map: (doc: T) => R): FindCursor<R, TRaw> {
-    if (this._state !== 'idle') {
-      throw new CursorError('Cannot set a new mapping on a running/closed cursor', this);
-    }
-    if (this._mapping) {
-      return this._clone(this._filter, this._options, (doc: TRaw) => map(this._mapping!(doc)));
-    } else {
-      return this._clone(this._filter, this._options, map as any);
-    }
+    return buildFLCMap(this, map);
   }
 
   /**
@@ -306,14 +275,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   }
 
   public override clone(): this {
-    return this._clone(this._filter, this._options, this._mapping);
-  }
-
-  /**
-   * @internal
-   */
-  private _clone<R, C = this>(filter: SerializedFilter, options: GenericFindOptions, mapping?: (doc: TRaw) => R): C {
-    return new (<any>this.constructor)(this._parent, this._serdes, filter, options, mapping);
+    return cloneFLC(this, this._filter, this._options, this._mapping);
   }
 
   /**

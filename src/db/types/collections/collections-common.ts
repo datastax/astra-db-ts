@@ -14,7 +14,8 @@
 
 import type { SomeDoc } from '@/src/documents/collections/index.js';
 import type { ToDotNotation } from '@/src/documents/types/dot-notation.js';
-import type { nullish } from '@/src/lib/index.js';
+import type { LitUnion } from '@/src/lib/types.js';
+import type { VectorizeServiceOptions } from '@/src/db/index.js';
 
 /**
  * Represents the options for the vector search.
@@ -60,58 +61,7 @@ export interface CollectionVectorOptions {
    *
    * If no source model if provided, this setting will default to `'other'`.
    */
-  sourceModel?: string,
-}
-
-/**
- * The options for defining the embedding service used for vectorize, to automatically transform your
- * text into a vector ready for semantic vector searching.
- *
- * You can find out more information about each provider/model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
- * or through {@link DbAdmin.findEmbeddingProviders}.
- *
- * @field provider - The name of the embedding provider which provides the model to use
- * @field model - The specific model to use for embedding, or undefined if it's an endpoint-defined model
- * @field authentication - Object containing any necessary collections-bound authentication, if any
- * @field parameters - Object allowing arbitrary parameters that may be necessary on a per-model basis
- *
- * @public
- */
-export interface VectorizeServiceOptions {
-  /**
-   * The name of the embedding provider which provides the model to use.
-   *
-   * You can find out more information about each provider in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
-   * or through  {@link DbAdmin.findEmbeddingProviders}.
-   */
-  provider: string,
-  /**
-   * The name of the embedding model to use.
-   *
-   * You can find out more information about each model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
-   * or through {@link DbAdmin.findEmbeddingProviders}.
-   */
-  modelName: string | nullish,
-  /**
-   * Object containing any necessary collections-bound authentication, if any.
-   *
-   * Most commonly, `providerKey: '*SHARED_SECRET_NAME*'` may be used here to reference an API key from the Astra KMS.
-   *
-   * {@link Db.createCollection} and {@link Db.collection} both offer an `embeddingApiKey` parameter which utilizes
-   * header-based auth to pass the provider's token/api-key to the Data API on a per-request basis instead, if that
-   * is preferred (or necessary).
-   */
-  authentication?: Record<string, string | undefined>,
-  /**
-   * Object allowing arbitrary parameters that may be necessary on a per-model/per-provider basis.
-   *
-   * Not all providers need this, but some, such as `huggingfaceDedicated` have required parameters, others have
-   * optional parameters (e.g. `openAi`), and some don't require any at all.
-   *
-   * You can find out more information about each provider/model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
-   * or through {@link DbAdmin.findEmbeddingProviders}.
-   */
-  parameters?: Record<string, unknown>,
+  sourceModel?: LitUnion<'other'>,
 }
 
 /**
@@ -166,7 +116,7 @@ export interface CollectionDefaultIdOptions {
    * | `uuidv6`   | A UUID v6.     | `new UUID('6f752f1a-6b6d-4f3e-8e1e-2e167e3b5f3d')` |
    * | `uuidv7`   | A UUID v7.     | `new UUID('018e75ff-a07b-7b08-bb91-aa566c5abaa6')` |
    * | `objectId` | An ObjectID.   | `new ObjectId('507f1f77bcf86cd799439011')`         |
-   * | default    | A string UUID. | `'f47ac10b-58cc-4372-a567-0e02b2c3d479'`           |
+   * | unset      | A string UUID. | `'f47ac10b-58cc-4372-a567-0e02b2c3d479'`           |
    *
    * @example
    * ```typescript

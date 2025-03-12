@@ -12,18 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Projection, Sort } from '@/src/documents/index.js';
+import type { DataAPIVector, Projection, Sort } from '@/src/documents/index.js';
 import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
  * @public
  */
-export type HybridSort = Sort & { $hybrid: string | Record<string, unknown> }
+export type HybridSort = Sort & { $hybrid: string | HybridSortObject }
 
-/**
- * @public
- */
-export type HybridProjection = 'none' | 'passage' | 'scores';
+export interface HybridSortObject {
+  $vectorize?: string,
+  $lexical?: string,
+  $vector?: number[] | DataAPIVector,
+  [col: string]: string | number[] | DataAPIVector | undefined,
+}
 
 /**
  * Options for some generic `findAndRerank` command.
@@ -50,6 +52,5 @@ export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodT
    */
   limit?: number,
   hybridLimits?: number | Record<string, number>,
-  hybridProjection: HybridProjection,
   rerankField?: string,
 }
