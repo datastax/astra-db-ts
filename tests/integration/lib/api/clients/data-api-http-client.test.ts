@@ -75,7 +75,6 @@ describe('integration.lib.api.clients.data-api-http-client', ({ db }) => {
       } catch (e) {
         assert.ok(e instanceof DataAPIResponseError);
         assert.strictEqual(e.errorDescriptors.length, 1);
-        assert.strictEqual(e.detailedErrorDescriptors.length, 1);
         assert.strictEqual(e.errorDescriptors[0].errorCode, 'UNAUTHENTICATED_REQUEST');
       }
     });

@@ -14,18 +14,17 @@
 
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
-import type {
-  DataAPIDetailedErrorDescriptor} from '@/src/documents/errors.js';
-import {
-  DataAPIResponseError,
-  mkRespErrorFromResponse,
-  mkRespErrorFromResponses,
-} from '@/src/documents/errors.js';
-import type { SomeDoc, SomeId } from '@/src/documents/index.js';
+import type { CollectionInsertManyError, TableInsertManyError } from '@/src/documents/errors.js';
+import { DataAPIResponseError } from '@/src/documents/errors.js';
+import type { SomeDoc, SomeId, SomeRow } from '@/src/documents/index.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
-import type { RawDataAPIResponse } from '@/src/lib/index.js';
 import type { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
+
+/**
+ * @internal
+ */
+export type InsertManyErrorConstructor = typeof TableInsertManyError | typeof CollectionInsertManyError;
 
 /**
  * @internal
@@ -36,7 +35,7 @@ export const insertManyOrdered = async <ID>(
   documents: readonly SomeDoc[],
   chunkSize: number,
   timeoutManager: TimeoutManager,
-  err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError,
+  err: InsertManyErrorConstructor,
 ): Promise<ID[]> => {
   const insertedIds: ID[] = [];
 
@@ -47,17 +46,13 @@ export const insertManyOrdered = async <ID>(
       ? { records: documents.length, ordered: true }
       : { records: documents.length, slice: `${i}..${i + slice.length}`, ordered: true };
 
-    const [_docResp, inserted, errDesc] = await insertMany<ID>(httpClient, serdes, slice, true, timeoutManager, extraLogInfo);
-    insertedIds.push(...inserted);
+    const resp = await insertMany<ID>(httpClient, serdes, slice, true, timeoutManager, extraLogInfo);
+    insertedIds.push(...resp.insertedIds);
 
-    if (errDesc) {
-      throw mkRespErrorFromResponse(err, errDesc.command, errDesc.rawResponse, {
-        partialResult: {
-          insertedIds: insertedIds as SomeId[],
-          insertedCount: insertedIds.length,
-        },
-        // documentResponses: docResp,
-        // failedCount: docResp.length - insertedIds.length,
+    if (resp.error) {
+      throw new err([resp.error], {
+        insertedIds: insertedIds as (SomeRow[] & SomeId[]),
+        insertedCount: insertedIds.length,
       });
     }
   }
@@ -75,14 +70,13 @@ export const insertManyUnordered = async <ID>(
   concurrency: number,
   chunkSize: number,
   timeoutManager: TimeoutManager,
-  err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError,
+  err: InsertManyErrorConstructor,
 ): Promise<ID[]> => {
   const insertedIds: ID[] = [];
   let masterIndex = 0;
 
-  const failCommands = [] as Record<string, unknown>[];
-  const failRaw = [] as RawDataAPIResponse[];
   const docResps = [] as GenericInsertManyDocumentResponse<SomeDoc>[];
+  const errors = [] as DataAPIResponseError[];
 
   const promises = Array.from({ length: concurrency }, async () => {
     while (masterIndex < documents.length) {
@@ -100,31 +94,32 @@ export const insertManyUnordered = async <ID>(
         ? { records: documents.length, ordered: false }
         : { records: documents.length, slice: `${localI}..${endIdx}`, ordered: false };
 
-      const [docResp, inserted, errDesc] = await insertMany<ID>(httpClient, serdes, slice, false, timeoutManager, extraLogInfo);
-      insertedIds.push(...inserted);
-      docResps.push(...docResp);
+      const resp = await insertMany<ID>(httpClient, serdes, slice, false, timeoutManager, extraLogInfo);
+      insertedIds.push(...resp.insertedIds);
+      docResps.push(...resp.documentResponses);
 
-      if (errDesc) {
-        failCommands.push(errDesc.command);
-        failRaw.push(errDesc.rawResponse);
+      if (resp.error) {
+        errors.push(resp.error);
       }
     }
   });
   await Promise.all(promises);
 
-  if (failCommands.length > 0) {
-    throw mkRespErrorFromResponses(err, failCommands, failRaw, {
-      partialResult: {
-        insertedIds: insertedIds as SomeId[],
-        insertedCount: insertedIds.length,
-      },
-      // documentResponses: docResps,
-      // failedCount: docResps.length - insertedIds.length,
+  if (errors.length > 0) {
+    throw new err(errors, {
+      insertedIds: insertedIds as (SomeRow[] & SomeId[]),
+      insertedCount: insertedIds.length,
     });
   }
 
   return insertedIds;
 };
+
+interface InsertManyResult<ID> {
+  readonly documentResponses: GenericInsertManyDocumentResponse<ID>[],
+  readonly insertedIds: ID[],
+  readonly error?: DataAPIResponseError,
+}
 
 const insertMany = async <ID>(
   httpClient: DataAPIHttpClient,
@@ -133,7 +128,7 @@ const insertMany = async <ID>(
   ordered: boolean,
   timeoutManager: TimeoutManager,
   extraLogInfo: Record<string, unknown>,
-): Promise<[GenericInsertManyDocumentResponse<ID>[], ID[], DataAPIDetailedErrorDescriptor | undefined]> => {
+): Promise<InsertManyResult<ID>> => {
   let raw, err: DataAPIResponseError | undefined;
 
   try {
@@ -159,7 +154,7 @@ const insertMany = async <ID>(
     if (!(e instanceof DataAPIResponseError)) {
       throw e;
     }
-    raw = e.detailedErrorDescriptors[0].rawResponse;
+    raw = e.rawResponse;
     err = e;
   }
 
@@ -178,5 +173,9 @@ const insertMany = async <ID>(
     }
   }
 
-  return [documentResponses, insertedIds, err?.detailedErrorDescriptors[0]];
+  return {
+    documentResponses,
+    insertedIds,
+    error: err,
+  };
 };

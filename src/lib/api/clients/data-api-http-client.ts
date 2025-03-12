@@ -28,7 +28,6 @@ import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/a
 import { HttpClient } from '@/src/lib/api/clients/http-client.js';
 import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants.js';
 import type { CollectionOptions, TableOptions } from '@/src/db/index.js';
-import { mkRespErrorFromResponse } from '@/src/documents/errors.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { EmptyObj } from '@/src/lib/types.js';
@@ -275,13 +274,14 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         : undefined;
 
       const warnings = data?.status?.warnings ?? [];
+
       if (warnings.length) {
         this.emissionStrategy.emitCommandWarnings?.(requestId, info, warnings, options);
       }
-      delete data?.status?.warnings;
 
       if (data.errors && data.errors.length > 0) {
-        throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data, warnings);
+        // throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data, warnings);
+        throw new DataAPIResponseError(info.command, data);
       }
 
       const respData = {
