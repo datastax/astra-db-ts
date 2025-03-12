@@ -13,27 +13,28 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import type { InternalLogger } from '@/src/lib/logging/internal-logger.js';
-import type { RawDataAPIResponse } from '@/src/lib/index.js';
-import {
-  EmbeddingAPIKeyHeaderProvider,
-  HeadersProvider,
-  RerankingAPIKeyHeaderProvider,
-  TokenProvider,
-} from '@/src/lib/index.js';
+import { Logger } from '@/src/lib/logging/logger.js';
+import type { HierarchicalEmitter, nullish, RawDataAPIResponse } from '@/src/lib/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
 import type { CommandEventTarget, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
-import { Collection, DataAPIHttpError, DataAPIResponseError, DataAPITimeoutError } from '@/src/documents/index.js';
-import type { HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types.js';
+import {
+  Collection,
+  DataAPIHttpError,
+  DataAPIResponseError,
+  DataAPITimeoutError,
+  EmbeddingHeadersProvider,
+} from '@/src/documents/index.js';
+import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types.js';
 import { HttpClient } from '@/src/lib/api/clients/http-client.js';
-import { HttpMethods } from '@/src/lib/api/constants.js';
+import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants.js';
 import type { CollectionOptions, TableOptions } from '@/src/db/index.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { EmptyObj } from '@/src/lib/types.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
-import type { DbAdmin } from '@/src/administration/index.js';
-import { NonErrorError } from '@/src/lib/errors.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import type { AdminCommandEventMap } from '@/src/administration/index.js';
+import { NonErrorError } from '@/src/lib/errors.js';
 
 type ClientKind = 'admin' | 'normal';
 
@@ -65,7 +66,7 @@ export interface DataAPIRequestInfo {
 /**
  * @internal
  */
-type EmissionStrategy<Kind extends ClientKind> = (logger: InternalLogger<any>) => {
+type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
   emitCommandStarted?(requestId: string, info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
   emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse | undefined, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
   emitCommandSucceeded?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
@@ -124,10 +125,10 @@ const adaptInfo4Devops = (info: DataAPIRequestInfo, methodName: string) => (<con
 /**
  * @internal
  */
-interface DataAPIHttpClientOpts<Kind extends ClientKind> extends Omit<HTTPClientOptions, 'mkTimeoutError'> {
+interface DataAPIHttpClientOpts<Kind extends ClientKind> extends HTTPClientOptions {
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy<Kind>,
-  tokenProvider: ParsedTokenProvider,
+  embeddingHeaders: EmbeddingHeadersProvider,
 }
 
 /**
@@ -154,53 +155,44 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
   readonly #props: DataAPIHttpClientOpts<Kind>;
 
   constructor(opts: DataAPIHttpClientOpts<Kind>) {
-    super('data-api', {
-      ...opts,
-      additionalHeaders: HeadersProvider.opts.fromObj.concat([
-        opts.additionalHeaders,
-        opts.tokenProvider.toHeadersProvider(),
-      ]),
-      mkTimeoutError: DataAPITimeoutError.mk,
-    });
-
+    super(opts, [mkAuthHeaderProvider(opts.tokenProvider), () => opts.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
     this.keyspace = opts.keyspace;
     this.#props = opts;
-    this.emissionStrategy = opts.emissionStrategy(opts.logger.internal);
+    this.emissionStrategy = opts.emissionStrategy(this.logger);
   }
 
-  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(tSlashC: Collection | Table<SomeRow>, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(thing: Collection | Table<SomeRow>, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
+      embeddingHeaders: EmbeddingHeadersProvider.parse(opts?.embeddingApiKey),
+      logging: Logger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
       emissionStrategy: EmissionStrategy.Normal,
-      keyspace: { ref: tSlashC.keyspace },
-      logger: tSlashC,
-      additionalHeaders: HeadersProvider.opts.monoid.concat([
-        this.#props.additionalHeaders,
-        HeadersProvider.opts.fromStr(EmbeddingAPIKeyHeaderProvider).parse(opts?.embeddingApiKey),
-        HeadersProvider.opts.fromStr(RerankingAPIKeyHeaderProvider).parse(opts?.rerankingApiKey),
-      ]),
+      keyspace: { ref: thing.keyspace },
+      emitter: thing,
     });
 
-    if (tSlashC instanceof Collection) {
-      clone.collectionName = tSlashC.name;
+    if (thing instanceof Collection) {
+      clone.collectionName = thing.name;
     } else {
-      clone.tableName = tSlashC.name;
+      clone.tableName = thing.name;
     }
-
+    
     clone.bigNumHack = bigNumHack;
     clone.tm = new Timeouts(DataAPITimeoutError.mk, Timeouts.cfg.parse({ ...this.tm.baseTimeouts, ...opts?.timeoutDefaults }));
 
     return clone;
   }
 
-  public forDbAdmin(dbAdmin: DbAdmin, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(emitter: HierarchicalEmitter<AdminCommandEventMap>, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.opts.concat([opts.adminToken, this.#props.tokenProvider]),
+      logging: Logger.cfg.concat([this.#props.logging, opts.logging]),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
+      additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
       emissionStrategy: EmissionStrategy.Admin,
-      logger: dbAdmin,
+      emitter: emitter,
     });
 
     clone.collectionName = undefined;
@@ -249,7 +241,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     const collectionPath = info.collection ? `/${info.collection}` : '';
     info.url += keyspacePath + collectionPath;
 
-    const requestId = this.logger.internal.generateCommandRequestId();
+    const requestId = this.logger.generateCommandRequestId();
 
     this.emissionStrategy.emitCommandStarted?.(requestId, info, options);
     const started = performance.now();
@@ -308,3 +300,15 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     }
   }
 }
+
+const mkAuthHeaderProvider = (tp: ParsedTokenProvider): HeaderProvider => () => {
+  const token = tp.getToken();
+
+  return (token instanceof Promise)
+    ? token.then(mkAuthHeader)
+    : mkAuthHeader(token);
+};
+
+const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
+  ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }
+  : {};
