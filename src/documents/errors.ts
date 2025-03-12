@@ -557,7 +557,7 @@ export class CollectionDeleteManyError extends DataAPIError {
    * The partial result of the `DeleteMany` operation that was performed. This is *always* defined, and is the result
    * of the operation up to the point of the first error.
    */
-  public readonly partialResult!: CollectionDeleteManyResult;
+  public readonly partialResult: CollectionDeleteManyResult;
 
   /**
    * The error that caused the operation to fail.
