@@ -43,7 +43,6 @@ import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
-import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import { TableFindAndRerankCursor } from '@/src/documents/tables/cursors/rerank-cursor.js';
 import type { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
@@ -1193,54 +1192,6 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
     return this as unknown as Table<NewWSchema, PKey, NewRSchema>;
-  }
-
-  /**
-   * Lists the index names for this table.
-   *
-   * If you want to include the index definitions in the response, set `nameOnly` to `false` (or omit it completely),
-   * using the other overload.
-   *
-   * @example
-   * ```typescript
-   * // ['my_vector_index', ...]
-   * console.log(await table.listIndexes({ nameOnly: true }));
-   * ```
-   *
-   * @param options - Options for this operation.
-   *
-   * @returns A promise that resolves to an array of index names.
-   */
-  public async listIndexes(options: ListIndexOptions & { nameOnly: true }): Promise<string[]>
-
-  /**
-   * Lists the indexes for this table.
-   *
-   * If you want to use only the index names, set `nameOnly` to `true`, using the other overload.
-   *
-   * @example
-   * ```typescript
-   * // [{ name: 'm_vector_index', definition: { ... } }, ...]
-   * console.log(await db.listTables());
-   * ```
-   *
-   * @param options - Options for this operation.
-   *
-   * @returns A promise that resolves to an array of index info.
-   */
-  public async listIndexes(options?: ListIndexOptions & { nameOnly?: false }): Promise<TableIndexDescriptor[]>
-
-  public async listIndexes(options?: ListIndexOptions): Promise<string[] | TableIndexDescriptor[]> {
-    const resp = await this.#httpClient.executeCommand({
-      listIndexes: {
-        options: {
-          explain: options?.nameOnly !== true,
-        },
-      },
-    }, {
-      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
-    });
-    return resp.status!.indexes;
   }
 
   /**
