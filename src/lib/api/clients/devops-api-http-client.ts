@@ -26,6 +26,7 @@ import type { nullish } from '@/src/lib/index.js';
 import { jsonTryParse } from '@/src/lib/utils.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import { NonErrorError } from '@/src/lib/errors.js';
 
 /**
  * @internal
@@ -129,9 +130,10 @@ export class DevOpsAPIHttpClient extends HttpClient {
         status: resp.status,
         headers: resp.headers,
       };
-    } catch (e: any) {
-      this.logger.adminCommandFailed?.(requestId, req, isLongRunning, e, started);
-      throw e;
+    } catch (thrown) {
+      const err = NonErrorError.asError(thrown);
+      this.logger.adminCommandFailed?.(requestId, req, isLongRunning, err, started);
+      throw err;
     }
   }
 

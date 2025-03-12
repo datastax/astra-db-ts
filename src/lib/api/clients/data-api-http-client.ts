@@ -34,6 +34,7 @@ import type { EmptyObj } from '@/src/lib/types.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 import type { AdminCommandEventMap } from '@/src/administration/index.js';
+import { NonErrorError } from '@/src/lib/errors.js';
 
 type ClientKind = 'admin' | 'normal';
 
@@ -292,9 +293,10 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
 
       this.emissionStrategy.emitCommandSucceeded?.(requestId, info, clonedData!, started, options);
       return respData;
-    } catch (e: any) {
-      this.emissionStrategy.emitCommandFailed?.(requestId, info, clonedData, e, started, options);
-      throw e;
+    } catch (thrown) {
+      const err = NonErrorError.asError(thrown);
+      this.emissionStrategy.emitCommandFailed?.(requestId, info, clonedData, err, started, options);
+      throw err;
     }
   }
 }

@@ -249,7 +249,7 @@ export abstract class BaseClientEvent {
    * @returns A JSON string with full event details.
    */
   public formatVerbose(): string {
-    const entries = Object.entries(this.hideDupeFields())
+    const entries = Object.entries(this.trimDuplicateFields())
       .filter(([k]) => {
         return !(this.constructor as any).formatVerboseTransientKeys.includes(k);
       });
@@ -323,7 +323,7 @@ export abstract class BaseClientEvent {
     this._propagationState = PropagationState.StopImmediate;
   }
 
-  public hideDupeFields(): this {
+  public trimDuplicateFields(): this {
     return this;
   }
 }
