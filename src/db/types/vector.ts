@@ -52,12 +52,12 @@ export interface VectorizeServiceOptions {
    * header-based auth to pass the provider's token/api-key to the Data API on a per-request basis instead, if that
    * is preferred (or necessary).
    */
-  authentication?: Record<string, unknown>,
+  authentication?: Record<string, string | undefined>,
   /**
    * Object allowing arbitrary parameters that may be necessary on a per-model/per-provider basis.
    *
-   * Not all providers need this, but some, such as `huggingfaceDedicated` have required parameters, some others have
-   * optional parameters (e.g. `openai`), and some don't require any at all.
+   * Not all providers need this, but some, such as `huggingfaceDedicated` have required parameters, others have
+   * optional parameters (e.g. `openAi`), and some don't require any at all.
    *
    * You can find out more information about each provider/model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
    * or through {@link DbAdmin.findEmbeddingProviders}.

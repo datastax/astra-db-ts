@@ -85,12 +85,12 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal
    */
-  protected readonly _mapping?: (doc: any) => T;
+  readonly _mapping?: (doc: any) => T;
 
   /**
    * @internal
    */
-  protected readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
+  readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
 
   /**
    * Should not be instantiated directly.

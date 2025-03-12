@@ -12,12 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @public
- */
-export interface RerankingServiceOptions {
-  provider: string,
-  modelName: string,
-  authentication?: Record<string, unknown>,
-  parameters?: Record<string, unknown>,
-}
+
