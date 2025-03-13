@@ -15,15 +15,7 @@
 import assert from 'assert';
 import { describe, it } from '@/tests/testlib/index.js';
 import { BigNumber } from 'bignumber.js';
-import {
-  buildAstraEndpoint,
-  forJSEnv,
-  isBigNumber,
-  isNullish,
-  jsonTryParse,
-  toArray,
-
-} from '@/src/lib/utils.js';
+import { buildAstraEndpoint, forJSEnv, isBigNumber, isNullish, jsonTryParse, toArray } from '@/src/lib/utils.js';
 import JBI from 'json-bigint';
 import { pathArraysEqual, pathMatches, withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 
@@ -159,17 +151,20 @@ describe('unit.lib.utils', () => {
       const ok = [
         BigNumber(123),
         new BigNumber(123),
-        new (class BigNumber { _isBigNumber = true; })(),
+        { _isBigNumber: true, s: 0, e: 0, c: 0 },
+        new (class BigNumber { _isBigNumber = true; s = 0; e = 0; c = 0; })(),
+        new (class Car { _isBigNumber = true; s = null; e = undefined; c = false; })(),
       ];
       ok.forEach(t => assert.ok(isBigNumber(t)));
 
       const notOk = [
         null as any,
         {},
-        { _isBigNumber: true },
         new (class BigNumber { _isBigNumber = 1; })(),
-        new (class BigNum { _isBigNumber = true; })(),
         new (class BigNumber {})(),
+        { _isBigNumber: true },
+        new (class BigNumber { _isBigNumber = true; })(),
+        new (class Car { _isBigNumber = true; })(),
       ];
       notOk.forEach(t => assert.ok(!isBigNumber(t)));
     });
