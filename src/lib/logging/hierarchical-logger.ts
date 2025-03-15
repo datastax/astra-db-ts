@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { BaseClientEvent} from '@/src/lib/index.js';
+import type { BaseClientEvent, LoggingConfig } from '@/src/lib/index.js';
 import { PropagationState } from '@/src/lib/index.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 
 /**
  * ##### Overview
@@ -76,15 +77,25 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
   /**
    * @internal
    */
-  readonly #parent: Pick<HierarchicalLogger<Events>, 'emit'> | null;
+  readonly #parent: HierarchicalLogger<Events> | null;
+
+  /**
+   * @internal
+   */
+  public internal: InternalLogger;
 
   /**
    * Should not be instantiated be the user directly.
    *
    * @internal
    */
-  protected constructor(parent: Pick<HierarchicalLogger<Events>, 'emit'> | null) {
+  protected constructor(parent: HierarchicalLogger<Events> | null, config: ParsedLoggingConfig) {
+    this.internal = new InternalLogger(config, this, console);
     this.#parent = parent;
+  }
+
+  public updateLoggingConfig(config: LoggingConfig) {
+    this.internal = this.internal.withUpdatedConfig(InternalLogger.cfg.parse(config));
   }
 
   /**

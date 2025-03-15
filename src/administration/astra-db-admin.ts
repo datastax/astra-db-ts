@@ -77,15 +77,15 @@ export class AstraDbAdmin extends DbAdmin {
    * @internal
    */
   constructor(db: Db, rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions, dbToken: ParsedTokenProvider, endpoint: string) {
-    super(rootOpts.client);
+    const loggingConfig = InternalLogger.cfg.concat([rootOpts.adminOptions.logging, adminOpts.logging]);
+    super(rootOpts.client, loggingConfig);
 
     this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);
 
     this.#httpClient = new DevOpsAPIHttpClient({
       baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
-      logging: InternalLogger.cfg.concat([rootOpts.adminOptions.logging, adminOpts.logging]),
       fetchCtx: rootOpts.fetchCtx,
-      emitter: this,
+      logger: this,
       caller: rootOpts.caller,
       tokenProvider: TokenProvider.opts.concat([dbToken, rootOpts.adminOptions.adminToken, adminOpts.adminToken]),
       additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },

@@ -43,10 +43,6 @@ export interface ParsedRootClientOpts extends Parsed<'DataAPIClientOptions'> {
   caller: typeof CallerCfgHandler.parsed,
   dbOptions: typeof DbOptsHandler.parsed,
   adminOptions: typeof AdminOptsHandler.parsed,
-  dbAndAdminCommon: {
-    timeoutDefaults: typeof Timeouts.cfg.parsed,
-    logging: typeof InternalLogger.cfg.parsed,
-  },
 }
 
 /**
@@ -87,7 +83,6 @@ export const RootOptsHandler = (defaultToken: typeof TokenProvider.opts.parsed, 
         adminToken: TokenProvider.opts.concat([defaultToken, input.adminOptions.adminToken]),
         ...dbAndAdminCommon,
       }]),
-      dbAndAdminCommon,
     };
   });
 

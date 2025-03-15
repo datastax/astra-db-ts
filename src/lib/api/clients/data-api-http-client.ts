@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import type { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import type { HierarchicalLogger, nullish, RawDataAPIResponse } from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import type { CommandEventTarget, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
@@ -158,17 +158,16 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     super(opts, [mkAuthHeaderProvider(opts.tokenProvider), () => opts.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
     this.keyspace = opts.keyspace;
     this.#props = opts;
-    this.emissionStrategy = opts.emissionStrategy(this.logger);
+    this.emissionStrategy = opts.emissionStrategy(opts.logger.internal);
   }
 
   public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(thing: Collection | Table<SomeRow>, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parse(opts?.embeddingApiKey),
-      logging: InternalLogger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
       emissionStrategy: EmissionStrategy.Normal,
       keyspace: { ref: thing.keyspace },
-      emitter: thing,
+      logger: thing,
     });
 
     if (thing instanceof Collection) {
@@ -187,12 +186,11 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.opts.concat([opts.adminToken, this.#props.tokenProvider]),
-      logging: InternalLogger.cfg.concat([this.#props.logging, opts.logging]),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
       additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
       emissionStrategy: EmissionStrategy.Admin,
-      emitter: emitter,
+      logger: emitter,
     });
 
     clone.collectionName = undefined;
@@ -241,7 +239,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     const collectionPath = info.collection ? `/${info.collection}` : '';
     info.url += keyspacePath + collectionPath;
 
-    const requestId = this.logger.generateCommandRequestId();
+    const requestId = this.logger.internal.generateCommandRequestId();
 
     this.emissionStrategy.emitCommandStarted?.(requestId, info, options);
     const started = performance.now();

@@ -75,9 +75,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * @internal
    */
   constructor(rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions) {
-    super(rootOpts.client);
-    
-    this.#defaultOpts = {
+    const defaultOpts = {
       ...rootOpts,
       adminOptions: AdminOptsHandler.concat([rootOpts.adminOptions, adminOpts]),
       dbOptions: {
@@ -86,12 +84,14 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       },
     };
 
+    super(rootOpts.client, defaultOpts.adminOptions.logging);
+    
+    this.#defaultOpts = defaultOpts;
     this.#environment = this.#defaultOpts.adminOptions.astraEnv ?? 'prod';
 
     this.#httpClient = new DevOpsAPIHttpClient({
-      logging: this.#defaultOpts.adminOptions.logging,
       baseUrl: this.#defaultOpts.adminOptions.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
-      emitter: this,
+      logger: this,
       fetchCtx: rootOpts.fetchCtx,
       caller: rootOpts.caller,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,

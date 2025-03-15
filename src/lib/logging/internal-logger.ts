@@ -66,10 +66,14 @@ export class InternalLogger implements Partial<Record<keyof DataAPIClientEventMa
   private readonly _someCommandEventEnabled: boolean = false;
   private readonly _someAdminCommandEventEnabled: boolean = false;
 
-  constructor(_config: ParsedLoggingConfig, private emitter: HierarchicalLogger<DataAPIClientEventMap>, private console: ConsoleLike) {
-    const config = this._buildInternalConfig(_config);
+  private readonly config: InternalLoggingOutputsMap;
 
-    for (const [_eventName, outputs] of Object.entries(config)) {
+  constructor(config: ParsedLoggingConfig | InternalLoggingOutputsMap, private emitter: HierarchicalLogger<any>, private console: ConsoleLike) {
+    this.config = ('layers' in config)
+      ? this._buildInternalConfig(config)
+      : config;
+
+    for (const [_eventName, outputs] of Object.entries(this.config)) {
       if (!outputs) {
         continue;
       }
@@ -99,8 +103,16 @@ export class InternalLogger implements Partial<Record<keyof DataAPIClientEventMa
     return this._someAdminCommandEventEnabled ? uuid.v4() : '';
   }
 
+  public withUpdatedConfig(config: ParsedLoggingConfig): InternalLogger {
+    return new InternalLogger(this._updateInternalConfig(this.config, config), this.emitter, this.console);
+  }
+
   private _buildInternalConfig(config: ParsedLoggingConfig): InternalLoggingOutputsMap {
-    const newConfig = { ...EmptyInternalLoggingConfig };
+    return this._updateInternalConfig(EmptyInternalLoggingConfig, config);
+  }
+
+  private _updateInternalConfig(base: InternalLoggingOutputsMap, config: ParsedLoggingConfig): InternalLoggingOutputsMap {
+    const newConfig = { ...base };
 
     for (const layer of config.layers) {
       for (const event of layer.events) {

@@ -16,7 +16,6 @@ import type { FetchCtx } from '@/src/lib/api/fetch/fetcher.js';
 import type { HttpMethods } from '@/src/lib/api/constants.js';
 import type { Ref } from '@/src/lib/types.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
-import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 import type { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler.js';
 import type { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
@@ -28,8 +27,7 @@ import type { DataAPIClientEventMap, HierarchicalLogger } from '@/src/lib/index.
 export interface HTTPClientOptions {
   baseUrl: string,
   baseApiPath?: string | null,
-  emitter: HierarchicalLogger<DataAPIClientEventMap>,
-  logging: ParsedLoggingConfig,
+  logger: HierarchicalLogger<DataAPIClientEventMap>,
   fetchCtx: FetchCtx,
   caller: ParsedCaller,
   additionalHeaders: Record<string, string> | undefined,

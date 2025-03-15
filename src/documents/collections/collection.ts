@@ -57,6 +57,8 @@ import JBI from 'json-bigint';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import { CollectionFindAndRerankCursor } from '@/src/documents/collections/cursors/rerank-cursor.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 
 const jbi = JBI;
 
@@ -173,8 +175,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions | undefined) {
-    super(db);
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: CollectionOptions | undefined) {
+    const loggingConfig = InternalLogger.cfg.concatParseWithin([rootOpts.dbOptions.logging], opts, 'logging');
+    super(db, loggingConfig);
 
     Object.defineProperty(this, 'name', {
       value: name,

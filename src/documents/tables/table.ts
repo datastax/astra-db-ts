@@ -48,6 +48,8 @@ import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import { TableFindAndRerankCursor } from '@/src/documents/tables/cursors/rerank-cursor.js';
 import type { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
 import type { TableCreateTextIndexOptions } from '@/src/documents/tables/types/indexes/create-text-index.js';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -299,8 +301,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions | undefined) {
-    super(db);
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: TableOptions | undefined) {
+    const loggingConfig = InternalLogger.cfg.concatParseWithin([rootOpts.dbOptions.logging], opts, 'logging');
+    super(db, loggingConfig);
 
     Object.defineProperty(this, 'name', {
       value: name,
