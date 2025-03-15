@@ -218,6 +218,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
           limit: this._options.limit,
           hybridLimits: this._options.hybridLimits,
           rerankOn: this._options.rerankOn,
+          includeScores: true,
         },
       },
     };
@@ -227,10 +228,12 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
       bigNumsPresent: this._filter[1],
       extraLogInfo: extra,
     });
-    const buffer = raw.data?.documents ?? [];
+
+    const buffer = raw.data?.documents ?? []
 
     for (let i = 0, n = buffer.length; i < n; i++) {
-      buffer[i] = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
+      const deserialized = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
+      buffer[i] = new RerankResult(deserialized, raw.data!.documentResponses[0]);
     }
 
     return buffer;

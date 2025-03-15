@@ -102,7 +102,7 @@ export abstract class BaseClientEvent {
    *
    * Imagine that:
    * - `BaseClientEvent` is a Java sealed class
-   * - `DataAPIClientEvent` is Java's `permit` keyword.
+   * - `DataAPIClientEvent` is Java's `permits` keyword.
    *
    * An implementing class would do something like this:
    *
