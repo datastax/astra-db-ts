@@ -16,8 +16,14 @@
 import type { initTestObjects } from '@/tests/testlib/fixtures.js';
 import { afterEach } from 'mocha';
 import { tryCatchErr } from '@/tests/testlib/utils.js';
-import type { SuiteBlock, SuiteOptions } from '@/tests/testlib/index.js';
-import { describe } from '@/tests/testlib/index.js';
+import type {
+  SuiteBlock,
+  SuiteOptions} from '@/tests/testlib/index.js';
+import {
+  CURRENT_DESCRIBE_NAMES,
+  describe,
+  TEST_FILTER,
+} from '@/tests/testlib/index.js';
 import { UUID } from '@/src/documents/index.js';
 import type { AsyncSuiteResult, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types.js';
 
@@ -80,7 +86,10 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
 
     [global.beforeEach, global.afterEach] = [oldBeforeEach, oldAfterEach];
 
-    const suites = parallelTestState.suites
+    const suites =  parallelTestState.suites
+      .tap((s) => {
+        s.tests = s.tests.filter(test => TEST_FILTER.test(test.name, ...CURRENT_DESCRIBE_NAMES));
+      })
       .filter(s => s.tests.length);
 
     let results: AsyncSuiteResult[];

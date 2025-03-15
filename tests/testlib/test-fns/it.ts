@@ -53,12 +53,6 @@ it = function (name: string, optsOrFn: TestOptions | TestFn, maybeFn?: TestFn) {
 
   const skipped = !checkTestsEnabled(name);
 
-  name.includes('integration.administration.lifecycle') && console.log('name:', name);
-
-  if (!TEST_FILTER.test(name, ...CURRENT_DESCRIBE_NAMES)) {
-    return null;
-  }
-
   if (isIntegrationTest() && !skipped) {
     RUNNING_INT_TESTS.ref = true;
   }
@@ -68,6 +62,10 @@ it = function (name: string, optsOrFn: TestOptions | TestFn, maybeFn?: TestFn) {
       asyncTestState.it(name, testFn, skipped);
       return null;
     }
+  }
+
+  if (!TEST_FILTER.test(name, ...CURRENT_DESCRIBE_NAMES)) {
+    return null;
   }
 
   function modifiedFn(this: Mocha.Context) {
