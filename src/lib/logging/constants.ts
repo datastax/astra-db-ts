@@ -28,7 +28,7 @@ import {
 } from '@/src/administration/events.js';
 import { buildOutputsMap } from '@/src/lib/logging/util.js';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
-import type { InternalLoggingOutputsMap } from '@/src/lib/logging/logger.js';
+import type { InternalLoggingOutputsMap } from '@/src/lib/logging/internal-logger.js';
 import { EqualityProof } from '@/src/lib/utils.js';
 
 /**

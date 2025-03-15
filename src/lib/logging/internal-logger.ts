@@ -29,7 +29,7 @@ import type {
 } from '@/src/administration/index.js';
 import { EmptyInternalLoggingConfig, EventConstructors, PrintLoggingOutputs } from '@/src/lib/logging/constants.js';
 import { buildOutputsMap } from '@/src/lib/logging/util.js';
-import type { BaseClientEvent, HierarchicalEmitter } from '@/src/lib/index.js';
+import type { BaseClientEvent, HierarchicalLogger } from '@/src/lib/index.js';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler.js';
 import * as uuid from 'uuid';
@@ -50,7 +50,7 @@ export type InternalLoggingOutputsMap = Readonly<Record<keyof DataAPIClientEvent
 /**
  * @internal
  */
-export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unknown>> {
+export class InternalLogger implements Partial<Record<keyof DataAPIClientEventMap, unknown>> {
   public commandStarted?:        (...args: ConstructorParameters<typeof CommandStartedEvent>       ) => void;
   public commandFailed?:         (...args: ConstructorParameters<typeof CommandFailedEvent>        ) => void;
   public commandWarnings?:       (...args: ConstructorParameters<typeof CommandWarningsEvent>      ) => void;
@@ -63,10 +63,10 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
 
   public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
 
-  private _someCommandEventEnabled = false;
-  private _someAdminCommandEventEnabled = false;
+  private readonly _someCommandEventEnabled: boolean = false;
+  private readonly _someAdminCommandEventEnabled: boolean = false;
 
-  constructor(_config: ParsedLoggingConfig, private emitter: HierarchicalEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
+  constructor(_config: ParsedLoggingConfig, private emitter: HierarchicalLogger<DataAPIClientEventMap>, private console: ConsoleLike) {
     const config = this._buildInternalConfig(_config);
 
     for (const [_eventName, outputs] of Object.entries(config)) {
@@ -75,7 +75,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
       }
 
       const eventName = _eventName as keyof DataAPIClientEventMap;
-      const log = this._mkLog(outputs);
+      const log = this._mkLogFn(outputs);
 
       if (eventName.startsWith('admin')) {
         this._someAdminCommandEventEnabled = true;
@@ -117,7 +117,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
     return newConfig;
   }
 
-  private _mkLog(outputs: Readonly<Record<LoggingOutput, boolean>>) {
+  private _mkLogFn(outputs: Readonly<Record<LoggingOutput, boolean>>) {
     if (outputs.stdout) {
       return (event: BaseClientEvent) => this.console.log(event.format());
     } else if (outputs.stderr) {

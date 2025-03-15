@@ -18,7 +18,7 @@ import type { AdminOptions } from '@/src/client/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import { exact, nullish, oneOf, optional, record, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
-import { Logger } from '@/src/lib/logging/logger.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
 
 /**
@@ -38,7 +38,7 @@ export type ParsedAdminOptions = MonoidType<typeof monoid> & Parsed<'AdminOption
  * @internal
  */
 const monoid = monoids.object({
-  logging: Logger.cfg,
+  logging: InternalLogger.cfg,
   adminToken: TokenProvider.opts,
   endpointUrl: monoids.optional<string>(),
   additionalHeaders: monoids.record<string>(),
@@ -51,7 +51,7 @@ const monoid = monoids.object({
  */
 const decoder = nullish(exact({
   environment: EnvironmentCfgHandler.decoder,
-  logging: Logger.cfg.decoder,
+  logging: InternalLogger.cfg.decoder,
   adminToken: TokenProvider.opts.decoder,
   endpointUrl: optional(string),
   additionalHeaders: optional(record(string)),

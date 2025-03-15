@@ -47,7 +47,7 @@ import type { ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
-import { HierarchicalEmitter, TokenProvider } from '@/src/lib/index.js';
+import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
 
 /**
  * #### Overview
@@ -119,7 +119,7 @@ import { HierarchicalEmitter, TokenProvider } from '@/src/lib/index.js';
  *
  * @public
  */
-export class Db extends HierarchicalEmitter<CommandEventMap> {
+export class Db extends HierarchicalLogger<CommandEventMap> {
   readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
 

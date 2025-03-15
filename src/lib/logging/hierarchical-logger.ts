@@ -66,7 +66,7 @@ import { PropagationState } from '@/src/lib/index.js';
  *
  * @public
  */
-export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>> {
+export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> {
   /**
    * @internal
    */
@@ -75,14 +75,14 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
   /**
    * @internal
    */
-  readonly #parent: Pick<HierarchicalEmitter<Events>, 'emit'> | null;
+  readonly #parent: Pick<HierarchicalLogger<Events>, 'emit'> | null;
 
   /**
    * Should not be instantiated be the user directly.
    *
    * @internal
    */
-  protected constructor(parent: Pick<HierarchicalEmitter<Events>, 'emit'> | null) {
+  protected constructor(parent: Pick<HierarchicalLogger<Events>, 'emit'> | null) {
     this.#parent = parent;
   }
 
@@ -145,16 +145,7 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
   }
 
   /**
-   * Emit an event.
-   *
-   * Should probably never be used by the user directly.
-   *
-   * **Note: Errors thrown by any listeners will be silently ignored. It will not stop the propagation of the event.**
-   *
-   * @param eventName - The event to emit.
-   * @param event - Any arguments to pass to the listeners.
-   *
-   * @returns `true` if the event had listeners, `false` otherwise.
+   * @internal
    */
   public emit<E extends keyof Events>(eventName: E, event: Events[E]): void {
     if (this.#listeners[eventName]) {

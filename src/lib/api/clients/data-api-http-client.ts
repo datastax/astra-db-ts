@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { Logger } from '@/src/lib/logging/logger.js';
-import type { HierarchicalEmitter, nullish, RawDataAPIResponse } from '@/src/lib/index.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import type { HierarchicalLogger, nullish, RawDataAPIResponse } from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import type { CommandEventTarget, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
 import {
@@ -66,7 +66,7 @@ export interface DataAPIRequestInfo {
 /**
  * @internal
  */
-type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
+type EmissionStrategy<Kind extends ClientKind> = (logger: InternalLogger) => {
   emitCommandStarted?(requestId: string, info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
   emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse | undefined, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
   emitCommandSucceeded?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
@@ -165,7 +165,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parse(opts?.embeddingApiKey),
-      logging: Logger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
+      logging: InternalLogger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
       emissionStrategy: EmissionStrategy.Normal,
       keyspace: { ref: thing.keyspace },
       emitter: thing,
@@ -183,11 +183,11 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     return clone;
   }
 
-  public forDbAdmin(emitter: HierarchicalEmitter<AdminCommandEventMap>, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(emitter: HierarchicalLogger<AdminCommandEventMap>, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.opts.concat([opts.adminToken, this.#props.tokenProvider]),
-      logging: Logger.cfg.concat([this.#props.logging, opts.logging]),
+      logging: InternalLogger.cfg.concat([this.#props.logging, opts.logging]),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
       additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },

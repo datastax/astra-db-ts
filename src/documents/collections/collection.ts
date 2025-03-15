@@ -43,7 +43,7 @@ import type {
 } from '@/src/documents/collections/types/index.js';
 import type { CollectionDefinition, CollectionOptions, Db } from '@/src/db/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
-import { HierarchicalEmitter } from '@/src/lib/logging/hierarchical-emitter.js';
+import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
@@ -153,7 +153,7 @@ const jbi = JBI;
  *
  * @public
  */
-export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalEmitter<CommandEventMap> {
+export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalLogger<CommandEventMap> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<IdOf<RSchema>>;
   readonly #db: Db;
