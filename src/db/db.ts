@@ -47,7 +47,7 @@ import type { ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
-import { HierarchicalEmitter, TokenProvider } from '@/src/lib/index.js';
+import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
 
 /**
  * #### Overview
@@ -119,7 +119,7 @@ import { HierarchicalEmitter, TokenProvider } from '@/src/lib/index.js';
  *
  * @public
  */
-export class Db extends HierarchicalEmitter<CommandEventMap> {
+export class Db extends HierarchicalLogger<CommandEventMap> {
   readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
 
@@ -134,15 +134,17 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * @internal
    */
   constructor(rootOpts: ParsedRootClientOpts, endpoint: string, dbOpts: ParsedDbOptions) {
-    super(rootOpts.client);
-
-    this.#defaultOpts = {
+    const defaultOpts = {
       ...rootOpts,
       dbOptions: DbOptsHandler.concat([rootOpts.dbOptions, dbOpts]),
       adminOptions: AdminOptsHandler.concatParse([rootOpts.adminOptions], {
         adminToken: TokenProvider.opts.parseWithin(dbOpts, 'token'),
       }),
     };
+
+    super(rootOpts.client, defaultOpts.dbOptions.logging);
+
+    this.#defaultOpts = defaultOpts;
 
     this.#keyspace = {
       ref: (rootOpts.environment === 'astra')
@@ -157,8 +159,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
       tokenProvider: this.#defaultOpts.dbOptions.token,
       embeddingHeaders: EmbeddingHeadersProvider.parse(null),
       baseApiPath: this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
-      emitter: this,
-      logging: this.#defaultOpts.dbOptions.logging,
+      logger: this,
       fetchCtx: rootOpts.fetchCtx,
       keyspace: this.#keyspace,
       caller: rootOpts.caller,
@@ -388,7 +389,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
       return new AstraDbAdmin(this, this.#defaultOpts, parsedOpts, this.#defaultOpts.dbOptions.token, this.#endpoint);
     }
 
-    return new DataAPIDbAdmin(this, this.#defaultOpts.client, this.#httpClient, parsedOpts);
+    return new DataAPIDbAdmin(this, this.#defaultOpts.client, this.#httpClient, this.#defaultOpts, parsedOpts);
   }
 
   /**
@@ -531,7 +532,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * @see db.createCollection
    */
   public collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema> {
-    return new Collection(this, this.#httpClient, name, {
+    return new Collection(this, this.#httpClient, name, this.#defaultOpts, {
       ...options,
       serdes: CollSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.collSerdes], options?.serdes),
     });
@@ -613,7 +614,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * @see InferTablePrimaryKey
    */
   public table<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
-    return new Table(this, this.#httpClient, name, {
+    return new Table(this, this.#httpClient, name, this.#defaultOpts, {
       ...options,
       serdes: TableSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.tableSerdes], options?.serdes),
     });

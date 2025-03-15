@@ -24,7 +24,7 @@ import type {
   Table,
   WithSim,
 } from '@/src/documents/index.js';
-import { vector } from '@/src/documents/index.js';
+import { vector } from '@/src/documents/datatypes/vector.js';
 import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';

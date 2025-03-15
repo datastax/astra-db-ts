@@ -15,18 +15,16 @@
 import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/fetcher.js';
 import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
 import type { DataAPIClientEventMap } from '@/src/lib/logging/index.js';
-import { Logger } from '@/src/lib/logging/logger.js';
 import type { MkTimeoutError } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
-import type { HierarchicalEmitter } from '@/src/lib/index.js';
+import type { HierarchicalLogger } from '@/src/lib/index.js';
 
 /**
  * @internal
  */
 export abstract class HttpClient {
   readonly baseUrl: string;
-  readonly emitter: HierarchicalEmitter<DataAPIClientEventMap>;
-  readonly logger: Logger;
+  readonly logger: HierarchicalLogger<DataAPIClientEventMap>;
   readonly fetchCtx: FetchCtx;
   readonly baseHeaders: Record<string, any>;
   readonly headerProviders: HeaderProvider[];
@@ -34,8 +32,7 @@ export abstract class HttpClient {
 
   protected constructor(options: HTTPClientOptions, headerProviders: HeaderProvider[], mkTimeoutError: MkTimeoutError) {
     this.baseUrl = options.baseUrl;
-    this.emitter = options.emitter;
-    this.logger = new Logger(options.logging, options.emitter, console);
+    this.logger = options.logger;
     this.fetchCtx = options.fetchCtx;
 
     if (options.baseApiPath) {

@@ -14,7 +14,7 @@
 
 import assert from 'assert';
 import { describe, it } from '@/tests/testlib/index.js';
-import { Logger } from '@/src/lib/logging/logger.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import type { LoggingConfig } from '@/src/lib/index.js';
 import {
   LoggingDefaultOutputs,
@@ -28,16 +28,16 @@ import { ensureMonoidalHandlerIsActuallyAMonoid } from '@/tests/testlib/opts-han
 describe('unit.lib.logging.cfg-handler', () => {
   describe('parse', () => {
     const parseEq = (cfg: LoggingConfig | undefined, layers: unknown) => {
-      assert.deepStrictEqual(Logger.cfg.parse(cfg), { layers });
+      assert.deepStrictEqual(InternalLogger.cfg.parse(cfg), { layers });
     };
 
     const parseErr = (cfg: any) => {
-      assert.throws(() => Logger.cfg.parse(cfg), OptionParseError);
+      assert.throws(() => InternalLogger.cfg.parse(cfg), OptionParseError);
     };
 
     it('should return the empty value on null/undefined', () => {
-      parseEq(null!, Logger.cfg.empty.layers);
-      parseEq(undefined, Logger.cfg.empty.layers);
+      parseEq(null!, InternalLogger.cfg.empty.layers);
+      parseEq(undefined, InternalLogger.cfg.empty.layers);
     });
 
     it('should substitute "all" with all events', () => {
@@ -128,17 +128,17 @@ describe('unit.lib.logging.cfg-handler', () => {
   });
 
   describe('concat', () => {
-    const layer1 = Logger.cfg.parse('all');
-    const layer2 = Logger.cfg.parse([{ events: 'all', emits: ['stderr'] }]);
-    const layer3 = Logger.cfg.parse([{ events: ['commandFailed', 'adminCommandFailed'], emits: [] }]);
+    const layer1 = InternalLogger.cfg.parse('all');
+    const layer2 = InternalLogger.cfg.parse([{ events: 'all', emits: ['stderr'] }]);
+    const layer3 = InternalLogger.cfg.parse([{ events: ['commandFailed', 'adminCommandFailed'], emits: [] }]);
     const layer4 = layer1;
 
     it('should properly concatenate layers from left to right', () => {
-      assert.deepStrictEqual(Logger.cfg.concat([layer1, layer2, layer3, layer4]), {
+      assert.deepStrictEqual(InternalLogger.cfg.concat([layer1, layer2, layer3, layer4]), {
         layers: [layer1.layers, layer2.layers, layer3.layers, layer4.layers].flat(),
       });
     });
 
-    ensureMonoidalHandlerIsActuallyAMonoid(Logger.cfg, [layer1, layer2, layer3, layer4]);
+    ensureMonoidalHandlerIsActuallyAMonoid(InternalLogger.cfg, [layer1, layer2, layer3, layer4]);
   });
 });

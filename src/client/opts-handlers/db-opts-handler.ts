@@ -18,7 +18,7 @@ import type { DbOptions } from '@/src/client/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import { exact, nullish, oneOf, optional, record, regex, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
-import { Logger } from '@/src/lib/logging/logger.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
@@ -39,7 +39,7 @@ export type ParsedDbOptions = MonoidType<typeof monoid> & Parsed<'DbOptions'>;
  * @internal
  */
 const monoid = monoids.object({
-  logging: Logger.cfg,
+  logging: InternalLogger.cfg,
   token: TokenProvider.opts,
   keyspace: monoids.optional<string>(),
   dataApiPath: monoids.optional<string>(),
@@ -53,7 +53,7 @@ const monoid = monoids.object({
  * @internal
  */
 const decoder = nullish(exact({
-  logging: Logger.cfg.decoder,
+  logging: InternalLogger.cfg.decoder,
   token: TokenProvider.opts.decoder,
   dataApiPath: optional(string),
   additionalHeaders: optional(record(string)),

@@ -24,7 +24,7 @@ import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-clien
 import type { Db } from '@/src/db/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info.js';
-import { Logger } from '@/src/lib/logging/logger.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import type { TimeoutManager} from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
@@ -77,15 +77,15 @@ export class AstraDbAdmin extends DbAdmin {
    * @internal
    */
   constructor(db: Db, rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions, dbToken: ParsedTokenProvider, endpoint: string) {
-    super(rootOpts.client);
+    const loggingConfig = InternalLogger.cfg.concat([rootOpts.adminOptions.logging, adminOpts.logging]);
+    super(rootOpts.client, loggingConfig);
 
     this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);
 
     this.#httpClient = new DevOpsAPIHttpClient({
       baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
-      logging: Logger.cfg.concat([rootOpts.adminOptions.logging, adminOpts.logging]),
       fetchCtx: rootOpts.fetchCtx,
-      emitter: this,
+      logger: this,
       caller: rootOpts.caller,
       tokenProvider: TokenProvider.opts.concat([dbToken, rootOpts.adminOptions.adminToken, adminOpts.adminToken]),
       additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },

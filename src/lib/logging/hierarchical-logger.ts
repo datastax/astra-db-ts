@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { BaseClientEvent} from '@/src/lib/index.js';
-import { PropagationState } from '@/src/lib/index.js';
+import type { BaseClientEvent, LoggingConfig } from '@/src/lib/index.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 
 /**
  * ##### Overview
@@ -66,24 +67,23 @@ import { PropagationState } from '@/src/lib/index.js';
  *
  * @public
  */
-export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>> {
+export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> {
   /**
    * @internal
    */
-  readonly #listeners: Partial<Record<keyof Events, ((event: any) => void)[]>> = {};
-
-  /**
-   * @internal
-   */
-  readonly #parent: Pick<HierarchicalEmitter<Events>, 'emit'> | null;
+  public internal: InternalLogger<Events>;
 
   /**
    * Should not be instantiated be the user directly.
    *
    * @internal
    */
-  protected constructor(parent: Pick<HierarchicalEmitter<Events>, 'emit'> | null) {
-    this.#parent = parent;
+  protected constructor(parent: HierarchicalLogger<Events> | null, config: ParsedLoggingConfig) {
+    this.internal = new InternalLogger(config, parent?.internal, console);
+  }
+
+  public updateLoggingConfig(config: LoggingConfig) {
+    this.internal = this.internal.withUpdatedConfig(InternalLogger.cfg.parse(config));
   }
 
   /**
@@ -95,11 +95,7 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
    * @returns A function to unsubscribe the listener.
    */
   public on<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void {
-    if (!this.#listeners[eventName]) {
-      this.#listeners[eventName] = [];
-    }
-
-    this.#listeners[eventName].push(listener);
+    this.internal.on(eventName, listener);
 
     return () => {
       this.off(eventName, listener);
@@ -113,15 +109,7 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
    * @param listener - The listener to remove.
    */
   public off<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): void {
-    if (!this.#listeners[eventName]) {
-      return;
-    }
-
-    const index = this.#listeners[eventName].indexOf(listener);
-
-    if (index !== -1) {
-      this.#listeners[eventName].splice(index, 1);
-    }
+    return this.internal.off(eventName, listener);
   }
 
   /**
@@ -145,38 +133,6 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
   }
 
   /**
-   * Emit an event.
-   *
-   * Should probably never be used by the user directly.
-   *
-   * **Note: Errors thrown by any listeners will be silently ignored. It will not stop the propagation of the event.**
-   *
-   * @param eventName - The event to emit.
-   * @param event - Any arguments to pass to the listeners.
-   *
-   * @returns `true` if the event had listeners, `false` otherwise.
-   */
-  public emit<E extends keyof Events>(eventName: E, event: Events[E]): void {
-    if (this.#listeners[eventName]) {
-      for (const listener of this.#listeners[eventName]) {
-        try {
-          listener(event);
-        } catch (_e) {
-          // Silently ignore errors
-        }
-
-        if (event._propagationState === PropagationState.StopImmediate) {
-          return;
-        }
-      }
-    }
-
-    if (this.#parent && event._propagationState !== PropagationState.Stop) {
-      this.#parent.emit(eventName, event);
-    }
-  }
-
-  /**
    * Remove all listeners for an event.
    *
    * If no event is provided, all listeners for all events will be removed.
@@ -184,12 +140,6 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
    * @param eventName - The event to remove listeners for.
    */
   public removeAllListeners<E extends keyof Events>(eventName?: E): void {
-    if (eventName) {
-      delete this.#listeners[eventName];
-    } else {
-      for (const key in this.#listeners) {
-        delete this.#listeners[key];
-      }
-    }
+    return this.internal.removeAllListeners(eventName);
   }
 }
