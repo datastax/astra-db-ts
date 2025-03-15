@@ -15,7 +15,7 @@
 import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { OptionsHandler } from '@/src/lib/opts-handler.js';
 import type { DataAPIClient, DataAPIClientOptions } from '@/src/client/index.js';
-import { HeadersProvider, TokenProvider } from '@/src/lib/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
 import { exact } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
@@ -43,7 +43,6 @@ export interface ParsedRootClientOpts extends Parsed<'DataAPIClientOptions'> {
   caller: typeof CallerCfgHandler.parsed,
   dbOptions: typeof DbOptsHandler.parsed,
   adminOptions: typeof AdminOptsHandler.parsed,
-  additionalHeaders: typeof HeadersProvider.opts.parsed,
 }
 
 /**
@@ -57,7 +56,6 @@ const decoder = exact({
   adminOptions: AdminOptsHandler.decoder,
   caller: CallerCfgHandler.decoder,
   timeoutDefaults: Timeouts.cfg.decoder,
-  additionalHeaders: HeadersProvider.opts.fromObj.decoder,
 });
 
 /**
@@ -71,25 +69,18 @@ export const RootOptsHandler = (defaultToken: typeof TokenProvider.opts.parsed, 
     };
 
     return {
-      additionalHeaders: input.additionalHeaders,
       environment: input.environment,
       fetchCtx: input.httpOptions,
       caller: input.caller,
       client: client,
       dbOptions: DbOptsHandler.concat([input.dbOptions, {
         ...DbOptsHandler.empty,
-        token: TokenProvider.opts.concat([
-          defaultToken,
-          input.dbOptions.token,
-        ]),
+        token: TokenProvider.opts.concat([defaultToken, input.dbOptions.token]),
         ...dbAndAdminCommon,
       }]),
       adminOptions: AdminOptsHandler.concat([input.adminOptions, {
         ...AdminOptsHandler.empty,
-        adminToken: TokenProvider.opts.concat([
-          defaultToken,
-          input.adminOptions.adminToken,
-        ]),
+        adminToken: TokenProvider.opts.concat([defaultToken, input.adminOptions.adminToken]),
         ...dbAndAdminCommon,
       }]),
     };

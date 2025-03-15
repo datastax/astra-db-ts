@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { Filter, FindAndRerankCursor, FindCursor, GenericFindOptions, SomeDoc } from '@/src/documents/index.js';
-import { CursorError } from '@/src/documents/index.js';
+import { CursorError } from '@/src/documents/cursors/abstract-cursor.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
 /**

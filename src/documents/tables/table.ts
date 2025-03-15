@@ -14,10 +14,11 @@
 
 import type {
   CommandEventMap,
-  TableCreateIndexOptions,
-  TableCreateVectorIndexOptions,
   FoundRow,
   SomeRow,
+  TableCreateIndexColumn,
+  TableCreateIndexOptions,
+  TableCreateVectorIndexOptions,
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
@@ -25,7 +26,7 @@ import type {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateFilter,
-  WithSim, TableCreateIndexColumn,
+  WithSim,
 } from '@/src/documents/index.js';
 import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
@@ -38,7 +39,7 @@ import type {
   ListTableDefinition,
   TableOptions,
 } from '@/src/db/index.js';
-import { HierarchicalEmitter } from '@/src/lib/logging/hierarchical-emitter.js';
+import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
@@ -47,6 +48,8 @@ import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import { TableFindAndRerankCursor } from '@/src/documents/tables/cursors/rerank-cursor.js';
 import type { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
 import type { TableCreateTextIndexOptions } from '@/src/documents/tables/types/indexes/create-text-index.js';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -209,7 +212,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * @public
  */
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalEmitter<CommandEventMap> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalLogger<CommandEventMap> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<PKey>;
   readonly #db: Db;
@@ -298,8 +301,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions | undefined) {
-    super(db);
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: TableOptions | undefined) {
+    const loggingConfig = InternalLogger.cfg.concatParseWithin([rootOpts.dbOptions.logging], opts, 'logging');
+    super(db, loggingConfig);
 
     Object.defineProperty(this, 'name', {
       value: name,

@@ -22,7 +22,7 @@ import {
   DataAPIVector,
   UUID,
 } from '@/src/documents/index.js';
-import { CURRENT_DESCRIBE_NAMES, it, parallel } from '@/tests/testlib/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 
