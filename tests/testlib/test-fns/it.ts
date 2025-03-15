@@ -53,6 +53,10 @@ it = function (name: string, optsOrFn: TestOptions | TestFn, maybeFn?: TestFn) {
 
   const skipped = !checkTestsEnabled(name);
 
+  if (isIntegrationTest() && !skipped) {
+    RUNNING_INT_TESTS.ref = true;
+  }
+
   for (const asyncTestState of [parallelTestState, backgroundTestState]) {
     if (asyncTestState.inBlock) {
       asyncTestState.it(name, testFn, skipped);
@@ -62,10 +66,6 @@ it = function (name: string, optsOrFn: TestOptions | TestFn, maybeFn?: TestFn) {
 
   if (!TEST_FILTER.test(name, ...CURRENT_DESCRIBE_NAMES)) {
     return null;
-  }
-
-  if (CURRENT_DESCRIBE_NAMES[0].startsWith('integration.') && !skipped) {
-    RUNNING_INT_TESTS.ref = true;
   }
 
   function modifiedFn(this: Mocha.Context) {
@@ -80,6 +80,12 @@ it = function (name: string, optsOrFn: TestOptions | TestFn, maybeFn?: TestFn) {
 
   return global.it(name, modifiedFn);
 };
+
+const IntegrationTestRegex = /(?:{[a-z]*}\s+)?integration\./;
+
+function isIntegrationTest() {
+  return IntegrationTestRegex.exec(CURRENT_DESCRIBE_NAMES[0]);
+}
 
 function pretendingEnv(env: 'server' | 'browser' | 'unknown', fn: TestFn): TestFn {
   if (env === 'server') {

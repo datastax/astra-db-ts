@@ -53,7 +53,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
     }
   });
 
-  it('should work with http2', async () => {
+  it('(ASTRA) should work with http2', async () => {
     const fetcher = new FetchH2({ client: 'fetch-h2', fetchH2, preferHttp2: true });
     try {
       const resp = await fetcher.fetch(genericOptions);

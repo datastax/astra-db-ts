@@ -25,8 +25,8 @@ if (process.env.USING_LOCAL_STARGATE) {
   process.env.CLIENT_DB_URL = 'http://localhost:8181';
 }
 
-if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN) {
-  throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN env vars are set');
+if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN || !process.env.TEST_OPENAI_KEY) {
+  throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN and TEST_OPENAI_KEY env vars are set');
 }
 
 const testHttpClient = process.env.CLIENT_TEST_HTTP_CLIENT;
@@ -53,6 +53,7 @@ export const TEST_HTTP_CLIENT = testHttpClient;
 
 export const TEST_APPLICATION_TOKEN = process.env.CLIENT_DB_TOKEN;
 export const TEST_APPLICATION_URI = process.env.CLIENT_DB_URL;
+export const TEST_OPENAI_KEY = process.env.TEST_OPENAI_KEY;
 export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra.datastax.com';
 
 export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;

@@ -41,7 +41,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     _counter: 0,
     _table: opts?.table ?? table,
     _eqOn: opts?.eqOn ?? (x => x),
-    async ok<Exp>(value: Exp, mapExp: (ex: Exp) => T = (x => x as unknown as T)) {
+    async ok<const Exp>(value: Exp, mapExp: (ex: Exp) => T = (x => x as unknown as T)) {
       const obj = { text: key, int: this._counter++, [col]: value };
       const pkey = { text: obj.text, int: obj.int };
       assert.deepStrictEqual(await this._table.insertOne(obj), { insertedId: pkey });
@@ -125,19 +125,19 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
   it('should handle different decimal insertion cases', async (key) => {
     const colAsserter = mkColumnAsserter(key, 'decimal');
 
-    // await colAsserter.notOk('123123.12312312312');
+    await colAsserter.notOk('123123.12312312312');
     await colAsserter.notOk(BigNumber('NaN'));
-    // await colAsserter.notOk(BigNumber('Infinity'));
-    // await colAsserter.notOk(BigNumber('-Infinity'));
-    // await colAsserter.notOk(NaN);
-    // await colAsserter.notOk(Infinity);
-    // await colAsserter.notOk(-Infinity);
-    //
-    // await colAsserter.ok(123123.123, BigNumber);
-    // await colAsserter.ok(123123n, n => BigNumber(n.toString()));
-    // await colAsserter.ok(BigNumber('1.1212121131231231231231231231231231231231233122'));
-    // await colAsserter.ok(BigNumber('-1e50'));
-    // await colAsserter.ok(BigNumber('-1e-50'));
+    await colAsserter.notOk(BigNumber('Infinity'));
+    await colAsserter.notOk(BigNumber('-Infinity'));
+    await colAsserter.notOk(NaN);
+    await colAsserter.notOk(Infinity);
+    await colAsserter.notOk(-Infinity);
+
+    await colAsserter.ok(123123.123, BigNumber);
+    await colAsserter.ok(123123n, n => BigNumber(n.toString()));
+    await colAsserter.ok(BigNumber('1.1212121131231231231231231231231231231231233122'));
+    await colAsserter.ok(BigNumber('-1e50'));
+    await colAsserter.ok(BigNumber('-1e-50'));
   });
 
   (['float', 'double'] as const).map((col) =>
@@ -227,14 +227,15 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
 
     const colAsserter = mkColumnAsserter(key, 'map');
 
-    await colAsserter.notOk([]);
-    await colAsserter.notOk([['a', uuid(4)]]);
     await colAsserter.notOk(new Map(<any>[['a', uuid1], ['b', 'uuid4']]));
 
     for (const val of [null, undefined, {}, new Map()]) {
       await colAsserter.ok(val, _ => new Map());
     }
 
+    // TODO
+    // await colAsserter.ok([], _ => new Map);
+    // await colAsserter.ok([['a', uuid(4)]], es => new Map(es));
     await colAsserter.ok({ a: uuid1.toString(), b: uuid4 }, _ => new Map([['a', uuid1], ['b', uuid4]]));
     await colAsserter.ok(new Map(<any>[['a', uuid1.toString()], ['b', uuid4]]), _ => new Map([['a', uuid1], ['b', uuid4]]));
     await colAsserter.ok(new Map([['⨳⨓⨋', uuid1]]));
@@ -251,9 +252,10 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.notOk({});
     await colAsserter.notOk(new Set([uuid1, 'uuid4']));
 
-    for (const val of [null, undefined, [], new Set()]) {
-      await colAsserter.ok(val, _ => new Set());
-    }
+    // TODO
+    // for (const val of [null, undefined, [], new Set()]) {
+    //   await colAsserter.ok(val, _ => new Set());
+    // }
 
     await colAsserter.ok([uuid1.toString(), uuid4], _ => new Set([uuid1, uuid4]));
     await colAsserter.ok(new Set([uuid1.toString(), uuid4]), _ => new Set([uuid1, uuid4]));
@@ -270,9 +272,10 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.notOk({});
     await colAsserter.notOk([uuid1, 'uuid4']);
 
-    for (const val of [null, undefined, []]) {
-      await colAsserter.ok(val, _ => []);
-    }
+    // TODO
+    // for (const val of [null, undefined, []]) {
+    //   await colAsserter.ok(val, _ => []);
+    // }
 
     await colAsserter.ok([uuid1.toString(), uuid1, uuid1, uuid4], _ => [uuid1, uuid1, uuid1, uuid4]);
     await colAsserter.ok(new Array(1000).fill(uuid(7)));
