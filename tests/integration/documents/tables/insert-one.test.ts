@@ -21,7 +21,7 @@ import {
   DataAPIVector,
   UUID,
 } from '@/src/documents/index.js';
-import { it, parallel } from '@/tests/testlib/index.js';
+import { CURRENT_DESCRIBE_NAMES, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 
@@ -121,7 +121,7 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
     });
   });
 
-  it('should should insert w/ vectorize', async (key) => {
+  it('should insert w/ vectorize', async (key) => {
     const inserted = await table_.insertOne({
       text: key,
       int: 0,

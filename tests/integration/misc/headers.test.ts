@@ -124,7 +124,7 @@ parallel('integration.misc.headers', () => {
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer ages');
     });
 
-    it('should properly set/override tokens throughout the hierarchy', async () => {
+    it('(ASTRA) should properly set/override tokens throughout the hierarchy', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders, TEST_APPLICATION_TOKEN);
 
@@ -143,25 +143,14 @@ parallel('integration.misc.headers', () => {
         getToken() { return 'are we we are'; }
       };
 
-      if (ENVIRONMENT === 'astra') {
-        const dbAdmin1 = db1.admin({ environment: ENVIRONMENT });
-        const keyspaces = await dbAdmin1.listKeyspaces();
-        assert.ok(Array.isArray(keyspaces));
-        assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${TEST_APPLICATION_TOKEN}`);
+      const dbAdmin1 = db1.admin();
+      const keyspaces = await dbAdmin1.listKeyspaces();
+      assert.ok(Array.isArray(keyspaces));
+      assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${TEST_APPLICATION_TOKEN}`);
 
-        const dbAdmin2 = db1.admin({ environment: ENVIRONMENT, adminToken: badTokenProvider });
-        await assert.rejects(() => dbAdmin2.listKeyspaces());
-        assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${badTokenProvider.getToken()}`);
-      } else {
-        const dbAdmin1 = db1.admin({ environment: ENVIRONMENT });
-        const keyspaces = await dbAdmin1.listKeyspaces();
-        assert.ok(Array.isArray(keyspaces));
-        assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
-
-        const dbAdmin2 = db1.admin({ environment: ENVIRONMENT, adminToken: badTokenProvider });
-        await assert.rejects(() => dbAdmin2.listKeyspaces());
-        assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], badTokenProvider.getToken());
-      }
+      const dbAdmin2 = db1.admin({ adminToken: badTokenProvider });
+      await assert.rejects(() => dbAdmin2.listKeyspaces());
+      assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${badTokenProvider.getToken()}`);
     });
   });
 
