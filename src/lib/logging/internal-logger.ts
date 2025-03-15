@@ -29,7 +29,8 @@ import type {
 } from '@/src/administration/index.js';
 import { EmptyInternalLoggingConfig, EventConstructors, PrintLoggingOutputs } from '@/src/lib/logging/constants.js';
 import { buildOutputsMap } from '@/src/lib/logging/util.js';
-import type { BaseClientEvent, HierarchicalLogger } from '@/src/lib/index.js';
+import type { BaseClientEvent } from '@/src/lib/index.js';
+import { PropagationState } from '@/src/lib/index.js';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler.js';
 import * as uuid from 'uuid';
@@ -50,7 +51,7 @@ export type InternalLoggingOutputsMap = Readonly<Record<keyof DataAPIClientEvent
 /**
  * @internal
  */
-export class InternalLogger implements Partial<Record<keyof DataAPIClientEventMap, unknown>> {
+export class InternalLogger<Events extends Record<string, BaseClientEvent>> implements Partial<Record<keyof DataAPIClientEventMap, unknown>> {
   public commandStarted?:        (...args: ConstructorParameters<typeof CommandStartedEvent>       ) => void;
   public commandFailed?:         (...args: ConstructorParameters<typeof CommandFailedEvent>        ) => void;
   public commandWarnings?:       (...args: ConstructorParameters<typeof CommandWarningsEvent>      ) => void;
@@ -68,7 +69,13 @@ export class InternalLogger implements Partial<Record<keyof DataAPIClientEventMa
 
   private readonly config: InternalLoggingOutputsMap;
 
-  constructor(config: ParsedLoggingConfig | InternalLoggingOutputsMap, private emitter: HierarchicalLogger<any>, private console: ConsoleLike) {
+  readonly _listeners: Partial<Record<keyof Events, ((event: any) => void)[]>> = {};
+
+  readonly _parent: InternalLogger<Events> | undefined;
+
+  constructor(config: ParsedLoggingConfig | InternalLoggingOutputsMap, parent: InternalLogger<Events> | undefined, private console: ConsoleLike) {
+    this._parent = parent;
+
     this.config = ('layers' in config)
       ? this._buildInternalConfig(config)
       : config;
@@ -89,7 +96,7 @@ export class InternalLogger implements Partial<Record<keyof DataAPIClientEventMa
 
       this[eventName] = (...args: any[]) => {
         const event = new (<any>EventConstructors[eventName])(...args);
-        outputs.event && this.emitter.emit(eventName, event);
+        outputs.event && this._emit(eventName, event);
         log?.(event);
       };
     }
@@ -103,10 +110,60 @@ export class InternalLogger implements Partial<Record<keyof DataAPIClientEventMa
     return this._someAdminCommandEventEnabled ? uuid.v4() : '';
   }
 
-  public withUpdatedConfig(config: ParsedLoggingConfig): InternalLogger {
-    return new InternalLogger(this._updateInternalConfig(this.config, config), this.emitter, this.console);
+  public withUpdatedConfig(config: ParsedLoggingConfig): InternalLogger<Events> {
+    return new InternalLogger(this._updateInternalConfig(this.config, config), this._parent, this.console);
   }
 
+  public on<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void) {
+    if (!this._listeners[eventName]) {
+      this._listeners[eventName] = [];
+    }
+
+    this._listeners[eventName].push(listener);
+  }
+
+  public off<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void) {
+    if (!this._listeners[eventName]) {
+      return;
+    }
+
+    const index = this._listeners[eventName].indexOf(listener);
+
+    if (index !== -1) {
+      this._listeners[eventName].splice(index, 1);
+    }
+  }
+  
+  public removeAllListeners<E extends keyof Events>(eventName?: E) {
+    if (eventName) {
+      delete this._listeners[eventName];
+    } else {
+      for (const key in this._listeners) {
+        delete this._listeners[key];
+      }
+    }
+  }
+
+  private _emit<E extends keyof Events>(eventName: E, event: Events[E]) {
+    if (this._listeners[eventName]) {
+      for (const listener of this._listeners[eventName]) {
+        try {
+          listener(event);
+        } catch (_e) {
+          // Silently ignore errors
+        }
+
+        if (event._propagationState === PropagationState.StopImmediate) {
+          return;
+        }
+      }
+    }
+
+    if (this._parent && event._propagationState !== PropagationState.Stop) {
+      this._parent._emit(eventName, event);
+    }
+  }
+  
   private _buildInternalConfig(config: ParsedLoggingConfig): InternalLoggingOutputsMap {
     return this._updateInternalConfig(EmptyInternalLoggingConfig, config);
   }

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import type { BaseClientEvent, LoggingConfig } from '@/src/lib/index.js';
-import { PropagationState } from '@/src/lib/index.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 
@@ -72,17 +71,7 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
   /**
    * @internal
    */
-  readonly #listeners: Partial<Record<keyof Events, ((event: any) => void)[]>> = {};
-
-  /**
-   * @internal
-   */
-  readonly #parent: HierarchicalLogger<Events> | null;
-
-  /**
-   * @internal
-   */
-  public internal: InternalLogger;
+  public internal: InternalLogger<Events>;
 
   /**
    * Should not be instantiated be the user directly.
@@ -90,8 +79,7 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
    * @internal
    */
   protected constructor(parent: HierarchicalLogger<Events> | null, config: ParsedLoggingConfig) {
-    this.internal = new InternalLogger(config, this, console);
-    this.#parent = parent;
+    this.internal = new InternalLogger(config, parent?.internal, console);
   }
 
   public updateLoggingConfig(config: LoggingConfig) {
@@ -107,11 +95,7 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
    * @returns A function to unsubscribe the listener.
    */
   public on<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void {
-    if (!this.#listeners[eventName]) {
-      this.#listeners[eventName] = [];
-    }
-
-    this.#listeners[eventName].push(listener);
+    this.internal.on(eventName, listener);
 
     return () => {
       this.off(eventName, listener);
@@ -125,15 +109,7 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
    * @param listener - The listener to remove.
    */
   public off<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): void {
-    if (!this.#listeners[eventName]) {
-      return;
-    }
-
-    const index = this.#listeners[eventName].indexOf(listener);
-
-    if (index !== -1) {
-      this.#listeners[eventName].splice(index, 1);
-    }
+    return this.internal.off(eventName, listener);
   }
 
   /**
@@ -157,29 +133,6 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
   }
 
   /**
-   * @internal
-   */
-  public emit<E extends keyof Events>(eventName: E, event: Events[E]): void {
-    if (this.#listeners[eventName]) {
-      for (const listener of this.#listeners[eventName]) {
-        try {
-          listener(event);
-        } catch (_e) {
-          // Silently ignore errors
-        }
-
-        if (event._propagationState === PropagationState.StopImmediate) {
-          return;
-        }
-      }
-    }
-
-    if (this.#parent && event._propagationState !== PropagationState.Stop) {
-      this.#parent.emit(eventName, event);
-    }
-  }
-
-  /**
    * Remove all listeners for an event.
    *
    * If no event is provided, all listeners for all events will be removed.
@@ -187,12 +140,6 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
    * @param eventName - The event to remove listeners for.
    */
   public removeAllListeners<E extends keyof Events>(eventName?: E): void {
-    if (eventName) {
-      delete this.#listeners[eventName];
-    } else {
-      for (const key in this.#listeners) {
-        delete this.#listeners[key];
-      }
-    }
+    return this.internal.removeAllListeners(eventName);
   }
 }
