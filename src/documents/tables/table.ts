@@ -14,10 +14,11 @@
 
 import type {
   CommandEventMap,
-  TableCreateIndexOptions,
-  TableCreateVectorIndexOptions,
   FoundRow,
   SomeRow,
+  TableCreateIndexColumn,
+  TableCreateIndexOptions,
+  TableCreateVectorIndexOptions,
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
@@ -25,7 +26,7 @@ import type {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateFilter,
-  WithSim, TableCreateIndexColumn,
+  WithSim,
 } from '@/src/documents/index.js';
 import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';

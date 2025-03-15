@@ -14,6 +14,7 @@
 
 import type { BaseClientEvent} from '@/src/lib/index.js';
 import { PropagationState } from '@/src/lib/index.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 
 /**
  * ##### Overview

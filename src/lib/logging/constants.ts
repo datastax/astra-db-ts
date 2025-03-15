@@ -13,12 +13,13 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type {
-  DataAPIClientEventMap,
-  LoggingEvent,
-  LoggingOutput,
-} from '@/src/lib/index.js';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents/index.js';
+import type { DataAPIClientEventMap, LoggingEvent, LoggingOutput } from '@/src/lib/index.js';
+import {
+  CommandFailedEvent,
+  CommandStartedEvent,
+  CommandSucceededEvent,
+  CommandWarningsEvent,
+} from '@/src/documents/events.js';
 import {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
