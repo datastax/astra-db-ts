@@ -128,6 +128,8 @@ export const function_ = define<(...any: any[]) => any>((fn, ok, err) => {
 export const anyInstanceOf = <T>(cls: abstract new (...args: any[]) => T) => instanceOf(cls as any) as Decoder<T>;
 
 /**
+ * **IMPORTANT: Should only handle finite integers**
+ *
  * @internal
  */
 export const numDigits = (n: number) => {

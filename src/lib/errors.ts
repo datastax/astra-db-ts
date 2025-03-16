@@ -26,7 +26,7 @@ export class NonErrorError extends Error {
     const valueType = betterTypeOf(value);
     const valueString = jsonTryStringify(value, `${value}`);
 
-    super(`Non-error value thrown; type='${valueType}' stringified='${valueString}'`);
+    super(`Non-error value thrown; type='${valueType}' toString='${value}' JSON.stringified='${valueString}'`);
 
     this.value = value;
   }
