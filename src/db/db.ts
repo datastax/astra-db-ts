@@ -152,7 +152,9 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
         : this.#defaultOpts.dbOptions.keyspace ?? undefined,
     };
 
-    endpoint = endpoint.endsWith('/') ? endpoint.replace(/\/+$/, "") : endpoint;
+    endpoint = (endpoint.endsWith('/'))
+      ? endpoint.replace(/\/+$/, "")
+      : endpoint;
 
     this.#httpClient = new DataAPIHttpClient({
       baseUrl: endpoint,
