@@ -16,7 +16,7 @@ import type { Table } from '@/src/documents/tables/table.js';
 import type {
   CreateTableColumnDefinitions,
   CreateTableDefinition,
-  CreateTablePrimaryKeyDefinition,
+  TablePrimaryKeyDefinition,
   FullCreateTablePrimaryKeyDefinition,
 } from '@/src/db/types/tables/create.js';
 import type { EmptyObj } from '@/src/lib/types.js';
@@ -198,7 +198,7 @@ type MkPrimaryKeyType<FullDef extends CreateTableDefinition<any>, Schema, PK ext
     : EmptyObj)
 >
 
-type NormalizePK<PK extends CreateTablePrimaryKeyDefinition<any>> =
+type NormalizePK<PK extends TablePrimaryKeyDefinition<any>> =
   PK extends string
     ? { partitionBy: [PK] } :
   PK extends object

@@ -16,7 +16,6 @@
 import type { DataAPICreateKeyspaceOptions } from '@/src/administration/types/index.js';
 import { DbAdmin } from '@/src/administration/db-admin.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
-import type { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { Db } from '@/src/db/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
@@ -98,31 +97,6 @@ export class DataAPIDbAdmin extends DbAdmin {
    */
   public override db(): Db {
     return this.#db;
-  }
-
-  /**
-   * Returns detailed information about the availability and usage of the vectorize embedding providers available on the
-   * current database (may vary based on cloud provider & region).
-   *
-   * @example
-   * ```typescript
-   * const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
-   *
-   * // ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']
-   * console.log(embeddingProviders['openai'].models.map(m => m.name));
-   * ```
-   *
-   * @param options - The options for the timeout of the operation.
-   *
-   * @returns The available embedding providers.
-   */
-  public override async findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult> {
-    const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, {
-      timeoutManager: this.#httpClient.tm.single('databaseAdminTimeoutMs', options),
-      methodName: 'dbAdmin.findEmbeddingProviders',
-      keyspace: null,
-    });
-    return resp.status as FindEmbeddingProvidersResult;
   }
 
   /**
@@ -227,6 +201,13 @@ export class DataAPIDbAdmin extends DbAdmin {
   }
 
   public get _httpClient(): OpaqueHttpClient {
+    return this.#httpClient;
+  }
+
+  /**
+   * @internal
+   */
+  protected override _getDataAPIHttpClient(): DataAPIHttpClient<'admin'> {
     return this.#httpClient;
   }
 }
