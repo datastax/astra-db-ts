@@ -21,6 +21,10 @@ export function escapeFieldNames(...segments: PathSegment[]): string
 export function escapeFieldNames(segments: Iterable<PathSegment>): string
 
 export function escapeFieldNames(segments: TemplateStringsArray | (string | number) | Iterable<string | number>, ...args: (string | number)[]): string {
+  if (arguments.length === 0) {
+    return '';
+  }
+
   if (_isTemplateStringsArray(segments)) {
     return segments.map((str, i) => str + _escapeSegment(args[i] ?? '')).join('');
   }
@@ -54,6 +58,10 @@ export function unescapeFieldPath(path: string): string[] {
     return [];
   }
 
+  if (path.startsWith('.')) {
+    throw new Error(`Invalid field path '${path}'; '.' may not appear at the beginning of the path`);
+  }
+
   for (let i = 0, n = path.length; i <= n; i++) {
     if (path[i] === '.' && i === n - 1) {
       throw new Error(`Invalid field path '${path}'; '.' may not appear at the end of the path`);
@@ -85,3 +93,4 @@ export function unescapeFieldPath(path: string): string[] {
 
   return ret;
 }
+
