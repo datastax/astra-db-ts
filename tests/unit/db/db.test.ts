@@ -41,7 +41,7 @@ describe('unit.db.db', () => {
 
     it('should trim trailing slash in endpoints', () => {
       for (let i = 0; i < 10; i++) {
-        const db = new Db(internalOps(), `https://id-region.apps.astra.datastax.com${'/'.repeat(i)}`, DbOptsHandler.empty);
+        const db = new Db(internalOps(), `https://id-region.apps.astra.datastax.com/${'/'.repeat(i)}`, DbOptsHandler.empty);
         assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
       }
     });
@@ -49,6 +49,11 @@ describe('unit.db.db', () => {
     it('should not throw on missing token', () => {
       const client = new DataAPIClient();
       assert.doesNotThrow(() => client.db(TEST_APPLICATION_URI));
+    });
+
+    it("should strip trailing slashes from the endpoint", () => {
+      const db = new Db(internalOps(), "https://id-region.apps.astra.datastax.com/", DbOptsHandler.empty);
+      assert.strictEqual(db["_httpClient"].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS["astra"]}`));
     });
   });
 
