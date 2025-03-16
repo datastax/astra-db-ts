@@ -9,7 +9,7 @@ import { CollectionSerDesConfig as CollectionSerDesConfig_2 } from '../../docume
 import { Decoder } from 'decoders';
 import type { DecoderType } from 'decoders';
 import { Monoid as Monoid_2 } from '../../lib/opts-handler.js';
-import { ParsedLoggingConfig } from '../../lib/logging/cfg-handler.js';
+import { ParsedLoggingConfig as ParsedLoggingConfig_2 } from '../../lib/logging/cfg-handler.js';
 import { ParsedSerDesConfig } from '../../lib/api/ser-des/cfg-handler.js';
 import { ParsedTimeoutDescriptor } from '../../lib/api/timeouts/cfg-handler.js';
 import { ParsedTokenProvider as ParsedTokenProvider_2 } from '../../lib/token-providers/token-provider.js';
@@ -202,7 +202,7 @@ export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'
 }
 
 // @public
-export class AstraAdmin extends HierarchicalEmitter<AdminCommandEventMap> {
+export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     // Warning: (ae-forgotten-export) The symbol "ParsedRootClientOpts" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "ParsedAdminOptions" needs to be exported by the entry point index.d.ts
     //
@@ -246,7 +246,10 @@ export class AstraDbAdmin extends DbAdmin {
     db(): Db;
     drop(options?: AstraDropKeyspaceOptions): Promise<void>;
     dropKeyspace(keyspace: string, options?: AstraDropKeyspaceOptions): Promise<void>;
-    findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
+    // Warning: (ae-forgotten-export) The symbol "DataAPIHttpClient" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    protected _getDataAPIHttpClient(): DataAPIHttpClient<'admin'>;
     // (undocumented)
     get _httpClient(): OpaqueHttpClient;
     get id(): string;
@@ -337,8 +340,6 @@ export abstract class BaseClientEvent {
     abstract getMessage(): string;
     // (undocumented)
     abstract getMessagePrefix(): string;
-    // (undocumented)
-    hideDupeFields(): this;
     readonly name: string;
     // @internal
     protected abstract permits: DataAPIClientEvent;
@@ -349,6 +350,8 @@ export abstract class BaseClientEvent {
     stopImmediatePropagation(): void;
     stopPropagation(): void;
     readonly timestamp: Date;
+    // (undocumented)
+    trimDuplicateFields(): this;
 }
 
 // @public (undocumented)
@@ -384,8 +387,6 @@ export interface BaseSerDesCtx {
     mutatingInPlace: boolean;
     // (undocumented)
     nevermind(): readonly [3];
-    // Warning: (ae-forgotten-export) The symbol "PathSegment" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     path: PathSegment[];
     // (undocumented)
@@ -409,11 +410,9 @@ export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
 export type Caller = readonly [name: string, version?: string];
 
 // @public
-export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalEmitter<CommandEventMap> {
-    // Warning: (ae-forgotten-export) The symbol "DataAPIHttpClient" needs to be exported by the entry point index.d.ts
-    //
+export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalLogger<CommandEventMap> {
     // @internal
-    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions | undefined);
+    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: CollectionOptions | undefined);
     countDocuments(filter: CollectionFilter<WSchema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
     deleteMany(filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult>;
     deleteOne(filter: CollectionFilter<WSchema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult>;
@@ -498,7 +497,7 @@ export class CollectionCodecs {
     //
     // (undocumented)
     static forName(name: string, optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
-    // (undocumented)
+    // @deprecated (undocumented)
     static forPath(path: readonly PathSegment[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
     // Warning: (ae-forgotten-export) The symbol "CollTypeCodecOpts" needs to be exported by the entry point index.d.ts
     //
@@ -638,6 +637,7 @@ export type CollectionIndexingOptions<Schema extends SomeDoc> = {
 
 // @public
 export class CollectionInsertManyError extends DataAPIError {
+    // @internal
     constructor(causes: DataAPIResponseError[], partRes: CollectionInsertManyResult<SomeDoc>);
     // (undocumented)
     errors(): Error[];
@@ -771,7 +771,6 @@ export interface CollectionVectorOptions {
     dimension?: number;
     metric?: 'cosine' | 'euclidean' | 'dot_product';
     service?: VectorizeServiceOptions;
-    // Warning: (ae-forgotten-export) The symbol "LitUnion" needs to be exported by the entry point index.d.ts
     sourceModel?: LitUnion<'other'>;
 }
 
@@ -825,11 +824,11 @@ export class CommandFailedEvent extends CommandEvent {
     readonly error: Error;
     // (undocumented)
     getMessage(): string;
-    // (undocumented)
-    hideDupeFields(): this;
     // @internal
     protected permits: this;
     readonly resp?: RawDataAPIResponse;
+    // (undocumented)
+    trimDuplicateFields(): this;
 }
 
 // @public
@@ -889,7 +888,7 @@ export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumn
 // @public
 export interface CreateTableDefinition<Def extends CreateTableDefinition<Def>> {
     readonly columns: CreateTableColumnDefinitions;
-    readonly primaryKey: CreateTablePrimaryKeyDefinition<keyof Def['columns'] & string>;
+    readonly primaryKey: TablePrimaryKeyDefinition<keyof Def['columns'] & string>;
 }
 
 // @public
@@ -899,9 +898,6 @@ export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = Cre
     // (undocumented)
     ifNotExists?: boolean;
 }
-
-// @public
-export type CreateTablePrimaryKeyDefinition<PKCols extends string> = PKCols | FullCreateTablePrimaryKeyDefinition<PKCols>;
 
 // @public
 export class CursorError extends DataAPIError {
@@ -963,7 +959,7 @@ export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | MaybeBuffer | {
 };
 
 // @public
-export class DataAPIClient extends HierarchicalEmitter<DataAPIClientEventMap> {
+export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
     constructor(options?: DataAPIClientOptions);
     constructor(token: string | TokenProvider | undefined, options?: DataAPIClientOptions);
     admin(options?: AdminOptions): AstraAdmin;
@@ -1026,21 +1022,15 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
 // @public
 export class DataAPIDbAdmin extends DbAdmin {
     // @internal
-    constructor(db: Db, client: DataAPIClient, httpClient: DataAPIHttpClient, adminOpts: ParsedAdminOptions);
+    constructor(db: Db, client: DataAPIClient, httpClient: DataAPIHttpClient, rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions);
     createKeyspace(keyspace: string, options?: DataAPICreateKeyspaceOptions): Promise<void>;
     db(): Db;
     dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
-    findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
+    // @internal (undocumented)
+    protected _getDataAPIHttpClient(): DataAPIHttpClient<'admin'>;
     // (undocumented)
     get _httpClient(): OpaqueHttpClient;
     listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
-}
-
-// @public
-export interface DataAPIDetailedErrorDescriptor {
-    readonly command: Record<string, any>;
-    readonly errorDescriptors: readonly DataAPIErrorDescriptor[];
-    readonly rawResponse: RawDataAPIResponse;
 }
 
 // @public
@@ -1156,7 +1146,6 @@ export class DataAPIResponseError extends DataAPIError {
     // @internal (undocumented)
     withTransientDupesForEvents(): {
         name: string;
-        message: string;
     };
 }
 
@@ -1240,7 +1229,7 @@ export const date: ((...params: [string] | [Date] | [number, number, number]) =>
 };
 
 // @public
-export class Db extends HierarchicalEmitter<CommandEventMap> {
+export class Db extends HierarchicalLogger<CommandEventMap> {
     // Warning: (ae-forgotten-export) The symbol "ParsedDbOptions" needs to be exported by the entry point index.d.ts
     //
     // @internal
@@ -1281,11 +1270,15 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
 }
 
 // @public
-export abstract class DbAdmin extends HierarchicalEmitter<AdminCommandEventMap> {
+export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     abstract createKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
     abstract db(): Db;
     abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
-    abstract findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
+    findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
+    // Warning: (ae-forgotten-export) The symbol "FindRerankingProvidersResult" needs to be exported by the entry point index.d.ts
+    findRerankingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindRerankingProvidersResult>;
+    // @internal (undocumented)
+    protected abstract _getDataAPIHttpClient(): DataAPIHttpClient<'admin'>;
     abstract listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
 }
 
@@ -1455,6 +1448,15 @@ export interface EmbeddingProviderTokenInfo {
 // @public
 export type EmptyObj = {};
 
+// @public (undocumented)
+export function escapeFieldNames(segments: TemplateStringsArray, ...args: PathSegment[]): string;
+
+// @public (undocumented)
+export function escapeFieldNames(...segments: PathSegment[]): string;
+
+// @public (undocumented)
+export function escapeFieldNames(segments: Iterable<PathSegment>): string;
+
 // @public
 export type EventFormatter = (event: DataAPIClientEvent, fullMessage: string) => string;
 
@@ -1568,7 +1570,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     readonly _parent: Table<SomeRow> | Collection;
     project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RRaw, RRaw>;
     // (undocumented)
-    rerankField(rerankField: string): this;
+    rerankOn(rerankOn: string): this;
     // Warning: (ae-forgotten-export) The symbol "SerDes" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
@@ -1659,7 +1661,7 @@ export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodT
     limit?: number;
     projection?: Projection;
     // (undocumented)
-    rerankField?: string;
+    rerankOn?: string;
     sort?: HybridSort;
 }
 
@@ -1751,14 +1753,21 @@ export interface GuaranteedUpdateResult<N extends number> {
 }
 
 // @public
-export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>> {
+export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> {
+    // Warning: (ae-forgotten-export) The symbol "ParsedLoggingConfig" needs to be exported by the entry point index.d.ts
+    //
     // @internal
-    protected constructor(parent: Pick<HierarchicalEmitter<Events>, 'emit'> | null);
-    emit<E extends keyof Events>(eventName: E, event: Events[E]): void;
+    protected constructor(parent: HierarchicalLogger<Events> | null, config: ParsedLoggingConfig);
+    // Warning: (ae-forgotten-export) The symbol "InternalLogger" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    internal: InternalLogger<Events>;
     off<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): void;
     on<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void;
     once<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void;
     removeAllListeners<E extends keyof Events>(eventName?: E): void;
+    // (undocumented)
+    updateLoggingConfig(config: LoggingConfig): void;
 }
 
 // @public
@@ -1842,20 +1851,6 @@ export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTime
 }
 
 // @public
-export interface ListCreateTableColumnDefinition {
-    // (undocumented)
-    type: 'list';
-    // (undocumented)
-    valueType: TableScalarType;
-}
-
-// @public
-export interface ListIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-    // (undocumented)
-    nameOnly?: boolean;
-}
-
-// @public
 export type ListTableColumnDefinitions = Record<string, ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition>;
 
 // @public
@@ -1902,6 +1897,9 @@ export interface ListTableUnsupportedColumnDefinition {
 }
 
 // @public
+export type LitUnion<LiteralType, BaseType = string> = LiteralType | (BaseType & Record<never, never>);
+
+// @public
 export type LoggingConfig = LoggingEvent | readonly (LoggingEvent | ExplicitLoggingConfig)[];
 
 // @public
@@ -1918,16 +1916,6 @@ export const LoggingOutputs: readonly ["event", "stdout", "stderr", "stdout:verb
 
 // @public
 export type LooseCreateTableColumnDefinition = TableScalarType | (string & Record<never, never>);
-
-// @public
-export interface MapCreateTableColumnDefinition {
-    // (undocumented)
-    keyType: 'text' | 'ascii';
-    // (undocumented)
-    type: 'map';
-    // (undocumented)
-    valueType: TableScalarType;
-}
 
 // @public
 export type MaybeBuffer = typeof globalThis extends {
@@ -1994,6 +1982,9 @@ export type OneOrMany<T> = T | readonly T[];
 // @public
 export type OpaqueHttpClient = any;
 
+// @public
+export type PathSegment = string | number;
+
 // Warning: (ae-internal-missing-underscore) The name "processCodecs" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
@@ -2045,6 +2036,14 @@ export interface RawDataAPIResponse {
     readonly warnings?: DataAPIWarningDescriptor[];
 }
 
+// Warning: (ae-internal-missing-underscore) The name "Ref" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface Ref<T> {
+    // (undocumented)
+    ref: T;
+}
+
 // @public (undocumented)
 export interface RerankingServiceOptions {
     // (undocumented)
@@ -2069,12 +2068,6 @@ export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'>
     extraLogInfo?: Record<string, unknown>;
     keyspace?: string | null;
     table?: string;
-}
-
-// @public
-export interface ScalarCreateTableColumnDefinition {
-    // (undocumented)
-    type: TableScalarType;
 }
 
 // Warning: (ae-forgotten-export) The symbol "SerDesFnRet" needs to be exported by the entry point index.d.ts
@@ -2107,14 +2100,6 @@ export interface Serializers<SerCtx> {
 }
 
 // @public
-export interface SetCreateTableColumnDefinition {
-    // (undocumented)
-    type: 'set';
-    // (undocumented)
-    valueType: TableScalarType;
-}
-
-// @public
 export type SomeConstructor = abstract new (...args: any[]) => any;
 
 // @public
@@ -2139,12 +2124,12 @@ export class StaticTokenProvider extends TokenProvider {
 }
 
 // @public
-export type StrictCreateTableColumnDefinition = ScalarCreateTableColumnDefinition | MapCreateTableColumnDefinition | ListCreateTableColumnDefinition | SetCreateTableColumnDefinition | VectorCreateTableColumnDefinition;
+export type StrictCreateTableColumnDefinition = TableScalarColumnDefinition | TableMapColumnDefinition | TableListColumnDefinition | TableSetColumnDefinition | TableVectorColumnDefinition;
 
 // @public
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalEmitter<CommandEventMap> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalLogger<CommandEventMap> {
     // @internal
-    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions | undefined);
+    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: TableOptions | undefined);
     alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>>;
     createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void>;
     // Warning: (ae-forgotten-export) The symbol "TableCreateTextIndexOptions" needs to be exported by the entry point index.d.ts
@@ -2175,12 +2160,6 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     insertMany(rows: readonly WSchema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<PKey>>;
     insertOne(row: WSchema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<PKey>>;
     readonly keyspace: string;
-    listIndexes(options: ListIndexOptions & {
-        nameOnly: true;
-    }): Promise<string[]>;
-    listIndexes(options?: ListIndexOptions & {
-        nameOnly?: false;
-    }): Promise<TableIndexDescriptor[]>;
     readonly name: string;
     static schema<const Def extends CreateTableDefinition<Def>>(schema: Def): Def;
     updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
@@ -2236,7 +2215,7 @@ export class TableCodecs {
     //
     // (undocumented)
     static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
-    // (undocumented)
+    // @deprecated (undocumented)
     static forPath(path: readonly PathSegment[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
     // Warning: (ae-forgotten-export) The symbol "TableTypeCodecOpts" needs to be exported by the entry point index.d.ts
     //
@@ -2332,14 +2311,6 @@ export type TableFindOneOptions = GenericFindOneOptions;
 export type TableFindOptions = GenericFindOptions;
 
 // @public
-export interface TableIndexDescriptor {
-    // (undocumented)
-    definition: TableNormalIndexDescriptor | TableVectorIndexDescriptor | TableUnknownIndex;
-    // (undocumented)
-    name: string;
-}
-
-// @public
 export interface TableIndexOptions {
     ascii?: boolean;
     caseSensitive?: boolean;
@@ -2347,17 +2318,8 @@ export interface TableIndexOptions {
 }
 
 // @public
-export interface TableIndexUnsupportedColumnApiSupport {
-    // (undocumented)
-    cqlDefinition: string;
-    // (undocumented)
-    createIndex: boolean;
-    // (undocumented)
-    filter: boolean;
-}
-
-// @public
 export class TableInsertManyError extends DataAPIError {
+    // @internal
     constructor(causes: DataAPIResponseError[], partRes: TableInsertManyResult<SomeRow>);
     // (undocumented)
     errors(): Error[];
@@ -2381,11 +2343,21 @@ export interface TableInsertOneResult<PKey extends SomeRow> {
 }
 
 // @public
-export interface TableNormalIndexDescriptor {
+export interface TableListColumnDefinition {
     // (undocumented)
-    column: string;
+    type: 'list';
     // (undocumented)
-    options: TableIndexOptions;
+    valueType: TableScalarType;
+}
+
+// @public
+export interface TableMapColumnDefinition {
+    // (undocumented)
+    keyType: 'text' | 'ascii';
+    // (undocumented)
+    type: 'map';
+    // (undocumented)
+    valueType: TableScalarType;
 }
 
 // @public
@@ -2395,6 +2367,15 @@ export interface TableOptions extends WithKeyspace {
     // @beta
     serdes?: TableSerDesConfig;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
+}
+
+// @public
+export type TablePrimaryKeyDefinition<PKCols extends string> = PKCols | FullCreateTablePrimaryKeyDefinition<PKCols>;
+
+// @public
+export interface TableScalarColumnDefinition {
+    // (undocumented)
+    type: TableScalarType;
 }
 
 // @public
@@ -2415,11 +2396,11 @@ export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDe
 }
 
 // @public
-export interface TableUnknownIndex {
+export interface TableSetColumnDefinition {
     // (undocumented)
-    apiSupport: TableIndexUnsupportedColumnApiSupport;
+    type: 'set';
     // (undocumented)
-    column: 'UNKNOWN';
+    valueType: TableScalarType;
 }
 
 // @public
@@ -2429,11 +2410,13 @@ export interface TableUpdateFilter<Schema extends SomeRow> {
 }
 
 // @public
-export interface TableVectorIndexDescriptor {
+export interface TableVectorColumnDefinition {
     // (undocumented)
-    column: string;
+    dimension: number;
     // (undocumented)
-    options: TableVectorIndexOptions;
+    service?: VectorizeServiceOptions;
+    // (undocumented)
+    type: 'vector';
 }
 
 // @public
@@ -2491,6 +2474,9 @@ export type TypeCodecOpts<SerCtx, DesCtx> = CustomCodecSerOpts<SerCtx> & {
     deserialize?: SerDesFn<DesCtx>;
 };
 
+// @public (undocumented)
+export function unescapeFieldPath(path: string): string[];
+
 // @public
 export class UnexpectedDataAPIResponseError extends Error {
     // @internal
@@ -2539,16 +2525,6 @@ export const uuid: (uuid: string | 1 | 4 | 6 | 7) => UUID;
 
 // @public
 export const vector: (v: DataAPIVectorLike) => DataAPIVector;
-
-// @public
-export interface VectorCreateTableColumnDefinition {
-    // (undocumented)
-    dimension: number;
-    // (undocumented)
-    service?: VectorizeServiceOptions;
-    // (undocumented)
-    type: 'vector';
-}
 
 // @public
 export interface VectorDoc {

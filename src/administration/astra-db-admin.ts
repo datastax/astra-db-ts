@@ -26,7 +26,7 @@ import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
