@@ -229,7 +229,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
       extraLogInfo: extra,
     });
 
-    const buffer = raw.data?.documents ?? []
+    const buffer = raw.data?.documents ?? [];
 
     for (let i = 0, n = buffer.length; i < n; i++) {
       const deserialized = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);

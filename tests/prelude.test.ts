@@ -35,6 +35,8 @@ before(async () => {
     return;
   }
 
+  console.warn('Running prelude.test.ts');
+
   const { db, dbAdmin } = GLOBAL_FIXTURES;
   const allKeyspaces = await dbAdmin.listKeyspaces();
 
