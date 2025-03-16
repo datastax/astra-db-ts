@@ -98,6 +98,8 @@ export class Db {
 
     this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token);
 
+    endpoint = endpoint.endsWith('/') ? endpoint.replace(/\/+$/, "") : endpoint;
+
     const combinedDbOpts = {
       ...rootOpts.dbOptions,
       ...dbOpts,
