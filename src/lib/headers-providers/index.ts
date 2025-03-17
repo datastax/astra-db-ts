@@ -19,7 +19,5 @@ export * from './impls/any/static-headers-provider.js';
 export * from './impls/reranking/reranking-api-key-header-provider.js';
 export * from './impls/embedding/embedding-api-key-header-provider.js';
 export * from './impls/embedding/aws-embedding-headers-provider.js';
-export * from './impls/token/userpass-token-providers.js';
-export * from './impls/token/static-token-provider.js';
 
 import './root/opts-handlers.js'; // loads HeadersProviders.opts w/out causing circular dependencies

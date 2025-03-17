@@ -12,12 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { StaticTokenProvider } from '@/src/lib/index.js';
+import type { GetHeadersCtx} from '@/src/lib/index.js';
+import { HeadersProvider, StaticTokenProvider } from '@/src/lib/index.js';
 import { anyInstanceOf, findLast, isNullish } from '@/src/lib/utils.js';
 import type { Monoid, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { MonoidalOptionsHandler } from '@/src/lib/opts-handler.js';
 import type { DecoderType} from 'decoders';
 import { either, nullish, string } from 'decoders';
+import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/src/lib/api/constants.js';
+import type { ParsedHeadersProviders } from '@/src/lib/headers-providers/root/opts-handlers.js';
 
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
@@ -53,7 +56,39 @@ export abstract class TokenProvider {
    * The function which provides the token. It may do any I/O as it wishes to obtain/refresh the token, as it's called
    * every time the token is required for use, whether it be for the Data API, or the DevOps API.
    */
-  abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
+  public abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
+
+  /**
+   * @internal
+   */
+  public toHeadersProvider(): ParsedHeadersProviders {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- necessary in this case
+    const tp = this;
+
+    const hp = new (class extends HeadersProvider {
+      getHeaders(ctx: GetHeadersCtx) {
+        const maybePromise = tp.getToken();
+
+        return (maybePromise instanceof Promise)
+          ? maybePromise.then(tp._mkAuthHeader(ctx))
+          : tp._mkAuthHeader(ctx)(maybePromise);
+      }
+    })();
+
+    return HeadersProvider.opts.fromObj.parse(hp);
+  }
+
+  /**
+   * @internal
+   */
+  protected _mkAuthHeader(ctx: GetHeadersCtx) {
+    return (token: string | null | undefined) =>
+      (token)
+        ? (ctx.for === 'data-api')
+          ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }
+          : { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }
+        : {};
+  }
 }
 
 /**

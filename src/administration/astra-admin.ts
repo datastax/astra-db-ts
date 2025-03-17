@@ -95,7 +95,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       fetchCtx: rootOpts.fetchCtx,
       caller: rootOpts.caller,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,
-      additionalHeaders: this.#defaultOpts.adminOptions.additionalHeaders,
+      additionalHeaders: this.#defaultOpts.additionalHeaders,
       timeoutDefaults: Timeouts.cfg.concat([rootOpts.adminOptions.timeoutDefaults, this.#defaultOpts.adminOptions.timeoutDefaults]),
     });
 

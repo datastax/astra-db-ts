@@ -16,7 +16,6 @@ export * from './events.js';
 export * from './cursors/index.js';
 export * from './collections/index.js';
 export * from './tables/index.js';
-export * from './embedding-providers/index.js';
 export * from './datatypes/index.js';
 export type * from './commands/index.js';
 export type * from './types/index.js';

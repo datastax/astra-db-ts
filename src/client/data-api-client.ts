@@ -14,7 +14,8 @@
 // noinspection JSDeprecatedSymbols
 
 import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types/index.js';
-import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
+import { type DataAPIClientEventMap } from '@/src/lib/index.js';
 import { Db, InvalidEnvironmentError } from '@/src/db/index.js';
 import { AstraAdmin } from '@/src/administration/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';

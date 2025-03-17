@@ -25,7 +25,7 @@ import type { CreateCollectionOptions } from '@/src/db/types/collections/create.
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { KeyspaceRef } from '@/src/lib/api/clients/types.js';
 import type { CommandEventMap, FoundRow, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
-import { EmbeddingHeadersProvider, Table } from '@/src/documents/index.js';
+import { Table } from '@/src/documents/index.js';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
 import type { CollectionOptions } from '@/src/db/types/collections/spawn.js';
 import type { DropCollectionOptions } from '@/src/db/types/collections/drop.js';
@@ -159,14 +159,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     this.#httpClient = new DataAPIHttpClient({
       baseUrl: endpoint,
       tokenProvider: this.#defaultOpts.dbOptions.token,
-      embeddingHeaders: EmbeddingHeadersProvider.parse(null),
       baseApiPath: this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
       logger: this,
       fetchCtx: rootOpts.fetchCtx,
       keyspace: this.#keyspace,
       caller: rootOpts.caller,
       emissionStrategy: EmissionStrategy.Normal,
-      additionalHeaders: this.#defaultOpts.dbOptions.additionalHeaders,
+      additionalHeaders: this.#defaultOpts.additionalHeaders,
       timeoutDefaults: this.#defaultOpts.dbOptions.timeoutDefaults,
     });
 

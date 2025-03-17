@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import type { WithKeyspace } from '@/src/db/index.js';
-import type { CollectionSerDesConfig, EmbeddingHeadersProvider } from '@/src/documents/index.js';
-import type { LoggingConfig} from '@/src/lib/index.js';
+import type { CollectionSerDesConfig } from '@/src/documents/index.js';
+import type { EmbeddingHeadersProvider, LoggingConfig, RerankingHeadersProvider } from '@/src/lib/index.js';
 import { type TimeoutDescriptor } from '@/src/lib/index.js';
 
 /**
@@ -34,7 +34,12 @@ export interface CollectionOptions extends WithKeyspace {
    * The API key for the embedding service to use, or the {@link EmbeddingHeadersProvider} if using
    * a provider that requires it (e.g. AWS bedrock).
    */
-  embeddingApiKey?: string | EmbeddingHeadersProvider | null,
+  embeddingApiKey?: string | EmbeddingHeadersProvider,
+  /**
+   * The API key for the reranking service to use, or the {@link RerankingHeadersProvider} if using
+   * a provider that requires it (e.g. AWS bedrock).
+   */
+  rerankingApiKey?: string | RerankingHeadersProvider,
   /**
    * The configuration for logging events emitted by the {@link DataAPIClient}.
    *

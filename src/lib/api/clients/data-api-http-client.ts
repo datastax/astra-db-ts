@@ -14,27 +14,26 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type { InternalLogger } from '@/src/lib/logging/internal-logger.js';
-import type { HierarchicalLogger, nullish, RawDataAPIResponse } from '@/src/lib/index.js';
-import { TokenProvider } from '@/src/lib/index.js';
-import type { CommandEventTarget, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
+import type { RawDataAPIResponse } from '@/src/lib/index.js';
 import {
-  Collection,
-  DataAPIHttpError,
-  DataAPIResponseError,
-  DataAPITimeoutError,
-  EmbeddingHeadersProvider,
-} from '@/src/documents/index.js';
-import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types.js';
+  EmbeddingAPIKeyHeaderProvider,
+  HeadersProvider,
+  RerankingAPIKeyHeaderProvider,
+  TokenProvider,
+} from '@/src/lib/index.js';
+import type { CommandEventTarget, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
+import { Collection, DataAPIHttpError, DataAPIResponseError, DataAPITimeoutError } from '@/src/documents/index.js';
+import type { HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types.js';
 import { HttpClient } from '@/src/lib/api/clients/http-client.js';
-import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants.js';
+import { HttpMethods } from '@/src/lib/api/constants.js';
 import type { CollectionOptions, TableOptions } from '@/src/db/index.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { EmptyObj } from '@/src/lib/types.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
-import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
-import type { AdminCommandEventMap } from '@/src/administration/index.js';
+import type { DbAdmin } from '@/src/administration/index.js';
 import { NonErrorError } from '@/src/lib/errors.js';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 
 type ClientKind = 'admin' | 'normal';
 
@@ -125,10 +124,10 @@ const adaptInfo4Devops = (info: DataAPIRequestInfo, methodName: string) => (<con
 /**
  * @internal
  */
-interface DataAPIHttpClientOpts<Kind extends ClientKind> extends HTTPClientOptions {
+interface DataAPIHttpClientOpts<Kind extends ClientKind> extends Omit<HTTPClientOptions, 'mkTimeoutError'> {
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy<Kind>,
-  embeddingHeaders: EmbeddingHeadersProvider,
+  tokenProvider: ParsedTokenProvider,
 }
 
 /**
@@ -155,42 +154,53 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
   readonly #props: DataAPIHttpClientOpts<Kind>;
 
   constructor(opts: DataAPIHttpClientOpts<Kind>) {
-    super(opts, [mkAuthHeaderProvider(opts.tokenProvider), () => opts.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
+    super('data-api', {
+      ...opts,
+      additionalHeaders: HeadersProvider.opts.fromObj.concat([
+        opts.additionalHeaders,
+        opts.tokenProvider.toHeadersProvider(),
+      ]),
+      mkTimeoutError: DataAPITimeoutError.mk,
+    });
+
     this.keyspace = opts.keyspace;
     this.#props = opts;
     this.emissionStrategy = opts.emissionStrategy(opts.logger.internal);
   }
 
-  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(thing: Collection | Table<SomeRow>, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(tSlashC: Collection | Table<SomeRow>, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      embeddingHeaders: EmbeddingHeadersProvider.parse(opts?.embeddingApiKey),
       emissionStrategy: EmissionStrategy.Normal,
-      keyspace: { ref: thing.keyspace },
-      logger: thing,
+      keyspace: { ref: tSlashC.keyspace },
+      logger: tSlashC,
+      additionalHeaders: HeadersProvider.opts.monoid.concat([
+        this.#props.additionalHeaders,
+        HeadersProvider.opts.fromStr(EmbeddingAPIKeyHeaderProvider).parse(opts?.embeddingApiKey),
+        HeadersProvider.opts.fromStr(RerankingAPIKeyHeaderProvider).parse(opts?.rerankingApiKey),
+      ]),
     });
 
-    if (thing instanceof Collection) {
-      clone.collectionName = thing.name;
+    if (tSlashC instanceof Collection) {
+      clone.collectionName = tSlashC.name;
     } else {
-      clone.tableName = thing.name;
+      clone.tableName = tSlashC.name;
     }
-    
+
     clone.bigNumHack = bigNumHack;
     clone.tm = new Timeouts(DataAPITimeoutError.mk, Timeouts.cfg.parse({ ...this.tm.baseTimeouts, ...opts?.timeoutDefaults }));
 
     return clone;
   }
 
-  public forDbAdmin(emitter: HierarchicalLogger<AdminCommandEventMap>, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(dbAdmin: DbAdmin, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.opts.concat([opts.adminToken, this.#props.tokenProvider]),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
-      additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
       emissionStrategy: EmissionStrategy.Admin,
-      logger: emitter,
+      logger: dbAdmin,
     });
 
     clone.collectionName = undefined;
@@ -298,15 +308,3 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     }
   }
 }
-
-const mkAuthHeaderProvider = (tp: ParsedTokenProvider): HeaderProvider => () => {
-  const token = tp.getToken();
-
-  return (token instanceof Promise)
-    ? token.then(mkAuthHeader)
-    : mkAuthHeader(token);
-};
-
-const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
-  ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }
-  : {};

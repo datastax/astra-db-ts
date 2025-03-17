@@ -26,14 +26,13 @@ import {
   TEST_APPLICATION_URI,
 } from '@/tests/testlib/index.js';
 import type { Ref } from '@/src/lib/types.js';
-import { StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib/index.js';
-import { EmbeddingHeadersProvider } from '@/src/documents/index.js';
+import { HeadersProvider, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib/index.js';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/src/lib/api/constants.js';
 
 parallel('integration.misc.headers', () => {
   const fetchNative = new FetchNative();
 
-  const mkClient = (latestHeaders: Ref<Record<string, string>>, tp?: string | TokenProvider) => new DataAPIClient(tp, {
+  const mkClient = (latestHeaders: Ref<Record<string, string | undefined>>, tp?: string | TokenProvider) => new DataAPIClient(tp, {
     environment: ENVIRONMENT,
     httpOptions: {
       client: 'custom',
@@ -57,7 +56,7 @@ parallel('integration.misc.headers', () => {
     }
   }
 
-  class AsyncEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
+  class AsyncEmbeddingHeadersProvider extends HeadersProvider<'embedding'> {
     async getHeaders() {
       return { 'x-my-custom-header': 'drain of incarnation' } as const;
     }
@@ -72,7 +71,7 @@ parallel('integration.misc.headers', () => {
     }
   }
 
-  class CyclingEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
+  class CyclingEmbeddingHeadersProvider extends HeadersProvider<'embedding'> {
     i = 0;
     tokens = ['tree', 'of', 'ages'];
 
