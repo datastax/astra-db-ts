@@ -87,7 +87,7 @@ export class AstraDbAdmin extends DbAdmin {
       logger: this,
       caller: rootOpts.caller,
       tokenProvider: TokenProvider.opts.concat([dbToken, rootOpts.adminOptions.adminToken, adminOpts.adminToken]),
-      additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
+      additionalHeaders: rootOpts.additionalHeaders,
       timeoutDefaults: Timeouts.cfg.concat([rootOpts.adminOptions.timeoutDefaults, adminOpts.timeoutDefaults]),
     });
 

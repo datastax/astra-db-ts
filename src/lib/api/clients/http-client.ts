@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/fetcher.js';
-import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import type { HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
 import type { DataAPIClientEventMap } from '@/src/lib/logging/index.js';
-import type { MkTimeoutError } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { HierarchicalLogger } from '@/src/lib/index.js';
+import { HeadersResolver } from '@/src/lib/api/clients/headers-resolver.js';
 
 /**
  * @internal
@@ -26,11 +26,10 @@ export abstract class HttpClient {
   readonly baseUrl: string;
   readonly logger: HierarchicalLogger<DataAPIClientEventMap>;
   readonly fetchCtx: FetchCtx;
-  readonly baseHeaders: Record<string, any>;
-  readonly headerProviders: HeaderProvider[];
+  readonly headersResolver: HeadersResolver;
   tm: Timeouts;
 
-  protected constructor(options: HTTPClientOptions, headerProviders: HeaderProvider[], mkTimeoutError: MkTimeoutError) {
+  protected constructor(target: 'data-api' | 'devops-api', options: HTTPClientOptions) {
     this.baseUrl = options.baseUrl;
     this.logger = options.logger;
     this.fetchCtx = options.fetchCtx;
@@ -39,12 +38,18 @@ export abstract class HttpClient {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.baseHeaders = { ...options.additionalHeaders };
-    this.baseHeaders['User-Agent'] = options.caller.userAgent;
-    this.baseHeaders['Content-Type'] = 'application/json';
+    // this.baseHeaders = { ...options.additionalHeaders };
+    // this.baseHeaders['User-Agent'] = options.caller.userAgent;
+    // this.baseHeaders['Content-Type'] = 'application/json';
+    //
+    // this.headerProviders = headerProviders;
 
-    this.headerProviders = headerProviders;
-    this.tm = new Timeouts(mkTimeoutError, options.timeoutDefaults);
+    this.headersResolver = new HeadersResolver(target, options.additionalHeaders, {
+      'User-Agent': options.caller.userAgent,
+      'Content-Type': 'application/json',
+    });
+
+    this.tm = new Timeouts(options.mkTimeoutError, options.timeoutDefaults);
   }
 
   protected async _request(info: HTTPRequestInfo): Promise<FetcherResponseInfo> {
@@ -64,26 +69,21 @@ export abstract class HttpClient {
       ? `${info.url}?${new URLSearchParams(params).toString()}`
       : info.url;
 
-    const reqHeaders = { ...this.baseHeaders };
+    const maybePromiseHeaders = this.headersResolver.resolve();
 
-    for (const provider of this.headerProviders) {
-      const maybePromise = provider();
-
-      const newHeaders = ('then' in maybePromise)
-        ? await maybePromise
-        : maybePromise;
-
-      Object.assign(reqHeaders, newHeaders);
-    }
+    const headers = (maybePromiseHeaders instanceof Promise)
+      ? await maybePromiseHeaders
+      : maybePromiseHeaders;
 
     return await this.fetchCtx.ctx.fetch({
       url: url,
       body: info.data,
       method: info.method,
-      headers: reqHeaders,
+      headers: headers,
       forceHttp1: !!info.forceHttp1,
       timeout: msRemaining,
       mkTimeoutError,
     });
   }
 }
+

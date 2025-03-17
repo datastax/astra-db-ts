@@ -159,7 +159,7 @@ export interface DataAPIClientOptions {
    *
    * ##### Inheritance
    *
-   * The additional headers set here will be inherited by, and may be overwritten by, the {@linnk DbOptions.additionalHeaders} and {@link AdminOptions.additionalHeaders} options.
+   * The additional headers set here will be inherited by, and may be overwritten by, the {@link DbOptions.additionalHeaders} and {@link AdminOptions.additionalHeaders} options.
    */
   additionalHeaders?: AdditionalHeaders,
 }

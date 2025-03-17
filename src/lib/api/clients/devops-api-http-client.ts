@@ -20,13 +20,13 @@ import {
   DevOpsUnexpectedStateError,
 } from '@/src/administration/errors.js';
 import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
-import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants.js';
-import type { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types.js';
-import type { nullish } from '@/src/lib/index.js';
+import { HttpMethods } from '@/src/lib/api/constants.js';
+import type { HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types.js';
 import { jsonTryParse } from '@/src/lib/utils.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
-import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 import { NonErrorError } from '@/src/lib/errors.js';
+import { HeadersProvider } from '@/src/lib/index.js';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 
 /**
  * @internal
@@ -63,9 +63,23 @@ interface DevopsAPIResponse {
 /**
  * @internal
  */
+interface DevOpsAPIHttpClientOpts extends Omit<HTTPClientOptions, 'mkTimeoutError'> {
+  tokenProvider: ParsedTokenProvider,
+}
+
+/**
+ * @internal
+ */
 export class DevOpsAPIHttpClient extends HttpClient {
-  constructor(opts: HTTPClientOptions) {
-    super(opts, [mkAuthHeaderProvider(opts.tokenProvider)], DevOpsAPITimeoutError.mk);
+  constructor(opts: DevOpsAPIHttpClientOpts) {
+    super('devops-api', {
+      ...opts,
+      additionalHeaders: HeadersProvider.opts.fromObj.concat([
+        opts.additionalHeaders,
+        opts.tokenProvider.toHeadersProvider(),
+      ]),
+      mkTimeoutError: DevOpsAPITimeoutError.mk,
+    });
   }
 
   public async request(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started = 0): Promise<DevopsAPIResponse> {
@@ -182,15 +196,3 @@ export class DevOpsAPIHttpClient extends HttpClient {
     }
   }
 }
-
-const mkAuthHeaderProvider = (tp: ParsedTokenProvider): HeaderProvider => () => {
-  const token = tp.getToken();
-
-  return (token instanceof Promise)
-    ? token.then(mkAuthHeader)
-    : mkAuthHeader(token);
-};
-
-const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
-  ? { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }
-  : {};

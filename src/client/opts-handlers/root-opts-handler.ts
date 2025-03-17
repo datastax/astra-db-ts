@@ -43,6 +43,7 @@ export interface ParsedRootClientOpts extends Parsed<'DataAPIClientOptions'> {
   caller: typeof CallerCfgHandler.parsed,
   dbOptions: typeof DbOptsHandler.parsed,
   adminOptions: typeof AdminOptsHandler.parsed,
+  additionalHeaders: typeof HeadersProvider.opts.parsed,
 }
 
 /**
@@ -70,18 +71,25 @@ export const RootOptsHandler = (defaultToken: typeof TokenProvider.opts.parsed, 
     };
 
     return {
+      additionalHeaders: input.additionalHeaders,
       environment: input.environment,
       fetchCtx: input.httpOptions,
       caller: input.caller,
       client: client,
       dbOptions: DbOptsHandler.concat([input.dbOptions, {
         ...DbOptsHandler.empty,
-        token: TokenProvider.opts.concat([defaultToken, input.dbOptions.token]),
+        token: TokenProvider.opts.concat([
+          defaultToken,
+          input.dbOptions.token,
+        ]),
         ...dbAndAdminCommon,
       }]),
       adminOptions: AdminOptsHandler.concat([input.adminOptions, {
         ...AdminOptsHandler.empty,
-        adminToken: TokenProvider.opts.concat([defaultToken, input.adminOptions.adminToken]),
+        adminToken: TokenProvider.opts.concat([
+          defaultToken,
+          input.adminOptions.adminToken,
+        ]),
         ...dbAndAdminCommon,
       }]),
     };
