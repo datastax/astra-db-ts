@@ -15,7 +15,7 @@
 import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
 import type { DbOptions } from '@/src/client/index.js';
-import { TokenProvider } from '@/src/lib/index.js';
+import { HeadersProvider, TokenProvider } from '@/src/lib/index.js';
 import { exact, nullish, oneOf, optional, record, regex, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';

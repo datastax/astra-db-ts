@@ -15,6 +15,7 @@
 import type { LoggingConfig, TokenProvider } from '@/src/lib/index.js';
 import { type TimeoutDescriptor } from '@/src/lib/index.js';
 import type { CollectionSerDesConfig, TableSerDesConfig } from '@/src/documents/index.js';
+import type { AdditionalHeaders } from '@/src/lib/headers-providers/index.js';
 
 /**
  * The default db options as can be specified in the {@link DataAPIClientOptions}.
@@ -117,6 +118,27 @@ export interface DbOptions {
    * @beta
    */
   serdes?: DbSerDesConfig,
+  /**
+   * ##### Overview
+   *
+   * Additional headers to include in the HTTP requests to both the Data API.
+   *
+   * ##### Disclaimer
+   *
+   * This is an "escape hatch" of sorts, for setting arbitrary headers which are not covered by other options.
+   *
+   * In the vast majority of cases, you may want to use other alternatives instead for setting appropriate headers, such as:
+   * - Parameters which accept {@link TokenProvider}s
+   * - Parameters such as
+   *   - {@link CollectionOptions.embeddingApiKey}
+   *   - {@link CollectionOptions.rerankingApiKey}
+   *   - (or their {@link TableOptions} equivalents!)
+   *
+   * ##### Inheritance
+   *
+   * This will inherit, and may potentially overwrite, any headers set in the {@link DataAPIClient.additionalHeaders} option.
+   */
+  additionalHeaders?: AdditionalHeaders,
   /**
    * ##### Overview
    *

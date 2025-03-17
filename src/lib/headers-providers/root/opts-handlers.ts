@@ -30,13 +30,13 @@ const monoid = monoids.object({
 /**
  * @internal
  */
-export type ParsedHeadersProviders = MonoidType<typeof monoid> & Parsed<'HeadersProvider'>;
+export type ParsedHeadersProvider = MonoidType<typeof monoid> & Parsed<'HeadersProvider'>;
 
 /**
  * @internal
  */
 interface StrBasedTypes extends OptionsHandlerTypes {
-  Parsed: ParsedHeadersProviders,
+  Parsed: ParsedHeadersProvider,
   Parseable: HeadersProvider | string | undefined | null,
   Decoded: DecoderType<typeof decoderFromStr>,
 }
@@ -73,7 +73,7 @@ export const StringBasedHeadersProviderOptsHandler = <Tag extends HeadersProvide
  * @internal
  */
 interface ObjBasedTypes extends OptionsHandlerTypes {
-  Parsed: ParsedHeadersProviders,
+  Parsed: ParsedHeadersProvider,
   Parseable: AdditionalHeaders | undefined | null,
   Decoded: DecoderType<typeof decoderFromObj>,
 }
@@ -112,6 +112,4 @@ export const ObjectBasedHeadersProviderOptsHandler = (() => {
 HeadersProvider.opts = {
   fromStr: StringBasedHeadersProviderOptsHandler,
   fromObj: ObjectBasedHeadersProviderOptsHandler,
-  monoid: monoid as MonoidType<ParsedHeadersProviders>,
-  parsed: null!,
 };
