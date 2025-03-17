@@ -14,6 +14,7 @@
 
 import { EmbeddingAPIKeyHeaderProvider } from '@/src/documents/index.js';
 import { isNullish } from '@/src/lib/utils.js';
+import { HeadersProvider } from '@/src/lib/headers-providers/root/headers-provider.js';
 
 /**
  * The base class for an "embedding headers provider", a general concept for anything that provides headers used for
@@ -45,7 +46,7 @@ import { isNullish } from '@/src/lib/utils.js';
  *
  * @public
  */
-export abstract class EmbeddingHeadersProvider {
+export abstract class EmbeddingHeadersProvider extends HeadersProvider {
   /**
    * The function which provides the headers.
    *

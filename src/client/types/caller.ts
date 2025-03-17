@@ -13,6 +13,8 @@
 // limitations under the License.
 
 /**
+ * ##### Overview
+ *
  * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
  *
  * **Intended generally for integrations or frameworks that wrap the client.**

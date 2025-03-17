@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type { LoggingConfig, TimeoutDescriptor, TokenProvider } from '@/src/lib/index.js';
+import type { AdditionalHeaders } from '@/src/lib/headers-providers/index.js';
 
 /**
  * The default admin options as can be specified in the {@link DataAPIClientOptions}.
@@ -68,14 +69,23 @@ export interface AdminOptions {
    */
   endpointUrl?: string,
   /**
-   * Additional headers to include in the HTTP requests to the DevOps API.
+   * ##### Overview
    *
-   * @remarks
-   * There are more than likely more official/structured ways to set any desired headers, such as through
-   * {@link TokenProvider}s or {@link EmbeddingHeadersProvider}s. This is more of a last-resort option, such
-   * as for enabling feature-flags or other non-standard headers.
+   * Additional headers to include in the HTTP requests to both the administration API.
+   * - This may be either the Data API or the DevOps API depending on the target database, and the operation being performed
+   *
+   * ##### Disclaimer
+   *
+   * This is an "escape hatch" of sorts, for setting arbitrary headers which are not covered by other options.
+   *
+   * In the vast majority of cases, you may want to use other alternatives instead for setting appropriate headers, such
+   * as parameters which accept {@link TokenProvider}s
+   *
+   * ##### Inheritance
+   *
+   * This will inherit, and may potentially overwrite, any headers set in the {@link DataAPIClient.additionalHeaders} option.
    */
-  additionalHeaders?: Record<string, string>,
+  additionalHeaders?: AdditionalHeaders,
   /**
    * The Astra environment to use when interacting with the DevOps API.
    *

@@ -15,6 +15,7 @@
 import type { LoggingConfig, TokenProvider } from '@/src/lib/index.js';
 import { type TimeoutDescriptor } from '@/src/lib/index.js';
 import type { CollectionSerDesConfig, TableSerDesConfig } from '@/src/documents/index.js';
+import type { AdditionalHeaders } from '@/src/lib/headers-providers/index.js';
 
 /**
  * The default db options as can be specified in the {@link DataAPIClientOptions}.
@@ -118,14 +119,26 @@ export interface DbOptions {
    */
   serdes?: DbSerDesConfig,
   /**
-   * Additional headers to include in the HTTP requests to the DevOps API.
+   * ##### Overview
    *
-   * @remarks
-   * There are more than likely more official/structured ways to set any desired headers, such as through
-   * {@link TokenProvider}s or {@link EmbeddingHeadersProvider}s. This is more of a last-resort option, such
-   * as for enabling feature-flags or other non-standard headers.
+   * Additional headers to include in the HTTP requests to both the Data API.
+   *
+   * ##### Disclaimer
+   *
+   * This is an "escape hatch" of sorts, for setting arbitrary headers which are not covered by other options.
+   *
+   * In the vast majority of cases, you may want to use other alternatives instead for setting appropriate headers, such as:
+   * - Parameters which accept {@link TokenProvider}s
+   * - Parameters such as
+   *   - {@link CollectionOptions.embeddingApiKey}
+   *   - {@link CollectionOptions.rerankingApiKey}
+   *   - (or their {@link TableOptions} equivalents!)
+   *
+   * ##### Inheritance
+   *
+   * This will inherit, and may potentially overwrite, any headers set in the {@link DataAPIClient.additionalHeaders} option.
    */
-  additionalHeaders?: Record<string, string>,
+  additionalHeaders?: AdditionalHeaders,
   /**
    * ##### Overview
    *

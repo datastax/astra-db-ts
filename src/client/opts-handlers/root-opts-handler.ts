@@ -15,7 +15,7 @@
 import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { OptionsHandler } from '@/src/lib/opts-handler.js';
 import type { DataAPIClient, DataAPIClientOptions } from '@/src/client/index.js';
-import { TokenProvider } from '@/src/lib/index.js';
+import { HeadersProvider, TokenProvider } from '@/src/lib/index.js';
 import { exact } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
@@ -56,6 +56,7 @@ const decoder = exact({
   adminOptions: AdminOptsHandler.decoder,
   caller: CallerCfgHandler.decoder,
   timeoutDefaults: Timeouts.cfg.decoder,
+  additionalHeaders: HeadersProvider.opts.fromObj.decoder,
 });
 
 /**
