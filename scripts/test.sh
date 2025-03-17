@@ -111,7 +111,7 @@ case "$test_type" in
     ;;
   "coverage")
     export CLIENT_RUN_VECTORIZE_TESTS=1 CLIENT_RUN_LONG_TESTS=1 CLIENT_RUN_ADMIN_TESTS=1
-    cmd_to_run="npx nyc $test_cmd"
+    cmd_to_run="npx c8 $test_cmd"
     ;;
 esac
 
