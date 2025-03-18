@@ -51,6 +51,9 @@ interface NumCoercionTree {
   [key: string]: NumCoercionTree;
 }
 
+/**
+ * @internal
+ */
 export const buildGetNumCoercionForPathFn = (cfg: ParsedSerDesConfig<CollectionSerDesConfig>): GetCollNumCoercionFn | undefined => {
   return (typeof cfg?.enableBigNumbers === 'object')
     ? collNumCoercionFnFromCfg(cfg.enableBigNumbers)
@@ -141,6 +144,9 @@ export class NumCoercionError extends Error {
   }
 }
 
+/**
+ * @internal
+ */
 export const coerceBigNumber = (value: BigNumber, path: readonly PathSegment[], getNumCoercionForPath: GetCollNumCoercionFn, pathMatches: (path: readonly PathSegment[]) => boolean): unknown => {
   const coercer = getNumCoercionForPath(path, pathMatches);
 
@@ -175,6 +181,9 @@ export const coerceBigNumber = (value: BigNumber, path: readonly PathSegment[], 
   }
 };
 
+/**
+ * @internal
+ */
 export const coerceNumber = (value: number, path: readonly PathSegment[], getNumCoercionForPath: GetCollNumCoercionFn, pathMatches: (path: readonly PathSegment[]) => boolean): unknown => {
   const coercer = getNumCoercionForPath(path, pathMatches);
 
@@ -200,10 +209,16 @@ export const coerceNumber = (value: number, path: readonly PathSegment[], getNum
   }
 };
 
+/**
+ * @internal
+ */
 export const coerceNums = (val: unknown, getNumCoercionForPath: GetCollNumCoercionFn) => {
   return coerceNumsImpl(val, [], getNumCoercionForPath, (p) => pathMatches([], p));
 };
 
+/**
+ * @internal
+ */
 const coerceNumsImpl = (val: unknown, path: PathSegment[], getNumCoercionForPath: GetCollNumCoercionFn, pathMatchesFn: (path: readonly PathSegment[]) => boolean): unknown => {
   if (typeof val === 'number') {
     return coerceNumber(val, path, getNumCoercionForPath, pathMatchesFn);

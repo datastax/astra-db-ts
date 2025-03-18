@@ -15,3 +15,4 @@
 export type * from './common.js';
 export type * from './filters.js';
 export type * from './dot-notation.js';
+export type * from './utils.js';

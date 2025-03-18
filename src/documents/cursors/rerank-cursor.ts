@@ -38,7 +38,7 @@ import {
   cloneFLC,
 } from '@/src/documents/cursors/common.js';
 
-class RerankResult<TRaw> {
+export class RerankResult<TRaw> {
   constructor(
     public readonly document: TRaw,
     public readonly scores: Record<string, number>,

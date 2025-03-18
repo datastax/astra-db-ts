@@ -23,7 +23,7 @@ export interface TableCreateTextIndexOptions extends WithTimeout<'tableAdminTime
   /**
    * Options available for `text` and `ascii` indexes
    */
-  options?: TableIndexOptions,
+  options?: TableTextIndexOptions,
   /**
    * If `true`, no error will be thrown if the index already exists.
    *
@@ -38,6 +38,6 @@ export interface TableCreateTextIndexOptions extends WithTimeout<'tableAdminTime
  *
  * @public
  */
-export interface TableIndexOptions {
+export interface TableTextIndexOptions {
   analyzer?: string | Record<string, unknown>,
 }

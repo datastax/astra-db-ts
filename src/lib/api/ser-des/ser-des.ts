@@ -14,7 +14,6 @@
 
 import type { SomeDoc } from '@/src/documents/index.js';
 import type { Deserializers, RawCodec, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
-import { processCodecs } from '@/src/lib/index.js';
 import type { BaseDesCtx, BaseSerCtx, BaseSerDesCtx } from '@/src/lib/api/ser-des/ctx.js';
 import {
   ctxDone,
@@ -28,6 +27,7 @@ import {
 } from '@/src/lib/api/ser-des/ctx.js';
 import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 import type { PathSegment } from '@/src/lib/types.js';
+import { processCodecs } from '@/src/lib/api/ser-des/codecs.js';
 
 /**
  * @public
