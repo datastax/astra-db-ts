@@ -9,6 +9,7 @@ import { CollectionSerDesConfig as CollectionSerDesConfig_2 } from '../../docume
 import { Decoder } from 'decoders';
 import type { DecoderType } from 'decoders';
 import { Monoid as Monoid_2 } from '../../lib/opts-handler.js';
+import { Monoid as Monoid_3 } from '../../../lib/opts-handler.js';
 import { ParsedLoggingConfig as ParsedLoggingConfig_2 } from '../../lib/logging/cfg-handler.js';
 import { ParsedSerDesConfig } from '../../lib/api/ser-des/cfg-handler.js';
 import { ParsedTimeoutDescriptor } from '../../lib/api/timeouts/cfg-handler.js';
@@ -74,6 +75,9 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
 export interface AddColumnOperation {
     columns: CreateTableColumnDefinitions;
 }
+
+// @public (undocumented)
+export type AdditionalHeaders = OneOrMany<HeadersProvider | Record<string, string | undefined>>;
 
 // @public (undocumented)
 export interface AddRerankingOperation {
@@ -172,7 +176,6 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
 
 // @public
 export interface AdminOptions {
-    additionalHeaders?: Record<string, string>;
     adminToken?: string | TokenProvider | null;
     astraEnv?: 'dev' | 'prod' | 'test';
     endpointUrl?: string;
@@ -311,9 +314,8 @@ export interface AstraPollBlockingOptions {
 }
 
 // @public
-export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
+export class AWSEmbeddingHeadersProvider extends StaticHeadersProvider<'embedding'> {
     constructor(accessKeyId: string, secretAccessKey: string);
-    getHeaders(): Record<string, string>;
 }
 
 // @public
@@ -677,8 +679,9 @@ export type CollectionNumberUpdate<Schema> = {
 
 // @public
 export interface CollectionOptions extends WithKeyspace {
-    embeddingApiKey?: string | EmbeddingHeadersProvider | null;
+    embeddingApiKey?: string | EmbeddingHeadersProvider;
     logging?: LoggingConfig;
+    rerankingApiKey?: string | RerankingHeadersProvider;
     // @beta
     serdes?: CollectionSerDesConfig;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
@@ -975,6 +978,7 @@ export type DataAPIClientEventMap = AdminCommandEventMap & CommandEventMap;
 
 // @public
 export interface DataAPIClientOptions {
+    additionalHeaders?: AdditionalHeaders;
     adminOptions?: RootAdminOptions;
     caller?: OneOrMany<Caller>;
     dbOptions?: RootDbOptions;
@@ -1181,8 +1185,7 @@ export class DataAPITimeoutError extends DataAPIError {
     constructor(info: HTTPRequestInfo, types: TimedOutCategories);
     // @internal (undocumented)
     static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError;
-    // (undocumented)
-    readonly timedOutTypes: TimedOutCategories;
+    readonly timedOutCategories: TimedOutCategories;
     readonly timeout: Partial<TimeoutDescriptor>;
 }
 
@@ -1284,7 +1287,6 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
 
 // @public
 export interface DbOptions {
-    additionalHeaders?: Record<string, string>;
     dataApiPath?: string;
     keyspace?: string | null;
     logging?: LoggingConfig;
@@ -1347,8 +1349,7 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
     constructor(info: HTTPRequestInfo, types: TimedOutCategories);
     // @internal (undocumented)
     static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError;
-    // (undocumented)
-    readonly timedOutTypes: TimedOutCategories;
+    readonly timedOutCategories: TimedOutCategories;
     readonly timeout: Partial<TimeoutDescriptor>;
     readonly url: string;
 }
@@ -1389,17 +1390,14 @@ export const duration: ((...params: [string] | [number, number, number | bigint]
 };
 
 // @public
-export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
+export class EmbeddingAPIKeyHeaderProvider extends StaticHeadersProvider<'embedding'> {
     constructor(apiKey: string | nullish);
-    getHeaders(): Record<string, string>;
+    // @internal
+    static parse(provider: unknown, field?: string): HeadersProvider<'embedding'>;
 }
 
-// @public
-export abstract class EmbeddingHeadersProvider {
-    abstract getHeaders(): Promise<Record<string, string>> | Record<string, string>;
-    // @internal
-    static parse(provider: unknown): EmbeddingHeadersProvider;
-}
+// @public (undocumented)
+export type EmbeddingHeadersProvider = HeadersProvider<'embedding'>;
 
 // @public
 export interface EmbeddingProviderAuthInfo {
@@ -1746,11 +1744,35 @@ export type GenericUpdateResult<ID, N extends number> = (GuaranteedUpdateResult<
 // @public (undocumented)
 export type GetCollNumCoercionFn = (path: readonly PathSegment[], matches: (path: readonly PathSegment[]) => boolean) => CollNumCoercion;
 
+// @public (undocumented)
+export interface GetHeadersCtx {
+    // (undocumented)
+    readonly for: 'devops-api' | 'data-api';
+}
+
 // @public
 export interface GuaranteedUpdateResult<N extends number> {
     matchedCount: N;
     modifiedCount: N;
 }
+
+// @public (undocumented)
+export abstract class HeadersProvider<Tag extends HeadersProviderVariants = any> {
+    // (undocumented)
+    abstract getHeaders(ctx: GetHeadersCtx): Promise<Record<string, string | undefined>> | Record<string, string | undefined>;
+    // @internal (undocumented)
+    static opts: {
+        fromStr: typeof StringBasedHeadersProviderOptsHandler;
+        fromObj: typeof ObjectBasedHeadersProviderOptsHandler;
+        monoid: Monoid<ParsedHeadersProviders>;
+        parsed: ParsedHeadersProviders;
+    };
+    // (undocumented)
+    readonly _phant: `Expected a HeaderProvider specifically for ${Tag}s (e.g. \`class ${Capitalize<Tag>}HeadersProvider extends HeadersProvider<'${Tag}'>\`).`;
+}
+
+// @public (undocumented)
+export type HeadersProviderVariants = 'embedding' | 'reranking';
 
 // @public
 export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> {
@@ -1939,6 +1961,9 @@ export interface NominalCodecOpts<SerCtx, DesCtx> {
 }
 
 // @public
+export type NonEmpty<T> = [T, ...T[]];
+
+// @public
 export interface NoUpsertUpdateResult {
     upsertedCount: 0;
     upsertedId?: never;
@@ -2011,6 +2036,12 @@ export const enum PropagationState {
 }
 
 // @public (undocumented)
+export abstract class PureHeadersProvider<Tag extends HeadersProviderVariants = any> extends HeadersProvider<Tag> {
+    // (undocumented)
+    abstract getHeaders(ctx: GetHeadersCtx): Record<string, string | undefined>;
+}
+
+// @public (undocumented)
 export type RawCodec<SerCtx = any, DesCtx = any> = {
     tag: 'forName';
     name: string;
@@ -2036,6 +2067,9 @@ export interface RawDataAPIResponse {
     readonly warnings?: DataAPIWarningDescriptor[];
 }
 
+// @public
+export type ReadonlyNonEmpty<T> = readonly [T, ...T[]];
+
 // Warning: (ae-internal-missing-underscore) The name "Ref" should be prefixed with an underscore because the declaration is marked as @internal
 //
 // @internal (undocumented)
@@ -2043,6 +2077,16 @@ export interface Ref<T> {
     // (undocumented)
     ref: T;
 }
+
+// @public
+export class RerankingAPIKeyHeaderProvider extends StaticHeadersProvider<'reranking'> {
+    constructor(apiKey: string | nullish);
+    // @internal
+    static parse(provider: unknown, field?: string): HeadersProvider<'reranking'>;
+}
+
+// @public (undocumented)
+export type RerankingHeadersProvider = HeadersProvider<'reranking'>;
 
 // @public (undocumented)
 export interface RerankingServiceOptions {
@@ -2117,10 +2161,19 @@ export type Sort = Record<string, SortDirection | string | number[] | DataAPIVec
 // @public
 export type SortDirection = 1 | -1;
 
+// @public (undocumented)
+export class StaticHeadersProvider<Tag extends HeadersProviderVariants = any> extends PureHeadersProvider<Tag> {
+    constructor(headers: Record<string, string | undefined>);
+    // (undocumented)
+    getHeaders(_: GetHeadersCtx): Record<string, string | undefined>;
+}
+
 // @public
 export class StaticTokenProvider extends TokenProvider {
     constructor(token: string);
     getToken(): string;
+    // @internal (undocumented)
+    toHeadersProvider(): ParsedHeadersProviders;
 }
 
 // @public
@@ -2362,8 +2415,9 @@ export interface TableMapColumnDefinition {
 
 // @public
 export interface TableOptions extends WithKeyspace {
-    embeddingApiKey?: string | EmbeddingHeadersProvider | null;
+    embeddingApiKey?: string | EmbeddingHeadersProvider;
     logging?: LoggingConfig;
+    rerankingApiKey?: string | RerankingHeadersProvider;
     // @beta
     serdes?: TableSerDesConfig;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
@@ -2434,7 +2488,7 @@ export const time: ((...params: [string] | [Date] | [number, number, number?, nu
 };
 
 // @public
-export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided';
+export type TimedOutCategories = ReadonlyNonEmpty<keyof TimeoutDescriptor> | 'provided';
 
 // @public
 export interface TimeoutDescriptor {
@@ -2455,10 +2509,23 @@ export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema,
 // @public
 export abstract class TokenProvider {
     abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
+    // @internal (undocumented)
+    protected _mkAuthHeader(ctx: GetHeadersCtx): (token: string | null | undefined) => {
+        Token: string;
+        Authorization?: undefined;
+    } | {
+        Authorization: string;
+        Token?: undefined;
+    } | {
+        Token?: undefined;
+        Authorization?: undefined;
+    };
     // Warning: (ae-forgotten-export) The symbol "TokenProviderOptsHandler" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
     static opts: typeof TokenProviderOptsHandler;
+    // @internal (undocumented)
+    toHeadersProvider(): ParsedHeadersProviders;
 }
 
 // @public
@@ -2496,9 +2563,8 @@ export interface UpsertedUpdateResult<ID> {
 }
 
 // @public
-export class UsernamePasswordTokenProvider extends TokenProvider {
+export class UsernamePasswordTokenProvider extends StaticTokenProvider {
     constructor(username: string, password: string);
-    getToken(): string;
 }
 
 // @public
@@ -2568,6 +2634,10 @@ export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
 //
 // dist/esm/documents/collections/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
 // dist/esm/documents/tables/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
+// dist/esm/lib/headers-providers/root/headers-provider.d.ts:10:9 - (ae-forgotten-export) The symbol "StringBasedHeadersProviderOptsHandler" needs to be exported by the entry point index.d.ts
+// dist/esm/lib/headers-providers/root/headers-provider.d.ts:11:9 - (ae-forgotten-export) The symbol "ObjectBasedHeadersProviderOptsHandler" needs to be exported by the entry point index.d.ts
+// dist/esm/lib/headers-providers/root/headers-provider.d.ts:12:9 - (ae-forgotten-export) The symbol "Monoid" needs to be exported by the entry point index.d.ts
+// dist/esm/lib/headers-providers/root/headers-provider.d.ts:12:9 - (ae-forgotten-export) The symbol "ParsedHeadersProviders" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
