@@ -770,7 +770,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns a {@link FindCursor} which can be iterated over.
    */
-  public find(filter?: TableFilter<WSchema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
+  public find(filter: TableFilter<WSchema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
 
   /**
    * ##### Overview
@@ -914,15 +914,15 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    */
   public find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
 
-  public find(filter?: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<SomeRow> {
+  public find(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<SomeRow> {
     return this.#commands.find(filter, options, TableFindCursor);
   }
 
-  public findAndRerank(filter?: TableFilter<WSchema>, options?: TableFindAndRerankOptions & { projection?: never }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
+  public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions & { projection?: never }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
 
   public findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>
 
-  public findAndRerank(filter?: TableFilter<WSchema>, options?: TableFindAndRerankOptions): TableFindAndRerankCursor<SomeRow> {
+  public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions): TableFindAndRerankCursor<SomeRow> {
     return this.#commands.findAndRerank(filter, options, TableFindAndRerankCursor);
   }
 

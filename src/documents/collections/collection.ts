@@ -738,7 +738,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns a {@link FindCursor} which can be iterated over.
    */
-  public find(filter?: CollectionFilter<WSchema>, options?: CollectionFindOptions & { projection?: never }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>
+  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions & { projection?: never }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>
 
   /**
    * ##### Overview
@@ -882,15 +882,15 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    */
   public find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>
 
-  public find(filter?: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc> {
+  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc> {
     return this.#commands.find(filter, options, CollectionFindCursor);
   }
 
-  public findAndRerank(filter?: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
+  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
 
   public findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<TRaw, TRaw>
 
-  public findAndRerank(filter?: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<SomeDoc> {
+  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<SomeDoc> {
     return this.#commands.findAndRerank(filter, options, CollectionFindAndRerankCursor);
   }
 

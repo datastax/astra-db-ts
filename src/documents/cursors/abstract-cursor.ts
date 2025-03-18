@@ -139,7 +139,9 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The records read from the buffer.
    */
   public consumeBuffer(max?: number): TRaw[] {
-    return this._buffer.splice(0, max ?? this._buffer.length);
+    const ret = this._buffer.splice(0, max ?? this._buffer.length);
+    this._consumed += ret.length;
+    return ret;
   }
 
   /**
