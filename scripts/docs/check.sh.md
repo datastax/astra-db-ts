@@ -79,10 +79,10 @@ If set, the script will check that all file-level test suites in the `test` fold
 It is expected that each file-level test suite will have a name that matches the file path relative to the `tests/` directory,
 with slashes replaced by dots, and the `.test.ts` extension removed.
 
-For example, the file `tests/unit/documents/cursor.test.ts` should have a file-level test suite named `unit.documents.cursor`.
+For example, the file `tests/unit/documents/utils.test.ts` should have a file-level test suite named `unit.documents.utils`.
 
 ```ts
-describe('unit.documents.cursor', () => {
+describe('unit.documents.utils', () => {
   // Tests here
 });
 ```
