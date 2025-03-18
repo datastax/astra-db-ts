@@ -143,7 +143,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): this {
-    return buildFLCOption(this, 'limit', limit || Infinity);
+    return buildFLCOption(this, 'limit', limit || undefined);
   }
 
   public hybridLimits(hybridLimits: number | Record<string, number>): this {

@@ -14,13 +14,13 @@
 // noinspection DuplicatedCode
 
 import { describe } from '@/tests/testlib/index.js';
-import { TableFindCursor } from '@/src/documents/index.js';
-import { unitTestFindCursor } from '@/tests/unit/documents/__common/find-cursor.js';
+import { TableFindAndRerankCursor } from '@/src/documents/index.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
+import { unitTestRerankCursor } from '@/tests/unit/documents/__common/rerank-cursor.js';
 
-describe('unit.documents.cursors.find-cursor', ({ table }) => {
-  unitTestFindCursor({
-    CursorImpl: TableFindCursor,
+describe('unit.documents.cursors.rerank-cursor', ({ table }) => {
+  unitTestRerankCursor({
+    CursorImpl: TableFindAndRerankCursor,
     parent: table,
     serdes: new TableSerDes(TableSerDes.cfg.empty),
   });
