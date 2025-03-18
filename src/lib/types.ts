@@ -69,3 +69,17 @@ export type LitUnion<LiteralType, BaseType = string> = LiteralType | (BaseType &
  * @public
  */
 export type PathSegment = string | number;
+
+/**
+ * Utility type to represent a non-empty array.
+ *
+ * @public
+ */
+export type NonEmpty<T> = [T, ...T[]];
+
+/**
+ * Utility type to represent a readonly non-empty array.
+ *
+ * @public
+ */
+export type ReadonlyNonEmpty<T> = readonly [T, ...T[]];

@@ -70,7 +70,10 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
    */
   public readonly timeout: Partial<TimeoutDescriptor>;
 
-  public readonly timedOutTypes: TimedOutCategories;
+  /**
+   * Represents which timeouts timed out (e.g. `'requestTimeoutMs'`, `'tableAdminTimeoutMs'`, the provided timeout, etc.)
+   */
+  public readonly timedOutCategories: TimedOutCategories;
 
   /**
    * Shouldn't be instantiated directly.
@@ -81,7 +84,7 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
     super(Timeouts.fmtTimeoutMsg(info.timeoutManager, types));
     this.url = info.url;
     this.timeout = info.timeoutManager.initial();
-    this.timedOutTypes = types;
+    this.timedOutCategories = types;
     this.name = 'DevOpsAPITimeoutError';
   }
 

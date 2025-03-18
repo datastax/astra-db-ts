@@ -198,7 +198,10 @@ export class DataAPITimeoutError extends DataAPIError {
    */
   public readonly timeout: Partial<TimeoutDescriptor>;
 
-  public readonly timedOutTypes: TimedOutCategories;
+  /**
+   * Represents which timeouts timed out (e.g. `'requestTimeoutMs'`, `'tableAdminTimeoutMs'`, the provided timeout, etc.)
+   */
+  public readonly timedOutCategories: TimedOutCategories;
 
   /**
    * Should not be instantiated by the user.
@@ -208,7 +211,7 @@ export class DataAPITimeoutError extends DataAPIError {
   constructor(info: HTTPRequestInfo, types: TimedOutCategories) {
     super(Timeouts.fmtTimeoutMsg(info.timeoutManager, types));
     this.timeout = info.timeoutManager.initial();
-    this.timedOutTypes = types;
+    this.timedOutCategories = types;
     this.name = 'DataAPITimeoutError';
   }
 
