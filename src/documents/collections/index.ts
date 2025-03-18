@@ -14,13 +14,14 @@
 // noinspection DuplicatedCode
 
 export * from './cursors/find-cursor.js';
-export * from './cursors/rerank-cursor.js';
-export * from './collection.js';
+export { CollectionFindAndRerankCursor } from './cursors/rerank-cursor.js';
+export { Collection } from './collection.js';
 
 export type * from './types/index.js';
 
 export * from './ser-des/codecs.js';
-export * from './ser-des/constants.js';
+export { CollectionCodecs } from './ser-des/codecs.js'; // 2nd export necessary for some reason; otherwise CollectionCodecs isn't available in CJS
+export { $SerializeForCollection, $DeserializeForCollection } from './ser-des/constants.js';
 
 export type {
   CollectionSerDesConfig,
