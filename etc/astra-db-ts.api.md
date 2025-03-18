@@ -397,8 +397,6 @@ export interface BaseSerDesCtx {
     replace<T>(obj: T): readonly [2, T];
     // (undocumented)
     rootObj: any;
-    // Warning: (ae-forgotten-export) The symbol "SerDesTarget" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     target: SerDesTarget;
 }
@@ -410,6 +408,9 @@ export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
 
 // @public
 export type Caller = readonly [name: string, version?: string];
+
+// @public (undocumented)
+export type CollCustomCodecOpts = CustomCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 // @public
 export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalLogger<CommandEventMap> {
@@ -425,8 +426,6 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
         projection?: never;
     }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
     find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>;
-    // Warning: (ae-forgotten-export) The symbol "CollectionFindAndRerankCursor" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     findAndRerank(filter?: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & {
         projection?: never;
@@ -457,8 +456,6 @@ export interface CollectionArrayFilterOps<Elem> {
     $size?: number;
 }
 
-// Warning: (ae-forgotten-export) The symbol "PickArrayTypes" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type CollectionArrayUpdate<Schema> = {
     [K in keyof Schema as any[] extends Schema[K] ? K : never]?: PickArrayTypes<Schema[K]>;
@@ -482,8 +479,6 @@ export class CollectionCodecs {
             [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
         };
     }) => void)): CollectionCodecClass;
-    // Warning: (ae-forgotten-export) The symbol "CollCustomCodecOpts" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     static custom(opts: CollCustomCodecOpts): RawCollCodecs;
     // (undocumented)
@@ -495,14 +490,10 @@ export class CollectionCodecs {
     };
     // (undocumented)
     static forId(clazz: CollectionCodecClass): RawCollCodecs;
-    // Warning: (ae-forgotten-export) The symbol "CollNominalCodecOpts" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     static forName(name: string, optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
     // @deprecated (undocumented)
     static forPath(path: readonly PathSegment[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
-    // Warning: (ae-forgotten-export) The symbol "CollTypeCodecOpts" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     static forType(type: string, optsOrClass: CollTypeCodecOpts | CollectionCodecClass): RawCollCodecs;
 }
@@ -514,8 +505,6 @@ export type CollectionCurrentDate<Schema> = {
     } ? K : never]?: boolean;
 };
 
-// Warning: (ae-forgotten-export) The symbol "ContainsDate" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type CollectionDateUpdate<Schema> = {
     [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | {
@@ -596,6 +585,18 @@ export type CollectionFilterOps<Elem> = {
     $gte?: Elem;
 } & (any[] extends Elem ? CollectionArrayFilterOps<Elem> : EmptyObj);
 
+// @public (undocumented)
+export class CollectionFindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindAndRerankCursor<T, TRaw> {
+    // (undocumented)
+    get dataSource(): Collection;
+    // (undocumented)
+    filter(filter: CollectionFilter<TRaw>): this;
+    // (undocumented)
+    map: <R>(map: (doc: T) => R) => CollectionFindAndRerankCursor<R, TRaw>;
+    // (undocumented)
+    project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => CollectionFindAndRerankCursor<RRaw, RRaw>;
+}
+
 // @public
 export type CollectionFindAndRerankOptions = GenericFindAndRerankOptions;
 
@@ -670,8 +671,6 @@ export interface CollectionLexicalOptions {
     enabled: boolean;
 }
 
-// Warning: (ae-forgotten-export) The symbol "IsNum" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type CollectionNumberUpdate<Schema> = {
     [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint;
@@ -778,6 +777,9 @@ export interface CollectionVectorOptions {
 }
 
 // @public (undocumented)
+export type CollNominalCodecOpts = NominalCodecOpts<CollectionSerCtx, CollectionDesCtx>;
+
+// @public (undocumented)
 export type CollNumCoercion = 'number' | 'strict_number' | 'bigint' | 'bignumber' | 'string' | 'number_or_string' | ((val: number | BigNumber, path: readonly PathSegment[]) => unknown);
 
 // @public (undocumented)
@@ -787,6 +789,9 @@ export interface CollNumCoercionCfg {
     // (undocumented)
     [path: string]: CollNumCoercion;
 }
+
+// @public (undocumented)
+export type CollTypeCodecOpts = TypeCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 // @public
 export abstract class CommandEvent extends BaseClientEvent {
@@ -867,6 +872,9 @@ export class CommandWarningsEvent extends CommandEvent {
     protected permits: this;
     readonly warnings: DataAPIErrorDescriptor[];
 }
+
+// @public
+export type ContainsDate<Schema> = IsDate<Schema[keyof Schema]>;
 
 // Warning: (ae-forgotten-export) The symbol "CqlNonGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "CqlGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
@@ -1278,7 +1286,6 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     abstract db(): Db;
     abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
-    // Warning: (ae-forgotten-export) The symbol "FindRerankingProvidersResult" needs to be exported by the entry point index.d.ts
     findRerankingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindRerankingProvidersResult>;
     // @internal (undocumented)
     protected abstract _getDataAPIHttpClient(): DataAPIHttpClient<'admin'>;
@@ -1539,8 +1546,6 @@ export class FetchNative implements Fetcher {
 // @public
 export type Filter = Record<string, any>;
 
-// Warning: (ae-forgotten-export) The symbol "RerankResult" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankResult<TRaw>> {
     // @internal
@@ -1614,6 +1619,11 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
 // @public
 export interface FindEmbeddingProvidersResult {
     embeddingProviders: Record<string, EmbeddingProviderInfo>;
+}
+
+// @public
+export interface FindRerankingProvidersResult {
+    rerankingProviders: Record<string, any>;
 }
 
 // @public
@@ -1845,6 +1855,17 @@ export class InvalidEnvironmentError extends Error {
 }
 
 // @public
+export type IsAny<T> = true extends false & T ? true : false;
+
+// @public
+export type IsDate<T> = IsAny<T> extends true ? true : T extends Date | {
+    $date: number;
+} ? true : false;
+
+// @public
+export type IsNum<T> = number extends T ? true : bigint extends T ? true : false;
+
+// @public
 export type KeyspaceReplicationOptions = {
     class: 'SimpleStrategy';
     replicationFactor: number;
@@ -2010,10 +2031,8 @@ export type OpaqueHttpClient = any;
 // @public
 export type PathSegment = string | number;
 
-// Warning: (ae-internal-missing-underscore) The name "processCodecs" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const processCodecs: <SerCtx, DesCtx>(raw: readonly RawCodec[]) => [Serializers<SerCtx>, Deserializers<DesCtx>];
+// @public
+export type PickArrayTypes<Schema> = Extract<Schema, any[]> extends (infer E)[] ? E : never;
 
 // @public
 export type Projection = Record<string, 1 | 0 | boolean | ProjectionSlice>;
@@ -2023,8 +2042,6 @@ export interface ProjectionSlice {
     $slice: number | [number, number];
 }
 
-// Warning: (ae-internal-missing-underscore) The name "PropagationState" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export const enum PropagationState {
     // (undocumented)
@@ -2059,6 +2076,11 @@ export type RawCodec<SerCtx = any, DesCtx = any> = {
     opts: CustomCodecOpts<SerCtx, DesCtx>;
 };
 
+// @public (undocumented)
+export type RawCollCodecs = readonly RawCodec<CollectionSerCtx, CollectionDesCtx>[] & {
+    phantom?: 'This codec is only valid for collections';
+};
+
 // @public
 export interface RawDataAPIResponse {
     readonly data?: Record<string, any>;
@@ -2067,11 +2089,14 @@ export interface RawDataAPIResponse {
     readonly warnings?: DataAPIWarningDescriptor[];
 }
 
+// @public (undocumented)
+export type RawTableCodecs = readonly RawCodec<TableSerCtx, TableDesCtx>[] & {
+    phantom?: 'This codec is only valid for tables';
+};
+
 // @public
 export type ReadonlyNonEmpty<T> = readonly [T, ...T[]];
 
-// Warning: (ae-internal-missing-underscore) The name "Ref" should be prefixed with an underscore because the declaration is marked as @internal
-//
 // @internal (undocumented)
 export interface Ref<T> {
     // (undocumented)
@@ -2100,6 +2125,15 @@ export interface RerankingServiceOptions {
     provider: string;
 }
 
+// @public (undocumented)
+export class RerankResult<TRaw> {
+    constructor(document: TRaw, scores: Record<string, number>);
+    // (undocumented)
+    readonly document: TRaw;
+    // (undocumented)
+    readonly scores: Record<string, number>;
+}
+
 // @public
 export type RootAdminOptions = Omit<AdminOptions, 'logging' | 'timeoutDefaults'>;
 
@@ -2114,13 +2148,27 @@ export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'>
     table?: string;
 }
 
-// Warning: (ae-forgotten-export) The symbol "SerDesFnRet" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export type SerDesFn<Ctx> = (value: any, ctx: Ctx) => SerDesFnRet | 'Return ctx.done(val?), ctx.recurse(val?), or ctx.continue(val?)';
 
 // @public (undocumented)
+export type SerDesFnRet = readonly [0 | 1 | 2 | 3, any?];
+
+// @public (undocumented)
 export type SerDesGuard<Ctx> = (value: any, ctx: Ctx) => boolean;
+
+// @public (undocumented)
+export const SerDesTarget: {
+    readonly Sort: number;
+    readonly Record: number;
+    readonly Filter: number;
+    readonly Update: number;
+    readonly Projection: number;
+    readonly InsertedId: number;
+};
+
+// @public (undocumented)
+export type SerDesTarget = typeof SerDesTarget[keyof typeof SerDesTarget];
 
 // @public (undocumented)
 export interface Serializers<SerCtx> {
@@ -2185,7 +2233,6 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: TableOptions | undefined);
     alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>>;
     createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void>;
-    // Warning: (ae-forgotten-export) The symbol "TableCreateTextIndexOptions" needs to be exported by the entry point index.d.ts
     createTextIndex(name: string, column: keyof WSchema, options?: TableCreateTextIndexOptions): Promise<void>;
     createVectorIndex(name: string, column: keyof WSchema, options?: TableCreateVectorIndexOptions): Promise<void>;
     definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
@@ -2196,9 +2243,6 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
         projection?: never;
     }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
     find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
-    // Warning: (ae-forgotten-export) The symbol "TableFindAndRerankOptions" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-forgotten-export) The symbol "TableFindAndRerankCursor" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     findAndRerank(filter?: TableFilter<WSchema>, options?: TableFindAndRerankOptions & {
         projection?: never;
@@ -2236,8 +2280,6 @@ export class TableCodecs {
             [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
         };
     }) => void)): TableCodecClass;
-    // Warning: (ae-forgotten-export) The symbol "TableCustomCodecOpts" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     static custom(opts: TableCustomCodecOpts): RawTableCodecs;
     // (undocumented)
@@ -2264,14 +2306,10 @@ export class TableCodecs {
         list: RawTableCodecs;
         set: RawTableCodecs;
     };
-    // Warning: (ae-forgotten-export) The symbol "TableNominalCodecOpts" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
     // @deprecated (undocumented)
     static forPath(path: readonly PathSegment[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
-    // Warning: (ae-forgotten-export) The symbol "TableTypeCodecOpts" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts | TableCodecClass): RawTableCodecs;
 }
@@ -2286,10 +2324,19 @@ export interface TableCreateIndexOptions extends WithTimeout<'tableAdminTimeoutM
 }
 
 // @public
+export interface TableCreateTextIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    ifNotExists?: boolean;
+    options?: TableTextIndexOptions;
+}
+
+// @public
 export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
     ifNotExists?: boolean;
     options?: TableVectorIndexOptions;
 }
+
+// @public (undocumented)
+export type TableCustomCodecOpts = CustomCodecOpts<TableSerCtx, TableDesCtx>;
 
 // @public
 export interface TableDescriptor {
@@ -2342,6 +2389,21 @@ export interface TableFilterOps<Elem> {
     // (undocumented)
     $nin?: Elem[];
 }
+
+// @public (undocumented)
+export class TableFindAndRerankCursor<T, TRaw extends SomeRow = SomeRow> extends FindAndRerankCursor<T, TRaw> {
+    // (undocumented)
+    get dataSource(): Table<SomeRow>;
+    // (undocumented)
+    filter(filter: TableFilter<TRaw>): this;
+    // (undocumented)
+    map: <R>(map: (doc: T) => R) => TableFindAndRerankCursor<R, TRaw>;
+    // (undocumented)
+    project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindAndRerankCursor<RRaw, RRaw>;
+}
+
+// @public
+export type TableFindAndRerankOptions = GenericFindAndRerankOptions;
 
 // @public (undocumented)
 export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCursor<T, TRaw> {
@@ -2413,6 +2475,9 @@ export interface TableMapColumnDefinition {
     valueType: TableScalarType;
 }
 
+// @public (undocumented)
+export type TableNominalCodecOpts = NominalCodecOpts<TableSerCtx, TableDesCtx>;
+
 // @public
 export interface TableOptions extends WithKeyspace {
     embeddingApiKey?: string | EmbeddingHeadersProvider;
@@ -2456,6 +2521,15 @@ export interface TableSetColumnDefinition {
     // (undocumented)
     valueType: TableScalarType;
 }
+
+// @public
+export interface TableTextIndexOptions {
+    // (undocumented)
+    analyzer?: string | Record<string, unknown>;
+}
+
+// @public (undocumented)
+export type TableTypeCodecOpts = TypeCodecOpts<TableSerCtx, TableDesCtx>;
 
 // @public
 export interface TableUpdateFilter<Schema extends SomeRow> {
@@ -2632,8 +2706,6 @@ export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
 
 // Warnings were encountered during analysis:
 //
-// dist/esm/documents/collections/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
-// dist/esm/documents/tables/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
 // dist/esm/lib/headers-providers/root/headers-provider.d.ts:10:9 - (ae-forgotten-export) The symbol "StringBasedHeadersProviderOptsHandler" needs to be exported by the entry point index.d.ts
 // dist/esm/lib/headers-providers/root/headers-provider.d.ts:11:9 - (ae-forgotten-export) The symbol "ObjectBasedHeadersProviderOptsHandler" needs to be exported by the entry point index.d.ts
 // dist/esm/lib/headers-providers/root/headers-provider.d.ts:12:9 - (ae-forgotten-export) The symbol "Monoid" needs to be exported by the entry point index.d.ts

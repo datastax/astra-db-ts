@@ -13,21 +13,20 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export { CollectionFindCursor } from './cursors/find-cursor.js';
-export { Collection } from './collection.js';
+export * from './cursors/find-cursor.js';
+export * from './cursors/rerank-cursor.js';
+export * from './collection.js';
+
 export type * from './types/index.js';
+
+export * from './ser-des/codecs.js';
+export * from './ser-des/constants.js';
 
 export type {
   CollectionSerDesConfig,
-  CollectionDesCtx,
   CollectionSerCtx,
+  CollectionDesCtx,
 } from './ser-des/ser-des.js';
-
-export type { CollectionCodecClass, CollectionCodec } from './ser-des/codecs.js';
-export { CollectionCodecs } from './ser-des/codecs.js';
 
 export type { CollNumCoercion, GetCollNumCoercionFn, CollNumCoercionCfg } from './ser-des/big-nums.js';
 export { NumCoercionError } from './ser-des/big-nums.js';
-
-export { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
-export { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
