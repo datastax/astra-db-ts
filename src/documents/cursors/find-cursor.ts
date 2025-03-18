@@ -144,7 +144,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): this {
-    return buildFLCOption(this, 'limit', limit || Infinity);
+    return buildFLCOption(this, 'limit', limit || undefined);
   }
 
   /**
@@ -172,8 +172,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @returns A new cursor with the new sort vector inclusion setting.
    */
-  public includeSortVector(includeSortVector = true): this {
-    return buildFLCOption(this, 'includeSortVector', includeSortVector);
+  public includeSortVector(includeSortVector?: boolean): this {
+    return buildFLCOption(this, 'includeSortVector', includeSortVector ?? true);
   }
 
   /**
@@ -229,8 +229,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @returns A new cursor with the new similarity setting.
    */
-  public includeSimilarity(includeSimilarity = true): FindCursor<WithSim<TRaw>, WithSim<TRaw>> {
-    return buildFLCPreMapOption(this, 'includeSimilarity', includeSimilarity);
+  public includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>> {
+    return buildFLCPreMapOption(this, 'includeSimilarity', includeSimilarity ?? true);
   }
 
   public map<R>(map: (doc: T) => R): FindCursor<R, TRaw> {

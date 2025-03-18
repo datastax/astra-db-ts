@@ -17,7 +17,9 @@ import { DataAPIEnvironments } from '@/src/lib/index.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
 
 export const arbs = <const>{
-  nonAstraEnvs: fc.constantFrom(...DataAPIEnvironments.filter(e => e !== 'astra').map((e) => EnvironmentCfgHandler.parse(e))),
-  pathSegment: fc.oneof(fc.string(), fc.integer()),
-  path: fc.array(fc.oneof(fc.string(), fc.integer())),
+  nonAstraEnvs: () => fc.constantFrom(...DataAPIEnvironments.filter(e => e !== 'astra').map((e) => EnvironmentCfgHandler.parse(e))),
+  pathSegment: () => fc.oneof(fc.string(), fc.integer()),
+  path: () => fc.array(fc.oneof(fc.string(), fc.integer())),
+  cursorState: () => fc.constantFrom('idle', 'started', 'closed'),
+  record: <T>(arb: fc.Arbitrary<T>) => fc.dictionary(fc.string().filter((s) => s !== '__proto__'), arb, { noNullPrototype: true }),
 };

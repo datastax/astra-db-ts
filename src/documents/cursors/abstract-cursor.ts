@@ -154,6 +154,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this._buffer.length = 0;
     this._nextPageState = new QueryState<string>();
     this._state = 'idle';
+    this._consumed = 0;
   }
 
   /**

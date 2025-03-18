@@ -18,6 +18,7 @@ import { HeadersResolver } from '@/src/lib/api/clients/headers-resolver.js';
 import { EmbeddingAPIKeyHeaderProvider, HeadersProvider, TokenProvider } from '@/src/lib/index.js';
 import { DEFAULT_DATA_API_AUTH_HEADER } from '@/src/lib/api/constants.js';
 import fc from 'fast-check';
+import { arbs } from '@/tests/testlib/arbitraries.js';
 
 describe('unit.lib.api.clients.headers-resolver', () => {
   function mergeObjsIgnoringUndefined(...objs: Record<string, string | undefined>[]) {
@@ -60,7 +61,7 @@ describe('unit.lib.api.clients.headers-resolver', () => {
 
     it('should ignore all undefined headers', async () => {
       const rawHeadersArb = fc.array(fc.dictionary(fc.string(), fc.oneof(fc.string(), fc.constant(undefined))));
-      const baseHeadersArb = fc.dictionary(fc.string(), fc.string());
+      const baseHeadersArb = arbs.record(fc.string());
 
       await fc.assert(
         fc.asyncProperty(rawHeadersArb, baseHeadersArb, async (rawHeaders, baseHeaders) => {
@@ -125,7 +126,7 @@ describe('unit.lib.api.clients.headers-resolver', () => {
 
     it('should ignore all undefined headers', async () => {
       const rawHeadersArb = fc.array(fc.dictionary(fc.string(), fc.oneof(fc.string(), fc.constant(undefined))));
-      const baseHeadersArb = fc.dictionary(fc.string(), fc.string());
+      const baseHeadersArb = arbs.record(fc.string());
 
       await fc.assert(
         fc.asyncProperty(rawHeadersArb, baseHeadersArb, async (rawHeaders, baseHeaders) => {

@@ -192,6 +192,7 @@ export class QueryState<T extends EmptyObj> {
       this._state = QueryStateState.Found;
       this._value = value;
     }
+    return this;
   }
 
   public get unwrap() {

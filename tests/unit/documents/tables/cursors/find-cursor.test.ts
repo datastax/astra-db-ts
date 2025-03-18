@@ -16,7 +16,12 @@
 import { describe } from '@/tests/testlib/index.js';
 import { TableFindCursor } from '@/src/documents/index.js';
 import { unitTestFindCursor } from '@/tests/unit/documents/__common/find-cursor.js';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 
 describe('unit.documents.cursors', ({ table }) => {
-  unitTestFindCursor(table, TableFindCursor);
+  unitTestFindCursor({
+    CursorImpl: TableFindCursor,
+    parent: table,
+    serdes: new TableSerDes(TableSerDes.cfg.empty),
+  });
 });

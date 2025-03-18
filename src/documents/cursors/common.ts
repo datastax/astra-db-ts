@@ -73,5 +73,5 @@ export const buildFLCFilter = <RC extends FindLikeCursor>(cursor: FindLikeCursor
   if (cursor.state !== 'idle') {
     throw new CursorError(`Cannot set a new filter on a running/closed cursor`, cursor);
   }
-  return cloneFLC(cursor, cursor._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), cursor._options, cursor._mapping);
+  return cloneFLC(cursor, cursor._serdes.serialize(filter, SerDesTarget.Filter), cursor._options, cursor._mapping);
 };

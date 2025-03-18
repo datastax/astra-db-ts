@@ -143,7 +143,9 @@ describe('unit.lib.utils', () => {
       fc.assert(
         fc.property(fc.array(fc.anything(), { minLength: 2 }), fc.anything(), (arr, target) => {
           const pred = (x: unknown) => x === target;
+
           fc.pre(arr.every(negate(pred)));
+          fc.pre(!(typeof target === 'number' && isNaN(target)));
 
           const randIndex = ~~(Math.random() * arr.length - 1);
           arr[randIndex] = target;

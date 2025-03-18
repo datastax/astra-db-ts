@@ -15,24 +15,33 @@
 
 import assert from 'assert';
 import { describe, it } from '@/tests/testlib/index.js';
-import {
+import type {
   Collection,
   CollectionFindAndRerankCursor,
   CollectionFindCursor,
+  SomeDoc,
   SomeRow,
   Table,
   TableFindAndRerankCursor,
   TableFindCursor,
 } from '@/src/documents/index.js';
-import { $CustomInspect } from '@/src/lib/constants.js';
 import fc from 'fast-check';
+import { QueryState } from '@/src/lib/utils.js';
+import { DeltaAsserter } from '@/tests/testlib/utils.js';
+import type { LitUnion } from '@/src/lib/index.js';
+import { arbs } from '@/tests/testlib/arbitraries.js';
+
+export const AbstractCursorDeltaAsserter = new DeltaAsserter(['_buffer', '_consumed', '_nextPageState', '_state', '_mapping', '_options']);
+
+type DeltaAsserterFields = LitUnion<typeof AbstractCursorDeltaAsserter extends DeltaAsserter<infer Fs> ? Fs : never>;
 
 export interface AbstractCursorTestConfig {
   parent: Table<SomeRow> | Collection,
   CursorImpl: typeof CollectionFindCursor | typeof TableFindCursor | typeof TableFindAndRerankCursor | typeof CollectionFindAndRerankCursor,
+  DeltaAsserter: DeltaAsserter<DeltaAsserterFields>
 }
 
-export const unitTestAbstractCursor = ({ CursorImpl, parent }: AbstractCursorTestConfig) => {
+export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: AbstractCursorTestConfig) => {
   describe('accessors', () => {
     describe('state', () => {
       it('should be idle on initialization', () => {
@@ -58,7 +67,7 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent }: AbstractCursorTes
 
       it('should return the length of cursor._buffer', () => {
         fc.assert(
-          fc.property(fc.integer(), (count) => {
+          fc.property(fc.nat(), (count) => {
             const cursor = new CursorImpl(parent, null!, [{}, false]);
             cursor['_buffer'] = Array(count);
             assert.strictEqual(cursor.buffered(), count);
@@ -85,8 +94,135 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent }: AbstractCursorTes
     });
 
     describe('consumeBuffer', () => {
-      it('should return ', () => {
-        
+      it('should consume all docs & increase consumed() if no max parameter passed', () => {
+        fc.assert(
+          fc.property(fc.array(fc.anything()), (buffer) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false]);
+            cursor['_buffer'] = [...buffer] as SomeDoc[];
+
+            assert.strictEqual(cursor.consumed(), 0);
+            assert.strictEqual(cursor.buffered(), buffer.length);
+
+            DeltaAsserter
+              .captureMutDelta(cursor, () => {
+                const consumed = cursor.consumeBuffer();
+                assert.deepStrictEqual(consumed, buffer);
+              })
+              .assertDelta({
+                _consumed: buffer.length,
+                _buffer: [],
+              });
+
+            assert.strictEqual(cursor.consumed(), buffer.length);
+            assert.strictEqual(cursor.buffered(), 0);
+          }),
+        );
+      });
+
+      it('should consume the max docs possible & increase consumed() if max parameter passed', () => {
+        fc.assert(
+          fc.property(fc.array(fc.anything()), fc.nat(), (buffer, max) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false]);
+            cursor['_buffer'] = [...buffer] as SomeDoc[];
+
+            assert.strictEqual(cursor.consumed(), 0);
+            assert.strictEqual(cursor.buffered(), buffer.length);
+
+            const expectedConsumed = Math.min(buffer.length, max);
+
+            DeltaAsserter
+              .captureMutDelta(cursor, () => {
+                const consumed = cursor.consumeBuffer(max);
+                assert.deepStrictEqual(consumed, buffer.slice(0, expectedConsumed));
+              })
+              .assertDelta({
+                _consumed: expectedConsumed,
+                _buffer: buffer.slice(expectedConsumed),
+              });
+
+            assert.strictEqual(cursor.consumed(), expectedConsumed);
+            assert.strictEqual(cursor.buffered(), buffer.length - expectedConsumed);
+          }),
+        );
+      });
+    });
+
+    describe('rewind', () => {
+      it('should reset the state, buffer, consumed, and nextPageState', () => {
+        fc.assert(
+          fc.property(fc.array(fc.anything()), fc.integer(), fc.option(fc.string()), fc.constantFrom('idle', 'started', 'closed'), (buffer, consumed, qs, state) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false]);
+            cursor['_buffer'] = [...buffer] as SomeDoc[];
+            cursor['_consumed'] = consumed;
+            cursor['_nextPageState'] = new QueryState<string>().swap(qs);
+            cursor['_state'] = state;
+
+            assert.strictEqual(cursor.state, state);
+            assert.strictEqual(cursor.buffered(), buffer.length);
+            assert.strictEqual(cursor.consumed(), consumed);
+
+            DeltaAsserter
+              .captureMutDelta(cursor, () => {
+                cursor.rewind();
+              })
+              .assertDelta({
+                _state: 'idle',
+                _buffer: [],
+                _consumed: 0,
+                _nextPageState: new QueryState(),
+              });
+
+            assert.strictEqual(cursor.state, 'idle');
+            assert.strictEqual(cursor.buffered(), 0);
+            assert.strictEqual(cursor.consumed(), 0);
+          }),
+        );
+      });
+    });
+
+    describe('close', () => {
+      it('should set the state to closed', () => {
+        fc.assert(
+          fc.property(arbs.cursorState(), (state) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false]);
+            cursor['_state'] = state;
+
+            DeltaAsserter
+              .captureMutDelta(cursor, () => {
+                cursor.close();
+              })
+              .assertDelta({
+                _state: 'closed',
+              });
+
+            assert.strictEqual(cursor.state, 'closed');
+          }),
+        );
+      });
+
+      it('should reset the buffer but not consumed', () => {
+        fc.assert(
+          fc.property(fc.array(fc.anything()), fc.integer(), (buffer, consumed) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false]);
+            cursor['_buffer'] = [...buffer] as SomeDoc[];
+            cursor['_consumed'] = consumed;
+
+            assert.strictEqual(cursor.buffered(), buffer.length);
+            assert.strictEqual(cursor.consumed(), consumed);
+
+            DeltaAsserter
+              .captureMutDelta(cursor, () => {
+                cursor.close();
+              })
+              .assertDelta({
+                _buffer: [],
+                _state: 'closed',
+              });
+
+            assert.strictEqual(cursor.buffered(), 0);
+            assert.strictEqual(cursor.consumed(), consumed);
+          }),
+        );
       });
     });
   });

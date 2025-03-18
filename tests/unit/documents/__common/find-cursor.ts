@@ -13,69 +13,222 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
+import type { CollectionFindCursor, FindCursor, Sort, TableFindCursor } from '@/src/documents/index.js';
+import { CursorError } from '@/src/documents/index.js';
+import type { AbstractCursorTestConfig } from '@/tests/unit/documents/__common/abstract-cursor.js';
+import {
+  AbstractCursorDeltaAsserter,
+  unitTestAbstractCursor,
+} from '@/tests/unit/documents/__common/abstract-cursor.js';
+import { DeltaAsserter } from '@/tests/testlib/utils.js';
+import fc from 'fast-check';
+import { arbs } from '@/tests/testlib/arbitraries.js';
 import assert from 'assert';
-import { it } from '@/tests/testlib/index.js';
-import type { Collection, CollectionFindCursor, SomeRow, Table, TableFindCursor } from '@/src/documents/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
+import { UUID } from '@/src/documents/datatypes/uuid.js';
+import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
+import { QueryState } from '@/src/lib/utils.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import { AbstractCursorTestConfig, unitTestAbstractCursor } from '@/tests/unit/documents/__common/abstract-cursor.js';
 
-interface FindCursorTestConfig extends AbstractCursorTestConfig {
-  parent: Table<SomeRow> | Collection,
+interface FindCursorTestConfig extends Omit<AbstractCursorTestConfig, 'DeltaAsserter'> {
   CursorImpl: typeof CollectionFindCursor | typeof TableFindCursor,
+  serdes: SerDes,
 }
 
-export const unitTestFindCursor = ({ CursorImpl, parent }: FindCursorTestConfig) => {
-  unitTestAbstractCursor({ CursorImpl, parent });
+const CursorDeltaAsserter = new DeltaAsserter(['_serdes', '_parent', '_filter', '_sortVector'], AbstractCursorDeltaAsserter);
 
-  it('should initialize an uninitialized Cursor', () => {
-    const cursor = new CursorImpl(parent, null!, [{}, false]);
-    assert.ok(cursor);
-    assert.strictEqual(cursor.buffered(), 0);
-    assert.strictEqual(cursor.consumed(), 0);
-    assert.strictEqual(cursor.state, 'idle');
+export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTestConfig) => {
+  unitTestAbstractCursor({ CursorImpl, parent, DeltaAsserter: CursorDeltaAsserter });
+
+  describe('misc', () => {
+    it('should throw an error when calling a builder method on a non-idle cursor', () => {
+      const properties = <const>['filter', 'sort', 'limit', 'skip', 'project', 'includeSimilarity', 'includeSortVector', 'map'] satisfies (keyof FindCursor<unknown>)[];
+
+      fc.assert(
+        fc.property(fc.constantFrom(...properties), (builder) => {
+          const cursor = new CursorImpl(parent, cfg.serdes, [{}, false]);
+          cursor['_state'] = (Math.random() > .5) ? 'started' : 'closed';
+          assert.throws(() => (cursor as any)[builder](), (e) => e instanceof CursorError && e.message.includes('on a running/closed cursor'));
+        }),
+      );
+    });
   });
 
-  it('should return the parent in dataSource', () => {
-    const cursor = new CursorImpl(parent, null!, [{}, false]);
-    assert.strictEqual(cursor.dataSource, parent);
-  });
+  describe('methods', () => {
+    describe('filter', () => {
+      it('should create a new cursor with a new pre-serialized filter', () => {
+        const cursor = new CursorImpl(parent, cfg.serdes, [{}, false]);
+        const uuid = UUID.v4();
 
-  it('should fail to set projection after mapping', () => {
-    const cursor1 = new CursorImpl(parent, null!, [{}, false]);
-    const cursor2 = cursor1.map((x) => x);
-    assert.doesNotThrow(() => cursor1.project({}));
-    assert.throws(() => cursor2.project({}));
-  });
+        CursorDeltaAsserter
+          .captureImmutDelta(cursor, () => cursor.filter({ uuid }))
+          .assertDelta({ _filter: cfg.serdes.serialize({ uuid }) });
+      });
+    });
 
-  it('should fail to set includeSimilarity after mapping', () => {
-    const cursor1 = new CursorImpl(parent, null!, [{}, false]);
-    const cursor2 = cursor1.map((x) => x);
-    assert.doesNotThrow(() => cursor1.includeSimilarity());
-    assert.throws(() => cursor2.includeSimilarity());
-  });
+    describe('sort', () => {
+      it('should create a new cursor with a new sort', () => {
+        fc.assert(
+          fc.property(arbs.record(fc.anything()), arbs.record(fc.anything()), (sort, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
 
-  it('should fail to set projection if not idle', () => {
-    const cursor = new CursorImpl(parent, null!, [{}, false]);
-    assert.doesNotThrow(() => cursor.project({}));
-    cursor.close();
-    assert.throws(() => cursor.project({}));
-  });
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.sort(sort as Sort))
+              .assertDelta({ _options: { ...oldOptions, sort } });
+          }),
+        );
+      });
+    });
 
-  it('should fail to set includeSimilarity if not idle', () => {
-    const cursor = new CursorImpl(parent, null!, [{}, false]);
-    assert.doesNotThrow(() => cursor.includeSimilarity());
-    cursor.close();
-    assert.throws(() => cursor.includeSimilarity());
-  });
+    describe('limit', () => {
+      it('should create a new cursor with a new limit', () => {
+        fc.assert(
+          fc.property(fc.nat(), arbs.record(fc.anything()), (limit, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
 
-  it('should error if trying to set .includeSortVector() after starting cursor', () => {
-    const cursor = new CursorImpl(parent, null!, [{}, false]).includeSortVector();
-    cursor.close();
-    assert.throws(() => cursor.includeSortVector(), { name: 'CursorError' });
-  });
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.limit(limit))
+              .assertDelta({ _options: { ...oldOptions, limit: limit || undefined } });
+          }),
+        );
+      });
+    });
 
-  it('should inspect properly', () => {
-    const cursor = new CursorImpl(parent, null!, [{}, false]);
-    assert.strictEqual((cursor as any)[$CustomInspect](), `${CursorImpl.name}(source="default_keyspace.test_coll",state="idle",consumed=0,buffered=0)`);
+    describe('skip', () => {
+      it('should create a new cursor with a new skip', () => {
+        fc.assert(
+          fc.property(fc.nat(), arbs.record(fc.anything()), (skip, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.skip(skip))
+              .assertDelta({ _options: { ...oldOptions, skip } });
+          }),
+        );
+      });
+    });
+
+    describe('project', () => {
+      it('should error if set after mapping', () => {
+        assert.throws(() => {
+          new CursorImpl(parent, null!, [{}, false]).map((x) => x).project({});
+        }, (e) => {
+          return e instanceof CursorError && e.message.includes('after already using cursor.map');
+        });
+      });
+
+      it('should create a new cursor with a new projection', () => {
+        fc.assert(
+          fc.property(arbs.record(fc.oneof(fc.constantFrom(0, 1), fc.boolean())), arbs.record(fc.anything()), (projection, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.project(projection))
+              .assertDelta({ _options: { ...oldOptions, projection } });
+          }),
+        );
+      });
+    });
+
+    describe('includeSimilarity', () => {
+      it('should error if set after mapping', () => {
+        assert.throws(() => {
+          new CursorImpl(parent, null!, [{}, false]).map((x) => x).includeSimilarity();
+        }, (e) => {
+          return e instanceof CursorError && e.message.includes('after already using cursor.map');
+        });
+      });
+
+      it('should create a new cursor with similarity included', () => {
+        fc.assert(
+          fc.property(fc.constantFrom(undefined, true, false), arbs.record(fc.anything()), (include, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.includeSimilarity(include))
+              .assertDelta({ _options: { ...oldOptions, includeSimilarity: include ?? true } });
+          }),
+        );
+      });
+    });
+
+    describe('includeSortVector', () => {
+      it('should create a new cursor with sort vector included', () => {
+        fc.assert(
+          fc.property(fc.constantFrom(undefined, true, false), arbs.record(fc.anything()), (include, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.includeSortVector(include))
+              .assertDelta({ _options: { ...oldOptions, includeSortVector: include ?? true } });
+          }),
+        );
+      });
+    });
+
+    describe('map', () => {
+      it('should create a new cursor by composting mappings', () => {
+        const cursor = new CursorImpl(parent, null!, [{}, false]);
+
+        const mapping1 = () => 3;
+        const cursor1 = cursor.map(mapping1);
+
+        const mapping2 = (n: number) => n * 2;
+        const cursor2 = cursor1.map(mapping2);
+
+        assert.strictEqual(cursor2['_mapping']?.('i like cars'), 6);
+      });
+    });
+
+    describe('clone', () => {
+      it('should return a brand new cursor with the same config', () => {
+        const allArbs = <const>[
+          arbs.record(fc.anything()),
+          arbs.record(fc.anything()),
+          fc.func(fc.anything()),
+          fc.array(fc.anything()),
+          arbs.cursorState(),
+          fc.nat(),
+          fc.string(),
+        ];
+
+        fc.assert(
+          fc.property(...allArbs, (filter, options, mapping, buffer, state, consumed, qs) => {
+            const cursor = new CursorImpl(parent, null!, [filter, false], options, mapping);
+
+            cursor['_nextPageState'] = new QueryState<string>().swap(qs);
+            cursor['_buffer'] = buffer;
+            cursor['_state'] = state;
+            cursor['_consumed'] = consumed;
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => {
+                return cursor.clone();
+              })
+              .assertDelta({
+                _nextPageState: new QueryState(),
+                _buffer: [],
+                _state: 'idle',
+                _consumed: 0,
+              });
+          }),
+        );
+      });
+    });
+
+    describe('$CustomInspect', () => {
+      it('works', () => {
+        fc.assert(
+          fc.property(arbs.cursorState(), fc.nat(), fc.nat(), (state, consumed, buffered) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false]);
+            cursor['_state'] = state;
+            cursor['_consumed'] = consumed;
+            cursor['_buffer'] = new Array(buffered);
+
+            assert.strictEqual((cursor as any)[$CustomInspect](), `${CursorImpl.name}(source="${parent.keyspace}.${parent.name}",state="${state}",consumed=${consumed},buffered=${buffered})`);
+          }),
+        );
+      });
+    });
   });
 };

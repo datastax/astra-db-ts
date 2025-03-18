@@ -20,6 +20,8 @@ import {
   TEST_APPLICATION_URI,
 } from '@/tests/testlib/config.js';
 import { GLOBAL_FIXTURES } from '@/tests/testlib/global.js';
+import type { SomeDoc } from '@/src/documents/index.js';
+import assert from 'assert';
 
 export async function tryCatchErr(fn: () => void | Promise<void>) {
   try {
@@ -127,4 +129,69 @@ export function useSuiteResources<Keys extends string, T>(mkResources: () => Rec
 
 export function negate<T extends any[]>(fn: (...args: T) => boolean): (...args: T) => boolean {
   return (...args: T) => !fn(...args);
+}
+
+export class DeltaAsserter<Fields extends string> {
+  constructor(private readonly _fields: Fields[], private readonly _extend?: DeltaAsserter<Fields>) {}
+
+  public captureMutDelta<R>(obj: SomeDoc, cb: () => R) {
+    const snapshot = this._buildSnapshot(obj);
+    const ret = cb();
+
+    return {
+      assertDelta: (delta: Partial<Record<Fields, unknown>>): R => {
+        this._assertDelta(snapshot, obj, delta);
+        return ret;
+      },
+    };
+  }
+
+  public captureImmutDelta<R extends SomeDoc>(obj: SomeDoc, cb: () => R) {
+    const snapshot = this._buildSnapshot(obj);
+    const newObj = cb();
+
+    return {
+      assertDelta: (delta: Partial<Record<Fields, unknown>>): R => {
+        this._assertDelta(snapshot, obj, {});
+        this._assertDelta(snapshot, newObj, delta);
+        return newObj;
+      },
+    };
+  }
+
+  public assertNoMutDelta<R>(obj: SomeDoc, cb: () => R) {
+    return this.captureMutDelta(obj, cb).assertDelta({});
+  }
+
+  public assertNoImmutDelta(obj: SomeDoc, cb: () => Record<string, unknown>) {
+    return this.captureImmutDelta(obj, cb).assertDelta({});
+  }
+
+  private _buildSnapshot(obj: Record<string, unknown>, base?: Record<string, unknown>): Record<string, unknown> {
+    const snapshot = base ?? {};
+
+    for (const field of this._fields) {
+      snapshot[field] = obj[field];
+    }
+
+    if (this._extend) {
+      return this._extend._buildSnapshot(obj, snapshot);
+    }
+
+    return snapshot;
+  }
+
+  private _assertDelta(snapshot: Record<string, unknown>, current: Record<string, unknown>, expectedDelta: Record<string, unknown>) {
+    for (const field of this._fields) {
+      if (field in expectedDelta) {
+        assert.deepStrictEqual(current[field], expectedDelta[field]);
+      } else {
+        assert.deepStrictEqual(current[field], snapshot[field]);
+      }
+    }
+
+    if (this._extend) {
+      this._extend._assertDelta(snapshot, current, expectedDelta);
+    }
+  }
 }
