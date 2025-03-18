@@ -17,8 +17,8 @@ import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import type { CollectionCodec} from '@/src/documents/index.js';
 import { $DeserializeForCollection, $SerializeForCollection, CollectionCodecs } from '@/src/documents/index.js';
-import { processCodecs } from '@/src/lib/index.js';
 import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
+import { processCodecs } from '@/src/lib/api/ser-des/codecs.js';
 
 describe('unit.documents.collections.ser-des.codecs', () => {
   describe('processCodecs', () => {
