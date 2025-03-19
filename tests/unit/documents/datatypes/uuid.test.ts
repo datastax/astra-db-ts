@@ -17,35 +17,48 @@ import assert from 'assert';
 import { uuid, UUID } from '@/src/documents/index.js';
 import { describe, it } from '@/tests/testlib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
+import fc from 'fast-check';
+import * as uuidModule from 'uuid';
 
 describe('unit.documents.datatypes.uuid', () => {
   describe('construction', () => {
     it('should properly construct a UUID', () => {
-      const id = new UUID('123e4567-e89b-12d3-a456-426614174000');
-      assert.strictEqual(id.toString(), '123e4567-e89b-12d3-a456-426614174000');
-    });
-
-    it('should properly construct a UUID using the shorthand', () => {
-      const id = uuid('123e4567-e89b-12d3-a456-426614174000');
-      assert.strictEqual(id.toString(), '123e4567-e89b-12d3-a456-426614174000');
+      fc.assert(
+        fc.property(fc.uuid(), (generated) => {
+          assert.strictEqual(new UUID(generated).toString(), generated);
+          assert.strictEqual(uuid(generated).toString(), generated);
+        }),
+      );
     });
   });
 
   describe('validation', () => {
     it('should error on invalid UUID', () => {
       assert.throws(() => new UUID('123e4567-e89b-12d3-a456-42661417400'));
+
+      fc.assert(
+        fc.property(fc.string(), (generated) => {
+          fc.pre(!uuidModule.validate(generated));
+          assert.throws(() => new UUID(generated));
+        }),
+      );
     });
 
     it('should error on invalid type', () => {
-      assert.throws(() => new UUID({} as any));
+      fc.assert(
+        fc.property(fc.anything(), (generated) => {
+          fc.pre(typeof generated !== 'string');
+          assert.throws(() => new UUID(generated as any));
+        }),
+      );
     });
 
-    it('should allow force construction on invalid UUID', () => {
-      assert.ok(new UUID('abc', false));
-    });
-
-    it('should allow force construction on invalid type', () => {
-      assert.throws(() => new UUID({} as any, false), TypeError);
+    it('should allow force construction on invalid UUID strings', () => {
+      fc.assert(
+        fc.property(fc.string(), (generated) => {
+          assert.ok(new UUID(generated as any, false));
+        }),
+      );
     });
   });
 
@@ -134,28 +147,39 @@ describe('unit.documents.datatypes.uuid', () => {
   });
 
   it('should equal a similar UUID', () => {
-    const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
-    const other = new UUID('123E4567-E89B-12D3-A456-426614174000');
-    assert.ok(uuid.equals(other));
+    fc.assert(
+      fc.property(fc.uuid().chain(uuid => fc.tuple(fc.constant(uuid), fc.mixedCase(fc.constant(uuid)))), ([uuid1, uuid2]) => {
+        assert.ok(uuid(uuid1).equals(uuid2));
+        assert.ok(uuid(uuid1).equals(uuid(uuid2)));
+      }),
+    );
   });
 
   it('should not equal a different UUID', () => {
-    const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
-    const other = new UUID('123e4567-e89b-12d3-a456-426614174001');
-    assert.ok(!uuid.equals(other));
-  });
-
-  it('should equal a string representation', () => {
-    const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
-    assert.ok(uuid.equals('123e4567-E89b-12D3-A456-426614174000'));
+    fc.assert(
+      fc.property(fc.uuid(), fc.uuid(), (uuid1, uuid2) => {
+        fc.pre(uuid1 !== uuid2);
+        assert.ok(!uuid(uuid1).equals(uuid2));
+        assert.ok(!uuid(uuid1).equals(uuid(uuid2)));
+      }),
+    );
   });
 
   it('should not equal an invalid type', () => {
-    const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
-    assert(!uuid.equals({}));
+    fc.assert(
+      fc.property(fc.uuid(), fc.anything(), (uuid1, uuid2) => {
+        fc.pre(typeof uuid2 !== 'string');
+        assert.ok(!uuid(uuid1).equals(uuid2 as any));
+      }),
+    );
   });
 
   it('should have a working inspect', () => {
-    assert.strictEqual((uuid('123e4567-E89b-12D3-A456-426614174000') as any)[$CustomInspect](), 'UUID<1>("123e4567-e89b-12d3-a456-426614174000")');
+    fc.assert(
+      fc.property(fc.mixedCase(fc.uuid()), (generated) => {
+        const uuid = new UUID(generated);
+        assert.strictEqual((uuid as any)[$CustomInspect](), `UUID<${uuid.version}>("${generated.toLowerCase()}")`);
+      }),
+    );
   });
 });

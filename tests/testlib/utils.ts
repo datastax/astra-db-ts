@@ -23,6 +23,8 @@ import { GLOBAL_FIXTURES } from '@/tests/testlib/global.js';
 import type { SomeDoc } from '@/src/documents/index.js';
 import assert from 'assert';
 
+export const AlwaysAvailableBuffer = Buffer; // some tests temporarily delete the global Buffer object
+
 export async function tryCatchErr(fn: () => void | Promise<void>) {
   try {
     await fn();

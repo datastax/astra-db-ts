@@ -15,6 +15,7 @@
 import fc from 'fast-check';
 import { DataAPIEnvironments } from '@/src/lib/index.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
+import { AlwaysAvailableBuffer } from '@/tests/testlib/utils.js';
 
 export const arbs = <const>{
   nonAstraEnvs: () => fc.constantFrom(...DataAPIEnvironments.filter(e => e !== 'astra').map((e) => EnvironmentCfgHandler.parse(e))),
@@ -22,4 +23,5 @@ export const arbs = <const>{
   path: () => fc.array(fc.oneof(fc.string(), fc.integer())),
   cursorState: () => fc.constantFrom('idle', 'started', 'closed'),
   record: <T>(arb: fc.Arbitrary<T>) => fc.dictionary(fc.string().filter((s) => s !== '__proto__'), arb, { noNullPrototype: true }),
+  validBase46: () => fc.base64String().filter((base64) => base64 === AlwaysAvailableBuffer.from(base64, 'base64').toString('base64')),
 };
