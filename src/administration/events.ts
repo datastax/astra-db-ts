@@ -253,7 +253,7 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    * The error that occurred.
    *
    * Typically, some {@link DevOpsAPIError}, commonly a {@link DevOpsAPIResponseError} or sometimes a
-   * {@link DevOpsUnexpectedStateError}
+   * {@link DevOpsAPITimeoutError}
    */
   public readonly error: Error;
 

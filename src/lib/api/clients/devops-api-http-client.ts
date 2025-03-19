@@ -17,7 +17,6 @@ import { HttpClient } from '@/src/lib/api/clients/index.js';
 import {
   DevOpsAPIResponseError,
   DevOpsAPITimeoutError,
-  DevOpsUnexpectedStateError,
 } from '@/src/administration/errors.js';
 import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
 import { HttpMethods } from '@/src/lib/api/constants.js';
@@ -181,7 +180,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       /* istanbul ignore next: exceptional case that can't be manually reproduced */
       if (!info.legalStates.includes(resp.data?.status)) {
         const okStates = [info.target, ...info.legalStates];
-        const error = new DevOpsUnexpectedStateError(`Created database is not in any legal state [${okStates.join(',')}]`, okStates, resp.data);
+        const error = new Error(`Created database is not in any legal state [${okStates.join(',')}]; current state: ${resp.data?.status}`);
 
         this.logger.internal.adminCommandFailed?.(requestId, req, true, error, started);
         throw error;
