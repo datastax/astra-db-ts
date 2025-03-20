@@ -79,6 +79,7 @@ export interface AddVectorizeOperation<Schema extends SomeRow> {
    * The options for vectorize-ing each column.
    */
   columns: Partial<Record<keyof Schema, VectorizeServiceOptions>>,
+  // ifNotExists?: boolean,
 }
 
 /**

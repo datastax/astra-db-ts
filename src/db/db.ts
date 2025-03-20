@@ -826,7 +826,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * @see InferTablePrimaryKey
    * @see CreateTableDefinition
    */
-  public async createTable<const Def extends CreateTableDefinition<any>>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
+  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
 
   /**
    * ##### Overview (explicit-schema version)

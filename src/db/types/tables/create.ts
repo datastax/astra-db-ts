@@ -32,7 +32,7 @@ import type { TableOptions } from '@/src/db/types/tables/spawn.js';
  *
  * @public
  */
-export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition<any>> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
+export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
   definition: Def,
   ifNotExists?: boolean,
 }
@@ -44,7 +44,7 @@ export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = Cre
  *
  * @public
  */
-export interface CreateTableDefinition<Def extends CreateTableDefinition<Def>> {
+export interface CreateTableDefinition<Def extends CreateTableDefinition<Def> = any> {
   /**
    * The columns to create in the table.
    */

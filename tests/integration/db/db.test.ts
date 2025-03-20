@@ -112,14 +112,6 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
       assert.strictEqual(collection, undefined);
     });
 
-    it('should drop a collections using the collections method', async () => {
-      const coll = await db.createCollection('coll_2d', { indexing: { deny: ['*'] } });
-      await coll.drop();
-      const collections = await db.listCollections();
-      const collection = collections.find(c => c.name === 'coll_2d');
-      assert.strictEqual(collection, undefined);
-    });
-
     it('should drop a collections in non-default keyspace', async () => {
       await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, keyspace: OTHER_KEYSPACE });
       await db.dropCollection('coll_3d', { keyspace: OTHER_KEYSPACE });

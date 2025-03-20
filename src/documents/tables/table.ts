@@ -1224,16 +1224,18 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @returns A promise which resolves once the index is created.
    */
   public async createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void> {
+    const includeOptions = !!options?.options && Object.keys(options.options).length > 0;
+    
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
         definition: {
           column,
-          options: {
-            caseSensitive: options?.options?.caseSensitive,
-            normalize: options?.options?.normalize,
-            ascii: options?.options?.ascii,
-          },
+          options: includeOptions ? {
+            caseSensitive: options.options?.caseSensitive,
+            normalize: options.options?.normalize,
+            ascii: options.options?.ascii,
+          } : undefined,
         },
         options: {
           ifNotExists: options?.ifNotExists,

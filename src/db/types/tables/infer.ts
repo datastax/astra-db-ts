@@ -43,7 +43,7 @@ import type { BigNumber } from 'bignumber.js';
  * @public
  */
 export type InferrableTable =
-  | CreateTableDefinition<any>
+  | CreateTableDefinition
   | ((..._: any[]) => Promise<Table<SomeRow>>)
   | ((..._: any[]) => Table<SomeRow>)
   | Promise<Table<SomeRow>>
@@ -121,7 +121,7 @@ export type InferrableTable =
  * @public
  */
 export type InferTableSchema<T extends InferrableTable> =
-  T extends CreateTableDefinition<any>
+  T extends CreateTableDefinition
     ? InferTableSchemaFromDefinition<T> :
   T extends (..._: any[]) => Promise<Table<infer Schema, any, any>>
     ? Schema :
@@ -142,7 +142,7 @@ export type InferTableSchema<T extends InferrableTable> =
  * @public
  */
 export type InferTablePrimaryKey<T extends InferrableTable> =
-  T extends CreateTableDefinition<any>
+  T extends CreateTableDefinition
     ? InferTablePKFromDefinition<T> :
   T extends (..._: any[]) => Promise<Table<any, infer PKey, any>>
     ? PKey :
@@ -163,7 +163,7 @@ export type InferTablePrimaryKey<T extends InferrableTable> =
  * @public
  */
 export type InferTableReadSchema<T extends InferrableTable> =
-  T extends CreateTableDefinition<any>
+  T extends CreateTableDefinition
     ? FoundRow<InferTableSchemaFromDefinition<T>> :
   T extends (..._: any[]) => Promise<Table<any, any, infer Schema>>
     ? Schema :
@@ -182,12 +182,12 @@ type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition<FullDe
 type InferTablePKFromDefinition<FullDef extends CreateTableDefinition<FullDef>> = Normalize<MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>;
 
 type MkColumnTypes<Cols extends CreateTableColumnDefinitions, PK extends Record<string, any>> = {
-  -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]> & {};
+  -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<Cols[P]> & {};
 } & {
-  -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]>;
+  -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<Cols[P]>;
 }
 
-type MkPrimaryKeyType<FullDef extends CreateTableDefinition<any>, Schema, PK extends FullCreateTablePrimaryKeyDefinition<any> = NormalizePK<FullDef['primaryKey']>> = Normalize<
+type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends FullCreateTablePrimaryKeyDefinition<any> = NormalizePK<FullDef['primaryKey']>> = Normalize<
   {
     -readonly [P in PK['partitionBy'][number]]: P extends keyof Schema ? Schema[P] & {} : TypeErr<`Field \`${P & string}\` not found as property in table definition`>;
   }
@@ -206,13 +206,8 @@ type NormalizePK<PK extends TablePrimaryKeyDefinition<any>> =
     : never;
 
 type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
-  -readonly [P in keyof Columns]: CqlType2TSType<PickCqlType<Columns[P]>, Columns[P]>;
+  -readonly [P in keyof Columns]: CqlType2TSType<Columns[P]>;
 };
-
-type PickCqlType<Def> =
-  Def extends { type: infer Type }
-    ? Type
-    : Def;
 
 /**
  * Converts a CQL type to its TS equivalent. If the type isn't some collection type, the second typeparam is
@@ -241,7 +236,14 @@ type PickCqlType<Def> =
  *
  * @public
  */
-export type CqlType2TSType<T extends string, Def> =
+export type CqlType2TSType<Def extends CreateTableColumnDefinitions[string]> = CqlType2TSTypeInternal<PickCqlType<Def>, Def>
+
+type PickCqlType<Def> =
+  Def extends { type: infer Type }
+    ? Type
+    : Def;
+
+type CqlType2TSTypeInternal<T, Def> =
   T extends keyof CqlNonGenericType2TSTypeDict
     ? CqlNonGenericType2TSTypeDict[T] :
   T extends keyof CqlGenericType2TSTypeDict<Def>
@@ -281,17 +283,17 @@ interface CqlGenericType2TSTypeDict<Def> {
 
 type CqlMapType2TsType<Def> =
   Def extends { keyType: infer KeyType extends string, valueType: infer ValueType extends string }
-    ? Map<CqlType2TSType<KeyType, never> & {}, CqlType2TSType<ValueType, never> & {}>
+    ? Map<CqlType2TSTypeInternal<KeyType, never> & {}, CqlType2TSTypeInternal<ValueType, never> & {}>
     : TypeErr<'Invalid generics definition for \'map\'; should have keyType and valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlListType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
-    ? (CqlType2TSType<ValueType, never> & {})[]
+    ? (CqlType2TSTypeInternal<ValueType, never> & {})[]
     : TypeErr<'Invalid generics definition for \'list\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlSetType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
-    ? Set<CqlType2TSType<ValueType, never> & {}>
+    ? Set<CqlType2TSTypeInternal<ValueType, never> & {}>
     : TypeErr<'Invalid generics definition for \'set\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlVectorType2TsType<Def> =

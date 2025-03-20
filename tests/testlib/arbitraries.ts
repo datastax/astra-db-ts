@@ -24,4 +24,5 @@ export const arbs = <const>{
   cursorState: () => fc.constantFrom('idle', 'started', 'closed'),
   record: <T>(arb: fc.Arbitrary<T>) => fc.dictionary(fc.string().filter((s) => s !== '__proto__'), arb, { noNullPrototype: true }),
   validBase46: () => fc.base64String().filter((base64) => base64 === AlwaysAvailableBuffer.from(base64, 'base64').toString('base64')),
+  one: (arb: fc.Arbitrary<any>) => fc.sample(arb, 1)[0],
 };
