@@ -38,7 +38,7 @@ import type {
   Table,
   UpdateFilter,
 } from '@/src/documents/index.js';
-import { CollectionDeleteManyError, CollectionUpdateManyError, DataAPIResponseError } from '@/src/documents/index.js';
+import { CollectionDeleteManyError, CollectionUpdateManyError } from '@/src/documents/index.js';
 import type { nullish, WithTimeout } from '@/src/lib/index.js';
 import type { InsertManyErrorConstructor } from '@/src/documents/commands/helpers/insertion.js';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion.js';
@@ -138,20 +138,12 @@ export class CommandImpls<ID> {
           timeoutManager,
         });
 
-        command.updateMany.options.pageState = resp.status?.nextPageState ;
-        commonResult.modifiedCount += resp.status?.modifiedCount ?? 0;
-        commonResult.matchedCount += resp.status?.matchedCount ?? 0;
+        command.updateMany.options.pageState = resp.status?.nextPageState;
+        commonResult.modifiedCount += resp.status?.modifiedCount;
+        commonResult.matchedCount += resp.status?.matchedCount;
       }
     } catch (e) {
-      if (e instanceof DataAPIResponseError) {
-        const combinedResult = {
-          matchedCount: commonResult.matchedCount + (e.rawResponse.status?.matchedCount ?? 0),
-          modifiedCount: commonResult.modifiedCount + (e.rawResponse.status?.modifiedCount ?? 0),
-        };
-        throw new CollectionUpdateManyError(e, coalesceUpsertIntoUpdateResult(combinedResult, e.rawResponse));
-      } else {
-        throw new CollectionUpdateManyError(e, coalesceUpsertIntoUpdateResult(commonResult, {}));
-      }
+      throw new CollectionUpdateManyError(e, coalesceUpsertIntoUpdateResult(commonResult, {}));
     }
 
     return coalesceUpsertIntoUpdateResult(commonResult, resp);
@@ -203,7 +195,7 @@ export class CommandImpls<ID> {
       filter: filter[0],
     });
 
-    const isDeleteAll = Object.keys(command.filter ?? {}).length === 0;
+    const isDeleteAll = Object.keys(_filter).length === 0;
 
     const timeoutManager = this._httpClient.tm.multipart('generalMethodTimeoutMs', options);
     let resp, numDeleted = 0;
@@ -218,12 +210,8 @@ export class CommandImpls<ID> {
         numDeleted += resp.status?.deletedCount ?? 0;
       }
     } catch (e) {
-      const extraDeletedCount = (e instanceof DataAPIResponseError)
-        ? e.rawResponse.status?.deletedCount ?? 0
-        : 0;
-
       throw new CollectionDeleteManyError(e, {
-        deletedCount: numDeleted + extraDeletedCount,
+        deletedCount: numDeleted,
       });
     }
 

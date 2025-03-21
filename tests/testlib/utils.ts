@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
+import type { FetcherResponseInfo } from '@/src/index.js';
 import {
   DEFAULT_COLLECTION_NAME,
   DEFAULT_TABLE_NAME,
@@ -22,6 +23,8 @@ import {
 import { GLOBAL_FIXTURES } from '@/tests/testlib/global.js';
 import type { SomeDoc } from '@/src/documents/index.js';
 import assert from 'assert';
+import type { HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import stableStringify from 'safe-stable-stringify';
 
 export const AlwaysAvailableBuffer = Buffer; // some tests temporarily delete the global Buffer object
 
@@ -131,6 +134,28 @@ export function useSuiteResources<Keys extends string, T>(mkResources: () => Rec
 
 export function negate<T extends any[]>(fn: (...args: T) => boolean): (...args: T) => boolean {
   return (...args: T) => !fn(...args);
+}
+
+export function memoizeRequests<H extends { _httpClient: any }>(hasHttpClient: H): H {
+  const requestCache: Record<string, FetcherResponseInfo> = {};
+  const requestFn = hasHttpClient._httpClient._request;
+
+  hasHttpClient._httpClient._request = async (info: HTTPRequestInfo): Promise<FetcherResponseInfo> => {
+    const key = stableStringify([
+      info.url,
+      info.data,
+      info.params,
+      info.method,
+    ]);
+
+    if (key in requestCache) {
+      return requestCache[key];
+    }
+
+    return requestCache[key] = requestFn.call(hasHttpClient._httpClient, info);
+  };
+
+  return hasHttpClient;
 }
 
 export class DeltaAsserter<Fields extends string> {

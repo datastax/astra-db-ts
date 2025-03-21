@@ -16,8 +16,6 @@
 import { DataAPIResponseError, DataAPIVector, ObjectId, UUID } from '@/src/documents/index.js';
 import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import fc from 'fast-check';
-import { arbs } from '@/tests/testlib/arbitraries.js';
 
 parallel('integration.documents.collections.insert-one', { truncate: 'colls:before' }, ({ collection }) => {
   it('should insert a document with IDs of all kinds', async () => {
@@ -31,7 +29,7 @@ parallel('integration.documents.collections.insert-one', { truncate: 'colls:befo
     ];
 
     const results = await Promise.all(ids.map(async (id) => {
-      return await collection.insertOne({ _id: id, value: arbs.one(fc.jsonValue().filter(Boolean)) });
+      return await collection.insertOne({ _id: id });
     }));
 
     assert.deepStrictEqual(ids.map((id) => ({ insertedId: id })), results);

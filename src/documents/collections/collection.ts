@@ -1485,7 +1485,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   public async options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>> {
-    const resp = await this.#db.listCollections({ timeout: options?.timeout, keyspace: this.keyspace });
+    const resp = await this.#db.listCollections({ ...options, keyspace: this.keyspace });
 
     const collection = resp.find((c) => c.name === this.name);
 

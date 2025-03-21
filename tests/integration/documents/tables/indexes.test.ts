@@ -66,9 +66,16 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
 
   testIndexCreation({
     testName: 'should work when createIndex-ing a scalar',
-    testColumnType: 'date',
+    testColumnType: 'text',
     async createIndex(table, indexName, colName, opts) {
-      await table.createIndex(indexName, colName, opts);
+      await table.createIndex(indexName, colName, {
+        options: {
+          caseSensitive: false,
+          normalize: false,
+          ascii: true,
+        },
+        ...opts,
+      });
     },
   });
 

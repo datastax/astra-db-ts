@@ -84,10 +84,6 @@ export const insertManyUnordered = async <ID>(
       const endIdx = Math.min(localI + chunkSize, documents.length);
       masterIndex += chunkSize;
 
-      if (localI >= endIdx) {
-        break;
-      }
-
       const slice = documents.slice(localI, endIdx);
 
       const extraLogInfo = (documents.length === slice.length)
@@ -165,6 +161,7 @@ const insertMany = async <ID>(
 
   for (let i = 0, n = documentResponses.length; i < n; i++) {
     const docResp = documentResponses[i];
+
     if (docResp.status === "OK") {
       insertedIds.push(serdes.deserialize(docResp._id, raw, SerDesTarget.InsertedId));
     } else if (docResp.errorIdx) {

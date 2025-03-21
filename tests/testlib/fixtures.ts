@@ -33,6 +33,7 @@ import type { BaseClientEvent, DataAPIClientEventMap, LoggingConfig } from '@/sr
 import type { InferTableSchema } from '@/src/db/index.js';
 import * as util from 'node:util';
 import { Table } from '@/src/documents/index.js';
+import { memoizeRequests } from '@/tests/testlib/utils.js';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
@@ -107,7 +108,7 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
   },
 });
 
-export const initTestObjects = (opts?: TestObjectsOptions) => {
+export function initTestObjects(opts?: TestObjectsOptions) {
   const {
     httpClient = TEST_HTTP_CLIENT,
     env = ENVIRONMENT,
@@ -150,7 +151,17 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     : null!;
 
   return { client, db, collection, collection_, dbAdmin, table, table_, admin };
-};
+}
+
+export function initMemoizedTestObjects(opts?: TestObjectsOptions) {
+  const objs = initTestObjects(opts);
+
+  Object.values(objs)
+    .filter(o => '_httpClient' in o)
+    .forEach(memoizeRequests);
+
+  return objs;
+}
 
 export const initCollectionWithFailingClient = () => {
   const { collection } = initTestObjects();
