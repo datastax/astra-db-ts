@@ -14,7 +14,7 @@
 /* eslint-disable prefer-const */
 
 import { initTestObjects } from '@/tests/testlib/fixtures.js';
-import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils.js';
+import { checkTestsEnabled, tryCatchErrAsync } from '@/tests/testlib/utils.js';
 import type { SuiteBlock } from '@/tests/testlib/index.js';
 import { CURRENT_DESCRIBE_NAMES } from '@/tests/testlib/index.js';
 import type { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types.js';
@@ -78,7 +78,7 @@ background = function (name: string, suiteFn: SuiteBlock) {
         const uuids = Array.from({ length: test.testFn.length }, () => UUID.v4().toString());
 
         arr.push({
-          error: await tryCatchErr(() => test.testFn(...uuids)),
+          error: await tryCatchErrAsync(() => test.testFn(...uuids)),
           ms: performance.now() - startTime,
         });
 

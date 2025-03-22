@@ -103,6 +103,8 @@ describe('unit.client.data-api-client', () => {
     assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'archspire' } }));
     // @ts-expect-error - testing invalid input
     assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: { client: 12312312312 } }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2: 'hi' } }));
   });
 
   it('validates options properly', () => {

@@ -59,7 +59,7 @@ export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTim
    */
   limit?: number,
   /**
-   * Optional parameter for pagination purposes. Used as this value for starting retrieving a specific page of results.
+   * Optional parameter for pagination purposes. Pass the UUID of the last item on the previous page to get the next page.
    */
-  skip?: number,
+  startingAfter?: string,
 }

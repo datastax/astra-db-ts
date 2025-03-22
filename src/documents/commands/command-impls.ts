@@ -207,6 +207,7 @@ export class CommandImpls<ID> {
           bigNumsPresent: filter[1],
           extraLogInfo: isDeleteAll ? { deleteAll: true } : undefined,
         });
+        /* c8 ignore next: don't think it's possible for deletedCount to be undefined, but just in case */
         numDeleted += resp.status?.deletedCount ?? 0;
       }
     } catch (e) {
@@ -305,6 +306,7 @@ export class CommandImpls<ID> {
 
   public async distinct(key: string, filter: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
     const projection = pullSafeProjection4Distinct(key);
+    /* c8 ignore next: not sure why this is being flagged as not run during tests, but it is */
     const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 }, timeout: options?.timeout }, mkCursor);
 
     const seen = new Set<unknown>();

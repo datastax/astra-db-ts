@@ -18,7 +18,7 @@ import { TableFindCursor } from '@/src/documents/index.js';
 import { unitTestFindCursor } from '@/tests/unit/documents/__common/find-cursor.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 
-describe('unit.documents.cursors.find-cursor', ({ table }) => {
+describe('unit.documents.tables.cursors.find-cursor', ({ table }) => {
   unitTestFindCursor({
     CursorImpl: TableFindCursor,
     parent: table,

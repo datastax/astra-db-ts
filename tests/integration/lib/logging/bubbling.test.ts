@@ -13,10 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { initTestObjects} from '@/tests/testlib/index.js';
+import type { initTestObjects } from '@/tests/testlib/index.js';
 import { initMemoizedTestObjects, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { BaseClientEvent, DataAPIClientEventMap, HierarchicalLogger } from '@/src/lib/index.js';
+import type { BaseClientEvent, DataAPIClientEventMap, HierarchicalLogger, Ref } from '@/src/lib/index.js';
 import { LoggingEvents } from '@/src/lib/logging/constants.js';
 import {
   CommandFailedEvent,
@@ -25,6 +25,7 @@ import {
   DataAPIResponseError,
 } from '@/src/documents/index.js';
 import { AdminCommandStartedEvent, AdminCommandSucceededEvent } from '@/src/administration/index.js';
+import { NonErrorError } from '@/src/lib/errors.js';
 
 type TestObjects = ReturnType<typeof initTestObjects>;
 
@@ -50,7 +51,8 @@ parallel('integration.lib.logging.bubbling', () => {
       emitters.client.removeAllListeners();
 
       const testStates = [] as TestState[];
-      setupTestEventListeners(emitters, testStates);
+      const errorRef: Ref<unknown> = { ref: undefined };
+      setupTestEventListeners(emitters, testStates, errorRef);
 
       for (let i = 0; i < 3; i++) {
         const testState = mkTestState();
@@ -95,9 +97,13 @@ parallel('integration.lib.logging.bubbling', () => {
       });
 
       assert.deepStrictEqual(testStates.at(-1), mkTestState());
+
+      if (errorRef.ref) {
+        throw NonErrorError.asError(errorRef.ref);
+      }
     });
 
-    function setupTestEventListeners(emitters: TestObjects, testStates: TestState[]) {
+    function setupTestEventListeners(emitters: TestObjects, testStates: TestState[], errorRef: Ref<unknown>) {
       for (const emitterName of Object.keys(emitters) as (keyof typeof emitters)[]) {
         const emitter = emitters[emitterName] as HierarchicalLogger<DataAPIClientEventMap> | null;
 
@@ -114,19 +120,23 @@ parallel('integration.lib.logging.bubbling', () => {
             emitter.on(eventName, (e: BaseClientEvent) => {
               const { emittedEvents, requestId, emittedEventsOrder } = testStates.at(-1)!;
 
-              if (eventName in emittedEvents) {
-                assert.strictEqual(emittedEvents[eventName], e); // ensure that it's the exact same event object being propagated
-              } else {
-                emittedEvents[eventName] = e;
-              }
+              try {
+                if (eventName in emittedEvents) {
+                  assert.strictEqual(emittedEvents[eventName], e); // ensure that it's the exact same event object being propagated
+                } else {
+                  emittedEvents[eventName] = e;
+                }
 
-              if (requestId !== undefined) {
-                assert.strictEqual(e.requestId, requestId); // ensure that the requestId is always the same for events generated from a single request
-              } else {
-                testStates.at(-1)!.requestId = e.requestId;
-              }
+                if (requestId !== undefined) {
+                  assert.strictEqual(e.requestId, requestId); // ensure that the requestId is always the same for events generated from a single request
+                } else {
+                  testStates.at(-1)!.requestId = e.requestId;
+                }
 
-              spec.plugin?.[emitterName]?.(e);
+                spec.plugin?.[emitterName]?.(e);
+              } catch (e) {
+                errorRef.ref = e;
+              }
 
               emittedEventsOrder.push(`${emitterName}:${eventName}:${i as 0 | 1 | 2}`);
             });

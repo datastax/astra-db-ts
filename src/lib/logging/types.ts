@@ -142,9 +142,9 @@ export type DataAPIClientEvent = DataAPIClientEventMap[keyof DataAPIClientEventM
  *
  * The `emits` field can be set to either `'event'`, `'stdout'`, `'stderr'`, or their verbose variants.
  *
- * - `'event'` will emit the event to each {@link HierarchicalEmitter} in the hierarchy
+ * - `'event'` will emit the event to each {@link HierarchicalLogger} in the hierarchy
  *   - e.g. first to the `Collection`, then the `Db`, then the `DataAPIClient`
- *   - See {@link HierarchicalEmitter} for more information on how events are emitted
+ *   - See {@link HierarchicalLogger} for more information on how events are emitted
  * - `'stdout'` & `'stderr'` will log the event to stdout or stderr, respectively
  *   - The `'stdout:verbose'` & `'stderr:verbose'` variants will use a verbose format containing all the events properties
  *   - These are useful for debugging, but may be overwhelming for normal use

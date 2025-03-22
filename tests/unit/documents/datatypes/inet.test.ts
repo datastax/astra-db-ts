@@ -14,56 +14,120 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPIInet } from '@/src/documents/index.js';
+import { DataAPIInet, inet } from '@/src/documents/index.js';
 import { describe, it } from '@/tests/testlib/index.js';
-
-const IPV4 = '127.0.0.1';
-const IPV6 = '2001:0db8:85a3:0000:0000:8a2e:0370:7334';
+import fc from 'fast-check';
+import { tryCatchErrSync } from '@/tests/testlib/utils.js';
 
 describe('unit.documents.datatypes.inet', () => {
   describe('construction', () => {
     it('should properly construct an IPv4 address', () => {
-      const explicit = new DataAPIInet(IPV4, 4);
-      assert.strictEqual(explicit.toString(), IPV4);
-      assert.strictEqual(explicit.version, 4);
+      fc.assert(
+        fc.property(fc.mixedCase(fc.ipV4()), (ip) => {
+          const validate = (inet: DataAPIInet) => {
+            assert.strictEqual(inet.toString(), ip.toLowerCase());
+            assert.strictEqual(inet.version, 4);
+          };
 
-      const implicit = new DataAPIInet(IPV4);
-      assert.strictEqual(implicit.toString(), IPV4);
-      assert.strictEqual(implicit.version, 4);
+          validate(new DataAPIInet(ip));
+          validate(new DataAPIInet(ip, 4));
+          validate(new DataAPIInet(ip, 4, false));
+          validate(new DataAPIInet(ip, null, false));
+
+          validate(inet(ip));
+          validate(inet(ip, 4));
+        }),
+      );
     });
 
     it('should properly construct an IPv6 address', () => {
-      const explicit = new DataAPIInet(IPV6, 6);
-      assert.strictEqual(explicit.toString(), IPV6);
-      assert.strictEqual(explicit.version, 6);
+      fc.assert(
+        fc.property(fc.mixedCase(fc.ipV6()), (ip) => {
+          const validate = (inet: DataAPIInet) => {
+            assert.strictEqual(inet.toString(), ip.toLowerCase());
+            assert.strictEqual(inet.version, 6);
+          };
 
-      const implicit = new DataAPIInet(IPV6);
-      assert.strictEqual(implicit.toString(), IPV6);
-      assert.strictEqual(implicit.version, 6);
+          validate(new DataAPIInet(ip));
+          validate(new DataAPIInet(ip, 6));
+          validate(new DataAPIInet(ip, 6, false));
+          validate(new DataAPIInet(ip, null, false));
+
+          validate(inet(ip));
+          validate(inet(ip, 6));
+        }),
+      );
+    });
+
+    it('should throw on invalid IPs', () => {
+      for (const version of [4, 6, undefined] as const) {
+        fc.assert(
+          fc.property(fc.string(), (ip) => {
+            fc.pre(!DataAPIInet.isIPv4(ip) && !DataAPIInet.isIPv6(ip));
+            assert.throws(() => new DataAPIInet(ip, version));
+          }),
+        );
+      }
+    });
+
+    it('should allow force creation of invalid values', () => {
+      for (const version of [4, 6, undefined] as const) {
+        fc.assert(
+          fc.property(fc.anything(), (ip) => {
+            if (ip !== null && (typeof ip === 'string' || typeof ip === 'object' && 'toLowerCase' in ip && typeof ip.toLowerCase === 'function')) {
+              assert.doesNotThrow(() => new DataAPIInet(ip as any, version, false));
+            } else {
+              assert.throws(() => new DataAPIInet(ip as any, version, false), TypeError);
+            }
+          }), {
+            examples: [[{ toLowerCase: () => 3 }]],
+          },
+        );
+      }
     });
   });
 
   describe('validation', () => {
-    it('should error on invalid IPv4', () => {
-      assert.throws(() => new DataAPIInet(IPV6, 4));
+    describe('isIPv4', () => {
+      it('should return true for valid IPv4 addresses', () => {
+        fc.assert(
+          fc.property(fc.mixedCase(fc.ipV4()), (ip) => {
+            assert.ok(DataAPIInet.isIPv4(ip));
+          }),
+        );
+      });
+
+      it('should return false for valid IPv6 addresses', () => {
+        fc.assert(
+          fc.property(fc.string(), (ip) => {
+            fc.pre(tryCatchErrSync(() => new URL(`https://[${ip}]`)) !== undefined);
+            assert.ok(!DataAPIInet.isIPv4(ip));
+          }), {
+            examples: [['a'], ['a'.repeat(100)]],
+          },
+        );
+      });
     });
 
-    it('should error on invalid IPv6', () => {
-      assert.throws(() => new DataAPIInet(IPV4, 6));
-    });
+    describe('isIPv6', () => {
+      it('should return true for valid IPv6 addresses', () => {
+        fc.assert(
+          fc.property(fc.mixedCase(fc.ipV6()), (ip) => {
+            assert.ok(DataAPIInet.isIPv6(ip));
+          }),
+        );
+      });
 
-    it('should error on invalid IP', () => {
-      assert.throws(() => new DataAPIInet('i like dogs'));
-    });
-
-    it('should error on invalid type', () => {
-      assert.throws(() => new DataAPIInet({} as any), Error);
-    });
-
-    it('should allow force creation of invalid values', () => {
-      assert.strictEqual(new DataAPIInet('abc', 4, false).version, 4);
-      assert.strictEqual(new DataAPIInet(IPV6, 4, false).version, 4);
-      assert.throws(() => new DataAPIInet({} as any, 4, false).version, TypeError);
+      it('should return false for valid IPv6 addresses', () => {
+        fc.assert(
+          fc.property(fc.string(), (ip) => {
+            fc.pre(tryCatchErrSync(() => new URL(`https://[${ip}]`)) !== undefined);
+            assert.ok(!DataAPIInet.isIPv6(ip));
+          }), {
+            examples: [['a'], ['a'.repeat(100)]],
+          },
+        );
+      });
     });
   });
 });

@@ -14,8 +14,8 @@
 
 import type { AdditionalHeaders, HeadersProviderVariants } from '@/src/lib/headers-providers/index.js';
 import { HeadersProvider, StaticHeadersProvider } from '@/src/lib/headers-providers/index.js';
-import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
-import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
+import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handlers.js';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handlers.js';
 import type { DecoderType } from 'decoders';
 import { either, nullish, optional, record, string } from 'decoders';
 import { anyInstanceOf, isNullish, oneOrMany } from '@/src/lib/utils.js';

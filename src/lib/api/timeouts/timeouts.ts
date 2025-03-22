@@ -319,7 +319,7 @@ export class Timeouts {
     tableAdminTimeoutMs: 30000,
     databaseAdminTimeoutMs: 600000,
     keyspaceAdminTimeoutMs: 30000,
-  });
+  }) as Required<ParsedTimeoutDescriptor>;
 
   public readonly baseTimeouts: TimeoutDescriptor;
 
@@ -329,7 +329,7 @@ export class Timeouts {
 
   public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {
     if (typeof override?.timeout === 'number') {
-      const timeout = override.timeout;
+      const timeout = override.timeout || EffectivelyInfinity;
 
       const initial = {
         requestTimeoutMs: timeout,

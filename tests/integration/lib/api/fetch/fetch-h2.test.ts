@@ -60,8 +60,37 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
       assert.strictEqual(resp.url, genericOptions.url);
       assert.strictEqual(typeof JSON.parse(resp.body!)?.status, 'object');
       assert.strictEqual(resp.status, 200);
-      assert.strictEqual(resp.statusText, '');
       assert.strictEqual(resp.httpVersion, 2);
+      assert.strictEqual(typeof resp.headers, 'object');
+      assert.strictEqual(resp.extraLogInfo, undefined);
+    } finally {
+      await fetcher.close();
+    }
+  });
+
+  it('should work with http2 when preferring http1', async () => {
+    const fetcher = new FetchH2({ client: 'fetch-h2', fetchH2, preferHttp2: false });
+    try {
+      const resp = await fetcher.fetch(genericOptions);
+      assert.strictEqual(resp.url, genericOptions.url);
+      assert.strictEqual(typeof JSON.parse(resp.body!)?.status, 'object');
+      assert.strictEqual(resp.status, 200);
+      assert.strictEqual(resp.httpVersion, 1);
+      assert.strictEqual(typeof resp.headers, 'object');
+      assert.strictEqual(resp.extraLogInfo, undefined);
+    } finally {
+      await fetcher.close();
+    }
+  });
+
+  it('should work with http2 when forcing http1', async () => {
+    const fetcher = new FetchH2({ client: 'fetch-h2', fetchH2, preferHttp2: true });
+    try {
+      const resp = await fetcher.fetch({ ...genericOptions, forceHttp1: true });
+      assert.strictEqual(resp.url, genericOptions.url);
+      assert.strictEqual(typeof JSON.parse(resp.body!)?.status, 'object');
+      assert.strictEqual(resp.status, 200);
+      assert.strictEqual(resp.httpVersion, 1);
       assert.strictEqual(typeof resp.headers, 'object');
       assert.strictEqual(resp.extraLogInfo, undefined);
     } finally {

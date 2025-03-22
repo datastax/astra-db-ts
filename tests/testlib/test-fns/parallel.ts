@@ -15,7 +15,7 @@
 
 import type { initTestObjects } from '@/tests/testlib/fixtures.js';
 import { afterEach } from 'mocha';
-import { tryCatchErr } from '@/tests/testlib/utils.js';
+import { tryCatchErrAsync } from '@/tests/testlib/utils.js';
 import type { SuiteBlock, SuiteOptions } from '@/tests/testlib/index.js';
 import { describe } from '@/tests/testlib/index.js';
 import { UUID } from '@/src/documents/index.js';
@@ -96,7 +96,7 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
           const uuids = Array.from({ length: test.testFn.length }, () => UUID.v4().toString());
 
           return {
-            error: await tryCatchErr(() => test.testFn(...uuids)),
+            error: await tryCatchErrAsync(() => test.testFn(...uuids)),
             ms: performance.now() - startTime,
           };
         });

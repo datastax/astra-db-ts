@@ -57,7 +57,7 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
   /**
    * The path for the request, not including the Base URL.
    */
-  public readonly path: string;
+  public readonly url: string;
 
   /**
    * The HTTP method for the request.
@@ -67,7 +67,7 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
   /**
    * The request body, if any.
    */
-  public readonly reqBody?: Record<string, any>;
+  public readonly requestBody?: Record<string, any>;
 
   /**
    * The query parameters, if any.
@@ -89,18 +89,18 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string, requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean) {
+  protected constructor(name: string, requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean) {
     super(name, requestId, {});
-    this.path = info.path;
+    this.url = baseUrl + info.path;
     this.method = info.method;
-    this.reqBody = info.data;
+    this.requestBody = info.data;
     this.params = info.params;
     this.longRunning = longRunning;
     this.methodName = info.methodName;
   }
 
   public override getMessagePrefix() {
-    return `(${this.methodName}) ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} `;
+    return `(${this.methodName}) ${this.method} ${this.url}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()}`;
   }
 }
 
@@ -129,13 +129,13 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>) {
-    super('AdminCommandStarted', requestId, info, longRunning);
+  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>) {
+    super('AdminCommandStarted', requestId, baseUrl, info, longRunning);
     this.timeout = timeout;
   }
 
   public override getMessage(): string {
-    return `${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
+    return `${this.longRunning ? '(blocking) ' : ''}${this.requestBody ? `${JSON.stringify(this.requestBody)}` : ''}`;
   }
 }
 
@@ -176,8 +176,8 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number) {
-    super('AdminCommandPolling', requestId, info, true);
+  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number) {
+    super('AdminCommandPolling', requestId, baseUrl, info, true);
     this.elapsed = performance.now() - started;
     this.interval = interval;
     this.pollCount = pollCount;
@@ -218,14 +218,14 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
-    super('AdminCommandSucceeded', requestId, info, longRunning);
+  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
+    super('AdminCommandSucceeded', requestId, baseUrl, info, longRunning);
     this.duration = performance.now() - started;
     this.resBody = data || undefined;
   }
 
   public override getMessage(): string {
-    return `${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(${~~this.duration}ms)`;
+    return `${this.requestBody ? `${JSON.stringify(this.requestBody)} ` : ''}(${~~this.duration}ms)`;
   }
 }
 
@@ -262,14 +262,14 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
-    super('AdminCommandFailed', requestId, info, longRunning);
+  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
+    super('AdminCommandFailed', requestId, baseUrl, info, longRunning);
     this.duration = performance.now() - started;
     this.error = error;
   }
 
   public override getMessage(): string {
-    return `$${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(${~~this.duration}ms) ERROR: '${this.error.message}'`;
+    return `${this.requestBody ? `${JSON.stringify(this.requestBody)} ` : ''}(${~~this.duration}ms) ERROR: ${JSON.stringify(this.error.message)}`;
   }
 }
 
@@ -298,12 +298,12 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
-    super('AdminCommandWarnings', requestId, info, longRunning);
+  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
+    super('AdminCommandWarnings', requestId, baseUrl, info, longRunning);
     this.warnings = warnings;
   }
 
   public override getMessage(): string {
-    return `${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''} WARNINGS: ${this.warnings.map(w => `'${w.message}'`).join(', ')}`;
+    return `${this.requestBody ? `${JSON.stringify(this.requestBody)} ` : ''}WARNINGS: ${this.warnings.map(w => JSON.stringify(w.message)).join(', ')}`;
   }
 }

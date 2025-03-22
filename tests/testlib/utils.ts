@@ -28,9 +28,17 @@ import stableStringify from 'safe-stable-stringify';
 
 export const AlwaysAvailableBuffer = Buffer; // some tests temporarily delete the global Buffer object
 
-export async function tryCatchErr(fn: () => void | Promise<void>) {
+export async function tryCatchErrAsync(fn: () => Promise<void>) {
   try {
     await fn();
+  } catch (e: any) {
+    return e as Error;
+  }
+}
+
+export function tryCatchErrSync(fn: () => void) {
+  try {
+    fn();
   } catch (e: any) {
     return e as Error;
   }
@@ -222,3 +230,9 @@ export class DeltaAsserter<Fields extends string> {
     }
   }
 }
+
+export const untouchable = <T extends object>(target: T = {} as T) => new Proxy(target, {
+  get() {
+    throw new Error('Untouchable proxy used');
+  },
+});

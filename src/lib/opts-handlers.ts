@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import type { Decoder } from 'decoders';
-import type { nullish } from '@/src/lib/index.js';
-import { findLast } from '@/src/lib/utils.js';
+import type { EmptyObj, nullish } from '@/src/lib/index.js';
+import { findLast, isNullish } from '@/src/lib/utils.js';
 
 /**
  * @public
@@ -63,14 +63,14 @@ export class OptionsHandler<Types extends OptionsHandlerTypes> {
 
   public parse(input: Types['Parseable'], field?: string): Types['Parsed'] {
     try {
-      return assertParsed(this.decoder.verify(input));
+      return asParsed(this.decoder.verify(input));
     } catch (e) {
       if (!(e instanceof Error && e.name === 'Decoding error')) {
         throw e;
       }
 
-      const message = (field)
-        ? `Error parsing ${field}: ${e.message}`
+      const message = (!isNullish(field))
+        ? `Error parsing '${field}': ${e.message}`
         : e.message;
 
       throw new OptionParseError(message, field);
@@ -90,11 +90,14 @@ export class MonoidalOptionsHandler<Types extends OptionsHandlerTypes> extends O
 
   constructor(decoder: Decoder<Unparse<Types['Parsed']>>, private readonly monoid: Monoid<Unparse<Types['Parsed']>>) {
     super(decoder);
-    this.empty = assertParsed(monoid.empty);
+    this.empty = asParsed(monoid.empty);
   }
 
   public concat(configs: Types['Parsed'][]): Types['Parsed'] {
-    return assertParsed(this.monoid.concat(configs));
+    if (configs.length <= 1) {
+      return configs[0] ?? this.empty; // minor optimization
+    }
+    return asParsed(this.monoid.concat(configs));
   }
 
   public concatParse(configs: Types['Parsed'][], raw: Types['Parseable'], field?: string): Types['Parsed'] {
@@ -106,7 +109,7 @@ export class MonoidalOptionsHandler<Types extends OptionsHandlerTypes> extends O
   }
 }
 
-const assertParsed = <T>(input: T): Parsed<string> => input as T & Parsed<string>;
+const asParsed = <T>(input: T): Parsed<string> => input as T & Parsed<string>;
 
 /**
  * @internal
@@ -132,13 +135,9 @@ export type MonoidType<T> = T extends Monoid<infer U> ? U : never;
  * @internal
  */
 export const monoids = <const>{
-  optional: <T>(): Monoid<T | undefined> => ({
+  optional: <T extends EmptyObj>(): Monoid<T | undefined> => ({
     empty: undefined,
     concat: findLast<T | undefined>((a) => a !== undefined && a !== null),
-  }),
-  record: <T>(): Monoid<Record<string, T>> => ({
-    empty: {},
-    concat: (as) => as.reduce((acc, next) => ({ ...acc, ...next }), {}),
   }),
   array: <T>(): Monoid<T[]> => ({
     empty: [],
@@ -148,7 +147,7 @@ export const monoids = <const>{
     empty: [],
     concat: (as) => as.reduce((acc, next) => [...next, ...acc], []),
   }),
-  object<const T>(schema: MonoidSchema<T>): Monoid<T> {
+  object<const T extends object>(schema: MonoidSchema<T>): Monoid<T> {
     const schemaEntries = Object.entries(schema) as [keyof typeof schema, Monoid<any>][];
 
     const empty = Object.fromEntries(schemaEntries.map(([k, v]) => [k, v.empty])) as T;

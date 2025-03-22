@@ -17,7 +17,7 @@ import type { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { forJSEnv } from '@/src/lib/utils.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
-import { mkInvArgsErr } from '@/src/documents/utils.js';
+import { mkInvArgsError } from '@/src/documents/utils.js';
 import type { SomeConstructor } from '@/src/lib/index.js';
 
 /**
@@ -83,7 +83,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    */
   public constructor(blob: DataAPIBlobLike, validate = true) {
     if (validate && !DataAPIBlob.isBlobLike(blob)) {
-      throw mkInvArgsErr('new DataAPIBlob', [['blob', 'DataAPIBlob | ArrayBuffer | Buffer | { $binary: string }']], blob);
+      throw mkInvArgsError('new DataAPIBlob', [['blob', 'DataAPIBlob | ArrayBuffer | Buffer | { $binary: string }']], blob);
     }
 
     Object.defineProperty(this, '_raw', {

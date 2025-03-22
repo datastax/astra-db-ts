@@ -15,7 +15,7 @@
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { DataAPIDate, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
-import { mkInvArgsErr } from '@/src/documents/utils.js';
+import { mkInvArgsError } from '@/src/documents/utils.js';
 
 /**
  * ##### Overview
@@ -296,7 +296,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
           this.nanoseconds = i1.getMilliseconds() * 1_000_000;
         }
         else {
-          throw mkInvArgsErr('new DataAPITime', [['time', 'string | Date']], i1);
+          throw mkInvArgsError('new DataAPITime', [['time', 'string | Date']], i1);
         }
         break;
       }
@@ -312,7 +312,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
           validateTime(this.hours, this.minutes, this.seconds, this.nanoseconds);
         }
         else {
-          throw mkInvArgsErr('new DataAPIDate', [['hour', 'number'], ['minute', 'number'], ['second', 'number?'], ['nanosecond', 'number?']], i1, i2, i3, i4);
+          throw mkInvArgsError('new DataAPIDate', [['hour', 'number'], ['minute', 'number'], ['second', 'number?'], ['nanosecond', 'number?']], i1, i2, i3, i4);
         }
         break;
       }
@@ -368,7 +368,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
     base ||= new Date();
 
     if (base instanceof Date) {
-      return new Date(base?.getFullYear() || 0, base?.getMonth() || 0, base?.getDate() || 0, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
+      return new Date(base.getFullYear(), base.getMonth(), base.getDate(), this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
     }
 
     return new Date(base.year, base.month - 1, base.date, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
@@ -599,7 +599,7 @@ const validateTime = (hours: number, minutes: number, seconds: number, nanosecon
 
 const ofSecondOfDay = (s: unknown): [number, number, number, number] => {
   if (typeof s !== 'number') {
-    throw mkInvArgsErr('DataAPITime.ofSecondOfDay', [['secondOfDay', 'number']], s);
+    throw mkInvArgsError('DataAPITime.ofSecondOfDay', [['secondOfDay', 'number']], s);
   }
 
   if (!Number.isInteger(s)) {
@@ -620,7 +620,7 @@ const ofSecondOfDay = (s: unknown): [number, number, number, number] => {
 
 const ofNanoOfDay = (ns: unknown): [number, number, number, number] => {
   if (typeof ns !== 'number') {
-    throw mkInvArgsErr('DataAPITime.ofNanoOfDay', [['nanoOfDay', 'number']], ns);
+    throw mkInvArgsError('DataAPITime.ofNanoOfDay', [['nanoOfDay', 'number']], ns);
   }
 
   if (!Number.isInteger(ns)) {

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
-import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
+import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handlers.js';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handlers.js';
 import type { DbOptions } from '@/src/client/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import { exact, nullish, oneOf, optional, regex, string } from 'decoders';

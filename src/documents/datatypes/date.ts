@@ -16,7 +16,7 @@ import { $CustomInspect } from '@/src/lib/constants.js';
 import type { DataAPITime, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
 import { DataAPIDuration } from '@/src/documents/index.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
-import { mkInvArgsErr } from '@/src/documents/utils.js';
+import { mkInvArgsError } from '@/src/documents/utils.js';
 
 const MillisecondsPerDay = 1000 * 60 * 60 * 24;
 
@@ -296,13 +296,13 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
           this.date = i1.getDate();
         }
         else {
-          throw mkInvArgsErr('new DataAPIDate', [['date', 'string | Date']], i1);
+          throw mkInvArgsError('new DataAPIDate', [['date', 'string | Date']], i1);
         }
         break;
       }
       case 3: {
         if (typeof i1 !== 'number' || typeof i2 !== 'number' || typeof i3 !== 'number') {
-          throw mkInvArgsErr('new DataAPIDate', [['year', 'number'], ['month', 'number'], ['date', 'number']], i1, i2, i3);
+          throw mkInvArgsError('new DataAPIDate', [['year', 'number'], ['month', 'number'], ['date', 'number']], i1, i2, i3);
         }
         validateDate(1, i1, i2, i3);
         this.year = i1;
@@ -626,7 +626,7 @@ const validateDate = (sign: number, year: number, month: number, date: number): 
 
 const ofYearDay = (year: unknown, dayOfYear: unknown): Date => {
   if (typeof year !== 'number' || typeof dayOfYear !== 'number') {
-    throw mkInvArgsErr('DataAPIDate.ofYearDay', [['year', 'number'], ['dayOfYear', 'number']], year, dayOfYear);
+    throw mkInvArgsError('DataAPIDate.ofYearDay', [['year', 'number'], ['dayOfYear', 'number']], year, dayOfYear);
   }
 
   if (!Number.isInteger(year) || !Number.isInteger(dayOfYear)) {
@@ -649,7 +649,7 @@ const ofYearDay = (year: unknown, dayOfYear: unknown): Date => {
 
 const ofEpochDay = (epochDays: unknown): Date => {
   if (typeof epochDays !== 'number') {
-    throw mkInvArgsErr('DataAPIDate.ofEpochDay', [['epochDays', 'number']], epochDays);
+    throw mkInvArgsError('DataAPIDate.ofEpochDay', [['epochDays', 'number']], epochDays);
   }
 
   if (!Number.isInteger(epochDays)) {

@@ -34,18 +34,23 @@ declare const $ERROR: unique symbol;
  */
 export interface TypeErr<S> { [$ERROR]: S }
 
-/**
- * @internal
- */
-export function extractDbIdFromUrl(uri: string): string | undefined {
-  return (/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/.exec(new URL(uri).hostname))?.[0];
-}
+const DBComponentsRegex = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-([a-z0-9_-]+)\.apps\.astra(?:-(?:dev|test))?\.datastax\.com/i;
 
 /**
  * @internal
  */
-export function extractRegionFromUrl(uri: string): string | undefined {
-  return new URL(uri).hostname.split('-').slice(5).join('-').split('.')[0] || undefined;
+export function extractDbComponentsFromAstraUrl(uri: string): [string, string] | [] {
+  try {
+    const match = DBComponentsRegex.exec(new URL(uri).hostname);
+
+    if (!match) {
+      return [];
+    }
+
+    return [match[1].toLowerCase(), match[2].toLowerCase()];
+  } catch (_) {
+    return [];
+  }
 }
 
 /**
@@ -57,7 +62,7 @@ export const betterTypeOf = (value: unknown): string => {
   }
 
   if (typeof value === 'object') {
-    return value.constructor?.name ?? 'Object';
+    return value.constructor?.name ?? 'Object[NullProto]';
   }
 
   return typeof value;
@@ -66,7 +71,7 @@ export const betterTypeOf = (value: unknown): string => {
 /**
  * @internal
  */
-export const mkInvArgsErr = (exp: string, params: [string, string][], ...got: unknown[]): TypeError => {
+export const mkInvArgsError = (exp: string, params: [string, string][], ...got: unknown[]): TypeError => {
   const names = params.map(([name]) => name).join(', ');
   const types = params.map(([, type]) => type).join(', ');
   return new TypeError(`Invalid argument(s) for \`${exp}(${names})\`; expected (${types}), got (${got.map(betterTypeOf).join(', ')})`);
@@ -75,6 +80,6 @@ export const mkInvArgsErr = (exp: string, params: [string, string][], ...got: un
 /**
  * @internal
  */
-export const wrongTypeErr = (name: string, expected: string, got: unknown): TypeError => {
+export const mkWrongTypeError = (name: string, expected: string, got: unknown): TypeError => {
   return new TypeError(`Expected '${name}' to be of type '${expected}', but got '${betterTypeOf(got)}' (${got})`);
 };

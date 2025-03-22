@@ -22,7 +22,7 @@ import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables
  *
  * @public
  */
-export const inet = (address: string, version?: 4 | 6) => new DataAPIInet(address, version);
+export const inet = (address: string, version?: 4 | 6 | null) => new DataAPIInet(address, version);
 
 /**
  * Represents an `inet` column for Data API tables.
@@ -52,6 +52,34 @@ export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
   }
 
   /**
+   * Checks if a string is a valid IPv6 address.
+   *
+   * **NOTE:** Will cover all common cases of IP addresses, but may reject otherwise valid addresses in more esoteric, yet still technically legal, forms.
+   *
+   * However, this will never return `true` on an IP which is actually invalid.
+   */
+  public static isIPv6(raw: string): boolean {
+    if (raw.length < IPv6Lengths.min || IPv6Lengths.max < raw.length) {
+      return false;
+    }
+    return IPv6Regex.test(raw);
+  }
+
+  /**
+   * Checks if a string is a valid IPv4 address.
+   *
+   * **NOTE:** Will cover all common cases of IP addresses, but may reject otherwise valid addresses in more esoteric, yet still technically legal, forms.
+   *
+   * However, this will never return `true` on an IP which is actually invalid.
+   */
+  public static isIPv4(raw: string): boolean {
+    if (raw.length < IPv4Lengths.min || IPv4Lengths.max < raw.length) {
+      return false;
+    }
+    return IPv4Regex.test(raw);
+  }
+
+  /**
    * Creates a new `DataAPIInet` instance from a vector-like value.
    *
    * If you pass a `version`, the value will be validated as an IPv4 or IPv6 address; otherwise, it'll be validated as
@@ -69,17 +97,17 @@ export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
     if (validate) {
       switch (version) {
         case 4:
-          if (!isIPv4(address)) {
+          if (!DataAPIInet.isIPv4(address)) {
             throw new Error(`'${address}' is not a valid IPv4 address`);
           }
           break;
         case 6:
-          if (!isIPv6(address)) {
+          if (!DataAPIInet.isIPv6(address)) {
             throw new Error(`'${address}' is not a valid IPv6 address`);
           }
           break;
         default:
-          if (!(version = isIPv4(address) ? 4 : isIPv6(address) ? 6 : null)) {
+          if (!(version = DataAPIInet.isIPv4(address) ? 4 : DataAPIInet.isIPv6(address) ? 6 : null)) {
             throw new Error(`'${address}' is not a valid IPv4 or IPv6 address`);
           }
       }
@@ -100,7 +128,7 @@ export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
    */
   public get version(): 4 | 6 {
     if (!this._version) {
-      this._version = isIPv4(this._raw) ? 4 : 6;
+      this._version = DataAPIInet.isIPv4(this._raw) ? 4 : 6;
     }
     return this._version;
   }
@@ -119,7 +147,7 @@ const IPv4Lengths = { max: 15, min: 7 };
 const IPv6Lengths = { max: 45, min: 2 };
 
 // =====================================================================================================================
-// From https://github.com/sindresorhus/ip-regex/blob/main/index.js
+// Vendored from https://github.com/sindresorhus/ip-regex/blob/main/index.js
 // Was getting errors trying to import it while as a dependency, so just decided not to deal with it for the time being
 const v4 = '(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)){3}';
 
@@ -141,17 +169,3 @@ const v6 = `
 const IPv4Regex = new RegExp(`^${v4}$`);
 const IPv6Regex = new RegExp(`^${v6}$`);
 // =====================================================================================================================
-
-function isIPv6(raw: string) {
-  if (raw.length < IPv6Lengths.min || IPv6Lengths.max < raw.length) {
-    return false;
-  }
-  return IPv6Regex.test(raw);
-}
-
-function isIPv4(raw: string) {
-  if (raw.length < IPv4Lengths.min || IPv4Lengths.max < raw.length) {
-    return false;
-  }
-  return IPv4Regex.test(raw);
-}

@@ -342,11 +342,12 @@ export class DataAPIResponseError extends DataAPIError {
    *
    * @internal
    */
-  constructor(command: Record<string, any>, rawResponse: RawDataAPIResponse) {
-    const errorDescriptors = rawResponse.errors!;
+  constructor(command: Record<string, any>, rawResponse: RawDataAPIResponse & { errors: DataAPIErrorDescriptor[] }) {
+    const errorDescriptors = rawResponse.errors;
 
     const message = (errorDescriptors[0]?.message)
       ? `${errorDescriptors[0].message}${errorDescriptors.length > 1 ? ` (+ ${errorDescriptors.length - 1} more errors)` : ''}`
+      /* c8 ignore next: not sure if this is possible but just in case */
       : `Something went wrong (${errorDescriptors.length} errors)`;
 
     super(message);
@@ -362,7 +363,7 @@ export class DataAPIResponseError extends DataAPIError {
    * longer for bulk operations like `insertMany` which may have multiple insertion errors.
    */
   public get errorDescriptors(): readonly DataAPIErrorDescriptor[] {
-    return this.rawResponse.errors ?? [];
+    return this.rawResponse.errors!;
   }
 
   /**

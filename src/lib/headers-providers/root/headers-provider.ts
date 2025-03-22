@@ -17,7 +17,7 @@ import type {
   ObjectBasedHeadersProviderOptsHandler, ParsedHeadersProviders,
   StringBasedHeadersProviderOptsHandler,
 } from '@/src/lib/headers-providers/root/opts-handlers.js';
-import type { Monoid } from '@/src/lib/opts-handler.js';
+import type { Monoid } from '@/src/lib/opts-handlers.js';
 
 export abstract class HeadersProvider<Tag extends HeadersProviderVariants = any> {
   public declare readonly _phant: `Expected a HeaderProvider specifically for ${Tag}s (e.g. \`class ${Capitalize<Tag>}HeadersProvider extends HeadersProvider<'${Tag}'>\`).`;

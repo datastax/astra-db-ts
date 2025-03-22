@@ -36,8 +36,8 @@ export class InvalidEnvironmentError extends Error {
    *
    * @internal
    */
-  constructor(operation: string, currentEnvironment: string, expectedEnvironments: string[], extra = '') {
-    super(`Invalid environment '${currentEnvironment}' for operation '${operation}' ${extra ? `(${extra})` : ''}; expected environment(s): ${expectedEnvironments.map(e => `'${e}'`).join(', ')}`);
+  constructor(operation: string, currentEnvironment: string, expectedEnvironments: string[], extra: string) {
+    super(`Invalid environment '${currentEnvironment}' for operation '${operation}' (${extra}); expected environment(s): ${expectedEnvironments.map(e => `'${e}'`).join(', ')}`);
     this.currentEnvironment = currentEnvironment;
     this.expectedEnvironments = expectedEnvironments;
     this.name = 'InvalidEnvironmentError';

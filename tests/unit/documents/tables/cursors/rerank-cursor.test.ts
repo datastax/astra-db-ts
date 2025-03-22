@@ -18,7 +18,7 @@ import { TableFindAndRerankCursor } from '@/src/documents/index.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { unitTestRerankCursor } from '@/tests/unit/documents/__common/rerank-cursor.js';
 
-describe('unit.documents.cursors.rerank-cursor', ({ table }) => {
+describe('unit.documents.tables.cursors.rerank-cursor', ({ table }) => {
   unitTestRerankCursor({
     CursorImpl: TableFindAndRerankCursor,
     parent: table,

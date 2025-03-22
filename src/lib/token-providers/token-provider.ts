@@ -15,8 +15,8 @@
 import type { GetHeadersCtx} from '@/src/lib/index.js';
 import { HeadersProvider, StaticTokenProvider } from '@/src/lib/index.js';
 import { anyInstanceOf, findLast, isNullish } from '@/src/lib/utils.js';
-import type { Monoid, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
-import { MonoidalOptionsHandler } from '@/src/lib/opts-handler.js';
+import type { Monoid, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handlers.js';
+import { MonoidalOptionsHandler } from '@/src/lib/opts-handlers.js';
 import type { DecoderType} from 'decoders';
 import { either, nullish, string } from 'decoders';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/src/lib/api/constants.js';

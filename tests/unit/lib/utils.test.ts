@@ -23,7 +23,7 @@ import {
   isNullish,
   jsonTryParse,
   jsonTryStringify,
-  numDigits,
+  numDigits, QueryState,
   toArray,
 } from '@/src/lib/utils.js';
 import fc from 'fast-check';
@@ -65,6 +65,7 @@ describe('unit.lib.utils', () => {
       assert.strictEqual('https://id-region.apps.astra.datastax.com', buildAstraEndpoint('id', 'region'));
       assert.strictEqual('https://id-region.apps.astra.datastax.com', buildAstraEndpoint('id', 'region', 'prod'));
       assert.strictEqual('https://id-region.apps-dev.astra.datastax.com', buildAstraEndpoint('id', 'region', 'dev'));
+      assert.strictEqual('https://id-region.apps-test.astra.datastax.com', buildAstraEndpoint('id', 'region', 'test'));
     });
   });
 
@@ -178,6 +179,32 @@ describe('unit.lib.utils', () => {
           const expected = arr.slice().reverse().find(pred);
           const result = findLast(pred)(arr);
           assert.strictEqual(result, expected);
+        }),
+      );
+    });
+  });
+
+  describe('QueryState', () => {
+    it('should be initialized as unattempted', () => {
+      const qs = new QueryState();
+      assert.strictEqual(qs.state, QueryState.Unattempted);
+      assert.strictEqual(qs.unwrap(), null);
+    });
+
+    it('should set the right state when advanced', () => {
+      const qs = new QueryState();
+
+      fc.assert(
+        fc.property(fc.option(fc.anything()), (value) => {
+          qs.swap(value);
+
+          if (isNullish(value)) {
+            assert.strictEqual(qs.state, QueryState.NotFound);
+            assert.strictEqual(qs.unwrap(), null);
+          } else {
+            assert.strictEqual(qs.state, QueryState.Found);
+            assert.strictEqual(qs.unwrap(), value);
+          }
         }),
       );
     });

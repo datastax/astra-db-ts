@@ -154,19 +154,20 @@ const insertMany = async <ID>(
     err = e;
   }
 
+  /* c8 ignore next: don't think it's possible for documentResponses to be null, but just in case */
   const documentResponses = raw.status?.documentResponses ?? [];
   const errors = raw.errors;
 
   const insertedIds: ID[] = [];
 
   for (let i = 0, n = documentResponses.length; i < n; i++) {
-    const docResp = documentResponses[i];
+    const response = documentResponses[i];
 
-    if (docResp.status === "OK") {
-      insertedIds.push(serdes.deserialize(docResp._id, raw, SerDesTarget.InsertedId));
-    } else if (docResp.errorIdx) {
-      docResp.error = errors![docResp.errorIdx];
-      delete docResp.errorIdx;
+    if (response.status === "OK") {
+      insertedIds.push(serdes.deserialize(response._id, raw, SerDesTarget.InsertedId));
+    } else if ('errorsIdx' in response) {
+      response.error = errors![response.errorsIdx];
+      delete response.errorsIdx;
     }
   }
 

@@ -35,7 +35,7 @@ describe('unit.lib.api.clients.headers-resolver', () => {
   describe('static', () => {
     it('should resolve headers statically when using all pure header providers', () => {
       const providers = HeadersProvider.opts.monoid.concat([
-        HeadersProvider.opts.fromObj.parse({ 'x-foo': 'baz' }),
+        HeadersProvider.opts.fromObj.parse([{ 'x-foo': 'baz' }, { 'x-foo': 'qux' }]),
         HeadersProvider.opts.fromStr(EmbeddingAPIKeyHeaderProvider).parse('api-key'),
         TokenProvider.opts.parse('old').toHeadersProvider(),
         TokenProvider.opts.parse('new').toHeadersProvider(),
@@ -52,7 +52,7 @@ describe('unit.lib.api.clients.headers-resolver', () => {
 
       assert.ok(!(headers instanceof Promise));
       assert.deepStrictEqual(headers, {
-        'x-foo': 'baz',
+        'x-foo': 'qux',
         'x-embedding-api-key': 'api-key',
         [DEFAULT_DATA_API_AUTH_HEADER]: 'new',
         'car': 'bus',

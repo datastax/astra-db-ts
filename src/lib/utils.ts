@@ -78,14 +78,14 @@ const getJSEnv = () =>
 
 const env = getJSEnv();
 
+/* c8 ignore start: uses a version of forJSEnv which re-checks the env @ every call for testing purposes (allows for "mocking" different js envs) */
 /**
  * @internal
  */
 export const forJSEnv = (typeof process !== 'undefined' && typeof process.env === 'object' && process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
-  /* Version of forJSEnv which re-checks the env @ every call for testing purposes (allows for "mocking" different js envs) */
   ? <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => (...args: Args) => fns[getJSEnv()](...args)
-  /* istanbul ignore else: same logic as above */
   : <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => fns[env];
+/* c8 ignore end */
 
 /**
  * @internal
@@ -160,42 +160,30 @@ export function findLast<T>(predicate: (value: T, index: number) => boolean, orE
 /**
  * @internal
  */
-const enum QueryStateState {
-  Unattempted,
-  Found,
-  NotFound,
-}
-
-/**
- * @internal
- */
 export class QueryState<T extends EmptyObj> {
-  private _state = QueryStateState.Unattempted;
+  public static Unattempted = 0 as const;
+  public static Found = 1 as const;
+  public static NotFound = 2 as const;
+
+  private _state: 0 | 1 | 2 = QueryState.Unattempted;
   private _value: T | null = null;
 
-  public isUnattempted(): this is { get unwrap(): null } {
-    return this._state === QueryStateState.Unattempted;
-  }
-
-  public isFound(): this is { get unwrap(): T } {
-    return this._state === QueryStateState.Found;
-  }
-
-  public isNotFound(): this is { get unwrap(): null } {
-    return this._state === QueryStateState.NotFound;
+  public get state() {
+    return this._state;
   }
 
   public swap(value: T | nullish) {
     if (isNullish(value)) {
-      this._state = QueryStateState.NotFound;
+      this._state = QueryState.NotFound;
+      this._value = null;
     } else {
-      this._state = QueryStateState.Found;
+      this._state = QueryState.Found;
       this._value = value;
     }
     return this;
   }
 
-  public get unwrap() {
+  public unwrap() {
     return this._value;
   }
 }

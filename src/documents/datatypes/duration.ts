@@ -15,7 +15,7 @@
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
-import { mkInvArgsErr } from '@/src/documents/utils.js';
+import { mkInvArgsError } from '@/src/documents/utils.js';
 import type { Ref } from '@/src/lib/types.js';
 import { numDigits } from '@/src/lib/utils.js';
 
@@ -307,13 +307,13 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
       case 1:
       case 2:
         if (typeof i1 !== 'string') {
-          throw mkInvArgsErr('DataAPIDuration', [['duration', 'string']], i1);
+          throw mkInvArgsError('DataAPIDuration', [['duration', 'string']], i1);
         }
         [this.months, this.days, this.nanoseconds] = parseDurationStr(i1, !!i2);
         break;
       case 3:
         if (typeof i1 !== 'number' || typeof i2 !== 'number' || (typeof i3 !== 'number' && typeof i3 !== 'bigint')) {
-          throw mkInvArgsErr('new DataAPIDuration', [['months', 'number'], ['days', 'number'], ['nanoseconds', 'number | bigint']], i1, i2, i3);
+          throw mkInvArgsError('new DataAPIDuration', [['months', 'number'], ['days', 'number'], ['nanoseconds', 'number | bigint']], i1, i2, i3);
         }
         validateDuration(i1, i2, BigInt(i3));
         [this.months, this.days, this.nanoseconds] = [i1, i2, BigInt(i3)];
@@ -1412,15 +1412,15 @@ const durationToShortString = (duration: DataAPIDuration): string => {
   let res = duration.isNegative() ? '-' : '';
 
   if (duration.months) {
-    res += duration.months + 'mo';
+    res += Math.abs(duration.months) + 'mo';
   }
 
   if (duration.days) {
-    res += duration.days + 'd';
+    res += Math.abs(duration.days) + 'd';
   }
 
   if (duration.nanoseconds) {
-    res += duration.nanoseconds + 'ns';
+    res += (duration.nanoseconds < 0n ? -duration.nanoseconds : duration.nanoseconds) + 'ns';
   }
 
   return res || '0s';

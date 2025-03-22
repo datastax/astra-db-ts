@@ -119,7 +119,7 @@ for check_type in $check_types; do
       ;;
     "test-exts")
       print_green_with_status "Checking for test files that do not end in '.test.ts'..."
-      offenders=$(find tests/unit tests/integration -type f -not -name "*.test.ts" -exec echo "- {}" \;)
+      offenders=$(find tests/unit tests/integration -type d -name '__*' -prune -o -type f -not -name "*.test.ts" -exec echo "- {}" \;)
 
       if [ -n "$offenders" ]; then
         print_failed "The following test files do not end in '.test.ts':"

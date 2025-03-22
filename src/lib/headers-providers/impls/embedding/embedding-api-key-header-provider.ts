@@ -15,6 +15,7 @@
 import type { nullish } from '@/src/lib/index.js';
 import { HeadersProvider, StaticHeadersProvider } from '@/src/lib/headers-providers/index.js';
 import { isNullish } from '@/src/lib/utils.js';
+import { mkWrongTypeError } from '@/src/documents/utils.js';
 
 /**
  * ##### Overview
@@ -44,7 +45,7 @@ export class EmbeddingAPIKeyHeaderProvider extends StaticHeadersProvider<'embedd
    * @param apiKey - The api-key/token to regurgitate in `getToken`
    */
   public constructor(apiKey: string | nullish) {
-    const headers = (apiKey)
+    const headers = (!isNullish(apiKey))
       ? { 'x-embedding-api-key': apiKey }
       : {};
     super(headers);
@@ -68,6 +69,6 @@ export class EmbeddingAPIKeyHeaderProvider extends StaticHeadersProvider<'embedd
       return provider;
     }
 
-    throw new TypeError(`Expected ${field ?? 'embedding api key'} to be type string | EmbeddingHeadersProvider | nullish`);
+    throw mkWrongTypeError(field ?? 'embedding api key', 'string | HeadersProvider<\'embedding\'> | nullish', provider);
   }
 }

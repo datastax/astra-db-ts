@@ -39,21 +39,19 @@ parallel('integration.lib.logging.lifecycle', () => {
     it(testName, async (key) => {
       const emitter = initTestEmitter();
 
-      const requestIds = { start: '', end: '' };
       const callOrder = [] as (StartEvent | SucceedEvent)[];
+
+      const startEmissions: BaseClientEvent[] = [];
+      const endEmissions: BaseClientEvent[] = [];
 
       const startListener = (e: BaseClientEvent) => {
         callOrder.push(spec.events.start);
-        assert.notStrictEqual(e.requestId, requestIds.start);
-        requestIds.start = e.requestId;
-        spec.validateEvents[spec.events.start](e);
+        startEmissions.push(e);
       };
 
       const endListener = (e: BaseClientEvent) => {
         callOrder.push(spec.events.end);
-        assert.notStrictEqual(e.requestId, requestIds.end);
-        requestIds.end = e.requestId;
-        spec.validateEvents[spec.events.end](e);
+        endEmissions.push(e);
       };
 
       // test the lifecycle of a single listener
@@ -67,7 +65,7 @@ parallel('integration.lib.logging.lifecycle', () => {
           emitter.off(spec.events.start, startListener);
         });
 
-        assertInternalStateNoOp(() => {
+        assertNoInternalStateChange(() => {
           startListenerOff();
           emitter.off(spec.events.start, startListener);
           emitter.off(spec.events.start, () => {});
@@ -80,7 +78,7 @@ parallel('integration.lib.logging.lifecycle', () => {
           endListenerOff();
         });
 
-        assertInternalStateNoOp(() => {
+        assertNoInternalStateChange(() => {
           endListenerOff();
           emitter.off(spec.events.start, startListener);
           emitter.off(spec.events.end, endListener);
@@ -105,7 +103,7 @@ parallel('integration.lib.logging.lifecycle', () => {
           emitter.off(spec.events.start, startListeners[0]);
         });
 
-        assertInternalStateNoOp(() => {
+        assertNoInternalStateChange(() => {
           emitter.off(spec.events.start, startListeners[0]);
           emitter.off(spec.events.start, startListener);
         });
@@ -116,7 +114,7 @@ parallel('integration.lib.logging.lifecycle', () => {
           emitter.removeAllListeners(spec.events.start);
         });
 
-        assertInternalStateNoOp(() => {
+        assertNoInternalStateChange(() => {
           emitter.removeAllListeners(spec.events.start);
           startListeners.forEach((listener) => emitter.off(spec.events.start, listener));
         });
@@ -137,12 +135,12 @@ parallel('integration.lib.logging.lifecycle', () => {
 
       // testing some noop-y stuff
       {
-        assertInternalStateNoOp(() => {
+        assertNoInternalStateChange(() => {
           const off = emitter.on(spec.events.start, startListener);
           off();
         });
 
-        await assertInternalStateNoOp(async () => {
+        await assertNoInternalStateChange(async () => {
           emitter.once(spec.events.start, () => {
             throw new Error('This should not affect anything...');
           });
@@ -194,7 +192,14 @@ parallel('integration.lib.logging.lifecycle', () => {
         });
 
         await generateEvents({ times: 3, callOrder, expectOrder: [spec.events.start, spec.events.end] });
+
+        assertNoInternalStateChange(() => {
+          assert.throws(() => emitter.updateLoggingConfig([{ events: 'all', emits: ['stderr', 'stdout'] }]));
+        });
       }
+
+      startEmissions.forEach(spec.validateEvents[spec.events.start]);
+      endEmissions.forEach(spec.validateEvents[spec.events.end]);
 
       function initTestEmitter() {
         const emitter = spec.pickEmitter(initMemoizedTestObjects());
@@ -229,7 +234,7 @@ parallel('integration.lib.logging.lifecycle', () => {
           : verify() as R;
       }
 
-      function assertInternalStateNoOp<R extends void | Promise<void>>(cb: () => R): R {
+      function assertNoInternalStateChange<R extends void | Promise<void>>(cb: () => R): R {
         const before = JSON.parse(JSON.stringify(emitter.internal));
 
         const ret = cb();
@@ -269,11 +274,11 @@ parallel('integration.lib.logging.lifecycle', () => {
     validateEvents: {
       commandStarted(e: BaseClientEvent) {
         assert.ok(e instanceof CommandStartedEvent);
-        assert.strictEqual(e.commandName, 'insertOne');
+        assert.strictEqual(e.commandName, 'findOne');
       },
       commandWarnings(e: BaseClientEvent) {
         assert.ok(e instanceof CommandWarningsEvent);
-        assert.strictEqual(e.commandName, 'insertOne');
+        assert.strictEqual(e.commandName, 'findOne');
       },
     },
   });

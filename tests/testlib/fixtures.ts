@@ -127,7 +127,7 @@ export function initTestObjects(opts?: TestObjectsOptions) {
     logging,
   });
 
-  for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEventMap)[]) {
+  for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed', 'adminCommandStarted', 'adminCommandWarnings', 'adminCommandPolling'] as (keyof DataAPIClientEventMap)[]) {
     client.on(event, (e: BaseClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
   }
 

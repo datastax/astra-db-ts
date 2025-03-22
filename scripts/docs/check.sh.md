@@ -72,6 +72,19 @@ to ensure that the library compiles correctly, and may be used in other projects
 
 If set, the script will check that all test files in the `test` folder have the `.test.ts` extension.
 
+However, this excludes files that reside within "special" directories, which start with a '__' prefix, such as `__common` or `__lib`.
+- This allows us to define test utilities within the test folders themselves
+
+For example, the first path will get flagged, but the second one is okay:
+
+```bash
+# WARNING
+tests/unit/doucments/__common/find-cursor.ts
+
+# OK
+tests/unit/doucments/__common/find-cursor.ts
+```
+
 ### Check test naming conventions (`test-names`)
 
 If set, the script will check that all file-level test suites in the `test` folder have the correct naming convention.

@@ -311,7 +311,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     try {
       while (this._buffer.length === 0) {
-        if (this._nextPageState.isNotFound()) {
+        if (this._nextPageState.state === QueryState.NotFound) {
           this.close();
           return null;
         }
@@ -319,11 +319,11 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
       }
 
       if (peek) {
-        return this._buffer.length > 1;
+        return true;
       }
 
       this._state = 'started';
-      const doc = this._buffer.shift() ?? null;
+      const doc = this._buffer.shift();
 
       if (doc) {
         this._consumed++;

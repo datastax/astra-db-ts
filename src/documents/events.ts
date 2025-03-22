@@ -132,7 +132,7 @@ export abstract class CommandEvent extends BaseClientEvent {
   }
 
   protected _extraLogInfoAsString() {
-    return this.extraLogInfo ? ` {${Object.entries(this.extraLogInfo).map(([k, v]) => `${k}=${v}`).join(',')}}` : '';
+    return this.extraLogInfo ? `{${Object.entries(this.extraLogInfo).map(([k, v]) => `${k}=${v}`).join(',')}} ` : '';
   }
 }
 
@@ -214,7 +214,7 @@ export class CommandSucceededEvent extends CommandEvent {
   }
 
   public override getMessage(): string {
-    return `${this._extraLogInfoAsString()} (${~~this.duration}ms)`;
+    return `${this._extraLogInfoAsString()}(${~~this.duration}ms)`;
   }
 }
 
@@ -266,7 +266,7 @@ export class CommandFailedEvent extends CommandEvent {
   }
 
   public override getMessage(): string {
-    return `${this._extraLogInfoAsString()} (${~~this.duration}ms) ERROR: '${this.error.message}'`;
+    return `${this._extraLogInfoAsString()}(${~~this.duration}ms) ERROR: ${JSON.stringify(this.error.message)}`;
   }
 
   public override trimDuplicateFields(): this {
@@ -308,6 +308,6 @@ export class CommandWarningsEvent extends CommandEvent {
   }
 
   public override getMessage(): string {
-    return `${this._extraLogInfoAsString()} WARNINGS: ${this.warnings.map(w => `'${w.message}'`).join(', ')}`;
+    return `${this._extraLogInfoAsString()}WARNINGS: ${this.warnings.map(w => JSON.stringify(w.message)).join(', ')}`;
   }
 }
