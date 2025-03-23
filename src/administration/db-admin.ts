@@ -161,6 +161,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     return resp.status as FindEmbeddingProvidersResult;
   }
 
+  /* c8 ignore start: not in data api yet */
   /**
    * Returns detailed information about the availability and usage of the reranking providers available on the
    * current database (may vary based on cloud provider & region).
@@ -187,6 +188,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     });
     return resp.status as FindRerankingProvidersResult;
   }
+  /* c8 ignore end */
 
   /**
    * @internal

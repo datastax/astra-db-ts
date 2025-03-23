@@ -64,13 +64,22 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
 
     const { client, db } = initTestObjects();
 
-    const ISBNCodec = CollectionCodecs.forId(CollectionCodecs.asCodecClass(ISBN, (clazz) => {
-      clazz.prototype[$SerializeForCollection] = function (ctx: CollectionSerCtx) {
+    // const ISBNCodec = CollectionCodecs.forId(CollectionCodecs.asCodecClass(ISBN, (clazz) => {
+    //   clazz.prototype[$SerializeForCollection] = function (ctx: CollectionSerCtx) {
+    //     return ctx.done(this.unwrap);
+    //   };
+    //   clazz[$DeserializeForCollection] = function (raw: string, ctx: CollectionDesCtx) {
+    //     return ctx.done(new ISBN(raw));
+    //   };
+    // }));
+
+    const ISBNCodec = CollectionCodecs.forId(CollectionCodecs.asCodecClass(ISBN, {
+      serializeForCollection(ctx) {
         return ctx.done(this.unwrap);
-      };
-      clazz[$DeserializeForCollection] = function (raw: string, ctx: CollectionDesCtx) {
+      },
+      deserializeForCollection(raw, ctx) {
         return ctx.done(new ISBN(raw));
-      };
+      },
     }));
 
     const BookCodec = CollectionCodecs.forPath([], {

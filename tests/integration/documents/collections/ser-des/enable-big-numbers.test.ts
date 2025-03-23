@@ -48,7 +48,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
     },
     bats: {
       mars: {
-        stars: [{ bars: 2 }, { czars: 9007199254740991n }],
+        stars: [{ bars: 2 }, { czars: 9000000000000000123n }],
       },
     },
   });
@@ -71,7 +71,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
     },
     bats: {
       mars: {
-        stars: [{ bars: 2 }, { czars: '9007199254740991' }],
+        stars: [{ bars: 2 }, { czars: '9000000000000000123' }],
       },
     },
   });
@@ -94,7 +94,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
     },
     bats: {
       mars: {
-        stars: [{ bars: BigNumber(2) }, { czars: BigNumber('9007199254740991') }],
+        stars: [{ bars: BigNumber(2) }, { czars: BigNumber('9000000000000000123') }],
       },
     },
   });
@@ -141,7 +141,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
   const TestObjAct4 = (key: string) => ({
     _id: key,
     root0: new Newtype(BigNumber(3)),
-    root1: new Newtype(9007199254740991n),
+    root1: new Newtype(9000000000000000123n),
     stats: {
       value: new Newtype(3),
     },
@@ -150,7 +150,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
   const TestObjExp4 = (key: string) => ({
     _id: key,
     root0: 3,
-    root1: '9007199254740991',
+    root1: '9000000000000000123',
     stats: {
       value: 3n,
     },
@@ -159,7 +159,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
   const TestObjExp4d = (key: string) => ({
     _id: key,
     root0: BigNumber(3),
-    root1: BigNumber('9007199254740991'),
+    root1: BigNumber('9000000000000000123'),
     stats: {
       value: BigNumber(3),
     },

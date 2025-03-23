@@ -28,7 +28,7 @@ import stableStringify from 'safe-stable-stringify';
 
 export const AlwaysAvailableBuffer = Buffer; // some tests temporarily delete the global Buffer object
 
-export async function tryCatchErrAsync(fn: () => Promise<void>) {
+export async function tryCatchErrAsync(fn: () => Promise<void> | void) {
   try {
     await fn();
   } catch (e: any) {

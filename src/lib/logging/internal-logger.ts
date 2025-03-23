@@ -68,7 +68,7 @@ export class InternalLogger<Events extends Record<string, BaseClientEvent>> impl
   private _someAdminCommandEventEnabled = false;
 
   private _config: InternalLoggingOutputsMap;
-  private readonly _listeners: Partial<Record<keyof Events, ((event: any) => void)[]>> = {};
+  private readonly _listeners: Partial<Record<keyof Events, ((event: any) => void)[]>> = Object.create(null);
   private readonly _parent: InternalLogger<Events> | undefined;
   private readonly _console: ConsoleLike;
 

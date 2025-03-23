@@ -194,7 +194,7 @@ const deserialize: SerDesFn<TableDesCtx> = (value, ctx) => {
     }
   }
 
-  if (key === '' || value === null) {
+  if (ctx.path.length === 0 || value === null) {
     return ctx.recurse(value);
   }
 
@@ -213,7 +213,7 @@ const codecs = TableSerDes.cfg.parse({ codecs: Object.values(TableCodecs.Default
 
 function populateSparseData(ctx: TableDesCtx) {
   for (const key in ctx.tableSchema) {
-    if (key in ctx.rootObj) {
+    if (Object.prototype.hasOwnProperty.call(ctx.rootObj, key)) {
       continue;
     }
 
@@ -241,6 +241,7 @@ function resolveAbsType({ path, tableSchema }: TableDesCtx): string | undefined 
 
   if (type === 'map') {
     if (typeof path[1] === 'number') {
+      /* c8 ignore next 3: not in data api yet */
       if (path.length === 3) {
         return (path[2] === 0 ? (column as any).keyType : (column as any).valueType);
       }

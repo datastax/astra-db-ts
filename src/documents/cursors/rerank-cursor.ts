@@ -38,6 +38,7 @@ import {
   cloneFLC,
 } from '@/src/documents/cursors/common.js';
 
+/* c8 ignore start: not in data api yet */
 export class RerankResult<TRaw> {
   constructor(
     public readonly document: TRaw,
@@ -255,3 +256,4 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     return this._httpClient.tm;
   }
 }
+/* c8 ignore end */

@@ -20,7 +20,14 @@ import { DataAPITime } from '@/src/documents/datatypes/time.js';
 import { UUID } from '@/src/documents/datatypes/uuid.js';
 import { DataAPIVector } from '@/src/documents/datatypes/vector.js';
 import type { TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
-import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib/index.js';
+import type {
+  CustomCodecOpts,
+  NominalCodecOpts,
+  RawCodec,
+  SerDesFn,
+  SomeConstructor,
+  TypeCodecOpts,
+} from '@/src/lib/index.js';
 import { BigNumber } from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { DataAPIInet } from '@/src/documents/datatypes/inet.js';
@@ -74,7 +81,7 @@ export class TableCodecs {
     }),
     date: TableCodecs.forType('date', DataAPIDate),
     decimal: TableCodecs.forType('decimal', {
-      deserialize: (value, ctx) => ctx.done((value instanceof BigNumber) ? value : new BigNumber(value)),
+      deserialize: (value, ctx) => ctx.done(BigNumber(value)),
     }),
     double: TableCodecs.forType('double', {
       deserialize: (value, ctx) => ctx.done(parseFloat(value)),
@@ -115,6 +122,7 @@ export class TableCodecs {
         return ctx.recurse(Object.fromEntries(value));
       },
       deserialize(_, ctx) {
+        /* c8 ignore next: not in data api yet */
         ctx.mapAfter((es) => new Map(Array.isArray(es) ? es : Object.entries(es)));
         return ctx.recurse();
       },
@@ -173,19 +181,30 @@ export class TableCodecs {
     return [{ tag: 'custom', opts: opts }];
   }
 
-  public static asCodecClass<T>(val: T, builder?: ((val: T & TableCodecClass & { prototype: { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> } }) => void)): TableCodecClass {
-    builder?.(val as T & TableCodecClass);
-    assertIsCodecClass(val);
-    return val;
+  public static asCodecClass<Class extends SomeConstructor>(clazz: Class, fns?: AsTableCodecClassFns<Class>): TableCodecClass {
+    if (fns) {
+      if (!('prototype' in clazz)) {
+        throw new TypeError(`Cannot attach ser/des functions to non-class ${clazz}`);
+      }
+      (clazz as any)[$DeserializeForTable] = fns.deserializeForTable;
+      (clazz.prototype)[$SerializeForTable] = fns.serializeForTable;
+    }
+    assertIsCodecClass(clazz);
+    return clazz;
   }
 }
 
-function assertIsCodecClass(val: unknown): asserts val is TableCodecClass {
-  if (typeof val !== 'function') {
-    throw new Error(`Invalid codec class: expected a constructor; got ${betterTypeOf(val)}`);
+export interface AsTableCodecClassFns<Class extends SomeConstructor> {
+  serializeForTable: (this: InstanceType<Class>, ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
+  deserializeForTable: SerDesFn<TableDesCtx>;
+}
+
+function assertIsCodecClass(clazz: unknown): asserts clazz is TableCodecClass {
+  if (typeof clazz !== 'function') {
+    throw new TypeError(`Invalid codec class: expected a constructor; got ${betterTypeOf(clazz)}`);
   }
-  assertHasSerializeFor(val, $SerializeForTable, '$SerializeForTable');
-  assertHasDeserializeFor(val, $DeserializeForTable, '$DeserializeForTable');
+  assertHasSerializeFor(clazz, $SerializeForTable, '$SerializeForTable');
+  assertHasDeserializeFor(clazz, $DeserializeForTable, '$DeserializeForTable');
 }
 
 function validateIfCodecClass<T>(val: TableCodecClass | T) {

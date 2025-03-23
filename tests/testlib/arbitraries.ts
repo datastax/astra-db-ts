@@ -16,13 +16,116 @@ import fc from 'fast-check';
 import { DataAPIEnvironments } from '@/src/lib/index.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
 import { AlwaysAvailableBuffer } from '@/tests/testlib/utils.js';
+import type { StrictCreateTableColumnDefinition } from '@/src/db/index.js';
+import { DataAPIInet, uuid } from '@/src/documents/index.js';
+import { BigNumber } from 'bignumber.js';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
+
+export type ArbType<T extends fc.Arbitrary<any>> = T extends fc.Arbitrary<infer U> ? U : never;
+
+const tableScalar = fc.constantFrom('text', 'uuid', 'varint', 'inet', 'timestamp');
+
+const tableColumnDefinition = () => fc.oneof(
+  tableScalar.map((type) => (<const>{ type })),
+  tableScalar.map((type) => (<const>{ type: 'map', keyType: 'text', valueType: type })),
+  tableScalar.map((type) => (<const>{ type: 'set', valueType: type })),
+  tableScalar.map((type) => (<const>{ type: 'list', valueType: type })),
+);
+
+const tableDefinition = () => fc.dictionary(fc.stringMatching(/^[a-zA-Z_]+$/).filter(s => s !== '__proto__'), tableColumnDefinition());
+
+const fromTableColumn = (def: StrictCreateTableColumnDefinition, minLengthForNonScalar?: number): fc.Arbitrary<unknown> => {
+  switch (def.type) {
+    case 'text':
+      return fc.string();
+    case 'uuid':
+      return arbs.uuid();
+    case 'varint':
+      return fc.bigInt();
+    case 'inet':
+      return arbs.inet();
+    case 'timestamp':
+      return fc.date({ noInvalidDate: true });
+    case 'map':
+      return arbs.map(fromTableColumn({ type: def.valueType }), minLengthForNonScalar);
+    case 'set':
+      return arbs.set(fromTableColumn({ type: def.valueType }), minLengthForNonScalar);
+    case 'list':
+      return fc.array(fromTableColumn({ type: def.valueType }), { minLength: minLengthForNonScalar });
+    default:
+      throw new Error(`Unexpected type: ${def.type}`);
+  }
+};
+
+interface TableDefAndRowConstraints {
+  partialRow?: boolean;
+  requireOneOf?: (ArbType<typeof tableScalar> | 'map' | 'set' | 'list')[];
+}
+
+const tableDefAndRowArb = (opts?: TableDefAndRowConstraints) => tableDefinition()
+  .filter((def) => {
+    if (opts?.requireOneOf) {
+      return Object.values(def).some((col) => opts.requireOneOf?.includes(col.type) || ('valueType' in col && opts.requireOneOf?.includes(col.valueType)));
+    }
+    return true;
+  })
+  .chain((def) => {
+    const entries = Object.entries(def)
+      .map(([k, v]) => [k, fromTableColumn(v, opts?.requireOneOf ? 1 : 0)])
+      .filter(() => !opts?.partialRow || Math.random() < 0.5);
+
+    const example = fc.record(Object.fromEntries(entries));
+
+    return fc.tuple(fc.constant(def), example);
+  });
+
+const datatypes = {
+  uuid: () => fc.uuid().map(uuid),
+  inet: () => fc.oneof(fc.ipV4(), fc.ipV6()).map(ip => new DataAPIInet(ip, null, false)),
+  map: <T>(value: fc.Arbitrary<T>, minLength?: number) => fc.array(fc.tuple(fc.string(), value), { minLength }).map((arr) => new Map(arr)),
+  set: <T>(value: fc.Arbitrary<T>, minLength?: number) => fc.array(value, { minLength }).map((arr) => new Set(arr)),
+  bigNum: () => fc.tuple(fc.bigInt(), fc.bigInt({ min: 0n })).map(([whole, decimal]) => BigNumber(`${whole}.${decimal}`)),
+};
+
+const tableSerdes = new TableSerDes(TableSerDes.cfg.empty);
+
+const tableDatatypesArb = (): fc.Arbitrary<[unknown, unknown, def: StrictCreateTableColumnDefinition]> => tableColumnDefinition().chain((def) => {
+  const arb = fromTableColumn(def);
+
+  return arb.map((dt) => {
+    return [dt, tableSerdes.serialize(dt)[0], def];
+  });
+});
+
+const collSerdes = new CollSerDes(CollSerDes.cfg.empty);
+
+const collDatatypesArb = (): fc.Arbitrary<[unknown, unknown]> => fc.letrec((tie) => ({
+  scalar: fc.oneof(
+    datatypes.uuid(),
+    fc.string(),
+    fc.date({ noInvalidDate: true }),
+  ),
+  datatypes: fc.oneof(
+    tie('scalar'),
+    arbs.record(tie('datatypes')),
+    fc.array(tie('datatypes')),
+  ),
+})).datatypes.map((dt) => {
+  return [dt, collSerdes.serialize(dt)[0]];
+});
 
 export const arbs = <const>{
   nonAstraEnvs: () => fc.constantFrom(...DataAPIEnvironments.filter(e => e !== 'astra').map((e) => EnvironmentCfgHandler.parse(e))),
-  pathSegment: () => fc.oneof(fc.string(), fc.integer()),
-  path: () => fc.array(fc.oneof(fc.string(), fc.integer())),
+  pathSegment: () => fc.oneof(arbs.nonProtoString(), fc.nat({ max: 10 })),
+  path: () => fc.array(arbs.pathSegment()).filter((p) => p.length === 0 || typeof p[0] === 'string'),
   cursorState: () => fc.constantFrom('idle', 'started', 'closed'),
-  record: <T>(arb: fc.Arbitrary<T>) => fc.dictionary(fc.string().filter((s) => s !== '__proto__'), arb, { noNullPrototype: true }),
+  record: <T>(arb: fc.Arbitrary<T>) => fc.dictionary(arbs.nonProtoString(), arb, { noNullPrototype: true }),
   validBase46: () => fc.base64String().filter((base64) => base64 === AlwaysAvailableBuffer.from(base64, 'base64').toString('base64')),
   one: (arb: fc.Arbitrary<any>) => fc.sample(arb, 1)[0],
+  tableDefinitionAndRow: tableDefAndRowArb,
+  tableDatatypes: tableDatatypesArb,
+  collDatatypes: collDatatypesArb,
+  nonProtoString: () => fc.string().filter((s) => s !== '__proto__'),
+  ...datatypes,
 };

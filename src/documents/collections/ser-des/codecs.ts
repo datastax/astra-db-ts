@@ -17,7 +17,14 @@ import { UUID } from '@/src/documents/datatypes/uuid.js';
 import { ObjectId } from '@/src/documents/datatypes/object-id.js';
 import { DataAPIVector, vector } from '@/src/documents/datatypes/vector.js';
 import type { CollectionDesCtx, CollectionSerCtx } from '@/src/documents/index.js';
-import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib/index.js';
+import type {
+  CustomCodecOpts,
+  NominalCodecOpts,
+  RawCodec,
+  SerDesFn,
+  SomeConstructor,
+  TypeCodecOpts,
+} from '@/src/lib/index.js';
 import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/api/ser-des/utils.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
@@ -130,19 +137,30 @@ export class CollectionCodecs {
     return [{ tag: 'custom', opts: opts }];
   }
 
-  public static asCodecClass<T>(val: T, builder?: ((val: T & CollectionCodecClass & { prototype: { [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>> } }) => void)): CollectionCodecClass {
-    builder?.(val as T & CollectionCodecClass);
-    assertIsCodecClass(val);
-    return val;
+  public static asCodecClass<Class extends SomeConstructor>(clazz: Class, fns?: AsCollectionCodecClassFns<Class>): CollectionCodecClass {
+    if (fns) {
+      if (!('prototype' in clazz)) {
+        throw new Error(`Cannot attach ser/des functions to non-class ${clazz}`);
+      }
+      (clazz as any)[$DeserializeForCollection] = fns.deserializeForCollection;
+      (clazz.prototype)[$SerializeForCollection] = fns.serializeForCollection;
+    }
+    assertIsCodecClass(clazz);
+    return clazz;
   }
 }
 
-function assertIsCodecClass(val: unknown): asserts val is CollectionCodecClass {
-  if (typeof val !== 'function') {
-    throw new Error(`Invalid codec class: expected a constructor; got ${betterTypeOf(val)}`);
+export interface AsCollectionCodecClassFns<Class extends SomeConstructor> {
+  serializeForCollection: (this: InstanceType<Class>, ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
+  deserializeForCollection: SerDesFn<CollectionDesCtx>;
+}
+
+function assertIsCodecClass(clazz: unknown): asserts clazz is CollectionCodecClass {
+  if (typeof clazz !== 'function') {
+    throw new TypeError(`Invalid codec class: expected a constructor; got ${betterTypeOf(clazz)}`);
   }
-  assertHasSerializeFor(val, $SerializeForCollection, '$SerializeForCollection');
-  assertHasDeserializeFor(val, $DeserializeForCollection, '$DeserializeForCollection');
+  assertHasSerializeFor(clazz, $SerializeForCollection, '$SerializeForCollection');
+  assertHasDeserializeFor(clazz, $DeserializeForCollection, '$DeserializeForCollection');
 }
 
 function validateIfCodecClass<T>(val: CollectionCodecClass | T) {

@@ -80,6 +80,6 @@ export const mkInvArgsError = (exp: string, params: [string, string][], ...got: 
 /**
  * @internal
  */
-export const mkWrongTypeError = (name: string, expected: string, got: unknown): TypeError => {
-  return new TypeError(`Expected '${name}' to be of type '${expected}', but got '${betterTypeOf(got)}' (${got})`);
+export const mkWrongTypeError = (fieldName: string, expected: string, got: unknown): TypeError => {
+  return new TypeError(`Expected '${fieldName}' to be of type '${expected}', but got '${betterTypeOf(got)}' (${got})`);
 };

@@ -29,7 +29,10 @@ Did you define [${synName}] as a class property instead of a prototype method?
 
 Don't do this:
 > class Bad { [${synName}] = () => ...; }
- 
+
+Or this:
+> Bad[${synName}] = () => ...;
+
 Do this:
 > class Good { [${synName}]() { ... } }
 

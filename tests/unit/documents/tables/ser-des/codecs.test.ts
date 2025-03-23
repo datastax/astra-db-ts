@@ -15,12 +15,26 @@
 
 import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { TableCodec} from '@/src/documents/tables/index.js';
+import type { TableCodec } from '@/src/documents/tables/index.js';
 import { $DeserializeForTable, $SerializeForTable, TableCodecs } from '@/src/documents/tables/index.js';
 import type { RawTableCodecs } from '@/src/documents/tables/ser-des/codecs.js';
 import { processCodecs } from '@/src/lib/api/ser-des/codecs.js';
+import type { CodecTestsConfig} from '@/tests/unit/documents/__common/ser-des/as-codec-class.js';
+import { unitTestAsCodecClass } from '@/tests/unit/documents/__common/ser-des/as-codec-class.js';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
+import { arbs } from '@/tests/testlib/arbitraries.js';
 
 describe('unit.documents.tables.ser-des.codecs', () => {
+  describe('asCodecClass', () => {
+    unitTestAsCodecClass({
+      CodecsClass: TableCodecs,
+      SerDesClass: TableSerDes,
+      $SerSym: $SerializeForTable as unknown as CodecTestsConfig['$SerSym'],
+      $DesSym: $DeserializeForTable as unknown as CodecTestsConfig['$DesSym'],
+      datatypesArb: arbs.tableDatatypes,
+    });
+  });
+
   describe('processCodecs', () => {
     it('should properly process raw codecs', () => {
       const fake = (id: string) => id as unknown as () => readonly [0] & boolean;
@@ -56,13 +70,11 @@ describe('unit.documents.tables.ser-des.codecs', () => {
 
       const processed = processCodecs(codecs.flat());
 
-      // console.dir(processed, { depth: null });
-
       assert.deepStrictEqual(processed, [
         {
-          forName: {
+          forName: Object.assign(Object.create(null), {
             ...Object.fromEntries(repeat((i) => [`name${i}`, [`name${i}:ser_fn`, `name${i}:serdes_fn`]])),
-          },
+          }),
           forClass: [
             { class: Delegate, fns: [...repeat((i) => `type${i}:ser_fn/class`), ...repeat((i) => `custom${i}:ser_fn/class`)] },
           ],
@@ -70,19 +82,19 @@ describe('unit.documents.tables.ser-des.codecs', () => {
             ...repeat((i) => ({ guard: `type${i}:ser_guard`, fn: `type${i}:ser_fn/guard` })),
             ...repeat((i) => ({ guard: `custom${i}:ser_guard`, fn: `custom${i}:ser_fn/guard` })),
           ],
-          forPath: {},
+          forPath: Object.assign(Object.create(null), {}),
         },
         {
-          forName: {
+          forName: Object.assign(Object.create(null), {
             ...Object.fromEntries(repeat((i) => [`name${i}`, ['$DeserializeForTable', `name${i}:des_fn`, `name${i}:serdes_fn`]])),
-          },
-          forType: {
+          }),
+          forType: Object.assign(Object.create(null), {
             ...Object.fromEntries(repeat((i) => [`type${i}`, ['$DeserializeForTable', `type${i}:des_fn`]])),
-          },
+          }),
           forGuard: [
             ...repeat((i) => ({ guard: `custom${i}:des_guard`, fn: `custom${i}:des_fn` })),
           ],
-          forPath: {},
+          forPath: Object.assign(Object.create(null), {}),
         },
       ]);
     });

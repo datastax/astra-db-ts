@@ -18,6 +18,7 @@ import { BigNumber } from 'bignumber.js';
 import { pathArraysEqual, pathMatches, withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import JBI from 'json-bigint';
 import fc from 'fast-check';
+import { arbs } from '@/tests/testlib/arbitraries.js';
 
 describe('unit.lib.api.serdes.utils', () => {
   describe('withJbiNullProtoFix', () => {
@@ -52,19 +53,17 @@ describe('unit.lib.api.serdes.utils', () => {
   });
 
   describe('pathArraysEqual', () => {
-    const pathArb = fc.array(fc.oneof(fc.string(), fc.integer()));
-
     it('should return true for any same arrays', () => {
       fc.assert(
-        fc.property(pathArb, (arr) => {
-          assert.ok(pathArraysEqual(arr, [...arr]));
+        fc.property(fc.clone(arbs.path(), 2), ([arr1, arr2]) => {
+          assert.ok(pathArraysEqual(arr1, arr2));
         }),
       );
     });
 
     it('should return false for any different arrays', () => {
       fc.assert(
-        fc.property(pathArb, pathArb, (arr1, arr2) => {
+        fc.property(arbs.path(), arbs.path(), (arr1, arr2) => {
           fc.pre(JSON.stringify(arr1) !== JSON.stringify(arr2));
           assert.ok(!pathArraysEqual(arr1, arr2));
         }),
@@ -73,7 +72,7 @@ describe('unit.lib.api.serdes.utils', () => {
 
     it('is symmetric', () => {
       fc.assert(
-        fc.property(pathArb, pathArb, (arr1, arr2) => {
+        fc.property(arbs.path(), arbs.path(), (arr1, arr2) => {
           assert.strictEqual(pathArraysEqual(arr1, arr2), pathArraysEqual(arr2, arr1));
         }),
       );

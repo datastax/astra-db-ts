@@ -15,12 +15,25 @@
 
 import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { CollectionCodec} from '@/src/documents/index.js';
+import type { CollectionCodec } from '@/src/documents/index.js';
 import { $DeserializeForCollection, $SerializeForCollection, CollectionCodecs } from '@/src/documents/index.js';
 import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 import { processCodecs } from '@/src/lib/api/ser-des/codecs.js';
+import { type CodecTestsConfig, unitTestAsCodecClass } from '@/tests/unit/documents/__common/ser-des/as-codec-class.js';
+import { arbs } from '@/tests/testlib/arbitraries.js';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
 describe('unit.documents.collections.ser-des.codecs', () => {
+  describe('asCodecClass', () => {
+    unitTestAsCodecClass({
+      CodecsClass: CollectionCodecs,
+      SerDesClass: CollSerDes,
+      $SerSym: $SerializeForCollection as unknown as CodecTestsConfig['$SerSym'],
+      $DesSym: $DeserializeForCollection as unknown as CodecTestsConfig['$DesSym'],
+      datatypesArb: arbs.collDatatypes,
+    });
+  });
+
   describe('processCodecs', () => {
     it('should properly process raw codecs', () => {
       const fake = (id: string) => id as unknown as () => readonly [0] & boolean;
@@ -63,16 +76,14 @@ describe('unit.documents.collections.ser-des.codecs', () => {
 
       const processed = processCodecs(codecs.flat());
 
-      // console.dir(processed, { depth: null });
-
       assert.deepStrictEqual(processed, [
         {
-          forName: {
+          forName: Object.assign(Object.create(null), {
             ...Object.fromEntries(repeat((i) => [`name${i}`, [`name${i}:ser_fn`, `name${i}:serdes_fn`]])),
-          },
-          forPath: {
+          }),
+          forPath: Object.assign(Object.create(null), {
             ['3']: repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: [`path${i}:ser_fn`, `path${i}:serdes_fn`] })),
-          },
+          }),
           forClass: [
             { class: Delegate, fns: [...repeat((i) => `type${i}:ser_fn/class`), ...repeat((i) => `custom${i}:ser_fn/class`)] },
           ],
@@ -82,15 +93,15 @@ describe('unit.documents.collections.ser-des.codecs', () => {
           ],
         },
         {
-          forName: {
+          forName: Object.assign(Object.create(null), {
             ...Object.fromEntries(repeat((i) => [`name${i}`, ['$DeserializeForCollection', `name${i}:des_fn`, `name${i}:serdes_fn`]])),
-          },
-          forPath: {
+          }),
+          forPath: Object.assign(Object.create(null), {
             ['3']: repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: ['$DeserializeForCollection', `path${i}:des_fn`, `path${i}:serdes_fn`] })),
-          },
-          forType: {
+          }),
+          forType: Object.assign(Object.create(null), {
             ...Object.fromEntries(repeat((i) => [`type${i}`, ['$DeserializeForCollection', `type${i}:des_fn`]])),
-          },
+          }),
           forGuard: [
             ...repeat((i) => ({ guard: `custom${i}:des_guard`, fn: `custom${i}:des_fn` })),
           ],

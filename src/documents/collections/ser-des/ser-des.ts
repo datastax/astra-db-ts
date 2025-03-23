@@ -71,7 +71,7 @@ export class CollSerDes extends SerDes<CollectionSerCtx, CollectionDesCtx> {
     ctx.getNumCoercionForPath = this._getNumCoercionForPath;
 
     if (ctx.getNumCoercionForPath) {
-      coerceNums(ctx.rootObj, ctx.getNumCoercionForPath);
+      ctx.rootObj = coerceNums(ctx.rootObj, ctx.getNumCoercionForPath);
     }
 
     return ctx;
@@ -130,7 +130,7 @@ const serialize: SerDesFn<CollectionSerCtx> = (value, ctx) => {
   }
   else if (typeof value === 'bigint') {
     if (!ctx.bigNumsEnabled) {
-      throw new Error('Bigint serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
+      throw new Error('BigInt serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
     }
     return ctx.done();
   }

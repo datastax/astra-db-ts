@@ -1281,6 +1281,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     });
   }
 
+  /* c8 ignore start: not in data api yet */
   /**
    * ##### Overview
    *
@@ -1314,6 +1315,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
   }
+  /* c8 ignore end */
 
   /**
    * ##### Overview
