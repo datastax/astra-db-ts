@@ -19,17 +19,28 @@ import type { CollectionCodec } from '@/src/documents/index.js';
 import { $DeserializeForCollection, $SerializeForCollection, CollectionCodecs } from '@/src/documents/index.js';
 import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 import { processCodecs } from '@/src/lib/api/ser-des/codecs.js';
-import { type CodecTestsConfig, unitTestAsCodecClass } from '@/tests/unit/documents/__common/ser-des/as-codec-class.js';
+import { unitTestAsCodecClass } from '@/tests/unit/documents/__common/ser-des/as-codec-class.js';
 import { arbs } from '@/tests/testlib/arbitraries.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
+import { unitTestForName } from '@/tests/unit/documents/__common/ser-des/for-name.js';
 
 describe('unit.documents.collections.ser-des.codecs', () => {
+  describe('forName', () => {
+    unitTestForName({
+      CodecsClass: CollectionCodecs,
+      SerDesClass: CollSerDes,
+      $SerSym: $SerializeForCollection,
+      $DesSym: $DeserializeForCollection,
+      datatypesArb: arbs.collDatatypes,
+    });
+  });
+
   describe('asCodecClass', () => {
     unitTestAsCodecClass({
       CodecsClass: CollectionCodecs,
       SerDesClass: CollSerDes,
-      $SerSym: $SerializeForCollection as unknown as CodecTestsConfig['$SerSym'],
-      $DesSym: $DeserializeForCollection as unknown as CodecTestsConfig['$DesSym'],
+      $SerSym: $SerializeForCollection,
+      $DesSym: $DeserializeForCollection,
       datatypesArb: arbs.collDatatypes,
     });
   });

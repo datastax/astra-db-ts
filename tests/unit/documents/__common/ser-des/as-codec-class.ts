@@ -15,7 +15,7 @@
 
 import type { CollectionCodecs, TableCodecs } from '@/src/documents/index.js';
 import { $SerializeForCollection } from '@/src/documents/index.js';
-import { describe, it } from '@/tests/testlib/index.js';
+import { it } from '@/tests/testlib/index.js';
 import type { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import assert from 'assert';
 import type { BaseSerCtx } from '@/src/lib/index.js';
@@ -23,23 +23,15 @@ import type { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js'
 import fc from 'fast-check';
 import type { StrictCreateTableColumnDefinition } from '@/src/db/index.js';
 
-interface CollCodecsTestConfig {
-  CodecsClass: typeof CollectionCodecs,
-  SerDesClass: typeof CollSerDes,
-}
-
-interface TableCodecsTestConfig {
-  CodecsClass: typeof TableCodecs,
-  SerDesClass: typeof TableSerDes,
-}
-
-export type CodecTestsConfig = (CollCodecsTestConfig | TableCodecsTestConfig) & {
+export interface AsCodecClassTestsConfig {
+  CodecsClass: typeof CollectionCodecs | typeof TableCodecs,
+  SerDesClass: typeof CollSerDes | typeof TableSerDes,
   datatypesArb: () => fc.Arbitrary<[unknown, unknown, StrictCreateTableColumnDefinition?]>,
-  readonly $SerSym: unique symbol,
-  readonly $DesSym: unique symbol,
+  $SerSym: symbol,
+  $DesSym: symbol,
 }
 
-export const unitTestAsCodecClass = ({ $SerSym, $DesSym, CodecsClass, SerDesClass, ...cfg }: CodecTestsConfig) => {
+export const unitTestAsCodecClass = ({ $SerSym, $DesSym, CodecsClass, SerDesClass, ...cfg }: AsCodecClassTestsConfig) => {
   const [$SerSymName, $DesSymName] = ($SerSym as unknown === $SerializeForCollection)
     ? ['$SerializeForCollection', '$DeserializeForCollection']
     : ['$SerializeForTable', '$DeserializeForTable'];
@@ -131,6 +123,7 @@ export const unitTestAsCodecClass = ({ $SerSym, $DesSym, CodecsClass, SerDesClas
 
   it('should throw an error if $SerSym is not on the class prototype', () => {
     class NoSer {
+      // @ts-expect-error - ts being stupid
       static [$DesSym] = () => {};
     }
     assert.throws(() => CodecsClass.asCodecClass(NoSer), {
@@ -154,7 +147,9 @@ export const unitTestAsCodecClass = ({ $SerSym, $DesSym, CodecsClass, SerDesClas
     });
 
     class SerNotOnProto {
+      // @ts-expect-error - ts being stupid
       static [$DesSym] = () => {};
+      // @ts-expect-error - ts being stupid
       [$SerSym] = () => {};
     }
     assert.throws(() => CodecsClass.asCodecClass(SerNotOnProto), {

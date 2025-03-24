@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
-import type { FetcherResponseInfo } from '@/src/index.js';
+import type { FetcherResponseInfo, PathSegment } from '@/src/index.js';
+import { escapeFieldNames } from '@/src/index.js';
 import {
   DEFAULT_COLLECTION_NAME,
   DEFAULT_TABLE_NAME,
@@ -236,3 +237,34 @@ export const untouchable = <T extends object>(target: T = {} as T) => new Proxy(
     throw new Error('Untouchable proxy used');
   },
 });
+
+export function traverseObject(obj: SomeDoc, visitor: (obj: SomeDoc, key: string | number) => void) {
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      visitor(obj, i);
+      traverseObject(obj[i], visitor);
+    }
+  } else if (typeof obj === 'object') {
+    for (const key in obj) {
+      visitor(obj, key);
+      traverseObject(obj[key], visitor);
+    }
+  }
+}
+
+export function traverseObjectPath(obj: SomeDoc, path: PathSegment[], modify?: (obj: SomeDoc, key: PathSegment) => void) {
+  let temp = obj;
+
+  for (let i = 0; i < path.length - 1; i++) {
+    temp = temp[path[i]];
+
+    if (!temp) {
+      throw new Error(`Path ${escapeFieldNames(path)} not found in object`);
+    }
+  }
+
+  const lastSegment = path[path.length - 1];
+  modify?.(temp, lastSegment);
+
+  return temp[lastSegment];
+}

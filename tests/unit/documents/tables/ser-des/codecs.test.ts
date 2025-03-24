@@ -19,18 +19,28 @@ import type { TableCodec } from '@/src/documents/tables/index.js';
 import { $DeserializeForTable, $SerializeForTable, TableCodecs } from '@/src/documents/tables/index.js';
 import type { RawTableCodecs } from '@/src/documents/tables/ser-des/codecs.js';
 import { processCodecs } from '@/src/lib/api/ser-des/codecs.js';
-import type { CodecTestsConfig} from '@/tests/unit/documents/__common/ser-des/as-codec-class.js';
 import { unitTestAsCodecClass } from '@/tests/unit/documents/__common/ser-des/as-codec-class.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { arbs } from '@/tests/testlib/arbitraries.js';
+import { unitTestForName } from '@/tests/unit/documents/__common/ser-des/for-name.js';
 
 describe('unit.documents.tables.ser-des.codecs', () => {
+  describe('forName', () => {
+    unitTestForName({
+      CodecsClass: TableCodecs,
+      SerDesClass: TableSerDes,
+      $SerSym: $SerializeForTable,
+      $DesSym: $DeserializeForTable,
+      datatypesArb: arbs.tableDatatypes,
+    });
+  });
+
   describe('asCodecClass', () => {
     unitTestAsCodecClass({
       CodecsClass: TableCodecs,
       SerDesClass: TableSerDes,
-      $SerSym: $SerializeForTable as unknown as CodecTestsConfig['$SerSym'],
-      $DesSym: $DeserializeForTable as unknown as CodecTestsConfig['$DesSym'],
+      $SerSym: $SerializeForTable,
+      $DesSym: $DeserializeForTable,
       datatypesArb: arbs.tableDatatypes,
     });
   });

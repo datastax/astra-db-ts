@@ -13,16 +13,21 @@
 // limitations under the License.
 
 import fc from 'fast-check';
-import { DataAPIEnvironments } from '@/src/lib/index.js';
+import { DataAPIEnvironments, SerDesTarget } from '@/src/lib/index.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
 import { AlwaysAvailableBuffer } from '@/tests/testlib/utils.js';
 import type { StrictCreateTableColumnDefinition } from '@/src/db/index.js';
-import { DataAPIInet, uuid } from '@/src/documents/index.js';
+import { DataAPIInet, type SomeDoc, uuid } from '@/src/documents/index.js';
 import { BigNumber } from 'bignumber.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
-export type ArbType<T extends fc.Arbitrary<any>> = T extends fc.Arbitrary<infer U> ? U : never;
+export type ArbType<T> =
+  T extends fc.Arbitrary<infer U>
+    ? U :
+  T extends (...args: any[]) => fc.Arbitrary<infer U>
+    ? U
+    : never;
 
 const tableScalar = fc.constantFrom('text', 'uuid', 'varint', 'inet', 'timestamp');
 
@@ -115,17 +120,55 @@ const collDatatypesArb = (): fc.Arbitrary<[unknown, unknown]> => fc.letrec((tie)
   return [dt, collSerdes.serialize(dt)[0]];
 });
 
+interface PathArbOpts {
+  atLeastOne?: boolean,
+  unique?: boolean,
+}
+
+const path = (opts: PathArbOpts) => {
+  const minLength = opts.atLeastOne ? 1 : 0;
+
+  const arrayArb = opts.unique ?
+    fc.uniqueArray(arbs.pathSegment(), { minLength, selector: String }) :
+    fc.array(arbs.pathSegment(), { minLength });
+
+  return arrayArb
+    .filter((p) => {
+      return p.length === 0 || typeof p[0] === 'string';
+    });
+};
+
+const pathWithObj = (opts: PathArbOpts) => path(opts).map((path) => {
+  const mkObj = (terminal: unknown) => {
+    const obj: SomeDoc = typeof path[0] === 'number' ? [] : {};
+    let tempObj = obj;
+
+    for (let i = 0; i < path.length - 1; i++) {
+      tempObj[path[i]] = typeof path[i + 1] === 'number' ? Array(path[i + 1] as number).fill(undefined) : {};
+      tempObj = tempObj[path[i]];
+    }
+
+    tempObj[path[path.length - 1]] = terminal;
+    return obj;
+  };
+
+  return <const>[path, mkObj];
+});
+
 export const arbs = <const>{
   nonAstraEnvs: () => fc.constantFrom(...DataAPIEnvironments.filter(e => e !== 'astra').map((e) => EnvironmentCfgHandler.parse(e))),
-  pathSegment: () => fc.oneof(arbs.nonProtoString(), fc.nat({ max: 10 })),
-  path: () => fc.array(arbs.pathSegment()).filter((p) => p.length === 0 || typeof p[0] === 'string'),
+  pathSegment: () => fc.oneof(arbs.nonProtoString().filter(Boolean), fc.nat({ max: 10 })),
+  path: path,
+  pathWithObj: pathWithObj,
   cursorState: () => fc.constantFrom('idle', 'started', 'closed'),
   record: <T>(arb: fc.Arbitrary<T>) => fc.dictionary(arbs.nonProtoString(), arb, { noNullPrototype: true }),
   validBase46: () => fc.base64String().filter((base64) => base64 === AlwaysAvailableBuffer.from(base64, 'base64').toString('base64')),
   one: (arb: fc.Arbitrary<any>) => fc.sample(arb, 1)[0],
   tableDefinitionAndRow: tableDefAndRowArb,
+  jsonObj: () => fc.jsonValue({ depthSize: 'medium' }).filter((val) => !!val && typeof val === 'object'),
   tableDatatypes: tableDatatypesArb,
   collDatatypes: collDatatypesArb,
   nonProtoString: () => fc.string().filter((s) => s !== '__proto__'),
+  serdesTarget: () => fc.constantFrom(...Object.values(SerDesTarget)),
   ...datatypes,
 };

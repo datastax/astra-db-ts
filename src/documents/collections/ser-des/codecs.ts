@@ -86,7 +86,7 @@ export class CollectionCodecs {
   };
 
   public static forId(clazz: CollectionCodecClass): RawCollCodecs {
-    CollectionCodecs.asCodecClass(clazz);
+    assertIsCodecClass(clazz);
 
     const { [$DeserializeForCollection]: deserialize } = clazz;
 

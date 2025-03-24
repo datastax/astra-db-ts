@@ -17,9 +17,10 @@ import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import { BigNumber } from 'bignumber.js';
-import type { CollNumCoercion, SomeDoc } from '@/src/documents/index.js';
+import type { CollNumCoercion } from '@/src/documents/index.js';
 import { NumCoercionError } from '@/src/documents/index.js';
 import fc from 'fast-check';
+import type { ArbType } from '@/tests/testlib/arbitraries.js';
 import { arbs } from '@/tests/testlib/arbitraries.js';
 import type { PathSegment } from '@/src/lib/index.js';
 import { buildGetNumCoercionForPathFn } from '@/src/documents/collections/ser-des/big-nums.js';
@@ -71,32 +72,19 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
   });
 
   describe('coercions', () => {
-    const mkObj = (path: PathSegment[], num: unknown) => {
-      const obj: SomeDoc = typeof path[0] === 'number' ? [] : {};
-      let tempObj = obj;
-
-      for (let i = 0; i < path.length - 1; i++) {
-        tempObj[path[i]] = typeof path[i + 1] === 'number' ? Array(path[i + 1] as number).fill(undefined) : {};
-        tempObj = tempObj[path[i]];
-      }
-
-      tempObj[path[path.length - 1]] = num;
-      return obj;
-    };
-
     const mkDesAsserter = (type: CollNumCoercion, coerce: (n: BigNumber | number) => unknown) => ({
       _serdesFn: new CollSerDes({ ...CollSerDes.cfg.empty, enableBigNumbers: () => type }),
       _serdesCfg: new CollSerDes({ ...CollSerDes.cfg.empty, enableBigNumbers: { '*': type, '*.*': type } }), // second wildcard prevents cfg object from being optimized into a const function `() => type`
-      ok(path: PathSegment[], n: BigNumber | number) {
+      ok([path, mkObj]: ArbType<typeof arbs.pathWithObj>, n: BigNumber | number) {
         fc.pre(path.length > 0);
-        const exp = mkObj(path, coerce(n));
-        assert.deepStrictEqual(this._serdesFn.deserialize(mkObj(path, n), null!), exp);
-        assert.deepStrictEqual(this._serdesCfg.deserialize(mkObj(path, n), null!), exp);
+        const exp = mkObj(coerce(n));
+        assert.deepStrictEqual(this._serdesFn.deserialize(mkObj(n), null!), exp);
+        assert.deepStrictEqual(this._serdesCfg.deserialize(mkObj(n), null!), exp);
       },
-      notOk(path: PathSegment[], n: BigNumber | number) {
+      notOk([path, mkObj]: ArbType<typeof arbs.pathWithObj>, n: BigNumber | number) {
         fc.pre(path.length > 0);
-        assert.throws(() => this._serdesFn.deserialize(mkObj(path, n), null!), NumCoercionError);
-        assert.throws(() => this._serdesCfg.deserialize(mkObj(path, n), null!), NumCoercionError);
+        assert.throws(() => this._serdesFn.deserialize(mkObj(n), null!), NumCoercionError);
+        assert.throws(() => this._serdesCfg.deserialize(mkObj(n), null!), NumCoercionError);
       },
     });
 
@@ -104,8 +92,8 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
       const desAsserter = mkDesAsserter('number', Number);
 
       fc.assert(
-        fc.property(fc.oneof(fc.double(), arbs.bigNum()), arbs.path(), (num, path) => {
-          desAsserter.ok(path, num);
+        fc.property(fc.oneof(fc.double(), arbs.bigNum()), arbs.pathWithObj(), (num, pathWithObj) => {
+          desAsserter.ok(pathWithObj, num);
         }),
       );
     });
@@ -114,17 +102,17 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
       const desAsserter = mkDesAsserter('strict_number', Number);
 
       fc.assert(
-        fc.property(fc.double(), arbs.path(), (num, path) => {
-          desAsserter.ok(path, num);
+        fc.property(fc.double(), arbs.pathWithObj(), (num, pathWithObj) => {
+          desAsserter.ok(pathWithObj, num);
         }),
       );
 
       fc.assert(
-        fc.property(arbs.bigNum(), arbs.path(), (bigNum, path) => {
+        fc.property(arbs.bigNum(), arbs.pathWithObj(), (bigNum, pathWithObj) => {
           if (bigNum.isEqualTo(bigNum.toNumber())) {
-            desAsserter.ok(path, bigNum);
+            desAsserter.ok(pathWithObj, bigNum);
           } else {
-            desAsserter.notOk(path, bigNum);
+            desAsserter.notOk(pathWithObj, bigNum);
           }
         }),
       );
@@ -134,22 +122,22 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
       const desAsserter = mkDesAsserter('bigint', (n) => BigInt(n.toFixed()));
 
       fc.assert(
-        fc.property(fc.oneof(fc.integer(), fc.bigInt().map((n) => BigNumber(n.toString()))), arbs.path(), (num, path) => {
-          desAsserter.ok(path, num);
+        fc.property(fc.oneof(fc.integer(), fc.bigInt().map((n) => BigNumber(n.toString()))), arbs.pathWithObj(), (num, pathWithObj) => {
+          desAsserter.ok(pathWithObj, num);
         }),
       );
 
       fc.assert(
-        fc.property(fc.double(), arbs.path(), (num, path) => {
+        fc.property(fc.double(), arbs.pathWithObj(), (num, path) => {
           fc.pre(!Number.isInteger(num));
           desAsserter.notOk(path, num);
         }),
       );
 
       fc.assert(
-        fc.property(arbs.bigNum(), arbs.path(), (num, path) => {
+        fc.property(arbs.bigNum(), arbs.pathWithObj(), (num, pathWithObj) => {
           fc.pre(!num.isInteger());
-          desAsserter.notOk(path, num);
+          desAsserter.notOk(pathWithObj, num);
         }),
       );
     });
@@ -158,8 +146,8 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
       const desAsserter = mkDesAsserter('bignumber', (n) => BigNumber(n));
 
       fc.assert(
-        fc.property(fc.oneof(fc.double(), arbs.bigNum()), arbs.path(), (num, path) => {
-          desAsserter.ok(path, num);
+        fc.property(fc.oneof(fc.double(), arbs.bigNum()), arbs.pathWithObj(), (num, pathWithObj) => {
+          desAsserter.ok(pathWithObj, num);
         }),
       );
     });
@@ -168,8 +156,8 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
       const desAsserter = mkDesAsserter('string', (n) => n.toString());
 
       fc.assert(
-        fc.property(fc.oneof(fc.double(), arbs.bigNum()), arbs.path(), (num, path) => {
-          desAsserter.ok(path, num);
+        fc.property(fc.oneof(fc.double(), arbs.bigNum()), arbs.pathWithObj(), (num, pathWithObj) => {
+          desAsserter.ok(pathWithObj, num);
         }),
       );
     });
@@ -179,17 +167,17 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
       const desAsserterStr = mkDesAsserter('number_or_string', (n) => n.toString());
 
       fc.assert(
-        fc.property(fc.double(), arbs.path(), (num, path) => {
-          desAsserterNum.ok(path, num);
+        fc.property(fc.double(), arbs.pathWithObj(), (num, pathWithObj) => {
+          desAsserterNum.ok(pathWithObj, num);
         }),
       );
 
       fc.assert(
-        fc.property(arbs.bigNum(), arbs.path(), (bigNum, path) => {
+        fc.property(arbs.bigNum(), arbs.pathWithObj(), (bigNum, pathWithObj) => {
           if (bigNum.isEqualTo(bigNum.toNumber())) {
-            desAsserterNum.ok(path, bigNum);
+            desAsserterNum.ok(pathWithObj, bigNum);
           } else {
-            desAsserterStr.ok(path, bigNum);
+            desAsserterStr.ok(pathWithObj, bigNum);
           }
         }),
       );
@@ -197,18 +185,18 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
 
     it('should allow a custom coercion function', () => {
       fc.assert(
-        fc.property(fc.oneof(fc.double(), arbs.bigNum()), fc.anything(), arbs.path(), (num, output, path) => {
+        fc.property(fc.oneof(fc.double(), arbs.bigNum()), fc.anything(), arbs.pathWithObj(), (num, output, pathWithObj) => {
           const coerceFn = (n: number | BigNumber) => {
             assert.deepStrictEqual(n, num);
             return output;
           };
 
           const coerceFnAndTestPath = (n: number | BigNumber, path2: readonly PathSegment[]) => {
-            assert.deepStrictEqual(path, path2);
+            assert.deepStrictEqual(pathWithObj, path2);
             return coerceFn(n);
           };
 
-          mkDesAsserter(coerceFnAndTestPath, coerceFn).ok(path, num);
+          mkDesAsserter(coerceFnAndTestPath, coerceFn).ok(pathWithObj, num);
         }),
       );
     });
