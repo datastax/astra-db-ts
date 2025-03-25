@@ -154,6 +154,14 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     return buildFLCOption(this, 'rerankOn', rerankOn);
   }
 
+  public rerankQuery(rerankQuery: string): this {
+    return buildFLCOption(this, 'rerankQuery', rerankQuery);
+  }
+
+  public includeScores(includeScores: boolean): this {
+    return buildFLCOption(this, 'includeScores', includeScores);
+  }
+
   /**
    * Sets the projection for the cursor, overwriting any previous projection.
    *
@@ -218,7 +226,8 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
           limit: this._options.limit,
           hybridLimits: this._options.hybridLimits,
           rerankOn: this._options.rerankOn,
-          includeScores: true,
+          rerankQuery: this._options.rerankQuery,
+          includeScores: this._options.includeScores,
         },
       },
     };
@@ -233,7 +242,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
 
     for (let i = 0, n = buffer.length; i < n; i++) {
       const deserialized = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
-      buffer[i] = new RerankResult(deserialized, raw.data!.documentResponses[0]);
+      buffer[i] = new RerankResult(deserialized, raw.data?.documentResponses[i] ?? {});
     }
 
     return buffer;
