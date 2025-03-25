@@ -64,6 +64,36 @@ Or this:
 /**
  * @internal
  */
+export const mkTypeUnsupportedForCollectionsError = (type: string, fauxTypeName: string, alternatives: string[]) => {
+  return new Error([
+    `${type} may not be used with collections by default.`,
+    '',
+    'Please use one of the following alternatives:',
+    ...[...alternatives, 'Write a custom codec for ${type} (beta)'].map((alt, i) => `${i + 1}. ${alt}`),
+    '',
+    'See the `CollectionCodecs` class for more information about writing your own collection codec.',
+    '',
+    `Keep in mind that you may need to use CollectionCodecs.forType(...) to create a faux custom type (e.g. { ${fauxTypeName}: <${type}> }) representing a ${type} so that the value may be identifiable as needing to be deserialized back into a ${type} as well`,
+  ].join('\n'));
+};
+
+/**
+ * @internal
+ */
+export const mkTypeUnsupportedForTablesError = (type: string, alternatives: string[]) => {
+  return new Error([
+    `${type} may not be used with collections by default.`,
+    '',
+    'Please use one of the following alternatives:',
+    ...[...alternatives, 'Write a custom codec for ${type} (beta)'].map((alt, i) => `${i + 1}. ${alt}`),
+    '',
+    'See the `TablesCodec` class for more information about writing your own table codec.',
+  ].join('\n'));
+};
+
+/**
+ * @internal
+ */
 export function withJbiNullProtoFix(jbi: ReturnType<typeof JBI>) {
   return {
     parse: (str: string) => nullProtoFix(jbi.parse(str)),

@@ -14,8 +14,10 @@
 
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { nullish } from '@/src/lib/index.js';
-import type { TableCodec, TableSerCtx, TableDesCtx } from '@/src/documents/index.js';
+import type { TableCodec, TableSerCtx, TableDesCtx} from '@/src/documents/index.js';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { mkTypeUnsupportedForCollectionsError } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * A shorthand function for `new DataAPIInet(addr, version?)`
@@ -36,6 +38,17 @@ export const inet = (address: string, version?: 4 | 6 | null) => new DataAPIInet
 export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
   readonly _raw: string;
   _version: 4 | 6 | nullish;
+
+  /**
+   * Errorful implementation of `$SerializeForCollection` for {@link TableCodec}
+   *
+   * Throws a human-readable error message warning that this datatype may not be used with collections without writing a custom ser/des codec.
+   */
+  public [$SerializeForCollection]() {
+    throw mkTypeUnsupportedForCollectionsError('DataAPIInet', '_inet', [
+      'Use another inet representation, such as a string, or an object containing the inet address, and the version',
+    ]);
+  };
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}

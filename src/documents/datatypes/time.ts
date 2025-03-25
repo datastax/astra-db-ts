@@ -14,8 +14,10 @@
 
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { DataAPIDate, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { mkInvArgsError } from '@/src/documents/utils.js';
+import { mkTypeUnsupportedForCollectionsError } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * ##### Overview
@@ -115,6 +117,18 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    * Must be between 0-999,999,999.
    */
   readonly nanoseconds: number;
+
+  /**
+   * Errorful implementation of `$SerializeForCollection` for {@link TableCodec}
+   *
+   * Throws a human-readable error message warning that this datatype may not be used with collections without writing a custom ser/des codec.
+   */
+  public [$SerializeForCollection]() {
+    throw mkTypeUnsupportedForCollectionsError('DataAPITime', '_time', [
+      'Use a native Javascript Date object',
+      'Use another time representation, such as a string, or an object containing the hours, minutes, seconds, and nanoseconds',
+    ]);
+  };
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}

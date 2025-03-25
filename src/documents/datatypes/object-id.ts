@@ -15,7 +15,9 @@
 import { isNullish } from '@/src/lib/utils.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { CollectionCodec, CollectionDesCtx, CollectionSerCtx } from '@/src/documents/index.js';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
+import { mkTypeUnsupportedForTablesError } from '@/src/lib/api/ser-des/utils.js';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
@@ -67,6 +69,17 @@ export const oid = (id?: string | number | null) => new ObjectId(id);
  */
 export class ObjectId implements CollectionCodec<typeof ObjectId> {
   private readonly _raw!: string;
+
+  /**
+   * Errorful implementation of `$SerializeForTable` for {@link TableCodec}
+   *
+   * Throws a human-readable error message warning that this datatype may not be used with tables without writing a custom ser/des codec.
+   */
+  public [$SerializeForTable]() {
+    throw mkTypeUnsupportedForTablesError('ObjectId', [
+      'Use another object ID representation, such as a string',
+    ]);
+  };
 
   /**
    * Implementation of `$SerializeForCollection` for {@link TableCodec}

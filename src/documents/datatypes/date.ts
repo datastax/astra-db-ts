@@ -14,9 +14,11 @@
 
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { DataAPITime, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { DataAPIDuration } from '@/src/documents/index.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { mkInvArgsError } from '@/src/documents/utils.js';
+import { mkTypeUnsupportedForCollectionsError } from '@/src/lib/api/ser-des/utils.js';
 
 const MillisecondsPerDay = 1000 * 60 * 60 * 24;
 
@@ -63,7 +65,7 @@ const MillisecondsPerDay = 1000 * 60 * 60 * 24;
  * // Create a `DataAPIDate` from a year and a valid day of the year
  * DataAPIDate.ofYearDay(2004, 258) // '2004-09-14'
  *
- * // Create a `DataAPIDate` given the number of days since the epoch (may be negative)
+ * // Create a `DataAPIDate` given the number of days since the epoch (can be negative)
  * DataAPIDate.ofEpochDay(12675) // '2004-09-14'
  * ```
  *
@@ -110,6 +112,18 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    * Must be a valid day for the given month.
    */
   readonly date: number;
+
+  /**
+   * Errorful implementation of `$SerializeForCollection` for {@link TableCodec}
+   *
+   * Throws a human-readable error message warning that this datatype may not be used with collections without writing a custom ser/des codec.
+   */
+  public [$SerializeForCollection]() {
+    throw mkTypeUnsupportedForCollectionsError('DataAPIDate', '_date', [
+      'Use a native Javascript Date object',
+      'Use another date representation, such as a string, or an object containing the year, month, and date',
+    ]);
+  };
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}

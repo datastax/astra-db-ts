@@ -14,10 +14,12 @@
 
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { mkInvArgsError } from '@/src/documents/utils.js';
 import type { Ref } from '@/src/lib/types.js';
 import { numDigits } from '@/src/lib/utils.js';
+import { mkTypeUnsupportedForCollectionsError } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * #### Overview
@@ -196,6 +198,17 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    * May be negative if and only if the other components are also negative.
    */
   readonly nanoseconds: bigint;
+
+  /**
+   * Errorful implementation of `$SerializeForCollection` for {@link TableCodec}
+   *
+   * Throws a human-readable error message warning that this datatype may not be used with collections without writing a custom ser/des codec.
+   */
+  public [$SerializeForCollection]() {
+    throw mkTypeUnsupportedForCollectionsError('DataAPIDuration', '_duration', [
+      'Use another durations representation, such as a string, or an object containing the months, days, and nanoseconds',
+    ]);
+  };
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}
