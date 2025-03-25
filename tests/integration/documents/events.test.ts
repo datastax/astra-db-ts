@@ -17,12 +17,13 @@ import assert from 'assert';
 import type { EverythingTableSchema } from '@/tests/testlib/index.js';
 import { initTestObjects, it, parallel } from '@/tests/testlib/index.js';
 import { memoizeRequests } from '@/tests/testlib/utils.js';
-import { CommandEventMap, DataAPIResponseError, Table } from '@/src/documents/index.js';
+import type { CommandEventMap, Table } from '@/src/documents/index.js';
 import {
   CommandFailedEvent,
   CommandStartedEvent,
   CommandSucceededEvent,
   CommandWarningsEvent,
+  DataAPIResponseError,
 } from '@/src/documents/index.js';
 
 parallel('integration.documents.events', () => {

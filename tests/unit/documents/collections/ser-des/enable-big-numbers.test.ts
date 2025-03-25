@@ -192,7 +192,7 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
           };
 
           const coerceFnAndTestPath = (n: number | BigNumber, path2: readonly PathSegment[]) => {
-            assert.deepStrictEqual(pathWithObj, path2);
+            assert.deepStrictEqual(pathWithObj[0], path2);
             return coerceFn(n);
           };
 

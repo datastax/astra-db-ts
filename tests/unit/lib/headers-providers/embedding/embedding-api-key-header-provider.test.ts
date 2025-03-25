@@ -19,7 +19,7 @@ import assert from 'assert';
 import fc from 'fast-check';
 import { untouchable } from '@/tests/testlib/utils.js';
 
-describe('integration.lib.headers-providers.embedding.embedding-api-key-header-provider', () => {
+describe('unit.lib.headers-providers.embedding.embedding-api-key-header-provider', () => {
   it('should return a single embedding api key header', () => {
     fc.assert(
       fc.property(fc.string(), (apiKey) => {

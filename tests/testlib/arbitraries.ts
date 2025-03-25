@@ -125,12 +125,14 @@ interface PathArbOpts {
   unique?: boolean,
 }
 
-const path = (opts: PathArbOpts) => {
-  const minLength = opts.atLeastOne ? 1 : 0;
+const path = (opts?: PathArbOpts) => {
+  const minLength = (opts?.atLeastOne)
+    ? 1
+    : 0;
 
-  const arrayArb = opts.unique ?
-    fc.uniqueArray(arbs.pathSegment(), { minLength, selector: String }) :
-    fc.array(arbs.pathSegment(), { minLength });
+  const arrayArb = (opts?.unique)
+    ? fc.uniqueArray(arbs.pathSegment(), { minLength, selector: String })
+    : fc.array(arbs.pathSegment(), { minLength });
 
   return arrayArb
     .filter((p) => {
@@ -138,7 +140,7 @@ const path = (opts: PathArbOpts) => {
     });
 };
 
-const pathWithObj = (opts: PathArbOpts) => path(opts).map((path) => {
+const pathWithObj = (opts?: PathArbOpts) => path(opts).map((path) => {
   const mkObj = (terminal: unknown) => {
     const obj: SomeDoc = typeof path[0] === 'number' ? [] : {};
     let tempObj = obj;

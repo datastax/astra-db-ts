@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
-import type { FetcherResponseInfo, PathSegment } from '@/src/index.js';
-import { escapeFieldNames } from '@/src/index.js';
+import type { FetcherResponseInfo } from '@/src/index.js';
 import {
   DEFAULT_COLLECTION_NAME,
   DEFAULT_TABLE_NAME,
@@ -167,6 +166,15 @@ export function memoizeRequests<H extends { _httpClient: any }>(hasHttpClient: H
   return hasHttpClient;
 }
 
+const withMaybePromise = <T>(value: T, cb: (value: T) => void): T => {
+  if (value instanceof Promise) {
+    return value.then(cb).then(() => value) as T;
+  } else {
+    cb(value);
+    return value;
+  }
+};
+
 export class DeltaAsserter<Fields extends string> {
   constructor(private readonly _fields: Fields[], private readonly _extend?: DeltaAsserter<Fields>) {}
 
@@ -195,19 +203,27 @@ export class DeltaAsserter<Fields extends string> {
     };
   }
 
-  public assertNoMutDelta<R>(obj: SomeDoc, cb: () => R) {
-    return this.captureMutDelta(obj, cb).assertDelta({});
+  public assertMutDelta<R>(obj: SomeDoc, cb: () => R): R {
+    const snapshot = this._buildSnapshot(obj);
+
+    return withMaybePromise(cb(), () => {
+      assert.notDeepStrictEqual(this._buildSnapshot(obj), snapshot);
+    });
   }
 
-  public assertNoImmutDelta(obj: SomeDoc, cb: () => Record<string, unknown>) {
-    return this.captureImmutDelta(obj, cb).assertDelta({});
+  public assertNoMutDelta<R>(obj: SomeDoc, cb: () => R): R {
+    const snapshot = this._buildSnapshot(obj);
+
+    return withMaybePromise(cb(), () => {
+      assert.deepStrictEqual(this._buildSnapshot(obj), snapshot);
+    });
   }
 
-  private _buildSnapshot(obj: Record<string, unknown>, base?: Record<string, unknown>): Record<string, unknown> {
+  private _buildSnapshot(obj: Record<string, unknown>, base?: Record<string, string | undefined>): Record<string, string | undefined> {
     const snapshot = base ?? {};
 
     for (const field of this._fields) {
-      snapshot[field] = obj[field];
+      snapshot[field] = stableStringify(obj[field]);
     }
 
     if (this._extend) {
@@ -217,12 +233,12 @@ export class DeltaAsserter<Fields extends string> {
     return snapshot;
   }
 
-  private _assertDelta(snapshot: Record<string, unknown>, current: Record<string, unknown>, expectedDelta: Record<string, unknown>) {
+  private _assertDelta(snapshot: Record<string, string | undefined>, current: Record<string, unknown>, expectedDelta: Record<string, unknown>) {
     for (const field of this._fields) {
       if (field in expectedDelta) {
-        assert.deepStrictEqual(current[field], expectedDelta[field]);
+        assert.deepStrictEqual(stableStringify(current[field]), stableStringify(expectedDelta[field]));
       } else {
-        assert.deepStrictEqual(current[field], snapshot[field]);
+        assert.deepStrictEqual(stableStringify(current[field]), snapshot[field]);
       }
     }
 
@@ -250,21 +266,4 @@ export function traverseObject(obj: SomeDoc, visitor: (obj: SomeDoc, key: string
       traverseObject(obj[key], visitor);
     }
   }
-}
-
-export function traverseObjectPath(obj: SomeDoc, path: PathSegment[], modify?: (obj: SomeDoc, key: PathSegment) => void) {
-  let temp = obj;
-
-  for (let i = 0; i < path.length - 1; i++) {
-    temp = temp[path[i]];
-
-    if (!temp) {
-      throw new Error(`Path ${escapeFieldNames(path)} not found in object`);
-    }
-  }
-
-  const lastSegment = path[path.length - 1];
-  modify?.(temp, lastSegment);
-
-  return temp[lastSegment];
 }

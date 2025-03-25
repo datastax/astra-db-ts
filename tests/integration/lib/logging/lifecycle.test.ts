@@ -24,8 +24,11 @@ import {
   CommandWarningsEvent,
 } from '@/src/documents/index.js';
 import { AdminCommandStartedEvent, AdminCommandSucceededEvent } from '@/src/administration/index.js';
+import { DeltaAsserter } from '@/tests/testlib/utils.js';
 
 type TestObjects = ReturnType<typeof initTestObjects>;
+
+const LoggerDeltaAsserter = new DeltaAsserter(['internal']);
 
 parallel('integration.lib.logging.lifecycle', () => {
   interface LifecycleTestSpec<Emitter extends HierarchicalLogger<DataAPIClientEventMap>, StartEvent extends keyof DataAPIClientEventMap, SucceedEvent extends keyof DataAPIClientEventMap> {
@@ -61,11 +64,11 @@ parallel('integration.lib.logging.lifecycle', () => {
 
         await generateEvents({ times: 3, callOrder, expectOrder: [spec.events.start, spec.events.end] });
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, () => {
           emitter.off(spec.events.start, startListener);
         });
 
-        assertNoInternalStateChange(() => {
+        LoggerDeltaAsserter.assertNoMutDelta(emitter, () => {
           startListenerOff();
           emitter.off(spec.events.start, startListener);
           emitter.off(spec.events.start, () => {});
@@ -74,17 +77,17 @@ parallel('integration.lib.logging.lifecycle', () => {
 
         await generateEvents({ times: 3, callOrder, expectOrder: [spec.events.end] });
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           endListenerOff();
-        });
+        }));
 
-        assertNoInternalStateChange(() => {
+        LoggerDeltaAsserter.assertNoMutDelta(emitter, (() => {
           endListenerOff();
           emitter.off(spec.events.start, startListener);
           emitter.off(spec.events.end, endListener);
           emitter.removeAllListeners(spec.events.start);
           emitter.removeAllListeners(spec.events.end);
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: [] });
       }
@@ -93,31 +96,31 @@ parallel('integration.lib.logging.lifecycle', () => {
       {
         const startListeners = Array.from({ length: 5 }, () => (e: BaseClientEvent) => startListener(e));
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           startListeners.forEach((listener) => emitter.on(spec.events.start, listener));
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: Array(5).fill(spec.events.start) });
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           emitter.off(spec.events.start, startListeners[0]);
-        });
+        }));
 
-        assertNoInternalStateChange(() => {
+        LoggerDeltaAsserter.assertNoMutDelta(emitter, (() => {
           emitter.off(spec.events.start, startListeners[0]);
           emitter.off(spec.events.start, startListener);
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: Array(4).fill(spec.events.start) });
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           emitter.removeAllListeners(spec.events.start);
-        });
+        }));
 
-        assertNoInternalStateChange(() => {
+        LoggerDeltaAsserter.assertNoMutDelta(emitter, (() => {
           emitter.removeAllListeners(spec.events.start);
           startListeners.forEach((listener) => emitter.off(spec.events.start, listener));
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: [] });
       }
@@ -126,21 +129,21 @@ parallel('integration.lib.logging.lifecycle', () => {
       {
         const startListeners = Array.from({ length: 5 }, () => (e: BaseClientEvent) => startListener(e));
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           startListeners.forEach((listener) => emitter.once(spec.events.start, listener));
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: Array(5).fill(spec.events.start), expectTimes: 1 });
       }
 
       // testing some noop-y stuff
       {
-        assertNoInternalStateChange(() => {
+        LoggerDeltaAsserter.assertNoMutDelta(emitter, (() => {
           const off = emitter.on(spec.events.start, startListener);
           off();
-        });
+        }));
 
-        await assertNoInternalStateChange(async () => {
+        await LoggerDeltaAsserter.assertNoMutDelta(emitter, (async () => {
           emitter.once(spec.events.start, () => {
             throw new Error('This should not affect anything...');
           });
@@ -153,49 +156,49 @@ parallel('integration.lib.logging.lifecycle', () => {
           emitter.once(spec.events.start, startListener);
 
           await generateEvents({ times: 3, callOrder, expectOrder: [spec.events.start, spec.events.start], expectTimes: 1 });
-        });
+        }));
 
         emitter.removeAllListeners();
       }
 
       // testing updateLoggingConfig
       {
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           emitter.on(spec.events.start, startListener);
           emitter.on(spec.events.end, endListener);
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: [spec.events.start, spec.events.end] });
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           emitter.updateLoggingConfig([{ events: [spec.events.start], emits: [] }]);
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: [spec.events.end] });
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           emitter.updateLoggingConfig([{ events: [spec.events.start], emits: ['event'] }]);
           emitter.updateLoggingConfig([{ events: [spec.events.end], emits: [] }]);
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: [spec.events.start] });
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           emitter.updateLoggingConfig([{ events: [spec.events.start], emits: [] }]);
           emitter.updateLoggingConfig([{ events: [spec.events.end], emits: [] }]);
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: [] });
 
-        assertInternalStateChange(() => {
+        LoggerDeltaAsserter.assertMutDelta(emitter, (() => {
           emitter.updateLoggingConfig([{ events: 'all', emits: ['event'] }]);
-        });
+        }));
 
         await generateEvents({ times: 3, callOrder, expectOrder: [spec.events.start, spec.events.end] });
 
-        assertNoInternalStateChange(() => {
+        LoggerDeltaAsserter.assertNoMutDelta(emitter, (() => {
           assert.throws(() => emitter.updateLoggingConfig([{ events: 'all', emits: ['stderr', 'stdout'] }]));
-        });
+        }));
       }
 
       startEmissions.forEach(spec.validateEvents[spec.events.start]);
@@ -221,28 +224,6 @@ parallel('integration.lib.logging.lifecycle', () => {
           assert.deepStrictEqual(cfg.callOrder, Array(expectTimes).fill(cfg.expectOrder).flat(), `Expected ${JSON.stringify(cfg.expectOrder)} * ${expectTimes} but got ${JSON.stringify(cfg.callOrder)}`);
           cfg.callOrder.length = 0;
         }
-      }
-
-      function assertInternalStateChange<R extends void | Promise<void>>(cb: () => R): R {
-        const before = JSON.parse(JSON.stringify(emitter.internal));
-
-        const ret = cb();
-        const verify = () => void assert.notDeepStrictEqual(before, JSON.parse(JSON.stringify(emitter.internal)));
-
-        return (ret instanceof Promise)
-          ? ret.then(verify) as R
-          : verify() as R;
-      }
-
-      function assertNoInternalStateChange<R extends void | Promise<void>>(cb: () => R): R {
-        const before = JSON.parse(JSON.stringify(emitter.internal));
-
-        const ret = cb();
-        const verify = () => void assert.deepStrictEqual(before, JSON.parse(JSON.stringify(emitter.internal)));
-
-        return (ret instanceof Promise)
-          ? ret.then(verify) as R
-          : verify() as R;
       }
     });
   };

@@ -1,7 +1,3 @@
-import type { Monoid, MonoidalOptionsHandler } from '@/src/lib/opts-handlers.js';
-import { it } from '@/tests/testlib/test-fns/it.js';
-import assert from 'assert';
-import fc from 'fast-check';
 // Copyright DataStax, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +11,11 @@ import fc from 'fast-check';
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+import type { Monoid } from '@/src/lib/opts-handlers.js';
+import { it } from '@/tests/testlib/test-fns/it.js';
+import assert from 'assert';
+import fc from 'fast-check';
 
 const monoid = <T>(handler: Monoid<T>, valueArb: fc.Arbitrary<NoInfer<T>>) => {
   it('should return the empty value when nothing to concat', () => {

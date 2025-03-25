@@ -19,7 +19,7 @@ import assert from 'assert';
 import fc from 'fast-check';
 import { untouchable } from '@/tests/testlib/utils.js';
 
-describe('integration.lib.headers-providers.embedding.aws-embedding-headers-provider', () => {
+describe('unit.lib.headers-providers.embedding.aws-embedding-headers-provider', () => {
   it('should return two headers (access & secret)', () => {
     fc.assert(
       fc.property(fc.string(), fc.string(), (accessKeyId, secretAccessKey) => {
