@@ -16,7 +16,7 @@
 import { describe } from '@/tests/testlib/index.js';
 import { TableFindAndRerankCursor } from '@/src/documents/index.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
-import { unitTestRerankCursor } from '@/tests/unit/documents/__common/rerank-cursor.js';
+import { unitTestRerankCursor } from '@/tests/unit/documents/__common/cursors/rerank-cursor.js';
 
 describe('unit.documents.tables.cursors.rerank-cursor', ({ table }) => {
   unitTestRerankCursor({

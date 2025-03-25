@@ -21,11 +21,11 @@ import type {
   TableFindAndRerankCursor,
 } from '@/src/documents/index.js';
 import { CursorError } from '@/src/documents/index.js';
-import type { AbstractCursorTestConfig } from '@/tests/unit/documents/__common/abstract-cursor.js';
+import type { AbstractCursorTestConfig } from '@/tests/unit/documents/__common/cursors/abstract-cursor.js';
 import {
   AbstractCursorDeltaAsserter,
   unitTestAbstractCursor,
-} from '@/tests/unit/documents/__common/abstract-cursor.js';
+} from '@/tests/unit/documents/__common/cursors/abstract-cursor.js';
 import { DeltaAsserter } from '@/tests/testlib/utils.js';
 import fc from 'fast-check';
 import { arbs } from '@/tests/testlib/arbitraries.js';
@@ -137,7 +137,7 @@ export const unitTestRerankCursor = ({ CursorImpl, parent, ...cfg }: FindCursorT
     });
 
     describe('rerankOn', () => {
-      it('should create a new cursor with sort vector included', () => {
+      it('should create a new cursor with new rerankOn configuration', () => {
         fc.assert(
           fc.property(fc.string(), arbs.record(fc.anything()), (rerankField, oldOptions) => {
             const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
@@ -150,8 +150,36 @@ export const unitTestRerankCursor = ({ CursorImpl, parent, ...cfg }: FindCursorT
       });
     });
 
+    describe('rerankQuery', () => {
+      it('should create a new cursor with new rerankQuery configuration', () => {
+        fc.assert(
+          fc.property(fc.string(), arbs.record(fc.anything()), (rerankQuery, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.rerankQuery(rerankQuery))
+              .assertDelta({ _options: { ...oldOptions, rerankQuery: rerankQuery } });
+          }),
+        );
+      });
+    });
+
+    describe('includeScores', () => {
+      it('should create a new cursor with new includeScores configuration', () => {
+        fc.assert(
+          fc.property(fc.boolean(), arbs.record(fc.anything()), (includeScores, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.includeScores(includeScores))
+              .assertDelta({ _options: { ...oldOptions, includeScores: includeScores } });
+          }),
+        );
+      });
+    });
+
     describe('map', () => {
-      it('should create a new cursor by composting mappings', () => {
+      it('should create a new cursor by composing mappings', () => {
         const cursor = new CursorImpl(parent, null!, [{}, false]);
 
         const mapping1 = () => 3;

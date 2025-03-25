@@ -15,11 +15,11 @@
 
 import type { CollectionFindCursor, FindCursor, Sort, TableFindCursor } from '@/src/documents/index.js';
 import { CursorError } from '@/src/documents/index.js';
-import type { AbstractCursorTestConfig } from '@/tests/unit/documents/__common/abstract-cursor.js';
+import type { AbstractCursorTestConfig } from '@/tests/unit/documents/__common/cursors/abstract-cursor.js';
 import {
   AbstractCursorDeltaAsserter,
   unitTestAbstractCursor,
-} from '@/tests/unit/documents/__common/abstract-cursor.js';
+} from '@/tests/unit/documents/__common/cursors/abstract-cursor.js';
 import { DeltaAsserter } from '@/tests/testlib/utils.js';
 import fc from 'fast-check';
 import { arbs } from '@/tests/testlib/arbitraries.js';
@@ -167,7 +167,7 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
     });
 
     describe('map', () => {
-      it('should create a new cursor by composting mappings', () => {
+      it('should create a new cursor by composing mappings', () => {
         const cursor = new CursorImpl(parent, null!, [{}, false]);
 
         const mapping1 = () => 3;

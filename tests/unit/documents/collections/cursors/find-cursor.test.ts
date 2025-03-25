@@ -15,7 +15,7 @@
 
 import { describe } from '@/tests/testlib/index.js';
 import { CollectionFindCursor } from '@/src/documents/index.js';
-import { unitTestFindCursor } from '@/tests/unit/documents/__common/find-cursor.js';
+import { unitTestFindCursor } from '@/tests/unit/documents/__common/cursors/find-cursor.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
 describe('unit.documents.collections.cursors.find-cursor', ({ collection }) => {
