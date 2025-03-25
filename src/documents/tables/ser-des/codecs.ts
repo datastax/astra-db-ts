@@ -28,6 +28,7 @@ import type {
   SomeConstructor,
   TypeCodecOpts,
 } from '@/src/lib/index.js';
+import { escapeFieldNames } from '@/src/lib/index.js';
 import { BigNumber } from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { DataAPIInet } from '@/src/documents/datatypes/inet.js';
@@ -91,17 +92,20 @@ export class TableCodecs {
       deserialize: (value, ctx) => ctx.done(parseFloat(value)),
     }),
     int: TableCodecs.forType('int', {
-      deserialize: (value, ctx) => ctx.done(parseInt(value, 10)),
+      deserialize: (value, ctx) => ctx.done(value),
     }),
     inet: TableCodecs.forType('inet', DataAPIInet),
     smallint: TableCodecs.forType('smallint', {
-      deserialize: (value, ctx) => ctx.done(parseInt(value, 10)),
+      deserialize: (value, ctx) => ctx.done(value),
     }),
     time: TableCodecs.forType('time', DataAPITime),
     timestamp: TableCodecs.forType('timestamp', {
       serializeClass: Date,
-      serialize(value, ctx) {
-        return ctx.done(value.toISOString());
+      serialize(date, ctx) {
+        if (isNaN(date.valueOf())) {
+          throw new Error(`Can not serialize an invalid date (at '${escapeFieldNames(ctx.path)}')`);
+        }
+        return ctx.done(date.toISOString());
       },
       deserialize(value, ctx) {
         return ctx.done(new Date(value));
@@ -109,12 +113,14 @@ export class TableCodecs {
     }),
     timeuuid: TableCodecs.forType('timeuuid', UUID),
     tinyint: TableCodecs.forType('tinyint', {
-      deserialize: (value, ctx) => ctx.done(parseInt(value, 10)),
+      deserialize: (value, ctx) => ctx.done(value),
     }),
     uuid: TableCodecs.forType('uuid', UUID),
     vector: TableCodecs.forType('vector', DataAPIVector),
     varint: TableCodecs.forType('varint', {
-      deserialize: (value, ctx) => ctx.done(BigInt(value)),
+      deserialize: (value, ctx) => {
+        return ctx.done(BigInt(value));
+      },
     }),
     map: TableCodecs.forType('map', {
       serializeClass: Map,

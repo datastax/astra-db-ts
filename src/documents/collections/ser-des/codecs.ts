@@ -25,6 +25,7 @@ import type {
   SomeConstructor,
   TypeCodecOpts,
 } from '@/src/lib/index.js';
+import { escapeFieldNames } from '@/src/lib/index.js';
 import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/api/ser-des/utils.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
@@ -70,8 +71,11 @@ export class CollectionCodecs {
   public static Defaults = {
     $date: CollectionCodecs.forType('$date', {
       serializeClass: Date,
-      serialize(value, ctx) {
-        return ctx.done({ $date: value.valueOf() });
+      serialize(date, ctx) {
+        if (isNaN(date.valueOf())) {
+          throw new Error(`Can not serialize an invalid date (at '${escapeFieldNames(ctx.path)}')`);
+        }
+        return ctx.done({ $date: date.valueOf() });
       },
       deserialize(value, ctx) {
         return ctx.done(new Date(Number(value.$date)));

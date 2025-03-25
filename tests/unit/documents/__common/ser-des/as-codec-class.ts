@@ -22,11 +22,12 @@ import type { BaseSerCtx } from '@/src/lib/index.js';
 import type { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import fc from 'fast-check';
 import type { StrictCreateTableColumnDefinition } from '@/src/db/index.js';
+import { desSchema } from '@/tests/testlib/utils.js';
 
 export interface AsCodecClassTestsConfig {
   CodecsClass: typeof CollectionCodecs | typeof TableCodecs,
   SerDesClass: typeof CollSerDes | typeof TableSerDes,
-  datatypesArb: () => fc.Arbitrary<[unknown, unknown, StrictCreateTableColumnDefinition?]>,
+  datatypesArb: (opts: { count: number }) => fc.Arbitrary<{ jsRep: unknown, jsonRep: unknown }[] & { definition?: StrictCreateTableColumnDefinition; }>,
   $SerSym: symbol,
   $DesSym: symbol,
 }
@@ -55,13 +56,13 @@ export const unitTestAsCodecClass = ({ $SerSym, $DesSym, CodecsClass, SerDesClas
     const serdes = new SerDesClass({ ...SerDesClass.cfg.empty, codecs: [UnsuspectingCodec] } as any);
 
     fc.assert(
-      fc.property(cfg.datatypesArb(), ([expectDes, expectSer, tableColumnDef]) => {
-        const unsuspecting = new Unsuspecting(expectDes);
+      fc.property(cfg.datatypesArb({ count: 1 }), (datatypes) => {
+        const unsuspecting = new Unsuspecting(datatypes[0].jsRep);
 
         const [actualSer] = serdes.serialize({ unsuspecting });
-        assert.deepStrictEqual(actualSer, { unsuspecting: expectSer });
+        assert.deepStrictEqual(actualSer, { unsuspecting: datatypes[0].jsonRep });
 
-        const actualDes = serdes.deserialize(actualSer, { status: { projectionSchema: { unsuspecting: tableColumnDef } } });
+        const actualDes = serdes.deserialize(actualSer, desSchema({ unsuspecting: datatypes.definition! }));
 
         assert.deepStrictEqual(actualDes, { unsuspecting });
       }),
@@ -93,13 +94,13 @@ export const unitTestAsCodecClass = ({ $SerSym, $DesSym, CodecsClass, SerDesClas
     const serdes = new SerDesClass({ ...SerDesClass.cfg.empty, codecs: [UnsuspectingCodec] } as any);
 
     fc.assert(
-      fc.property(cfg.datatypesArb(), ([expectDes, expectSer, tableColumnDef]) => {
-        const unsuspecting = new Unsuspecting(expectDes);
+      fc.property(cfg.datatypesArb({ count: 1 }), (datatypes) => {
+        const unsuspecting = new Unsuspecting(datatypes[0].jsRep);
 
         const [actualSer] = serdes.serialize({ unsuspecting });
-        assert.deepStrictEqual(actualSer, { unsuspecting: expectSer });
+        assert.deepStrictEqual(actualSer, { unsuspecting: datatypes[0].jsonRep });
 
-        const actualDes = serdes.deserialize(actualSer, { status: { projectionSchema: { unsuspecting: tableColumnDef } } });
+        const actualDes = serdes.deserialize(actualSer, desSchema({ unsuspecting: datatypes.definition! }));
 
         assert.deepStrictEqual(actualDes, { unsuspecting });
       }),

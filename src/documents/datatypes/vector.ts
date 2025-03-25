@@ -210,7 +210,7 @@ export class DataAPIVector implements DataAPICodec<typeof DataAPIVector> {
    * @returns `true` if the value is a vector-like value; `false` otherwise
    */
   public static isVectorLike(value: unknown): value is DataAPIVectorLike {
-    return !!value && typeof value === 'object' && (Array.isArray(value) || value instanceof Float32Array || ('$binary' in value && typeof value.$binary === 'string') || value instanceof DataAPIVector);
+    return !!value && typeof value === 'object' && ((Array.isArray(value) && typeof value[0] === 'number') || value instanceof Float32Array || ('$binary' in value && typeof value.$binary === 'string') || value instanceof DataAPIVector);
   }
 
   /**

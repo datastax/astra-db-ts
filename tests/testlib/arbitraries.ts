@@ -17,7 +17,15 @@ import { DataAPIEnvironments, SerDesTarget } from '@/src/lib/index.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
 import { AlwaysAvailableBuffer } from '@/tests/testlib/utils.js';
 import type { StrictCreateTableColumnDefinition } from '@/src/db/index.js';
-import { DataAPIInet, type SomeDoc, uuid } from '@/src/documents/index.js';
+import {
+  DataAPIBlob,
+  DataAPIInet,
+  DataAPIVector,
+  genObjectId,
+  ObjectId,
+  type SomeDoc,
+  uuid,
+} from '@/src/documents/index.js';
 import { BigNumber } from 'bignumber.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
@@ -29,7 +37,7 @@ export type ArbType<T> =
     ? U
     : never;
 
-const tableScalar = fc.constantFrom('text', 'uuid', 'varint', 'inet', 'timestamp');
+const tableScalar = fc.constantFrom('text', 'uuid', 'decimal', 'inet', 'timestamp', 'blob');
 
 const tableColumnDefinition = () => fc.oneof(
   tableScalar.map((type) => (<const>{ type })),
@@ -46,12 +54,14 @@ const fromTableColumn = (def: StrictCreateTableColumnDefinition, minLengthForNon
       return fc.string();
     case 'uuid':
       return arbs.uuid();
-    case 'varint':
-      return fc.bigInt();
+    case 'decimal':
+      return arbs.bigNum();
     case 'inet':
       return arbs.inet();
+    case 'blob':
+      return arbs.blob();
     case 'timestamp':
-      return fc.date({ noInvalidDate: true });
+      return arbs.validDate();
     case 'map':
       return arbs.map(fromTableColumn({ type: def.valueType }), minLengthForNonScalar);
     case 'set':
@@ -85,40 +95,76 @@ const tableDefAndRowArb = (opts?: TableDefAndRowConstraints) => tableDefinition(
     return fc.tuple(fc.constant(def), example);
   });
 
+const bigNum = (opts?: { type?: 'decimal' | 'integer' }) => (opts?.type !== 'integer')
+  ? fc.tuple(fc.bigInt(), fc.bigInt({ min: 0n })).map(([whole, decimal]) => BigNumber(`${whole}.${decimal}`))
+  : fc.bigInt().map((whole) => BigNumber(whole.toString()));
+
 const datatypes = {
   uuid: () => fc.uuid().map(uuid),
   inet: () => fc.oneof(fc.ipV4(), fc.ipV6()).map(ip => new DataAPIInet(ip, null, false)),
   map: <T>(value: fc.Arbitrary<T>, minLength?: number) => fc.array(fc.tuple(fc.string(), value), { minLength }).map((arr) => new Map(arr)),
   set: <T>(value: fc.Arbitrary<T>, minLength?: number) => fc.array(value, { minLength }).map((arr) => new Set(arr)),
-  bigNum: () => fc.tuple(fc.bigInt(), fc.bigInt({ min: 0n })).map(([whole, decimal]) => BigNumber(`${whole}.${decimal}`)),
+  bigNum: bigNum,
+  vector: (opts?: { dim?: number }) => fc.array(fc.float(), opts?.dim ? { minLength: opts.dim, maxLength: opts.dim } : { minLength: 1 }).map((arr) => new DataAPIVector(arr, false)),
+  oid: () => fc.tuple(fc.date(), fc.nat(0xFFFFFF)).map(([date, rand]) => new ObjectId(genObjectId(date.valueOf(), rand), false)),
+  blob: () => fc.base64String().map((base64) => new DataAPIBlob({ $binary: base64 }, false)),
 };
 
 const tableSerdes = new TableSerDes(TableSerDes.cfg.empty);
 
-const tableDatatypesArb = (): fc.Arbitrary<[unknown, unknown, def: StrictCreateTableColumnDefinition]> => tableColumnDefinition().chain((def) => {
-  const arb = fromTableColumn(def);
+interface CollSlashTableDatatypesArbOpts {
+  scalarOnly?: boolean,
+  count?: number,
+}
 
-  return arb.map((dt) => {
-    return [dt, tableSerdes.serialize(dt)[0], def];
+const tableDatatypesArb = (opts?: CollSlashTableDatatypesArbOpts) => tableColumnDefinition()
+  .filter((def) => {
+    if (opts?.scalarOnly) {
+      return !['map', 'set', 'list'].includes(def.type);
+    }
+    return true;
+  })
+  .chain((def) => {
+    const arb = fc.array(fromTableColumn(def), {
+      minLength: opts?.count,
+      maxLength: opts?.count,
+    });
+
+    return arb
+      .map((dts) => {
+        return dts.map((dt) => ({ jsRep: dt, jsonRep: tableSerdes.serialize(dt)[0] }));
+      })
+      .map((_dts) => {
+        const dts = _dts as { jsRep: unknown, jsonRep: unknown }[] & { definition: StrictCreateTableColumnDefinition; };
+        dts.definition = def;
+        return dts;
+      });
   });
-});
 
 const collSerdes = new CollSerDes(CollSerDes.cfg.empty);
 
-const collDatatypesArb = (): fc.Arbitrary<[unknown, unknown]> => fc.letrec((tie) => ({
-  scalar: fc.oneof(
-    datatypes.uuid(),
-    fc.string(),
-    fc.date({ noInvalidDate: true }),
-  ),
-  datatypes: fc.oneof(
-    tie('scalar'),
-    arbs.record(tie('datatypes')),
-    fc.array(tie('datatypes')),
-  ),
-})).datatypes.map((dt) => {
-  return [dt, collSerdes.serialize(dt)[0]];
-});
+const collDatatypesArb = (opts?: CollSlashTableDatatypesArbOpts) => fc.array(
+  fc.letrec((tie) => ({
+    scalar: fc.oneof(
+      datatypes.uuid(),
+      datatypes.oid(),
+      fc.string(),
+      arbs.validDate(),
+    ),
+    datatypes: opts?.scalarOnly
+      ? tie('scalar')
+      : fc.oneof(
+          tie('scalar'),
+          arbs.record(tie('datatypes')),
+          fc.array(tie('datatypes')),
+        ),
+  })).datatypes.map((dt) => {
+    return { jsRep: dt, jsonRep: collSerdes.serialize(dt)[0] };
+  }), {
+    minLength: opts?.count,
+    maxLength: opts?.count,
+  },
+);
 
 interface PathArbOpts {
   atLeastOne?: boolean,
@@ -167,10 +213,11 @@ export const arbs = <const>{
   validBase46: () => fc.base64String().filter((base64) => base64 === AlwaysAvailableBuffer.from(base64, 'base64').toString('base64')),
   one: (arb: fc.Arbitrary<any>) => fc.sample(arb, 1)[0],
   tableDefinitionAndRow: tableDefAndRowArb,
-  jsonObj: () => fc.jsonValue({ depthSize: 'medium' }).filter((val) => !!val && typeof val === 'object'),
+  jsonObj: (): fc.Arbitrary<SomeDoc> => fc.jsonValue({ depthSize: 'medium' }).filter((val) => !!val && typeof val === 'object').filter((val) => !Array.isArray(val)),
   tableDatatypes: tableDatatypesArb,
   collDatatypes: collDatatypesArb,
   nonProtoString: () => fc.string().filter((s) => s !== '__proto__'),
   serdesTarget: () => fc.constantFrom(...Object.values(SerDesTarget)),
+  validDate: () => fc.date({ noInvalidDate: true }),
   ...datatypes,
 };

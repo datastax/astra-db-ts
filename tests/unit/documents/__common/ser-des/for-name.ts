@@ -17,7 +17,6 @@ import type { CollectionCodecs, TableCodecs } from '@/src/documents/index.js';
 import type { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import type { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import fc from 'fast-check';
-import type { StrictCreateTableColumnDefinition } from '@/src/db/index.js';
 import { unitTestCodecBuilderCommon } from '@/tests/unit/documents/__common/ser-des/codec-builders-common.js';
 import { it } from '@/tests/testlib/index.js';
 import type { BaseSerDesCtx, RawCodec } from '@/src/lib/index.js';
@@ -26,7 +25,6 @@ import { traverseObject } from '@/tests/testlib/utils.js';
 import { arbs } from '@/tests/testlib/arbitraries.js';
 
 export interface ForNameTestsConfig {
-  datatypesArb: () => fc.Arbitrary<[unknown, unknown, StrictCreateTableColumnDefinition?]>,
   CodecsClass: typeof CollectionCodecs | typeof TableCodecs,
   SerDesClass: typeof CollSerDes | typeof TableSerDes,
   $SerSym: symbol,

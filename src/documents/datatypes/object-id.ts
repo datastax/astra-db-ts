@@ -18,6 +18,7 @@ import type { CollectionCodec, CollectionDesCtx, CollectionSerCtx } from '@/src/
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { mkTypeUnsupportedForTablesError } from '@/src/lib/api/ser-des/utils.js';
+import type { nullish } from '@/src/lib/index.js';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
@@ -115,7 +116,7 @@ export class ObjectId implements CollectionCodec<typeof ObjectId> {
     }
 
     Object.defineProperty(this, '_raw', {
-      value: (typeof id === 'string') ? id.toLowerCase() : genObjectId(id),
+      value: (typeof id === 'string') ? id.toLowerCase() : genObjectId(id, ObjectIDGenIndex),
     });
 
     Object.defineProperty(this, $CustomInspect, {
@@ -169,13 +170,16 @@ const HexTable = Array.from({ length: 256 }, (_, i) => {
   return (i <= 15 ? '0' : '') + i.toString(16);
 });
 
-let index = ~~(Math.random() * 0xFFFFFF);
+let ObjectIDGenIndex = ~~(Math.random() * 0xFFFFFF);
 
-function genObjectId(time?: number | null): string {
+/**
+ * @internal
+ */
+export function genObjectId(time: number | nullish, genIndex: number): string {
   time ??= ~~(Date.now() / 1000);
   time = time % 0xFFFFFFFF;
 
-  index = (index + 1) % 0xFFFFFF;
+  ObjectIDGenIndex = (genIndex + 1) % 0xFFFFFF;
 
   let hexString = '';
 
@@ -188,9 +192,9 @@ function genObjectId(time?: number | null): string {
   hexString += HexTable[(RAND_ID & 0xFF)];
   hexString += HexTable[((PID >> 8) & 0xFF)];
   hexString += HexTable[(PID & 0xFF)];
-  hexString += HexTable[((index >> 16) & 0xFF)];
-  hexString += HexTable[((index >> 8) & 0xFF)];
-  hexString += HexTable[(index & 0xFF)];
+  hexString += HexTable[((ObjectIDGenIndex >> 16) & 0xFF)];
+  hexString += HexTable[((ObjectIDGenIndex >> 8) & 0xFF)];
+  hexString += HexTable[(ObjectIDGenIndex & 0xFF)];
 
   return hexString;
 }

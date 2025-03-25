@@ -267,3 +267,7 @@ export function traverseObject(obj: SomeDoc, visitor: (obj: SomeDoc, key: string
     }
   }
 }
+
+export const desSchema = (schema: Record<string, unknown> = {}) => {
+  return { status: { projectionSchema: schema, primaryKeySchema: schema } };
+};

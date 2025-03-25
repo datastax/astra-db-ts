@@ -82,7 +82,7 @@ export const mkTypeUnsupportedForCollectionsError = (type: string, fauxTypeName:
  */
 export const mkTypeUnsupportedForTablesError = (type: string, alternatives: string[]) => {
   return new Error([
-    `${type} may not be used with collections by default.`,
+    `${type} may not be used with tables by default.`,
     '',
     'Please use one of the following alternatives:',
     ...[...alternatives, 'Write a custom codec for ${type} (beta)'].map((alt, i) => `${i + 1}. ${alt}`),
