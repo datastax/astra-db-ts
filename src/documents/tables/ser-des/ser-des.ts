@@ -223,11 +223,11 @@ function resolveAbsType({ path, tableSchema }: TableDesCtx): string | undefined 
 
   if (type === 'map') {
     if (typeof path[1] === 'number') {
-      /* c8 ignore next 3: not in data api yet */
       if (path.length === 3) {
         return (path[2] === 0 ? (column as any).keyType : (column as any).valueType);
       }
-    } else if (path.length === 2) {
+    }
+    else if (path.length === 2) {
       return (column as any).valueType;
     }
   }

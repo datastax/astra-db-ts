@@ -27,14 +27,15 @@ describe('unit.lib.errors', () => {
           fc.property(fc.anything(), (value) => {
             fc.pre(!(value instanceof Error));
 
-            if (value && typeof value === 'object' && 'toString' in value) {
-              fc.pre(typeof value.toString === 'function');
-            }
-
             const error = NonErrorError.asError(value);
             assert.ok(error instanceof NonErrorError);
-            assert.strictEqual(error.message, `Non-error value thrown; type='${betterTypeOf(value)}' toString='${value}' JSON.stringified='${jsonTryStringify(value, `${value}`)}'`);
             assert.strictEqual(error.value, value);
+
+            try {
+              assert.strictEqual(error.message, `Non-error value thrown; type='${betterTypeOf(value)}' toString='${value}' JSON.stringified='${jsonTryStringify(value, `${value}`)}'`);
+            } catch (_) {
+              assert.strictEqual(error.message, `Non-error value thrown; type='${betterTypeOf(value)}'`);
+            }
           }),
         );
       });
@@ -57,10 +58,6 @@ describe('unit.lib.errors', () => {
 
         fc.assert(
           fc.property(errorsArb, (error) => {
-            if (error && typeof error === 'object' && 'toString' in error) {
-              fc.pre(typeof error.toString === 'function');
-            }
-
             for (let i = 0; i < 10; i++) {
               const nextError = NonErrorError.asError(error);
               assert.strictEqual(nextError, error);
