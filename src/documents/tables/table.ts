@@ -45,8 +45,6 @@ import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
-import { TableFindAndRerankCursor } from '@/src/documents/tables/cursors/rerank-cursor.js';
-import type { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
 import type { TableCreateTextIndexOptions } from '@/src/documents/tables/types/indexes/create-text-index.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
@@ -918,13 +916,13 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     return this.#commands.find(filter, options, TableFindCursor);
   }
 
-  public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions & { projection?: never }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
-
-  public findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>
-
-  public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions): TableFindAndRerankCursor<SomeRow> {
-    return this.#commands.findAndRerank(filter, options, TableFindAndRerankCursor);
-  }
+  // public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions & { projection?: never }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
+  //
+  // public findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>
+  //
+  // public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions): TableFindAndRerankCursor<SomeRow> {
+  //   return this.#commands.findAndRerank(filter, options, TableFindAndRerankCursor);
+  // }
 
   /**
    * ##### Overview

@@ -16,7 +16,6 @@ import type {
   Collection,
   Filter,
   GenericFindAndRerankOptions,
-  GenericFindOptions,
   HybridSort,
   Projection,
   SomeDoc,
@@ -35,6 +34,7 @@ import {
   buildFLCMap,
   buildFLCOption,
   buildFLCPreMapOption,
+  buildFLCSort,
   cloneFLC,
 } from '@/src/documents/cursors/common.js';
 
@@ -77,7 +77,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * @internal
    */
-  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T) {
     super(options ?? {}, mapping);
     this._parent = parent;
     this._httpClient = parent._httpClient;
@@ -128,7 +128,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new sort set.
    */
   public sort(sort: HybridSort): this {
-    return buildFLCOption(this, 'sort', sort);
+    return buildFLCSort(this, sort);
   }
 
   /**
@@ -239,11 +239,14 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
       extraLogInfo: extra,
     });
 
+    this._nextPageState.swap(raw.data?.nextPageState);
+
+    /* c8 ignore next: don't think it's possible for documents to be nullish, but just in case */
     const buffer = raw.data?.documents ?? [];
 
     for (let i = 0, n = buffer.length; i < n; i++) {
       const deserialized = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
-      buffer[i] = new RerankResult(deserialized, raw.data?.documentResponses[i] ?? {});
+      buffer[i] = new RerankResult(deserialized, raw.data?.documentResponses?.[i] ?? {});
     }
 
     return buffer;

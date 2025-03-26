@@ -27,7 +27,7 @@ import type {
 } from '@/src/documents/index.js';
 import fc from 'fast-check';
 import { QueryState } from '@/src/lib/utils.js';
-import { DeltaAsserter } from '@/tests/testlib/utils.js';
+import { DeltaAsserter, untouchable } from '@/tests/testlib/utils.js';
 import type { LitUnion } from '@/src/lib/index.js';
 import { arbs } from '@/tests/testlib/arbitraries.js';
 
@@ -142,6 +142,17 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
 
             assert.strictEqual(cursor.consumed(), expectedConsumed);
             assert.strictEqual(cursor.buffered(), buffer.length - expectedConsumed);
+          }),
+        );
+      });
+
+      it('should return the raw records before any mapping', () => {
+        fc.assert(
+          fc.property(fc.array(fc.anything()), (buffer) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false]).map(() => untouchable());
+            cursor['_buffer'] = [...buffer] as SomeDoc[];
+            const consumed = cursor.consumeBuffer();
+            assert.deepStrictEqual(consumed, buffer);
           }),
         );
       });

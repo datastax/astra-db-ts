@@ -87,6 +87,8 @@ parallel('integration.administration.events', () => {
     });
   };
 
+  const DevopsApiEndpoint = DEFAULT_DEVOPS_API_ENDPOINTS[extractAstraEnvironment(TEST_APPLICATION_URI)];
+
   defineEventsTest('should emit adminCommandStarted events', {
     eventName: 'adminCommandStarted',
     async generateEvent(dbAdmin) {
@@ -95,10 +97,10 @@ parallel('integration.administration.events', () => {
     validateEvent(_, e) {
       assert.ok(e instanceof AdminCommandStartedEvent);
       assert.strictEqual(e.getMessage(), '');
-      assert.strictEqual(e.getMessagePrefix(), '(dbAdmin.listKeyspaces) GET https://api.astra.datastax.com/v2/databases/9c4023b2-af22-4358-baa0-10cf938fd7c9');
+      assert.match(e.getMessagePrefix(), /^\(dbAdmin\.listKeyspaces\) GET http\S+$/);
     },
     validateEventAstra(dbAdmin, e) {
-      assert.strictEqual(e.url, DEFAULT_DEVOPS_API_ENDPOINTS[extractAstraEnvironment(TEST_APPLICATION_URI)] + '/databases/' + dbAdmin.id);
+      assert.strictEqual(e.url, DevopsApiEndpoint + '/databases/' + dbAdmin.id);
     },
   });
 
@@ -110,10 +112,10 @@ parallel('integration.administration.events', () => {
     validateEvent(_, e) {
       assert.ok(e instanceof AdminCommandSucceededEvent);
       assert.match(e.getMessage(), /^\(\d+ms\)$/);
-      assert.strictEqual(e.getMessagePrefix(), '(dbAdmin.listKeyspaces) GET https://api.astra.datastax.com/v2/databases/9c4023b2-af22-4358-baa0-10cf938fd7c9');
+      assert.match(e.getMessagePrefix(),  /^\(dbAdmin\.listKeyspaces\) GET http\S+$/);
     },
     validateEventAstra(dbAdmin, e) {
-      assert.strictEqual(e.url, DEFAULT_DEVOPS_API_ENDPOINTS[extractAstraEnvironment(TEST_APPLICATION_URI)] + '/databases/' + dbAdmin.id);
+      assert.strictEqual(e.url, DevopsApiEndpoint + '/databases/' + dbAdmin.id);
     },
   });
 
@@ -125,10 +127,10 @@ parallel('integration.administration.events', () => {
     validateEvent(_, e) {
       assert.ok(e instanceof AdminCommandFailedEvent);
       assert.match(e.getMessage(), /^\(\d+ms\) ERROR: [^\n]/);
-      assert.strictEqual(e.getMessagePrefix(), '(dbAdmin.createKeyspace) POST https://api.astra.datastax.com/v2/databases/9c4023b2-af22-4358-baa0-10cf938fd7c9/keyspaces/!@*&($!(@');
+      assert.match(e.getMessagePrefix(),  /^\(dbAdmin\.createKeyspace\) POST http\S+$/);
     },
     validateEventAstra(dbAdmin, e) {
-      assert.strictEqual(e.url, DEFAULT_DEVOPS_API_ENDPOINTS[extractAstraEnvironment(TEST_APPLICATION_URI)] + '/databases/' + dbAdmin.id + '/keyspaces/!@*&($!(@');
+      assert.strictEqual(e.url, DevopsApiEndpoint + '/databases/' + dbAdmin.id + '/keyspaces/!@*&($!(@');
     },
   });
 
@@ -142,7 +144,7 @@ parallel('integration.administration.events', () => {
       assert.ok(e instanceof AdminCommandWarningsEvent);
       assert.strictEqual(e.url, dbAdmin.db().endpoint + '/api/json/v1');
       assert.match(e.getMessage(), /^\{"findNamespaces":\{}} WARNINGS: .*/);
-      assert.strictEqual(e.getMessagePrefix(), '(dbAdmin.xyz) POST https://9c4023b2-af22-4358-baa0-10cf938fd7c9-us-east-2.apps.astra.datastax.com/api/json/v1');
+      assert.match(e.getMessagePrefix(), /^\(dbAdmin\.xyz\) POST http\S+$/);
     },
   });
 

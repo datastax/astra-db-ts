@@ -54,14 +54,17 @@ before(async () => {
   
   const createTCPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
-      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, keyspace })
-        .then(c => c.deleteMany({}));
+      await db.createCollection(DEFAULT_COLLECTION_NAME, {
+        vector: (keyspace === DEFAULT_KEYSPACE) ? { dimension: 5, metric: 'cosine' } : { dimension: 1024, service: { provider: 'mistral', modelName: 'mistral-embed' } },
+        keyspace,
+      }).then(c => c.deleteMany({}));
 
       const table = await db.createTable(DEFAULT_TABLE_NAME, {
         definition: (keyspace === DEFAULT_KEYSPACE) ? EverythingTableSchema : EverythingTableSchemaWithVectorize,
         ifNotExists: true,
         keyspace,
       });
+      await table.deleteMany({});
 
       if (keyspace === DEFAULT_KEYSPACE) {
         await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector' as keyof InferTableSchema<typeof table>, { options: { metric: 'dot_product' }, ifNotExists: true });

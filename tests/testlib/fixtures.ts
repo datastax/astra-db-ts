@@ -34,6 +34,8 @@ import type { InferTableSchema } from '@/src/db/index.js';
 import * as util from 'node:util';
 import { Table } from '@/src/documents/index.js';
 import { memoizeRequests } from '@/tests/testlib/utils.js';
+import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants.js';
+import { extractAstraEnvironment } from '@/src/administration/utils.js';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
@@ -99,8 +101,8 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
     map: { type: 'map', keyType: 'text', valueType: 'uuid' },
     set: { type: 'set', valueType: 'uuid' },
     list: { type: 'list', valueType: 'uuid' },
-    vector1: { type: 'vector', dimension: 1024, service: { provider: 'openai', modelName: 'text-embedding-3-small' } },
-    vector2: { type: 'vector', dimension: 1024, service: { provider: 'openai', modelName: 'text-embedding-3-small' } },
+    vector1: { type: 'vector', dimension: 1024, service: { provider: 'mistral', modelName: 'mistral-embed' } },
+    vector2: { type: 'vector', dimension: 1024, service: { provider: 'mistral', modelName: 'mistral-embed' } },
   },
   primaryKey: {
     partitionBy: ['text'],
@@ -123,6 +125,7 @@ export function initTestObjects(opts?: TestObjectsOptions) {
     httpOptions: clientType ? { preferHttp2, client: <any>clientType } : undefined,
     timeoutDefaults: { requestTimeoutMs: 60000 },
     dbOptions: { keyspace: DEFAULT_KEYSPACE },
+    adminOptions: { endpointUrl: DEFAULT_DEVOPS_API_ENDPOINTS[extractAstraEnvironment(TEST_APPLICATION_URI)] },
     environment: env,
     logging,
   });
@@ -134,12 +137,15 @@ export function initTestObjects(opts?: TestObjectsOptions) {
   const db = client.db(TEST_APPLICATION_URI);
 
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
-  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
+  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, {
+    embeddingApiKey: TEST_OPENAI_KEY,
+    keyspace: OTHER_KEYSPACE,
+  });
 
   const table = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME);
   const table_ = db.table<EverythingTableSchemaWithVectorize>(DEFAULT_TABLE_NAME, {
-    keyspace: OTHER_KEYSPACE,
     embeddingApiKey: TEST_OPENAI_KEY,
+    keyspace: OTHER_KEYSPACE,
   });
 
   const dbAdmin = (ENVIRONMENT === 'astra')

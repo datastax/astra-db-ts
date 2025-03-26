@@ -12,7 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Filter, FindAndRerankCursor, FindCursor, GenericFindOptions, SomeDoc } from '@/src/documents/index.js';
+import type {
+  Filter,
+  FindAndRerankCursor,
+  FindCursor,
+  GenericFindAndRerankOptions,
+  GenericFindOptions, HybridSort,
+  SomeDoc, Sort,
+} from '@/src/documents/index.js';
 import { CursorError } from '@/src/documents/cursors/abstract-cursor.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
@@ -27,8 +34,8 @@ type FindLikeCursorConstructor<C extends FindLikeCursor> = new (...args: Constru
 /**
  * @internal
  */
-export const cloneFLC = <R, RC extends FindLikeCursor, Opts extends GenericFindOptions>(cursor: FindLikeCursor, filter: SerializedFilter, options: Opts, mapping?: (doc: SomeDoc) => R): RC => {
-  return new (<FindLikeCursorConstructor<RC>>cursor.constructor)(cursor.dataSource, cursor._serdes, filter, options, mapping);
+export const cloneFLC = <R, RC extends FindLikeCursor, Opts extends GenericFindAndRerankOptions | GenericFindOptions>(cursor: FindLikeCursor, filter: SerializedFilter, options: Opts, mapping?: (doc: SomeDoc) => R): RC => {
+  return new (<FindLikeCursorConstructor<RC>>cursor.constructor)(cursor.dataSource, cursor._serdes, filter, options as any, mapping);
 };
 
 /**
@@ -74,4 +81,11 @@ export const buildFLCFilter = <RC extends FindLikeCursor>(cursor: FindLikeCursor
     throw new CursorError(`Cannot set a new filter on a running/closed cursor`, cursor);
   }
   return cloneFLC(cursor, cursor._serdes.serialize(filter, SerDesTarget.Filter), cursor._options, cursor._mapping);
+};
+
+/**
+ * @internal
+ */
+export const buildFLCSort = <RC extends FindLikeCursor>(cursor: FindLikeCursor, sort: Sort | HybridSort): RC => {
+  return buildFLCOption(cursor, 'sort', cursor._serdes.serialize(sort, SerDesTarget.Sort)[0] as Sort);
 };

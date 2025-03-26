@@ -82,7 +82,7 @@ export class CollectionCodecs {
       },
     }),
     $vector: CollectionCodecs.forName('$vector', {
-      serialize: (val, ctx) => DataAPIVector.isVectorLike(val) ? vector(val)[$SerializeForCollection](ctx) : ctx.nevermind(),
+      serialize: (val, ctx) => ctx.target !== SerDesTarget.Sort && DataAPIVector.isVectorLike(val) ? vector(val)[$SerializeForCollection](ctx) : ctx.nevermind(),
       deserialize: DataAPIVector[$DeserializeForCollection],
     }),
     $uuid: CollectionCodecs.forType('$uuid', UUID),

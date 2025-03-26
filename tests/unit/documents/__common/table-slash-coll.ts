@@ -97,14 +97,8 @@ export const unitTestTableSlashColls = ({ mkTSlashC, ...cfg }: TableSlashCollUni
     });
 
     describe('find', () => {
-      it(`return a ${cfg.className}FindCursor`, () => {
+      it(`returns a ${cfg.className}FindCursor`, () => {
         assert.ok(tsc.find({}) instanceof cfg.findCursorClass);
-      });
-    });
-
-    describe('findAndRerank', () => {
-      it('return a ${cfg.className}FindAndRerankCursor', () => {
-        assert.ok(tsc.findAndRerank({}) instanceof cfg.rerankCursorClass);
       });
     });
   });

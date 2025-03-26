@@ -271,3 +271,16 @@ export function traverseObject(obj: SomeDoc, visitor: (obj: SomeDoc, key: string
 export const desSchema = (schema: Record<string, unknown> = {}) => {
   return { status: { projectionSchema: schema, primaryKeySchema: schema } };
 };
+
+export const assertPromiseResolvesImmediately = async <T>(mk: () => Promise<T>): Promise<T> => {
+  const promise = mk();
+
+  let isImmediate = false;
+  await Promise.race([
+    promise.then(() => isImmediate = true),
+    Promise.resolve(),
+  ]);
+
+  assert.strictEqual(isImmediate, true);
+  return promise;
+};

@@ -35,6 +35,7 @@ import { UUID } from '@/src/documents/datatypes/uuid.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { QueryState } from '@/src/lib/utils.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
+import { SerDesTarget } from '@/src/lib/index.js';
 
 interface FindCursorTestConfig extends Omit<AbstractCursorTestConfig, 'DeltaAsserter'> {
   CursorImpl: typeof CollectionFindAndRerankCursor | typeof TableFindAndRerankCursor,
@@ -66,21 +67,25 @@ export const unitTestRerankCursor = ({ CursorImpl, parent, ...cfg }: FindCursorT
         const cursor = new CursorImpl(parent, cfg.serdes, [{}, false]);
         const uuid = UUID.v4();
 
+        const newFilter = cfg.serdes.serialize({ uuid }, SerDesTarget.Filter);
+
         CursorDeltaAsserter
           .captureImmutDelta(cursor, () => cursor.filter({ uuid }))
-          .assertDelta({ _filter: cfg.serdes.serialize({ uuid }) });
+          .assertDelta({ _filter: newFilter });
       });
     });
 
     describe('sort', () => {
-      it('should create a new cursor with a new sort', () => {
+      it('should create a new cursor with a new pre-serialized sort', () => {
         fc.assert(
           fc.property(arbs.record(fc.anything()), arbs.record(fc.anything()), (sort, oldOptions) => {
-            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+            const cursor = new CursorImpl(parent, cfg.serdes, [{}, false], oldOptions);
+
+            const newSort = cfg.serdes.serialize(sort, SerDesTarget.Sort)[0];
 
             CursorDeltaAsserter
               .captureImmutDelta(cursor, () => cursor.sort(sort as HybridSort))
-              .assertDelta({ _options: { ...oldOptions, sort } });
+              .assertDelta({ _options: { ...oldOptions, sort: newSort } });
           }),
         );
       });

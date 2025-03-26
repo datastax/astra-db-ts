@@ -38,6 +38,7 @@ import {
   buildFLCMap,
   buildFLCOption,
   buildFLCPreMapOption,
+  buildFLCSort,
   cloneFLC,
 } from '@/src/documents/cursors/common.js';
 
@@ -128,7 +129,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new sort set.
    */
   public sort(sort: Sort): this {
-    return buildFLCOption(this, 'sort', sort);
+    return buildFLCSort(this, sort);
   }
 
   /**
