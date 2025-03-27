@@ -150,7 +150,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
 
     parallel('next', () => {
       it('should return the next document in the cursor, consuming the buffer', async () => {
-        const seenSet = new Set<unknown>(docs.map((d) => stableStringify(d)));
+        const seenSet = new Set(docs.map((d) => stableStringify(d)));
         const cursor = memoizedSource.find({});
 
         assert.strictEqual(cursor.buffered(), 0);
@@ -225,7 +225,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
     parallel('[Symbol.asyncIterator]', () => {
       it('should iterate over all documents', async () => {
         const cursor = memoizedSource_.find({});
-        const seenSet = new Set<unknown>(docs_.map((d) => stableStringify(d)));
+        const seenSet = new Set(docs_.map((d) => stableStringify(d)));
 
         for await (const doc of cursor) {
           seenSet.delete(stableStringify(doc));
@@ -238,7 +238,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
 
       it('should iterate over all documents with a mapping function', async () => {
         const cursor = memoizedSource_.find({}).map((d) => stableStringify(d));
-        const seenSet = new Set<unknown>(docs_.map((d) => stableStringify(d)));
+        const seenSet = new Set(docs_.map((d) => stableStringify(d)));
 
         for await (const doc of cursor) {
           seenSet.delete(doc);
@@ -310,7 +310,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         assert.strictEqual(cursor.buffered(), 0);
       });
 
-      it('should iterate over all documents with a mapping function', async () => {
+      it('should get all documents with a mapping function', async () => {
         const cursor = memoizedSource_.find({}).map(intToString);
         const docs = await cursor.toArray();
         assert.deepStrictEqual(docs.sort(sortByInt), docs_.map(intToString));

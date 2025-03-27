@@ -19,7 +19,7 @@ import { integrationTestRerankCursor } from '@/tests/integration/documents/__com
 describe('integration.documents.collections.cursors.rerank-cursor', () => {
   integrationTestRerankCursor({
     for: 'colls',
-    mkSource: () => initTestObjects().collection,
-    mkSource_: () => initTestObjects().collection_,
+    mkSourceBYO: () => initTestObjects().collection,
+    mkSourceVectorize: () => initTestObjects().collection_,
   });
 });
