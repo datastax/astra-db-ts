@@ -59,7 +59,17 @@ node -i -e "
   const bn = require('bignumber.js');
   const JBI = require('json-bigint');
 
-  let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }] });
+  let fetchNative = new $.FetchNative()
+  let fetchInfo;
+
+  let fetcher = {
+    fetch(info) {
+      fetchInfo = info;
+      return fetchNative.fetch(info);
+    }
+  }
+
+  let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }], httpOptions: { client: 'custom', fetcher } });
   let db = client.db(process.env.CLIENT_DB_URL, { keyspace: '$default_keyspace_name' });
   let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
 
@@ -121,9 +131,60 @@ node -i -e "
     return originalEmit.apply(process, arguments);
   };
 
+  const { styleText } = require('node:util');
+  let promisePlusVerbosity = 'low';
+
+  Object.defineProperty(this, 'vl', {
+    get: () => (promisePlusVerbosity = 'low', 0),
+  });
+
+  Object.defineProperty(this, 'vh', {
+    get: () => (promisePlusVerbosity = 'high', 0),
+  });
+
   Promise.prototype[Symbol.toPrimitive] = function() {
     let ok = 1;
-    console.dir(sp(() => this.catch(e => (ok = 0, e)))(), { colors: true });
+
+    switch (promisePlusVerbosity) {
+      case 'high':
+        sp(() => this
+          .then((r) => {
+             console.log(styleText('gray', '\nCommand:'));
+             console.dir(JSON.parse(fetchInfo.body), { colors: true });
+             console.log(styleText('gray', '\nResponse:'));
+             console.dir(r, { colors: true });
+             console.log(styleText('gray', '\nSuccess?:'));
+          })
+          .catch((e) => {
+             ok = 0;
+             console.log(styleText('gray', '\nCommand:'));
+             console.dir(JSON.parse(fetchInfo.body), { colors: true });
+             console.log(styleText('gray', '\nError:'));
+             console.dir(e, { colors: true });
+             console.log(styleText('gray', '\nSuccess?:'));
+          }))()
+
+        break;
+      case 'low':
+        sp(() => this
+          .then((r) => {
+             console.log(styleText('gray', '\nCommand:'));
+             console.dir(JSON.parse(fetchInfo.body), { colors: true });
+             console.log(styleText('gray', '\nResponse:'));
+             console.dir(r, { colors: true });
+             console.log(styleText('gray', '\nSuccess?:'));
+          })
+          .catch((e) => {
+             ok = 0;
+             console.log(styleText('gray', '\nCommand:'));
+             console.dir(JSON.parse(fetchInfo.body), { colors: true });
+             console.log(styleText('gray', '\nError - ' + e.name + ':'));
+             console.log(styleText('red', e.message));
+             console.log(styleText('gray', '\nSuccess?:'));
+          }))()
+        break;
+    }
+
     return ok;
   }
 "
