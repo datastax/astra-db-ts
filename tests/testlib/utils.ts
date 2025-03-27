@@ -74,21 +74,11 @@ export async function dropEphemeralTables() {
   await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
-export function processTags(tags: string): string[] {
-  const matches = tags.match(/\(([A-Z-]+?)\)/g);
-
-  if (!matches) {
-    return [];
-  }
-
-  return matches.map(tag => tag.slice(1, -1));
-}
-
 export function checkTestsEnabled(name: string) {
   const tags = processTags(name);
 
   tags.forEach((tag) => {
-    if (!['VECTORIZE', 'LONG', 'ADMIN', 'DEV', 'ASTRA'].includes(tag.replace(/^NOT-/, ''))) {
+    if (!['VECTORIZE', 'LONG', 'ADMIN', 'DEV', 'ASTRA', 'RERANKING'].includes(tag.replace(/^NOT-/, ''))) {
       throw new Error(`Unknown test tag, '${tag}'`);
     }
   });
@@ -97,7 +87,18 @@ export function checkTestsEnabled(name: string) {
       && ifMatchTag(tags, 'LONG',      () => process.env.CLIENT_RUN_LONG_TESTS)
       && ifMatchTag(tags, 'ADMIN',     () => process.env.CLIENT_RUN_ADMIN_TESTS)
       && ifMatchTag(tags, 'DEV',       () => TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com'))
-      && ifMatchTag(tags, 'ASTRA',     () => TEST_APPLICATION_URI.includes('datastax.com'));
+      && ifMatchTag(tags, 'ASTRA',     () => TEST_APPLICATION_URI.includes('datastax.com'))
+      && ifMatchTag(tags, 'RERANKING', () => !TEST_APPLICATION_URI.includes('apps.astra.datastax.com'));
+}
+
+function processTags(tags: string): string[] {
+  const matches = tags.match(/\(([A-Z-]+?)\)/g);
+
+  if (!matches) {
+    return [];
+  }
+
+  return matches.map(tag => tag.slice(1, -1));
 }
 
 function ifMatchTag(tags: string[], expected: string, pred: () => unknown) {

@@ -16,7 +16,7 @@
 import { describe, initTestObjects } from '@/tests/testlib/index.js';
 import { integrationTestRerankCursor } from '@/tests/integration/documents/__common/cursors/rerank-cursor.js';
 
-describe('integration.documents.collections.cursors.rerank-cursor', () => {
+describe('(RERANKING) integration.documents.collections.cursors.rerank-cursor', () => {
   integrationTestRerankCursor({
     for: 'colls',
     mkSourceBYO: () => initTestObjects().collection,
