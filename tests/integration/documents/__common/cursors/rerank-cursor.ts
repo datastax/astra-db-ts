@@ -40,11 +40,11 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
     const lexicalKey = cfg.for === 'tables' ? '$iLikeCars123' : '$lexical';
     const vectorizeKey = cfg.for === 'tables' ? 'vector1' : '$vectorize';
 
-    const sortByText = (a: SomeDoc, b: SomeDoc) => parseInt(a[textKey]) - parseInt(b[textKey]);
-    const sortByInt = (a: SomeDoc, b: SomeDoc) => a.int - b.int;
+    // const sortByText = (a: SomeDoc, b: SomeDoc) => parseInt(a[textKey]) - parseInt(b[textKey]);
+    // const sortByInt = (a: SomeDoc, b: SomeDoc) => a.int - b.int;
 
-    const intToString = (doc: SomeDoc) => ({ int: `${doc.int}` });
-    const textToNum = (doc: SomeDoc) => ({ [textKey]: parseInt(doc[textKey]) });
+    // const intToString = (doc: SomeDoc) => ({ int: `${doc.int}` });
+    // const textToNum = (doc: SomeDoc) => ({ [textKey]: parseInt(doc[textKey]) });
 
     const assertIteratorThrowsOnClosed = async (cursor: FindAndRerankCursor<unknown>, cb: () => Promise<unknown>) => {
       cursor.close();
