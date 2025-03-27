@@ -80,7 +80,9 @@ node -i -e "
     : null;
 
   let coll = db.collection('$default_coll_name');
+  let coll_ = db.collection('$default_coll_name', { keyspace: 'other_keyspace', embeddingApiKey: process.env.TEST_OPENAI_KEY });
   let table = db.table('$default_table_name');
+  let table_ = db.table('$default_table_name', { keyspace: 'other_keyspace', embeddingApiKey: process.env.TEST_OPENAI_KEY });
 
   if (process.env.LOG_ALL_TO_STDOUT) {
     for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed', /.*Warning/]) {
