@@ -60,11 +60,29 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
       });
     };
 
-    const docsBYO = [
-      { [textKey]: '0', int: 0, [vectorKey]: [.1, .1, .1, .1, .1], [lexicalKey]: 'I like cars' },
-      { [textKey]: '1', int: 1, [vectorKey]: [.5, .3, .3, .4, .5], [lexicalKey]: 'I like bikes' },
-      { [textKey]: '2', int: 2, [vectorKey]: [.1, .3, .5, .3, .1], [lexicalKey]: 'I like boats' },
-    ];
+    const permutations = <T>(arr: T[]): T[][] => {
+      if (arr.length === 0) return [[]];
+
+      const [head, ...tail] = arr;
+
+      return permutations(tail).flatMap((perm) => {
+        return Array.from({ length: perm.length + 1 }, (_, i) => {
+          return [...perm.slice(0, i), head, ...perm.slice(i)];
+        });
+      });
+    };
+
+    const docsBYOCommon = permutations([
+      { [vectorKey]: [.1, .1, .1, .1, .1], [lexicalKey]: 'I like cars' },
+      { [vectorKey]: [.5, .3, .3, .4, .5], [lexicalKey]: 'I like bikes' },
+      { [vectorKey]: [.1, .3, .5, .3, .1], [lexicalKey]: 'I like boats' },
+    ]);
+
+    const docsBYO = Array.from({ length: 100 }, (_, i) => ({
+      [textKey]: i.toString(),
+      int: i,
+      ...docsBYOCommon[i % docsBYOCommon.length],
+    }));
 
     const docsVectorize = [
       { [textKey]: '0', int: 0, [vectorizeKey]: 'I like cars',  [lexicalKey]: 'I like cars' },
@@ -72,10 +90,7 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
       { [textKey]: '2', int: 2, [vectorizeKey]: 'I like boats', [lexicalKey]: 'I like boats' },
     ];
 
-    const vectors = docsBYO.map(doc => doc[vectorKey] as number[]);
-    const strings = docsBYO.map(doc => doc[lexicalKey] as string);
-
-    const expectedDocsBYO = docsBYO.map((doc) => new RerankResult({ [textKey]: doc[textKey], int: doc.int }, {}));
+    const strings = docsVectorize.map(doc => doc[lexicalKey] as string);
     const expectedDocsVectorize = docsVectorize.map((doc) => new RerankResult({ [textKey]: doc[textKey], int: doc.int }, {}));
 
     before(async () => {
@@ -479,6 +494,10 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
           await cursor.forEach(() => {});
         });
       });
+    });
+
+    parallel('filter tests', () => {
+
     });
 
     parallel('misc', () => {
