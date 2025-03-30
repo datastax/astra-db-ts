@@ -299,7 +299,7 @@ export interface TableScalarColumnDefinition {
  * import { uuid } from '@datastax/astra-db-ts';
  *
  * await table.insertOne({
- *   mapCol: new Map([['key1', uuid(4)], ['key2', uuid(4)]]);
+ *   mapCol: new Map([['key1', uuid.v4()], ['key2', uuid.v4()]]);
  * });
  * ```
  *
@@ -343,7 +343,7 @@ export interface TableMapColumnDefinition {
  * import { uuid } from '@datastax/astra-db-ts';
  *
  * await table.insertOne({
- *   listCol: [uuid(4), uuid(4), uuid(7)],
+ *   listCol: [uuid.v4(), uuid.v4(), uuid.v7()],
  * });
  * ```
  *
@@ -386,7 +386,7 @@ export interface TableListColumnDefinition {
  * import { uuid } from '@datastax/astra-db-ts';
  *
  * await table.insertOne({
- *   setCol: new Set([uuid(4), uuid(4), uuid(7)]),
+ *   setCol: new Set([uuid.v4(), uuid.v4(), uuid.v7()]),
  * });
  * ```
  *

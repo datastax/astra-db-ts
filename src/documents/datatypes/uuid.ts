@@ -21,28 +21,6 @@ import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables
 import type { DataAPICodec } from '@/src/lib/index.js';
 
 /**
- * A shorthand function for `new UUID(uuid)`
- *
- * `uuid(4)` and `uuid(7)` are equivalent to `UUID.v4()` and `UUID.v7()`, respectively.
- *
- * @public
- */
-export const uuid = (uuid: string | 1 | 4 | 6 | 7) => {
-  switch (uuid) {
-    case 1:
-      return UUID.v1();
-    case 4:
-      return UUID.v4();
-    case 6:
-      return UUID.v6();
-    case 7:
-      return UUID.v7();
-    default:
-      return new UUID(uuid);
-  }
-};
-
-/**
  * Represents a UUID that can be used as an _id in the DataAPI.
  *
  * Provides methods for creating v4 and v7 UUIDs, and for parsing timestamps from v7 UUIDs.
@@ -128,10 +106,10 @@ export class UUID implements DataAPICodec<typeof UUID> {
    * @param validate - Whether to validate the UUID string. Defaults to `true`.
    * @param version - The version of the UUID. If not provided, it is inferred from the UUID string.
    */
-  constructor(uuid: string, validate = true, version = 0) {
+  constructor(uuid: string | UUID, validate = true, version = 0) {
     if (validate) {
-      if (typeof <unknown>uuid !== 'string') {
-        throw new Error(`UUID '${uuid}' must be a string`);
+      if (typeof uuid !== 'string' && !(uuid as unknown instanceof UUID)) {
+        throw new Error(`UUID '${uuid}' must be a string or another UUID instance`);
       }
 
       if (!_uuid.validate(uuid)) {
@@ -140,7 +118,7 @@ export class UUID implements DataAPICodec<typeof UUID> {
     }
 
     Object.defineProperty(this, '_raw', {
-      value: uuid.toLowerCase(),
+      value: (typeof uuid === 'string') ? uuid.toLowerCase() : uuid._raw,
     });
 
     Object.defineProperty(this, 'version', {
@@ -199,31 +177,57 @@ export class UUID implements DataAPICodec<typeof UUID> {
   /**
    * Creates a new v1 UUID.
    */
-  public static v1(msecs?: number, nsecs?: number): UUID {
+  public static v1(this: void, msecs?: number, nsecs?: number): UUID {
     return new UUID(_uuid.v1({ msecs, nsecs }), false, 1);
   }
 
   /**
    * Creates a new v4 UUID.
    */
-  public static v4(): UUID {
+  public static v4(this: void): UUID {
     return new UUID(_uuid.v4(), false, 4);
   }
 
   /**
    * Creates a new v6 UUID.
    */
-  public static v6(msecs?: number, nsecs?: number): UUID {
+  public static v6(this: void, msecs?: number, nsecs?: number): UUID {
     return new UUID(_uuid.v6({ msecs, nsecs }), false, 6);
   }
 
   /**
    * Creates a new v7 UUID.
    */
-  public static v7(msecs?: number): UUID {
+  public static v7(this: void, msecs?: number): UUID {
     return new UUID(_uuid.v7({ msecs }), false, 7);
   }
 }
+
+/**
+ * ##### Overview
+ *
+ * A shorthand function-object for {@link UUID}. May be used anywhere when creating new `UUID`s.
+ *
+ * @example
+ * ```ts
+ * // equiv. to `new UUID('f47ac10b-58cc-4372-a567-0e02b2c3d479')`
+ * uuid('f47ac10b-58cc-4372-a567-0e02b2c3d479')
+ *
+ * // equiv. to `UUID.v4()`
+ * uuid.v4()
+ * ```
+ *
+ * @public
+ */
+export const uuid = Object.assign(
+  (...params: [string] | [UUID]) => new UUID(...<[any]>params),
+  {
+    v1: UUID.v1,
+    v4: UUID.v4,
+    v6: UUID.v6,
+    v7: UUID.v7,
+  },
+);
 
 const MAGIC_NUMBER = 1221929280000000 * 100;
 

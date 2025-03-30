@@ -173,7 +173,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
       },
     }),
     async ok(exp: (key: string) => object, act: (key: string) => object) {
-      const key = uuid(4).toString();
+      const key = uuid.v4().toString();
       const { insertedId } = await this.coll.insertOne(act(key));
       assert.deepStrictEqual(await this.coll.findOne({ _id: insertedId }), exp(key));
     },

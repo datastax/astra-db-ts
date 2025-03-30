@@ -31,7 +31,7 @@ describe('unit.documents.errors', () => {
     });
 
     it('should return just the name for DataAPIResponseError', () => {
-      const error = new DataAPIResponseError({}, { errors: [] });
+      const error = new DataAPIResponseError({}, { errors: [null!] });
       assert.deepStrictEqual(error.withTransientDupesForEvents(), { name: 'DataAPIResponseError' });
     });
   });

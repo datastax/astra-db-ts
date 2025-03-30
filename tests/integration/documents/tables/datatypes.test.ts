@@ -222,8 +222,8 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
   });
 
   it('should handle different map insertion cases', async (key) => {
-    const uuid1 = uuid(1);
-    const uuid4 = uuid(4);
+    const uuid1 = uuid.v1();
+    const uuid4 = uuid.v4();
 
     const colAsserter = mkColumnAsserter(key, 'map');
 
@@ -235,17 +235,17 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
 
     // TODO
     // await colAsserter.ok([], _ => new Map);
-    // await colAsserter.ok([['a', uuid(4)]], es => new Map(es));
+    // await colAsserter.ok([['a', uuid.v4()]], es => new Map(es));
     await colAsserter.ok({ a: uuid1.toString(), b: uuid4 }, _ => new Map([['a', uuid1], ['b', uuid4]]));
     await colAsserter.ok(new Map(<any>[['a', uuid1.toString()], ['b', uuid4]]), _ => new Map([['a', uuid1], ['b', uuid4]]));
     await colAsserter.ok(new Map([['⨳⨓⨋', uuid1]]));
     await colAsserter.ok(new Map([['a'.repeat(50000), uuid1]]));
-    await colAsserter.ok(new Map(Array.from({ length: 1000 }, (_, i) => [i.toString(), uuid(7)])));
+    await colAsserter.ok(new Map(Array.from({ length: 1000 }, (_, i) => [i.toString(), uuid.v7()])));
   });
 
   it('should handle different set insertion cases', async (key) => {
-    const uuid1 = uuid(1);
-    const uuid4 = uuid(4);
+    const uuid1 = uuid.v1();
+    const uuid4 = uuid.v4();
 
     const colAsserter = mkColumnAsserter(key, 'set');
 
@@ -260,12 +260,12 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.ok([uuid1.toString(), uuid4], _ => new Set([uuid1, uuid4]));
     await colAsserter.ok(new Set([uuid1.toString(), uuid4]), _ => new Set([uuid1, uuid4]));
     await colAsserter.ok([uuid1, uuid1, uuid4], _ => new Set([uuid1, uuid4]));
-    await colAsserter.ok(new Set(Array.from({ length: 1000 }, () => uuid(7))));
+    await colAsserter.ok(new Set(Array.from({ length: 1000 }, () => uuid.v7())));
   });
 
   it('should handle different list insertion cases', async (key) => {
-    const uuid1 = uuid(1);
-    const uuid4 = uuid(4);
+    const uuid1 = uuid.v1();
+    const uuid4 = uuid.v4();
 
     const colAsserter = mkColumnAsserter(key, 'list');
 
@@ -278,7 +278,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     // }
 
     await colAsserter.ok([uuid1.toString(), uuid1, uuid1, uuid4], _ => [uuid1, uuid1, uuid1, uuid4]);
-    await colAsserter.ok(new Array(1000).fill(uuid(7)));
+    await colAsserter.ok(new Array(1000).fill(uuid.v7()));
   });
 
   it('should handle different time insertion cases', async (key) => {

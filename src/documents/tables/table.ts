@@ -114,7 +114,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * await db.table<User>('users').insertOne({
  *   id: '123',
- *   friends: new Map([['Alice', uuid(4)]]), // or UUID.v4()
+ *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
  *   vector: vector([1, 2, 3]), // or new DataAPIVector([...])
  * });
  * ```
@@ -143,7 +143,7 @@ const jbi = JBI({ storeAsString: true });
  * const res = await db.table<User, UserPK>('users').insertOne({
  *   id: '123',
  *   dob: date(), // or new DataAPIDate(new Date())
- *   friends: new Map([['Alice', uuid(4)]]), // or UUID.v4()
+ *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
  * });
  * ```
  *
@@ -339,7 +339,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * // Insert a row with a specific ID
    * await table.insertOne({ id: 'text-id', name: 'John Doe' });
-   * await table.insertOne({ id: UUID.v7(), name: 'Dane Joe' }); // or uuid(7)
+   * await table.insertOne({ id: UUID.v7(), name: 'Dane Joe' }); // or uuid.v7()
    *
    * // Insert a row with a vector
    * // DataAPIVector class enables faster ser/des
@@ -413,8 +413,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * import { uuid, vector, ... } from '@datastax/astra-db-ts';
    *
    * await table1.insertMany([
-   *   { id: uuid(4), name: 'John Doe' }, // or UUID.v4()
-   *   { id: uuid(7), name: 'Jane Doe' },
+   *   { id: uuid.v4(), name: 'John Doe' }, // or UUID.v4()
+   *   { id: uuid.v7(), name: 'Jane Doe' },
    * ]);
    *
    * // Insert a row with a vector

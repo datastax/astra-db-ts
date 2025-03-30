@@ -63,7 +63,7 @@ import { oid, uuid, vector } from '@datastax/astra-db-ts';
 
 await collection.insertOne({
   date: new Date(),
-  uuid: uuid(4),
+  uuid: uuid.v4(),
   oid: oid(),
   $vector: vector([.1, .2, .3]),
 });
@@ -172,7 +172,7 @@ You can use UUIDs in collections using the `UUID` class (or the `uuid` shorthand
 import { UUID, uuid } from '@datastax/astra-db-ts';
 
 await collection.insertOne({
-  _id: uuid(4), // Equivalent to `UUID.v4()`
+  _id: uuid.v4(), // Equivalent to `UUID.v4()`
 });
 
 const doc = await collection.findOne();
@@ -182,7 +182,7 @@ console.log(doc._id instanceof UUID); // true
 You can create a `UUID` through the class, or through the `uuid` shorthand, in a few different ways:
 1. By passing the UUID string to `new UUID()` or `uuid()`
 2. By using `UUID.v1()`, `.v4()`, `.v6()`, or `.v7()` to generate a new UUID of the respective version
-3. By using `uuid(1)`, `uuid(4)`, `uuid(6)`, or `uuid(7)` to generate a new UUID of the respective version
+3. By using `uuid.v1()`, `uuid.v4()`, `uuid.v6()`, or `uuid.v7()` to generate a new UUID of the respective version
 
 From the `UUID` class, you can either:
 - Get the string representation of the `UUID` using `.toString()`
@@ -356,7 +356,7 @@ You can use UUIDs in collections using the `UUID` class (or the `uuid` shorthand
 import { UUID, uuid } from '@datastax/astra-db-ts';
 
 await table.insertOne({
-  uuid: uuid(4), // Equivalent to `UUID.v4()`
+  uuid: uuid.v4(), // Equivalent to `UUID.v4()`
 });
 
 const row = await table.findOne();
@@ -366,7 +366,7 @@ console.log(row.uuid instanceof UUID); // true
 You can create a `UUID` through the class, or through the `uuid` shorthand, in a few different ways:
 1. By passing the UUID string to `new UUID()` or `uuid()`
 2. By using `UUID.v1()`, `.v4()`, `.v6()`, or `.v7()` to generate a new UUID of the respective version
-3. By using `uuid(1)`, `uuid(4)`, `uuid(6)`, or `uuid(7)` to generate a new UUID of the respective version
+3. By using `uuid.v1()`, `uuid.v4()`, `uuid.v6()`, or `uuid.v7()` to generate a new UUID of the respective version
 
 From the `UUID` class, you can either:
 - Get the string representation of the `UUID` using `.toString()`
@@ -450,7 +450,7 @@ If you really want to change the behavior of how a certain type is deserialized,
 | Type        | Type            | Shorthand | Examples                                                       |
 |-------------|-----------------|-----------|----------------------------------------------------------------|
 | `$date`     | `Date`          | -         | `new Date()`                                                   |
-| `$uuid`     | `UUID`          | `uuid`    | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid(7)`       |
+| `$uuid`     | `UUID`          | `uuid`    | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid.v7()`       |
 | `$objectId` | `ObjectId`      | `oid`     | `new ObjectId()`, `new ObjectId('...')`, `oid()`, `oid('...')` |
 | `$vector`   | `DataAPIVector` | `vector`  | `new DataAPIVector([.1, .2, .3])`, `vector([.1, .2, .3])`      |
 
@@ -477,9 +477,9 @@ If you really want to change the behavior of how a certain type is deserialized,
 | `text`      | `string`          | -          | `'Hello!'`                                                                           |
 | `time`      | `DataAPITime`     | `time`     | `new DataAPITime()`, `time(new Date(1734070574056))`, `time('12:34:56')`, `time()`   |
 | `timestamp` | `Date`            | -          | `new Date()`, `new Date(1734070574056)`, `new Date('...')`                           |
-| `timeuuid`  | `UUID`            | `uuid`     | `new UUID('...')`, `UUID.v1()`, `uuid('...')`, `uuid(1)`                             |
+| `timeuuid`  | `UUID`            | `uuid`     | `new UUID('...')`, `UUID.v1()`, `uuid('...')`, `uuid.v1()`                             |
 | `tinyint`   | `number`          | -          | `42`                                                                                 |
-| `uuid`      | `UUID`            | `uuid`     | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid(7)`                             |
+| `uuid`      | `UUID`            | `uuid`     | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid.v7()`                             |
 | `varchar`   | `string`          | -          | `'Hello!'`                                                                           |
 | `varint`    | `bigint`          | -          | `BigInt('42')`, `42n`                                                                |
 | `vector`    | `DataAPIVector`   | `vector`   | `new DataAPIVector([.1, .2, .3])`, `vector([.1, .2, .3])`                            |

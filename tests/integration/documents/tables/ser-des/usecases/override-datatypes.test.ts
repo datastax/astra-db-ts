@@ -52,7 +52,7 @@ parallel('integration.documents.tables.ser-des.usecases.override-datatypes', ({ 
       serdes: { codecs: [MapCodec], sparseData: true },
     });
 
-    const id = uuid(4);
+    const id = uuid.v4();
 
     await table.insertOne({ text: key, int: 0, map: { a: id } });
     const result = await table.findOne({ text: key });

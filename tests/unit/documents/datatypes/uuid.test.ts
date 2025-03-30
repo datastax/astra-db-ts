@@ -64,7 +64,7 @@ describe('unit.documents.datatypes.uuid', () => {
 
   it('should work with v1s', () => {
     const genLong = UUID.v1();
-    const genShort = uuid(1);
+    const genShort = uuid.v1();
 
     const parsedLong = new UUID(genLong.toString());
     const parsedShort = new UUID(genShort.toString());
@@ -87,7 +87,7 @@ describe('unit.documents.datatypes.uuid', () => {
 
   it('should work with v4s', () => {
     const genLong = UUID.v4();
-    const genShort = uuid(4);
+    const genShort = uuid.v4();
 
     const parsedLong = new UUID(genLong.toString());
     const parsedShort = new UUID(genShort.toString());
@@ -106,7 +106,7 @@ describe('unit.documents.datatypes.uuid', () => {
 
   it('should work with v6s', () => {
     const genLong = UUID.v6();
-    const genShort = uuid(6);
+    const genShort = uuid.v6();
 
     const parsedLong = new UUID(genLong.toString());
     const parsedShort = new UUID(genShort.toString());
@@ -125,7 +125,7 @@ describe('unit.documents.datatypes.uuid', () => {
 
   it('should work with v7s', () => {
     const genLong = UUID.v7();
-    const genShort = uuid(7);
+    const genShort = uuid.v7();
 
     const parsedLong = new UUID(genLong.toString());
     const parsedShort = new UUID(genShort.toString());
