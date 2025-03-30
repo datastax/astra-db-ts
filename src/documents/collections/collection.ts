@@ -47,7 +47,9 @@ import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import { CommandEventMap, RerankResult, WithSim } from '@/src/documents/index.js';
+import type { CommandEventMap, RerankResult, WithSim } from '@/src/documents/index.js';
+import { CollectionDeleteManyError } from '@/src/documents/index.js';
+import { CollectionUpdateManyError } from '@/src/documents/index.js';
 import {
   CollectionFindCursor,
   CollectionInsertManyError,
@@ -491,7 +493,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @returns A summary of what changed.
    */
   public async updateMany(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<RSchema>> {
-    return this.#commands.updateMany(filter, update, options);
+    return this.#commands.updateMany(filter, update, options, (e, result) => new CollectionUpdateManyError(e, result));
   }
 
   /**
@@ -632,7 +634,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @returns How many documents were deleted.
    */
   public async deleteMany(filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult> {
-    return this.#commands.deleteMany(filter, options);
+    return this.#commands.deleteMany(filter, options, (e, result) => new CollectionDeleteManyError(e, result));
   }
 
   /**

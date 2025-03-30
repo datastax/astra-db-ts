@@ -35,6 +35,7 @@ import type { DbAdmin } from '@/src/administration/index.js';
 import { NonErrorError } from '@/src/lib/errors.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
+import { isNonEmpty } from '@/src/lib/utils.js';
 
 type ClientKind = 'admin' | 'normal';
 
@@ -290,7 +291,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         this.emissionStrategy.emitCommandWarnings?.(requestId, info, warnings, options);
       }
 
-      if (data.errors && data.errors.length > 0) {
+      if (data.errors && isNonEmpty(data.errors)) {
         throw new DataAPIResponseError(info.command, data);
       }
 

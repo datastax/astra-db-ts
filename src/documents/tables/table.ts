@@ -48,6 +48,7 @@ import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import type { TableCreateTextIndexOptions } from '@/src/documents/tables/types/indexes/create-text-index.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import { NonErrorError } from '@/src/lib/errors.js';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -662,7 +663,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @returns A promise which resolves once the operation is completed.
    */
   public async deleteMany(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
-    await this.#commands.deleteMany(filter, timeout);
+    await this.#commands.deleteMany(filter, timeout, (e) => NonErrorError.asError(e));
   }
 
   /**

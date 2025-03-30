@@ -20,6 +20,7 @@ import type { SomeDoc, SomeId, SomeRow } from '@/src/documents/index.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import type { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
+import { isNonEmpty } from '@/src/lib/utils.js';
 
 /**
  * @internal
@@ -101,7 +102,7 @@ export const insertManyUnordered = async <ID>(
   });
   await Promise.all(promises);
 
-  if (errors.length > 0) {
+  if (isNonEmpty(errors)) {
     throw new err(errors, {
       insertedIds: insertedIds as (SomeRow[] & SomeId[]),
       insertedCount: insertedIds.length,

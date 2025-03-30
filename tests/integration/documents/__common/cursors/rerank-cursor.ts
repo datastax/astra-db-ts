@@ -60,23 +60,22 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
       });
     };
 
-    const permutations = <T>(arr: T[]): T[][] => {
-      if (arr.length === 0) return [[]];
-
-      const [head, ...tail] = arr;
-
-      return permutations(tail).flatMap((perm) => {
-        return Array.from({ length: perm.length + 1 }, (_, i) => {
-          return [...perm.slice(0, i), head, ...perm.slice(i)];
-        });
-      });
+    const cartProd = ({ vectors, strings }: { vectors: number[][], strings: string[] }) => {
+      return vectors.flatMap(vector => strings.map(lexical => ({ [vectorKey]: vector, [lexicalKey]: lexical })));
     };
 
-    const docsBYOCommon = permutations([
-      { [vectorKey]: [.1, .1, .1, .1, .1], [lexicalKey]: 'I like cars' },
-      { [vectorKey]: [.5, .3, .3, .4, .5], [lexicalKey]: 'I like bikes' },
-      { [vectorKey]: [.1, .3, .5, .3, .1], [lexicalKey]: 'I like boats' },
-    ]);
+    const docsBYOCommon = cartProd({
+      vectors: [
+        [.1, .1, .1, .1, .1],
+        [.5, .3, .3, .4, .5],
+        [.1, .3, .5, .3, .1],
+      ],
+      strings: [
+        'I like cars',
+        'I like bikes',
+        'I like boats',
+      ],
+    });
 
     const docsBYO = Array.from({ length: 100 }, (_, i) => ({
       [textKey]: i.toString(),
@@ -95,7 +94,7 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
 
     before(async () => {
       await sourceBYO.insertMany(docsBYO);
-      await sourceVectorize.insertMany(docsVectorize);
+      // await sourceVectorize.insertMany(docsVectorize);
     });
 
     parallel('hasNext', () => {
@@ -494,10 +493,6 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
           await cursor.forEach(() => {});
         });
       });
-    });
-
-    parallel('filter tests', () => {
-
     });
 
     parallel('misc', () => {

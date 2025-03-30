@@ -15,7 +15,7 @@
 import { BigNumber } from 'bignumber.js';
 import type { Decoder } from 'decoders';
 import { array, define, either, instanceOf } from 'decoders';
-import type { EmptyObj, nullish } from '@/src/lib/types.js';
+import type { EmptyObj, NonEmpty, nullish } from '@/src/lib/types.js';
 
 /**
  * @internal
@@ -186,4 +186,8 @@ export class QueryState<T extends EmptyObj> {
   public unwrap() {
     return this._value;
   }
+}
+
+export function isNonEmpty<T>(arr: readonly T[]): arr is NonEmpty<T> {
+  return arr.length > 0;
 }
