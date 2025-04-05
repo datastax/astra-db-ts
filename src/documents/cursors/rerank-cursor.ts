@@ -14,6 +14,7 @@
 
 import type {
   Collection,
+  DataAPIVector,
   Filter,
   GenericFindAndRerankOptions,
   HybridSort,
@@ -22,6 +23,7 @@ import type {
   SomeRow,
   Table,
 } from '@/src/documents/index.js';
+import { vector } from '@/src/documents/index.js';
 import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
@@ -37,8 +39,8 @@ import {
   buildFLCSort,
   cloneFLC,
 } from '@/src/documents/cursors/common.js';
+import { QueryState } from '@/src/lib/utils.js';
 
-/* c8 ignore start: not in data api yet */
 export class RerankResult<TRaw> {
   constructor(
     public readonly document: TRaw,
@@ -71,6 +73,11 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @internal
    */
   readonly _filter: SerializedFilter;
+
+  /**
+   * @internal
+   */
+  private _sortVector = new QueryState<DataAPIVector>();
 
   /**
    * Should not be instantiated directly.
@@ -163,6 +170,10 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     return buildFLCOption(this, 'includeScores', includeScores);
   }
 
+  public includeSortVector(includeSortVector?: boolean): this {
+    return buildFLCOption(this, 'includeSortVector', includeSortVector ?? true);
+  }
+
   /**
    * Sets the projection for the cursor, overwriting any previous projection.
    *
@@ -210,6 +221,20 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     return buildFLCMap(this, map);
   }
 
+  public async getSortVector(): Promise<DataAPIVector | null> {
+    if (this._sortVector.state === QueryState.Unattempted && this._options.includeSortVector) {
+      const reset2idle = this._state === 'idle';
+
+      await this._next(true, '.getSortVector');
+
+      if (reset2idle) {
+        this._state = 'idle';
+      }
+    }
+
+    return this._sortVector.unwrap();
+  }
+
   public override clone(): this {
     return cloneFLC(this, this._filter, this._options, this._mapping);
   }
@@ -249,6 +274,10 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
       buffer[i] = new RerankResult(deserialized, raw.data?.documentResponses?.[i] ?? {});
     }
 
+    const sortVector = raw.status?.sortVector;
+    this._sortVector.swap(sortVector ? vector(sortVector) : sortVector);
+    this._options.includeSortVector = false;
+
     return buffer;
   }
 
@@ -259,4 +288,3 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     return this._httpClient.tm;
   }
 }
-/* c8 ignore end */

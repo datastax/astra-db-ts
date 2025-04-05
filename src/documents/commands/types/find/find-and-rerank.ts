@@ -55,4 +55,5 @@ export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodT
   rerankOn?: string,
   rerankQuery?: string,
   includeScores?: boolean,
+  includeSortVector?: boolean,
 }

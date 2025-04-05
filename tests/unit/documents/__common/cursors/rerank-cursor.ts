@@ -183,6 +183,20 @@ export const unitTestRerankCursor = ({ CursorImpl, parent, ...cfg }: FindCursorT
       });
     });
 
+    describe('includeSortVector', () => {
+      it('should create a new cursor with sort vector included', () => {
+        fc.assert(
+          fc.property(fc.constantFrom(undefined, true, false), arbs.record(fc.anything()), (include, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.includeSortVector(include))
+              .assertDelta({ _options: { ...oldOptions, includeSortVector: include ?? true } });
+          }),
+        );
+      });
+    });
+
     describe('map', () => {
       it('should create a new cursor by composing mappings', () => {
         const cursor = new CursorImpl(parent, null!, [{}, false]);
