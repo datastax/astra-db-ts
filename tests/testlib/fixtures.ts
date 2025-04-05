@@ -17,6 +17,7 @@
 // + import { Client } from '@/src/client';
 // And now it's not even needed anymore :(
 
+import * as fetchH2 from 'fetch-h2';
 import { DataAPIClient } from '@/src/client/index.js';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
 import {
@@ -101,8 +102,8 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
     map: { type: 'map', keyType: 'text', valueType: 'uuid' },
     set: { type: 'set', valueType: 'uuid' },
     list: { type: 'list', valueType: 'uuid' },
-    vector1: { type: 'vector', dimension: 1024, service: { provider: 'mistral', modelName: 'mistral-embed' } },
-    vector2: { type: 'vector', dimension: 1024, service: { provider: 'mistral', modelName: 'mistral-embed' } },
+    vector1: { type: 'vector', dimension: 4096, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+    vector2: { type: 'vector', dimension: 4096, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
   },
   primaryKey: {
     partitionBy: ['text'],
@@ -122,7 +123,7 @@ export function initTestObjects(opts?: TestObjectsOptions) {
   const clientType = httpClient?.split(':')[0];
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-    httpOptions: clientType ? { preferHttp2, client: <any>clientType } : undefined,
+    httpOptions: clientType ? { preferHttp2, client: <any>clientType, fetchH2 } : undefined,
     timeoutDefaults: { requestTimeoutMs: 60000 },
     dbOptions: { keyspace: DEFAULT_KEYSPACE },
     adminOptions: { endpointUrl: DEFAULT_DEVOPS_API_ENDPOINTS[extractAstraEnvironment(TEST_APPLICATION_URI)] },

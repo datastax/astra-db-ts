@@ -32,7 +32,7 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
   describe('common', { truncate: `${cfg.for}:before` }, () => {
     const sourceBYO = cfg.mkSourceBYO();
     const sourceVectorize = cfg.mkSourceVectorize();
-    const memoizedSourceBYO = memoizeRequests(cfg.mkSourceBYO()); // for tests that don't depend on an up-to-date result from the server
+    // const memoizedSourceBYO = memoizeRequests(cfg.mkSourceBYO()); // for tests that don't depend on an up-to-date result from the server
     const memoizedSourceVectorize = memoizeRequests(cfg.mkSourceVectorize());
 
     const textKey = cfg.for === 'tables' ? 'text' : '_id';
@@ -41,7 +41,7 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
     const vectorizeKey = cfg.for === 'tables' ? 'vector1' : '$vectorize';
 
     const intToString = (doc: SomeDoc) => ({ int: `${doc.int}` });
-    const textToNum = (doc: SomeDoc) => ({ [textKey]: parseInt(doc[textKey]) });
+    // const textToNum = (doc: SomeDoc) => ({ [textKey]: parseInt(doc[textKey]) });
 
     const assertIteratorThrowsOnClosed = async (cb: (cursor: FindAndRerankCursor<unknown>) => Promise<unknown>) => {
       const cursor = memoizedSourceVectorize.findAndRerank({})
@@ -94,7 +94,7 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
 
     before(async () => {
       await sourceBYO.insertMany(docsBYO);
-      // await sourceVectorize.insertMany(docsVectorize);
+      await sourceVectorize.insertMany(docsVectorize);
     });
 
     parallel('hasNext', () => {

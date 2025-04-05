@@ -106,11 +106,27 @@ node -i -e "
   });
 
   Object.defineProperty(this, 'cfa', {
-    get: sp(() => coll.find({}).toArray()),
+    get: sp(() => coll.find({}).project({ '*': 1 }).toArray()),
   });
 
   Object.defineProperty(this, 'tfa', {
-    get: sp(() => table.find({}).toArray()),
+    get: sp(() => table.find({}).project({ '*': 1 }).toArray()),
+  });
+
+  Object.defineProperty(this, 'cda_', {
+    get: sp(() => coll_.deleteMany({})),
+  });
+
+  Object.defineProperty(this, 'tda_', {
+    get: sp(() => table_.deleteMany({})),
+  });
+
+  Object.defineProperty(this, 'cfa_', {
+    get: sp(() => coll_.find({}).project({ '*': 1 }).toArray()),
+  });
+
+  Object.defineProperty(this, 'tfa_', {
+    get: sp(() => table_.find({}).project({ '*': 1 }).toArray()),
   });
 
   const cif = sp(async (doc) => {

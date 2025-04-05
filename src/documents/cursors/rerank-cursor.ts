@@ -166,8 +166,8 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     return buildFLCOption(this, 'rerankQuery', rerankQuery);
   }
 
-  public includeScores(includeScores: boolean): this {
-    return buildFLCOption(this, 'includeScores', includeScores);
+  public includeScores(includeScores?: boolean): this {
+    return buildFLCOption(this, 'includeScores', includeScores ?? true);
   }
 
   public includeSortVector(includeSortVector?: boolean): this {
@@ -254,6 +254,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
           rerankOn: this._options.rerankOn,
           rerankQuery: this._options.rerankQuery,
           includeScores: this._options.includeScores,
+          includeSortVector: this._options.includeSortVector,
         },
       },
     };
@@ -271,7 +272,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
 
     for (let i = 0, n = buffer.length; i < n; i++) {
       const deserialized = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
-      buffer[i] = new RerankResult(deserialized, raw.data?.documentResponses?.[i] ?? {});
+      buffer[i] = new RerankResult(deserialized, raw.status?.documentResponses?.[i]?.scores ?? {});
     }
 
     const sortVector = raw.status?.sortVector;
