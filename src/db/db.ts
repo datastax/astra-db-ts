@@ -150,6 +150,8 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
         : this.#defaultOpts.dbOptions.keyspace ?? undefined,
     };
 
+    endpoint = endpoint.endsWith('/') ? endpoint.replace(/\/+$/, "") : endpoint;
+
     this.#httpClient = new DataAPIHttpClient({
       baseUrl: endpoint,
       tokenProvider: this.#defaultOpts.dbOptions.token,

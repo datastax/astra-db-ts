@@ -43,6 +43,11 @@ describe('unit.db.db', () => {
       const client = new DataAPIClient();
       assert.doesNotThrow(() => client.db(TEST_APPLICATION_URI));
     });
+
+    it("should strip trailing slashes from the endpoint", () => {
+      const db = new Db(internalOps(), "https://id-region.apps.astra.datastax.com/", DbOptsHandler.empty);
+      assert.strictEqual(db["_httpClient"].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS["astra"]}`));
+    });
   });
 
   describe('new Db tests', () => {
