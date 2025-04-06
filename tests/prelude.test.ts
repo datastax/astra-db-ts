@@ -13,7 +13,13 @@
 // limitations under the License.
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
-import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE, SKIP_PRELUDE } from '@/tests/testlib/config.js';
+import {
+  DEFAULT_COLLECTION_NAME,
+  DEFAULT_TABLE_NAME,
+  OTHER_KEYSPACE,
+  SKIP_PRELUDE,
+  VECTORIZE_VECTOR_LENGTH,
+} from '@/tests/testlib/config.js';
 import {
   EverythingTableSchema,
   EverythingTableSchemaWithVectorize,
@@ -55,7 +61,7 @@ before(async () => {
   const createTCPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
       await db.createCollection(DEFAULT_COLLECTION_NAME, {
-        vector: (keyspace === DEFAULT_KEYSPACE) ? { dimension: 5, metric: 'cosine' } : { dimension: 4096, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+        vector: (keyspace === DEFAULT_KEYSPACE) ? { dimension: 5, metric: 'cosine' } : { dimension: VECTORIZE_VECTOR_LENGTH, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
         keyspace,
       }).then(c => c.deleteMany({}));
 

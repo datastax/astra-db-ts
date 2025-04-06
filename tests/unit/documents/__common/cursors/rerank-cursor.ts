@@ -17,7 +17,7 @@ import type {
   CollectionFindAndRerankCursor,
   FindAndRerankCursor,
   HybridSort,
-  RerankResult,
+  RerankedResult,
   TableFindAndRerankCursor,
 } from '@/src/documents/index.js';
 import { CursorError } from '@/src/documents/index.js';
@@ -228,7 +228,7 @@ export const unitTestRerankCursor = ({ CursorImpl, parent, ...cfg }: FindCursorT
             const cursor = new CursorImpl(parent, null!, [filter, false], options, mapping);
 
             cursor['_nextPageState'] = new QueryState<string>().swap(qs);
-            cursor['_buffer'] = buffer as RerankResult<any>[];
+            cursor['_buffer'] = buffer as RerankedResult<any>[];
             cursor['_state'] = state;
             cursor['_consumed'] = consumed;
 

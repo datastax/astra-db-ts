@@ -47,7 +47,7 @@ import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type { CommandEventMap, RerankResult, WithSim } from '@/src/documents/index.js';
+import type { CommandEventMap, RerankedResult, WithSim } from '@/src/documents/index.js';
 import { CollectionDeleteManyError } from '@/src/documents/index.js';
 import { CollectionUpdateManyError } from '@/src/documents/index.js';
 import {
@@ -888,9 +888,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     return this.#commands.find(filter, options, CollectionFindCursor);
   }
 
-  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<RerankResult<RSchema>, RerankResult<RSchema>>
+  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<RerankedResult<RSchema>, RerankedResult<RSchema>>
 
-  public findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankResult<TRaw>, RerankResult<TRaw>>
+  public findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<TRaw>, RerankedResult<TRaw>>
 
   public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<SomeDoc> {
     return this.#commands.findAndRerank(filter, options, CollectionFindAndRerankCursor);

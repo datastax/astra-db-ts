@@ -36,7 +36,7 @@ import {
   DataAPIVector,
   UUID,
 } from '@/src/documents/index.js';
-import { EverythingTableSchema, it, parallel } from '@/tests/testlib/index.js';
+import { EverythingTableSchema, it, parallel, VECTORIZE_VECTOR_LENGTH } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 
@@ -173,7 +173,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
   });
 
   it('should upsert w/ vectorize', async (key) => {
-    const vector = Array.from({ length: 1024 }, () => .1);
+    const vector = Array.from({ length: VECTORIZE_VECTOR_LENGTH }, () => .1);
 
     await table_.updateOne({ text: key, int: 0 }, {
       $set: { vector1: "hello world!!!", vector2: new DataAPIVector(vector) },

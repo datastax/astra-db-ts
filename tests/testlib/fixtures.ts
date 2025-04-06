@@ -28,7 +28,7 @@ import {
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-  TEST_HTTP_CLIENT, TEST_OPENAI_KEY,
+  TEST_HTTP_CLIENT, TEST_OPENAI_KEY, VECTORIZE_VECTOR_LENGTH,
 } from '@/tests/testlib/config.js';
 import type { BaseClientEvent, DataAPIClientEventMap, LoggingConfig } from '@/src/lib/index.js';
 import type { InferTableSchema } from '@/src/db/index.js';
@@ -102,8 +102,8 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
     map: { type: 'map', keyType: 'text', valueType: 'uuid' },
     set: { type: 'set', valueType: 'uuid' },
     list: { type: 'list', valueType: 'uuid' },
-    vector1: { type: 'vector', dimension: 4096, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
-    vector2: { type: 'vector', dimension: 4096, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+    vector1: { type: 'vector', dimension: VECTORIZE_VECTOR_LENGTH, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+    vector2: { type: 'vector', dimension: VECTORIZE_VECTOR_LENGTH, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
   },
   primaryKey: {
     partitionBy: ['text'],

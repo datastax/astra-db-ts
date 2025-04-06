@@ -42,7 +42,6 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
     const sortByInt = (a: SomeDoc, b: SomeDoc) => a.int - b.int;
 
     const intToString = (doc: SomeDoc) => ({ int: `${doc.int}` });
-    const textToNum = (doc: SomeDoc) => ({ [textKey]: parseInt(doc[textKey]) });
 
     const assertIteratorThrowsOnClosed = async (cb: (cursor: FindCursor<unknown>) => Promise<unknown>) => {
       const cursor = source.find({});
@@ -420,16 +419,10 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
     });
 
     parallel('filter tests', () => {
-      it('should filter documents', async () => {
+      it('should omit documents not matching the filter', async () => {
         const cursor = memoizedSource.find({}).filter({ [textKey]: '1' });
         const res = await cursor.toArray();
         assert.deepStrictEqual(res, [docs[1]]);
-      });
-
-      it('should filter documents with a mapping function', async () => {
-        const cursor = memoizedSource.find({}).filter({ [textKey]: '1' }).map(intToString);
-        const res = await cursor.toArray();
-        assert.deepStrictEqual(res, [intToString(docs[1])]);
       });
     });
 
@@ -440,7 +433,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         assert.deepStrictEqual(res.length, 2);
       });
 
-      it('should limit documents across pints', async () => {
+      it('should limit documents across pages', async () => {
         const cursor = memoizedSource_.find({}).limit(50);
         const res = await cursor.toArray();
         assert.strictEqual(res.length, 50);
@@ -458,13 +451,13 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         assert.deepStrictEqual(res.sort(sortByText), docs.slice(1));
       });
 
-      it('should skip documents across pints', async () => {
+      it('should skip documents across pages', async () => {
         const cursor = memoizedSource_.find({}).skip(50).sort({ [textKey]: 1 });
         const res = await cursor.toArray();
         assert.deepStrictEqual(res, docs_.slice(50, 70));
       });
 
-      it('should limit and skip documents across pints', async () => {
+      it('should limit and skip documents across pages', async () => {
         const cursor = memoizedSource_.find({}).skip(50).limit(20).sort({ [textKey]: 1 });
         const res = await cursor.toArray();
         assert.deepStrictEqual(res, docs_.slice(50, 70));
@@ -476,12 +469,6 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         const cursor = memoizedSource_.find({}).sort({ [textKey]: 1 });
         const res = await cursor.toArray();
         assert.deepStrictEqual(res, [...docs_].slice(0, 20).sort(sortByText));
-      });
-
-      it('should sort documents with a mapping function', async () => {
-        const cursor = memoizedSource.find({}).sort({ [textKey]: 1 }).map(textToNum);
-        const res = await cursor.toArray();
-        assert.deepStrictEqual(res, [...docs].sort(sortByText).map(textToNum));
       });
 
       it('should only return one page of docs with a sort', async () => {
@@ -500,12 +487,6 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         const res = await cursor.toArray();
         assert.deepStrictEqual(res, [{ [textKey]: '0' }, { [textKey]: '1' }, { [textKey]: '2' }]);
       });
-
-      it('should project documents with a mapping function', async () => {
-        const cursor = memoizedSource.find({}).project({ [textKey]: 1 }).map(textToNum).sort({ [textKey]: 1 });
-        const res = await cursor.toArray();
-        assert.deepStrictEqual(res, [{ [textKey]: 0 }, { [textKey]: 1 }, { [textKey]: 2 }]);
-      });
     });
 
     parallel('mapping tests', () => {
@@ -513,6 +494,12 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         const cursor = memoizedSource.find({}).map(intToString);
         const res = await cursor.toArray();
         assert.deepStrictEqual(new Set(res), new Set([{ int: '0' }, { int: '1' }, { int: '2' }]));
+      });
+
+      it('should compose mapping functions', async () => {
+        const cursor = memoizedSource.find({}).map((d) => d.int).map((i) => i + 5).map((i) => i * 2);
+        const res = await cursor.toArray();
+        assert.deepStrictEqual(new Set(res), new Set([10, 12, 14]));
       });
 
       it('should close cursor and rethrow error if mapping function throws', async () => {

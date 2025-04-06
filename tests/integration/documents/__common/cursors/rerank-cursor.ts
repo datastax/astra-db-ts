@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import type { Collection, FindAndRerankCursor, SomeDoc } from '@/src/documents/index.js';
-import { CursorError, RerankResult } from '@/src/documents/index.js';
+import { CursorError, RerankedResult } from '@/src/documents/index.js';
 import { assertPromiseResolvesImmediately, memoizeRequests } from '@/tests/testlib/utils.js';
 import assert from 'assert';
 import { describe, it, parallel } from '@/tests/testlib/index.js';
@@ -40,8 +40,10 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
     const lexicalKey = cfg.for === 'tables' ? '$iLikeCars123' : '$lexical';
     const vectorizeKey = cfg.for === 'tables' ? 'vector1' : '$vectorize';
 
-    const intToString = (doc: SomeDoc) => ({ int: `${doc.int}` });
-    // const textToNum = (doc: SomeDoc) => ({ [textKey]: parseInt(doc[textKey]) });
+    const intToString = (res: RerankedResult<SomeDoc>) => ({ int: `${res.document.int}` });
+
+    const inOrder = <T extends { text?: string, _id?: string, int: number }>(docs: T[], ...order: number[]) => order.map((i) => ({ [textKey]: docs[i][textKey], int: docs[i].int}));
+    const inOrderResults = <T extends { int: number }>(docs: T[], ...order: number[]) => inOrder(docs, ...order).map((doc) => new RerankedResult(doc, {}));
 
     const assertIteratorThrowsOnClosed = async (cb: (cursor: FindAndRerankCursor<unknown>) => Promise<unknown>) => {
       const cursor = memoizedSourceVectorize.findAndRerank({})
@@ -71,9 +73,9 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
         [.1, .3, .5, .3, .1],
       ],
       strings: [
-        'I like cars',
-        'I like bikes',
-        'I like boats',
+        'I like red cars',
+        'I drive a red car',
+        'I drive to work',
       ],
     });
 
@@ -84,13 +86,12 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
     }));
 
     const docsVectorize = [
-      { [textKey]: '0', int: 0, [vectorizeKey]: 'I like cars',  [lexicalKey]: 'I like cars' },
-      { [textKey]: '1', int: 1, [vectorizeKey]: 'I like bikes', [lexicalKey]: 'I like bikes' },
-      { [textKey]: '2', int: 2, [vectorizeKey]: 'I like boats', [lexicalKey]: 'I like boats' },
+      { [textKey]: '0', int: 0, [vectorizeKey]: 'I like red cars', [lexicalKey]: 'I like red cars' },
+      { [textKey]: '1', int: 1, [vectorizeKey]: 'I drive a red car', [lexicalKey]: 'I drive a red car' },
+      { [textKey]: '2', int: 2, [vectorizeKey]: 'I drive to work', [lexicalKey]: 'I drive to work' },
     ];
 
     const strings = docsVectorize.map(doc => doc[lexicalKey] as string);
-    const expectedDocsVectorize = docsVectorize.map((doc) => new RerankResult({ [textKey]: doc[textKey], int: doc.int }, {}));
 
     before(async () => {
       await sourceBYO.insertMany(docsBYO);
@@ -132,7 +133,7 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
         const cursor = memoizedSourceVectorize.findAndRerank({})
           .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } });
 
-        for (const _ of docsBYO) {
+        for (const _ of docsVectorize) {
           await cursor.next();
         }
 
@@ -188,18 +189,18 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
 
     parallel('next', () => {
       it('should return the next document in the cursor, consuming the buffer', async () => {
-        const seenSet = new Set(expectedDocsVectorize.map((d) => stableStringify(d)));
+        const seen = [];
 
         const cursor = memoizedSourceVectorize.findAndRerank({})
           .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } });
 
         assert.strictEqual(cursor.buffered(), 0);
-        for (const _ of docsBYO) {
-          seenSet.delete(stableStringify(await cursor.next()));
+        for (const _ of docsVectorize) {
+          seen.push(await cursor.next());
           assert.strictEqual(cursor.buffered(), 3 - cursor.consumed());
         }
         assert.strictEqual(cursor.buffered(), 0);
-        assert.strictEqual(seenSet.size, 0);
+        assert.deepStrictEqual(seen, inOrderResults(docsVectorize, 0, 1, 2));
       });
 
       it('should return null if there are no more documents left to find', async () => {
@@ -214,7 +215,7 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
         const cursor = memoizedSourceVectorize.findAndRerank({})
           .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } });
 
-        for (const _ of docsBYO) {
+        for (const _ of docsVectorize) {
           await cursor.next();
         }
 
@@ -265,31 +266,33 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
     parallel('[Symbol.asyncIterator]', () => {
       it('should iterate over all documents', async () => {
         const cursor = memoizedSourceVectorize.findAndRerank({})
-          .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } });
+          .sort({ $hybrid: { [vectorizeKey]: strings[1], [lexicalKey]: strings[1] } });
 
-        const seenSet = new Set(expectedDocsVectorize.map((d) => stableStringify(d)));
+        const seen = [];
 
         for await (const doc of cursor) {
-          seenSet.delete(stableStringify(doc));
+          seen.push(doc);
+          assert.strictEqual(cursor.buffered(), 3 - cursor.consumed());
         }
 
-        assert.strictEqual(seenSet.size, 0);
+        assert.deepStrictEqual(seen, inOrderResults(docsVectorize, 1, 0, 2));
         assert.strictEqual(cursor.consumed(), docsVectorize.length);
         assert.strictEqual(cursor.buffered(), 0);
       });
 
       it('should iterate over all documents with a mapping function', async () => {
         const cursor = memoizedSourceVectorize.findAndRerank({})
-          .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } })
+          .sort({ $hybrid: { [vectorizeKey]: strings[1], [lexicalKey]: strings[1] } })
           .map((d) => stableStringify(d));
 
-        const seenSet = new Set(expectedDocsVectorize.map((d) => stableStringify(d)));
+        const seen = [];
 
         for await (const doc of cursor) {
-          seenSet.delete(doc);
+          seen.push(doc);
+          assert.strictEqual(cursor.buffered(), 3 - cursor.consumed());
         }
 
-        assert.strictEqual(seenSet.size, 0);
+        assert.deepStrictEqual(seen, inOrderResults(docsVectorize, 1, 0, 2).map((d) => stableStringify(d)));
         assert.strictEqual(cursor.consumed(), docsVectorize.length);
         assert.strictEqual(cursor.buffered(), 0);
       });
@@ -357,22 +360,21 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
     parallel('toArray', () => {
       it('should get all documents', async () => {
         const cursor = memoizedSourceVectorize.findAndRerank({})
-          .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } });
+          .sort({ $hybrid: { [vectorizeKey]: strings[2], [lexicalKey]: strings[2] } });
 
         const docs = await cursor.toArray();
-        assert.deepStrictEqual(docs, expectedDocsVectorize);
+        assert.deepStrictEqual(docs, inOrderResults(docsVectorize, 2, 1, 0));
         assert.strictEqual(cursor.consumed(), docsVectorize.length);
         assert.strictEqual(cursor.buffered(), 0);
       });
 
       it('should get all documents with a mapping function', async () => {
         const cursor = memoizedSourceVectorize.findAndRerank({})
-          .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } })
-          .map((d) => d.document)
+          .sort({ $hybrid: { [vectorizeKey]: strings[2], [lexicalKey]: strings[2] } })
           .map(intToString);
 
         const docs = await cursor.toArray();
-        assert.deepStrictEqual(docs, expectedDocsVectorize.map((d) => intToString(d.document)));
+        assert.deepStrictEqual(docs, inOrderResults(docsVectorize, 2, 1, 0).map((d) => intToString(d)));
         assert.strictEqual(cursor.consumed(), docsVectorize.length);
         assert.strictEqual(cursor.buffered(), 0);
       });
@@ -404,29 +406,31 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
         const cursor = memoizedSourceVectorize.findAndRerank({})
           .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } });
 
-        const seenSet = new Set<unknown>(expectedDocsVectorize.map((d) => stableStringify(d)));
+        const seen = [] as unknown[];
 
         await cursor.forEach((doc) => {
-          seenSet.delete(stableStringify(doc));
+          seen.push(doc);
+          assert.strictEqual(cursor.buffered(), 3 - cursor.consumed());
         });
 
-        assert.strictEqual(seenSet.size, 0);
+        assert.deepStrictEqual(seen, inOrderResults(docsVectorize, 0, 1, 2));
         assert.strictEqual(cursor.consumed(), docsVectorize.length);
         assert.strictEqual(cursor.buffered(), 0);
       });
 
       it('should iterate over all documents with a mapping function', async () => {
         const cursor = memoizedSourceVectorize.findAndRerank({})
-          .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } })
+          .sort({ $hybrid: { [vectorizeKey]: strings[1], [lexicalKey]: strings[1] } })
           .map((d) => stableStringify(d));
 
-        const seenSet = new Set<unknown>(expectedDocsVectorize.map((d) => stableStringify(d)));
+        const seen = [] as unknown[];
 
         await cursor.forEach((doc) => {
-          seenSet.delete(doc);
+          seen.push(doc);
+          assert.strictEqual(cursor.buffered(), 3 - cursor.consumed());
         });
 
-        assert.strictEqual(seenSet.size, 0);
+        assert.deepStrictEqual(seen, inOrderResults(docsVectorize, 1, 0, 2).map((d) => stableStringify(d)));
         assert.strictEqual(cursor.consumed(), docsVectorize.length);
         assert.strictEqual(cursor.buffered(), 0);
       });
@@ -492,6 +496,112 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
         await assertIteratorThrowsOnClosed(async (cursor) => {
           await cursor.forEach(() => {});
         });
+      });
+    });
+
+    parallel('filter tests', () => {
+      it('should omit documents not matching the filter', async () => {
+        const cursor = memoizedSourceVectorize.findAndRerank({ int: { $lt: 2 } })
+          .sort({ $hybrid: { [vectorizeKey]: strings[1], [lexicalKey]: strings[1] } });
+
+        assert.deepStrictEqual(await cursor.toArray(), inOrderResults(docsVectorize, 1, 0));
+      });
+    });
+
+    parallel('limit tests', () => {
+      it('should limit documents', async () => {
+        const cursor = memoizedSourceVectorize.findAndRerank({})
+          .sort({ $hybrid: { [vectorizeKey]: strings[2], [lexicalKey]: strings[2] } })
+          .limit(2);
+
+        assert.deepStrictEqual(await cursor.toArray(), inOrderResults(docsVectorize, 2, 1));
+      });
+
+      it('should have no limit if limit is set to 0', async () => {
+        const cursor = memoizedSourceVectorize.findAndRerank({})
+          .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } })
+          .limit(0);
+
+        assert.deepStrictEqual(await cursor.toArray(), inOrderResults(docsVectorize, 0, 1, 2));
+      });
+    });
+
+    parallel('projection tests', () => {
+      it('should project documents', async () => {
+        const cursor = memoizedSourceVectorize.findAndRerank({})
+          .sort({ $hybrid: { [vectorizeKey]: strings[2], [lexicalKey]: strings[2] } })
+          .project({ int: 0 });
+
+        assert.deepStrictEqual(await cursor.toArray(), inOrder(docsVectorize, 2, 1, 0).map((d) => new RerankedResult({ [textKey]: d[textKey] }, {})));
+      });
+    });
+
+    parallel('mapping tests', () => {
+      it('should map documents', async () => {
+        const cursor = memoizedSourceVectorize.findAndRerank({})
+          .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } })
+          .map(intToString);
+
+        assert.deepStrictEqual(await cursor.toArray(), inOrderResults(docsVectorize, 0, 1, 2).map(intToString));
+      });
+
+      it('should compose mapping functions', async () => {
+        const cursor = memoizedSourceVectorize.findAndRerank({})
+          .sort({ $hybrid: { [vectorizeKey]: strings[1], [lexicalKey]: strings[1] } })
+          .map((d) => d.document.int)
+          .map((i) => i + 5)
+          .map((i) => i * 2);
+
+        assert.deepStrictEqual(await cursor.toArray(), inOrder(docsVectorize, 1, 0, 2).map((d) => (d.int + 5) * 2));
+      });
+
+      it('should close cursor and rethrow error if mapping function throws', async () => {
+        const cursor = memoizedSourceVectorize.findAndRerank({})
+          .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } })
+          .map(() => { throw new Error('Mapping error'); });
+
+        await assert.rejects(async () => await cursor.toArray(), { message: 'Mapping error' });
+        assert.equal(cursor.state, 'closed');
+      });
+    });
+
+    parallel('sort vector tests', () => {
+      const sortVector = docsBYO[0][vectorKey] as number[];
+
+      it('should return sort vector on only first API call if includeSortVector: true', async () => {
+        const cursor = sourceBYO.findAndRerank({})
+          .sort({ $hybrid: { [vectorKey]: sortVector, [lexicalKey]: 'I like red cars' } })
+          .rerankQuery('I like red cars')
+          .rerankOn('$lexical')
+          .includeSortVector();
+
+        const start = performance.now();
+        assert.deepStrictEqual((await cursor.getSortVector())?.asArray(), sortVector);
+        assert.ok(performance.now() - start > 5);
+
+        const cachedVector = await assertPromiseResolvesImmediately(() => cursor.getSortVector());
+        assert.deepStrictEqual(cachedVector?.asArray(), sortVector);
+      });
+
+      it('getSortVector should populate buffer if called first w/ includeSortVector: true', async () => {
+        const cursor = sourceBYO.findAndRerank({})
+          .sort({ $hybrid: { [vectorKey]: sortVector, [lexicalKey]: 'I like red cars' } })
+          .rerankQuery('I like red cars')
+          .rerankOn('$lexical')
+          .includeSortVector();
+
+        assert.deepStrictEqual((await cursor.getSortVector())?.asArray(), sortVector);
+        assert.ok(cursor.consumeBuffer().length > 0);
+      });
+
+      it('should return null in getSortVector if includeSortVector: false', async () => {
+        const cursor = sourceBYO.findAndRerank({})
+          .sort({ $hybrid: { [vectorKey]: sortVector, [lexicalKey]: 'I like red cars' } })
+          .rerankQuery('I like red cars')
+          .rerankOn('$lexical');
+
+        await cursor.hasNext();
+        assert.deepStrictEqual(await cursor.getSortVector(), null);
       });
     });
 

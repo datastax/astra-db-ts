@@ -41,14 +41,14 @@ import {
 } from '@/src/documents/cursors/common.js';
 import { QueryState } from '@/src/lib/utils.js';
 
-export class RerankResult<TRaw> {
+export class RerankedResult<TRaw> {
   constructor(
     public readonly document: TRaw,
     public readonly scores: Record<string, number>,
   ) {}
 }
 
-export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankResult<TRaw>> {
+export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankedResult<TRaw>> {
   /**
    * @internal
    */
@@ -242,7 +242,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   /**
    * @internal
    */
-  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankResult<TRaw>[]> {
+  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankedResult<TRaw>[]> {
     const command = {
       findAndRerank: {
         filter: this._filter[0],
@@ -272,7 +272,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
 
     for (let i = 0, n = buffer.length; i < n; i++) {
       const deserialized = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
-      buffer[i] = new RerankResult(deserialized, raw.status?.documentResponses?.[i]?.scores ?? {});
+      buffer[i] = new RerankedResult(deserialized, raw.status?.documentResponses?.[i]?.scores ?? {});
     }
 
     const sortVector = raw.status?.sortVector;
