@@ -16,9 +16,9 @@ import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-han
 import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
 import type { DbOptions } from '@/src/client/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
-import { exact, nullish, oneOf, optional, record, regex, string } from 'decoders';
+import { exact, nullish, oneOf, optional, regex, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
-import { Logger } from '@/src/lib/logging/logger.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
@@ -39,24 +39,22 @@ export type ParsedDbOptions = MonoidType<typeof monoid> & Parsed<'DbOptions'>;
  * @internal
  */
 const monoid = monoids.object({
-  logging: Logger.cfg,
-  token: TokenProvider.opts,
+  logging: InternalLogger.cfg,
   keyspace: monoids.optional<string>(),
   dataApiPath: monoids.optional<string>(),
   collSerdes: CollSerDes.cfg,
   tableSerdes: TableSerDes.cfg,
-  additionalHeaders: monoids.record<string>(),
   timeoutDefaults: Timeouts.cfg,
+  token: TokenProvider.opts,
 });
 
 /**
  * @internal
  */
 const decoder = nullish(exact({
-  logging: Logger.cfg.decoder,
+  logging: InternalLogger.cfg.decoder,
   token: TokenProvider.opts.decoder,
   dataApiPath: optional(string),
-  additionalHeaders: optional(record(string)),
   keyspace: optional(regex(/^\w{1,48}$/, 'Expected a string of 1-48 alphanumeric characters')),
   timeoutDefaults: Timeouts.cfg.decoder,
   serdes: optional(exact({
@@ -85,7 +83,6 @@ const transformer = decoder.transform((input) => {
     dataApiPath: input.dataApiPath,
     collSerdes: input.serdes?.collection ?? CollSerDes.cfg.empty,
     tableSerdes: input.serdes?.table ?? TableSerDes.cfg.empty,
-    additionalHeaders: input.additionalHeaders ?? {},
   };
 });
 

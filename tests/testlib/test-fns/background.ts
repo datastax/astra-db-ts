@@ -15,8 +15,8 @@
 
 import { initTestObjects } from '@/tests/testlib/fixtures.js';
 import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils.js';
-import type { SuiteBlock} from '@/tests/testlib/index.js';
-import { TEST_FILTER } from '@/tests/testlib/index.js';
+import type { SuiteBlock } from '@/tests/testlib/index.js';
+import { CURRENT_DESCRIBE_NAMES } from '@/tests/testlib/index.js';
 import type { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types.js';
 import { UUID } from '@/src/documents/index.js';
 
@@ -54,11 +54,11 @@ background = function (name: string, suiteFn: SuiteBlock) {
 
     backgroundTestState.suites.push(suite);
 
+    CURRENT_DESCRIBE_NAMES.push(name);
     backgroundTestState.inBlock = true;
     suiteFn(initTestObjects());
     backgroundTestState.inBlock = false;
-
-    suite.tests = suite.tests.filter(test => TEST_FILTER.test(suite.name!, test.name));
+    CURRENT_DESCRIBE_NAMES.pop();
 
     if (!suite.tests.length) {
       backgroundTestState.suites.pop();

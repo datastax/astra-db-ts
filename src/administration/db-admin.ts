@@ -15,9 +15,11 @@
 
 import type { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers.js';
 import type { WithTimeout } from '@/src/lib/index.js';
-import { HierarchicalEmitter } from '@/src/lib/index.js';
+import { HierarchicalLogger } from '@/src/lib/index.js';
 import type { Db } from '@/src/db/index.js';
 import type { AdminCommandEventMap } from '@/src/administration/events.js';
+import type { FindRerankingProvidersResult } from '@/src/administration/types/db-admin/find-reranking-providers.js';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 
 /**
  * Represents some DatabaseAdmin class used for managing some specific database.
@@ -29,7 +31,7 @@ import type { AdminCommandEventMap } from '@/src/administration/events.js';
  *
  * @public
  */
-export abstract class DbAdmin extends HierarchicalEmitter<AdminCommandEventMap> {
+export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
   /**
    * Gets the underlying `Db` object. The options for the db were set when the DbAdmin instance, or whatever spawned
    * it, was created.
@@ -50,23 +52,6 @@ export abstract class DbAdmin extends HierarchicalEmitter<AdminCommandEventMap> 
   abstract db(): Db;
 
   /**
-   * Returns detailed information about the availability and usage of the vectorize embedding providers available on the
-   * current database (may vary based on cloud provider & region).
-   *
-   * @example
-   * ```typescript
-   * const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
-   *
-   * // ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']
-   * console.log(embeddingProviders['openai'].models.map(m => m.name));
-   * ```
-   *
-   * @param options - The options for the timeout of the operation.
-   *
-   * @returns The available embedding providers.
-   */
-  abstract findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
-  /**
    * Retrieves a list of all the keyspaces in the database.
    *
    * Semantic order is not guaranteed, but implementations are free to assign one. {@link AstraDbAdmin}, for example,
@@ -83,6 +68,7 @@ export abstract class DbAdmin extends HierarchicalEmitter<AdminCommandEventMap> 
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
   abstract listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
+
   /**
    * Creates a new, additional, keyspace for this database.
    *
@@ -114,6 +100,7 @@ export abstract class DbAdmin extends HierarchicalEmitter<AdminCommandEventMap> 
    * @returns A promise that resolves when the operation completes.
    */
   abstract createKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+
   /**
    * Drops a keyspace from this database.
    *
@@ -146,4 +133,63 @@ export abstract class DbAdmin extends HierarchicalEmitter<AdminCommandEventMap> 
    * @returns A promise that resolves when the operation completes.
    */
   abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+
+  /**
+   * Returns detailed information about the availability and usage of the vectorize embedding providers available on the
+   * current database (may vary based on cloud provider & region).
+   *
+   * @example
+   * ```typescript
+   * const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
+   *
+   * // ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']
+   * console.log(embeddingProviders['openai'].models.map(m => m.name));
+   * ```
+   *
+   * @param options - The options for the timeout of the operation.
+   *
+   * @returns The available embedding providers.
+   */
+  public async findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult> {
+    const httpClient = this._getDataAPIHttpClient();
+
+    const resp = await httpClient.executeCommand({ findEmbeddingProviders: {} }, {
+      timeoutManager: httpClient.tm.single('databaseAdminTimeoutMs', options),
+      methodName: 'dbAdmin.findEmbeddingProviders',
+      keyspace: null,
+    });
+    return resp.status as FindEmbeddingProvidersResult;
+  }
+
+  /**
+   * Returns detailed information about the availability and usage of the reranking providers available on the
+   * current database (may vary based on cloud provider & region).
+   *
+   * @example
+   * ```typescript
+   * const { rerankingProviders } = await dbAdmin.findRerankingProviders();
+   *
+   * // ['nvidia/llama-3.2-nv-rerankqa-1b-v2']
+   * console.log(rerankingProviders['nvidia'].models.map(m => m.name));
+   * ```
+   *
+   * @param options - The options for the timeout of the operation.
+   *
+   * @returns The available reranking providers.
+   */
+  public async findRerankingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindRerankingProvidersResult> {
+    const httpClient = this._getDataAPIHttpClient();
+
+    const resp = await httpClient.executeCommand({ findRerankingProviders: {} }, {
+      timeoutManager: httpClient.tm.single('databaseAdminTimeoutMs', options),
+      methodName: 'dbAdmin.findRerankingProviders',
+      keyspace: null,
+    });
+    return resp.status as FindRerankingProvidersResult;
+  }
+
+  /**
+   * @internal
+   */
+  protected abstract _getDataAPIHttpClient(): DataAPIHttpClient<'admin'>;
 }

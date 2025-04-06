@@ -71,7 +71,7 @@ type GetTRawOfCursor<Cursor> = Cursor extends CollectionFindCursor<any, infer TR
 
   const mapped = cursor.map((doc) => doc._id);
 
-  type mapped_is_expected = Expect<Equal<typeof mapped, FindCursor<string, WithSim<FoundDoc<TestSchema>>>>>;
+  type mapped_is_expected = Expect<Equal<typeof mapped, CollectionFindCursor<string, WithSim<FoundDoc<TestSchema>>>>>;
 
   void mapped.next().then((mappedDoc) => {
     type mappedDoc_type_is_expected = Expect<Equal<string | null, typeof mappedDoc>>;
@@ -89,7 +89,7 @@ type GetTRawOfCursor<Cursor> = Cursor extends CollectionFindCursor<any, infer TR
 
   const rawProjected = cursor.project({ _id: 0, amount: 1 });
 
-  type rawProjected_T_and_TRaw_are_expected = Expect<Equal<typeof rawProjected, FindCursor<Partial<WithSim<FoundDoc<TestSchema>>>, Partial<WithSim<FoundDoc<TestSchema>>>>>>;
+  type rawProjected_T_and_TRaw_are_expected = Expect<Equal<typeof rawProjected, CollectionFindCursor<Partial<WithSim<FoundDoc<TestSchema>>>, Partial<WithSim<FoundDoc<TestSchema>>>>>>;
 
   void rawProjected.next().then((doc) => {
     type doc_type_is_expected = Expect<Equal<Partial<WithSim<FoundDoc<TestSchema>>> | null, typeof doc>>;

@@ -18,10 +18,6 @@ import type { IsDate, IsNum } from '@/src/documents/types/utils.js';
 /**
  * Represents the update filter to specify how to update a document.
  *
- * **If you want stricter type-checking and full auto-complete, see {@link StrictCollectionUpdateFilter}.**
- *
- * This is a more relaxed version of {@link StrictCollectionUpdateFilter} that doesn't type-check nested fields.
- *
  * @example
  * ```typescript
  * const updateFilter: UpdateFilter<SomeDoc> = {
@@ -268,5 +264,16 @@ export type CollectionCurrentDate<Schema> =  {
   [K in keyof Schema as Schema[K] extends Date | { $date: number } ? K : never]?: boolean
 };
 
-type ContainsDate<Schema> = IsDate<Schema[keyof Schema]>;
-type PickArrayTypes<Schema> = Extract<Schema, any[]> extends (infer E)[] ? E : unknown
+/**
+ * Checks if the schema contains a date type.
+ *
+ * @public
+ */
+export type ContainsDate<Schema> = IsDate<Schema[keyof Schema]>;
+
+/**
+ * Picks the array types from a type that may be an array.
+ *
+ * @public
+ */
+export type PickArrayTypes<Schema> = Extract<Schema, any[]> extends (infer E)[] ? E : never;

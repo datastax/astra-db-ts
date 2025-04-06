@@ -14,11 +14,11 @@
 
 import type {
   CommandEventMap,
-  CreateTableIndexOptions,
-  CreateTableVectorIndexOptions,
   FoundRow,
-  SomeDoc,
   SomeRow,
+  TableCreateIndexColumn,
+  TableCreateIndexOptions,
+  TableCreateVectorIndexOptions,
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
@@ -28,9 +28,7 @@ import type {
   TableUpdateFilter,
   WithSim,
 } from '@/src/documents/index.js';
-import {
-  TableInsertManyError,
-} from '@/src/documents/index.js';
+import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import type {
@@ -41,14 +39,17 @@ import type {
   ListTableDefinition,
   TableOptions,
 } from '@/src/db/index.js';
-import { HierarchicalEmitter } from '@/src/lib/logging/hierarchical-emitter.js';
+import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
-import { TableFindCursor } from '@/src/documents/tables/cursor.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
-import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
+import { TableFindAndRerankCursor } from '@/src/documents/tables/cursors/rerank-cursor.js';
+import type { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
+import type { TableCreateTextIndexOptions } from '@/src/documents/tables/types/indexes/create-text-index.js';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -211,7 +212,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * @public
  */
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalEmitter<CommandEventMap> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalLogger<CommandEventMap> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<PKey>;
   readonly #db: Db;
@@ -300,8 +301,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions | undefined) {
-    super(db);
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: TableOptions | undefined) {
+    const loggingConfig = InternalLogger.cfg.concatParseWithin([rootOpts.dbOptions.logging], opts, 'logging');
+    super(db, loggingConfig);
 
     Object.defineProperty(this, 'name', {
       value: name,
@@ -912,10 +914,18 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    */
   public find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
 
-  public find(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
+  public find(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<SomeRow> {
     return this.#commands.find(filter, options, TableFindCursor);
   }
-  
+
+  public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions & { projection?: never }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
+
+  public findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>
+
+  public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions): TableFindAndRerankCursor<SomeRow> {
+    return this.#commands.findAndRerank(filter, options, TableFindAndRerankCursor);
+  }
+
   /**
    * ##### Overview
    *
@@ -1123,7 +1133,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    */
   public async findOne<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOneOptions): Promise<TRaw | null>;
 
-  public async findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<SomeDoc | null> {
+  public async findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<SomeRow | null> {
     return this.#commands.findOne(filter, options);
   }
 
@@ -1189,61 +1199,13 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
   }
 
   /**
-   * Lists the index names for this table.
-   *
-   * If you want to include the index definitions in the response, set `nameOnly` to `false` (or omit it completely),
-   * using the other overload.
-   *
-   * @example
-   * ```typescript
-   * // ['my_vector_index', ...]
-   * console.log(await table.listIndexes({ nameOnly: true }));
-   * ```
-   *
-   * @param options - Options for this operation.
-   *
-   * @returns A promise that resolves to an array of index names.
-   */
-  public async listIndexes(options: ListIndexOptions & { nameOnly: true }): Promise<string[]>
-
-  /**
-   * Lists the indexes for this table.
-   *
-   * If you want to use only the index names, set `nameOnly` to `true`, using the other overload.
-   *
-   * @example
-   * ```typescript
-   * // [{ name: 'm_vector_index', definition: { ... } }, ...]
-   * console.log(await db.listTables());
-   * ```
-   *
-   * @param options - Options for this operation.
-   *
-   * @returns A promise that resolves to an array of index info.
-   */
-  public async listIndexes(options?: ListIndexOptions & { nameOnly?: false }): Promise<TableIndexDescriptor[]>
-
-  public async listIndexes(options?: ListIndexOptions): Promise<string[] | TableIndexDescriptor[]> {
-    const resp = await this.#httpClient.executeCommand({
-      listIndexes: {
-        options: {
-          explain: options?.nameOnly !== true,
-        },
-      },
-    }, {
-      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
-    });
-    return resp.status!.indexes;
-  }
-
-  /**
    * ##### Overview
    *
-   * Creates a secondary non-vector index on the table.
+   * Creates a secondary index on the table.
    *
    * The operation blocks until the index is created and ready to use.
    *
-   * See {@link Table.createVectorIndex} for creating vector indexes.
+   * See {@link Table.createVectorIndex} for creating vector indexes, and {@link Table.createTextIndex} for creating lexical indexes.
    *
    * ##### Text indexes
    *
@@ -1261,7 +1223,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns A promise which resolves once the index is created.
    */
-  public async createIndex(name: string, column: WSchema | string, options?: CreateTableIndexOptions): Promise<void> {
+  public async createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
@@ -1283,6 +1245,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
   }
 
   /**
+   * ##### Overview
+   *
    * Creates an index on an existing vector column in the table.
    *
    * The operation blocks until the index is created and ready to use.
@@ -1295,7 +1259,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns A promise which resolves once the index is created.
    */
-  public async createVectorIndex(name: string, column: WSchema | string, options?: CreateTableVectorIndexOptions): Promise<void> {
+  public async createVectorIndex(name: string, column: keyof WSchema, options?: TableCreateVectorIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createVectorIndex: {
         name: name,
@@ -1304,6 +1268,40 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
           options: {
             sourceModel: options?.options?.sourceModel,
             metric: options?.options?.metric,
+          },
+        },
+        options: {
+          ifNotExists: options?.ifNotExists,
+        },
+      },
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+    });
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Creates a lexical index on an existing text column in the table.
+   *
+   * The operation blocks until the index is created and ready to use.
+   *
+   * See {@link Table.createIndex} for creating non-lexical indexes.
+   *
+   * @param name - The name of the index
+   * @param column - The text column to index
+   * @param options - Options for this operation
+   *
+   * @returns A promise which resolves once the index is created.
+   */
+  public async createTextIndex(name: string, column: keyof WSchema, options?: TableCreateTextIndexOptions): Promise<void> {
+    await this.#httpClient.executeCommand({
+      createTextIndex: {
+        name: name,
+        definition: {
+          column,
+          options: {
+            analyzer: options?.options?.analyzer,
           },
         },
         options: {

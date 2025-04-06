@@ -248,7 +248,7 @@ export interface ListTableUnsupportedColumnApiSupport {
  *
  * ##### No shorthand
  *
- * Unlike {@link CreateTablePrimaryKeyDefinition}, `ListTablePrimaryKeyDefinition` does not return primary key definitions in their shorthand notation, even if they were created with them.
+ * Unlike {@link TablePrimaryKeyDefinition}, `ListTablePrimaryKeyDefinition` does not return primary key definitions in their shorthand notation, even if they were created with them.
  *
  * See {@link ListTableDefinition} for more information.
  *

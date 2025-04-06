@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIEnvironment, LoggingConfig, TimeoutDescriptor } from '@/src/lib/index.js';
+import type { DataAPIEnvironment, AdditionalHeaders, LoggingConfig, TimeoutDescriptor } from '@/src/lib/index.js';
 import type { Caller, HttpOptions, RootAdminOptions, RootDbOptions } from '@/src/client/index.js';
 import type { OneOrMany } from '@/src/lib/types.js';
 
@@ -70,6 +70,8 @@ export interface DataAPIClientOptions {
    */
   adminOptions?: RootAdminOptions,
   /**
+   * ##### Overview
+   *
    * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
    *
    * **Intended generally for integrations or frameworks that wrap the client.**
@@ -137,4 +139,27 @@ export interface DataAPIClientOptions {
    * @see TimeoutDescriptor
    */
   timeoutDefaults?: Partial<TimeoutDescriptor>,
+  /**
+   * ##### Overview
+   *
+   * Additional headers to include in the HTTP requests to both the Data API & the DevOps API.
+   *
+   * Headers specific to admin & non-admin related operations may be set in {@link DbOptions.additionalHeaders} and {@link AdminOptions.additionalHeaders}.
+   *
+   * ##### Disclaimer
+   *
+   * This is an "escape hatch", of sorts, for setting arbitrary headers which are not covered by other options.
+   *
+   * In the vast majority of cases, you may want to use other alternatives instead for setting appropriate headers, such as:
+   * - Parameters which accept {@link TokenProvider}s
+   * - Parameters such as
+   *   - {@link CollectionOptions.embeddingApiKey}
+   *   - {@link CollectionOptions.rerankingApiKey}
+   *   - (or their {@link TableOptions} equivalents!)
+   *
+   * ##### Inheritance
+   *
+   * The additional headers set here will be inherited by, and may be overwritten by, the {@link DbOptions.additionalHeaders} and {@link AdminOptions.additionalHeaders} options.
+   */
+  additionalHeaders?: AdditionalHeaders,
 }

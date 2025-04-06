@@ -14,7 +14,8 @@
 // noinspection JSDeprecatedSymbols
 
 import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types/index.js';
-import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
+import { type DataAPIClientEventMap } from '@/src/lib/index.js';
 import { Db, InvalidEnvironmentError } from '@/src/db/index.js';
 import { AstraAdmin } from '@/src/administration/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
@@ -22,7 +23,8 @@ import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler.js';
-import { HierarchicalEmitter } from '@/src/lib/logging/hierarchical-emitter.js';
+import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 
 /**
  * ##### Overview
@@ -67,7 +69,7 @@ import { HierarchicalEmitter } from '@/src/lib/logging/hierarchical-emitter.js';
  *
  * @see DataAPIEnvironment
  */
-export class DataAPIClient extends HierarchicalEmitter<DataAPIClientEventMap> {
+export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
   readonly #options: ParsedRootClientOpts;
 
   /**
@@ -114,8 +116,6 @@ export class DataAPIClient extends HierarchicalEmitter<DataAPIClientEventMap> {
   constructor(token: string | TokenProvider | undefined, options?: DataAPIClientOptions)
 
   constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions, maybeOptions?: DataAPIClientOptions) {
-    super(null);
-
     const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || arguments.length > 1);
 
     const token = (tokenPassed)
@@ -125,6 +125,9 @@ export class DataAPIClient extends HierarchicalEmitter<DataAPIClientEventMap> {
     const rawOptions = (tokenPassed)
       ? maybeOptions
       : tokenOrOptions;
+
+    const loggingConfig = InternalLogger.cfg.parse(rawOptions?.logging);
+    super(null, loggingConfig);
 
     const parsedToken = TokenProvider.opts.parse(token, 'token');
     this.#options = RootOptsHandler(parsedToken, this).parse(rawOptions ?? {}, 'options');

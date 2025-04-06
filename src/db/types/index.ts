@@ -12,20 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type * from './collections/collections-common.js';
-export type * from './collections/collection-definition.js';
-export type * from './collections/create-collection.js';
-export type * from './collections/list-collections.js';
-export type * from './collections/drop-collection.js';
-export type * from './collections/collection-options.js';
+export type * from './collections/create.js';
+export type * from './collections/default-id.js';
+export type * from './collections/definition.js';
+export type * from './collections/drop.js';
+export type * from './collections/indexing.js';
+export type * from './collections/lexical.js';
+export type * from './collections/list.js';
+export type * from './collections/reranking.js';
+export type * from './collections/spawn.js';
+export type * from './collections/vector.js';
 
-export type * from './tables/alter-table.js';
-export type * from './tables/create-table.js';
-export type * from './tables/table-schema.js';
-export type * from './tables/drop-table.js';
+export type * from './tables/alter.js';
+export type * from './tables/create.js';
+export type * from './tables/drop.js';
 export type * from './tables/list-tables.js';
-export type * from './tables/list-indexes.js';
-export type * from './tables/spawn-table.js';
+export type * from './tables/infer.js';
+export type * from './tables/spawn.js';
 
-export type { WithKeyspace } from './common.js';
+export type * from './common.js';
 export type * from './command.js';
+export type * from './reranking.js';
+export type * from './vector.js';

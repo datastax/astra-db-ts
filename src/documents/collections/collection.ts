@@ -16,7 +16,7 @@ import type {
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
   CollectionDeleteOneResult,
-  CollectionFilter,
+  CollectionFilter, CollectionFindAndRerankOptions,
   CollectionFindOneAndDeleteOptions,
   CollectionFindOneAndReplaceOptions,
   CollectionFindOneAndUpdateOptions,
@@ -43,16 +43,22 @@ import type {
 } from '@/src/documents/collections/types/index.js';
 import type { CollectionDefinition, CollectionOptions, Db } from '@/src/db/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
-import { HierarchicalEmitter } from '@/src/lib/logging/hierarchical-emitter.js';
+import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { CommandEventMap, WithSim } from '@/src/documents/index.js';
-import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents/index.js';
+import {
+  CollectionFindCursor,
+  CollectionInsertManyError,
+  TooManyDocumentsToCountError,
+} from '@/src/documents/index.js';
 import JBI from 'json-bigint';
-import { CollectionFindCursor } from '@/src/documents/collections/cursor.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
+import { CollectionFindAndRerankCursor } from '@/src/documents/collections/cursors/rerank-cursor.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 
 const jbi = JBI;
 
@@ -149,7 +155,7 @@ const jbi = JBI;
  *
  * @public
  */
-export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalEmitter<CommandEventMap> {
+export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalLogger<CommandEventMap> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<IdOf<RSchema>>;
   readonly #db: Db;
@@ -169,8 +175,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions | undefined) {
-    super(db);
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: CollectionOptions | undefined) {
+    const loggingConfig = InternalLogger.cfg.concatParseWithin([rootOpts.dbOptions.logging], opts, 'logging');
+    super(db, loggingConfig);
 
     Object.defineProperty(this, 'name', {
       value: name,
@@ -875,8 +882,16 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    */
   public find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>
 
-  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc, any> {
+  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc> {
     return this.#commands.find(filter, options, CollectionFindCursor);
+  }
+
+  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
+
+  public findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<TRaw, TRaw>
+
+  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<SomeDoc> {
+    return this.#commands.findAndRerank(filter, options, CollectionFindAndRerankCursor);
   }
 
   /**

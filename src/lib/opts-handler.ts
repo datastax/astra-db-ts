@@ -65,7 +65,7 @@ export class OptionsHandler<Types extends OptionsHandlerTypes> {
     try {
       return assertParsed(this.decoder.verify(input));
     } catch (e) {
-      if (!(e instanceof Error) || e.name !== 'Decoding error') {
+      if (!(e instanceof Error && e.name === 'Decoding error')) {
         throw e;
       }
 

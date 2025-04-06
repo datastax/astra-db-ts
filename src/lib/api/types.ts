@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { DataAPIErrorDescriptor, DataAPIWarningDescriptor } from '@/src/documents/errors.js';
+
 /**
  * Unstable backdoor to some class's internal HTTP client. No guarantees are made about this type.
  *
@@ -32,11 +34,15 @@ export interface RawDataAPIResponse {
   /**
    * Status objects, generally describe the side effects of commands, such as the number of updated or inserted documents.
    */
-  readonly errors?: any[],
+  readonly errors?: DataAPIErrorDescriptor[],
   /**
    * Array of objects or null (Error)
    */
   readonly data?: Record<string, any>,
+  /**
+   * Array of objects or null (Error)
+   */
+  readonly warnings?: DataAPIWarningDescriptor[],
 }
 
 /**

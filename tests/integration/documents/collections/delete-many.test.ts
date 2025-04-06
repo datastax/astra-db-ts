@@ -15,7 +15,7 @@
 
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { DataAPIError, CollectionDeleteManyError } from '@/src/documents/index.js';
+import { CollectionDeleteManyError, DataAPIResponseError } from '@/src/documents/index.js';
 
 parallel('integration.documents.collections.delete-many', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
   before(async () => {
@@ -40,28 +40,27 @@ parallel('integration.documents.collections.delete-many', { truncate: 'colls:bef
   });
 
   it('fails gracefully on 2XX exceptions', async () => {
-    try {
-      await collection.deleteMany({ $invalidOperator: 1 });
-      assert.fail('Expected error');
-    } catch (e) {
+    const promise = collection.deleteMany({ $invalid: 3 });
+
+    await assert.rejects(promise, (e) => {
       assert.ok(e instanceof CollectionDeleteManyError);
-      assert.strictEqual(e.errorDescriptors[0].errorCode, 'INVALID_FILTER_EXPRESSION');
-      assert.strictEqual(e.detailedErrorDescriptors[0].errorDescriptors[0].errorCode, 'INVALID_FILTER_EXPRESSION');
-      assert.strictEqual(e.errorDescriptors.length, 1);
-      assert.strictEqual(e.detailedErrorDescriptors.length, 1);
+      assert.ok(e.cause instanceof DataAPIResponseError);
+      assert.strictEqual(e.cause.errorDescriptors.length, 1);
+      assert.strictEqual(e.cause.errorDescriptors[0].errorCode, 'INVALID_FILTER_EXPRESSION');
       assert.deepStrictEqual(e.partialResult, { deletedCount: 0 });
-    }
+      return true;
+    });
   });
 
-  it('fails fast on hard errors', async () => {
+  it('fails gracefully on non-2XX exceptions', async () => {
     const collection = initCollectionWithFailingClient();
-    try {
-      await collection.deleteMany({ _id: 3 });
-      assert.fail('Expected an error');
-    } catch (e) {
-      assert.ok(e instanceof Error);
-      assert.ok(!(e instanceof DataAPIError));
-      assert.strictEqual(e.message, 'failing_client');
-    }
+    const promise = collection.deleteMany({ _id: 3 });
+
+    await assert.rejects(promise, (e) => {
+      assert.ok(e instanceof CollectionDeleteManyError);
+      assert.ok(!(e.cause instanceof DataAPIResponseError));
+      assert.strictEqual(e.cause.message, 'failing_client');
+      return true;
+    });
   });
 });

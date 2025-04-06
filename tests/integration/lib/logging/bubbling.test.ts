@@ -47,7 +47,7 @@ parallel('integration.lib.logging.bubbling', () => {
       for (const objName of Object.keys(objs) as (keyof typeof objs)[]) {
         for (const eventName of LoggingEvents) {
           for (let i = 0; i < 3; i++) {
-            (objs[objName].on as any)(eventName, (e: BaseClientEvent) => {
+            (objs[objName]?.on as any)?.(eventName, (e: BaseClientEvent) => {
               eventName in emitted && assert.strictEqual(emitted[eventName], e);
               referenceId !== undefined && assert.strictEqual(e.requestId, referenceId);
               referenceId = e.requestId;

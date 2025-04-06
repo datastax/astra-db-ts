@@ -39,7 +39,7 @@ describe('unit.lib.api.timeouts', () => {
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
+      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs']);
       assert.strictEqual(e.message, `Command timed out after ${Timeouts.Default.requestTimeoutMs}ms (requestTimeoutMs timed out)`);
 
       assert.deepStrictEqual(tm.initial(), {
@@ -57,7 +57,7 @@ describe('unit.lib.api.timeouts', () => {
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'provided');
+      assert.deepStrictEqual(e.timeoutType, 'provided');
       assert.strictEqual(e.message, 'Command timed out after 100ms (The timeout provided via `{ timeout: <number> }` timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
@@ -75,7 +75,7 @@ describe('unit.lib.api.timeouts', () => {
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'databaseAdminTimeoutMs');
+      assert.deepStrictEqual(e.timeoutType, ['databaseAdminTimeoutMs']);
       assert.strictEqual(e.message, 'Command timed out after 50ms (databaseAdminTimeoutMs timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
@@ -93,7 +93,7 @@ describe('unit.lib.api.timeouts', () => {
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
+      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs']);
       assert.strictEqual(e.message, 'Command timed out after 10ms (requestTimeoutMs timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
@@ -130,7 +130,7 @@ describe('unit.lib.api.timeouts', () => {
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
+      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs']);
       assert.strictEqual(e.message, `Command timed out after ${Timeouts.Default.requestTimeoutMs}ms (requestTimeoutMs timed out)`);
 
       assert.deepStrictEqual(tm.initial(), {
@@ -149,7 +149,7 @@ describe('unit.lib.api.timeouts', () => {
       const e2 = mkError();
       assert.ok(e2 instanceof TimeoutError);
       assert.deepStrictEqual(e2.info, info(tm));
-      assert.strictEqual(e2.timeoutType, 'generalMethodTimeoutMs');
+      assert.deepStrictEqual(e2.timeoutType, ['generalMethodTimeoutMs']);
       assert.strictEqual(e2.message, 'Command timed out after 10001ms (generalMethodTimeoutMs timed out)');
     });
 
@@ -161,7 +161,7 @@ describe('unit.lib.api.timeouts', () => {
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
+      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs']);
       assert.strictEqual(e.message, 'Command timed out after 10ms (requestTimeoutMs timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
@@ -180,7 +180,7 @@ describe('unit.lib.api.timeouts', () => {
       const e2 = mkError();
       assert.ok(e2 instanceof TimeoutError);
       assert.deepStrictEqual(e2.info, info(tm));
-      assert.strictEqual(e2.timeoutType, 'requestTimeoutMs');
+      assert.deepStrictEqual(e2.timeoutType, ['requestTimeoutMs']);
       assert.strictEqual(e2.message, 'Command timed out after 10ms (requestTimeoutMs timed out)');
     });
 
@@ -192,7 +192,7 @@ describe('unit.lib.api.timeouts', () => {
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
+      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs']);
       assert.strictEqual(e.message, 'Command timed out after 10ms (requestTimeoutMs timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
@@ -207,7 +207,7 @@ describe('unit.lib.api.timeouts', () => {
       const e2 = mkError();
       assert.ok(e2 instanceof TimeoutError);
       assert.deepStrictEqual(e2.info, info(tm));
-      assert.strictEqual(e2.timeoutType, 'requestTimeoutMs');
+      assert.deepStrictEqual(e2.timeoutType, ['requestTimeoutMs']);
       assert.strictEqual(e2.message, 'Command timed out after 10ms (requestTimeoutMs timed out)');
 
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -217,7 +217,7 @@ describe('unit.lib.api.timeouts', () => {
       const e3 = mkError();
       assert.ok(e3 instanceof TimeoutError);
       assert.deepStrictEqual(e3.info, info(tm));
-      assert.strictEqual(e3.timeoutType, 'tableAdminTimeoutMs');
+      assert.deepStrictEqual(e3.timeoutType, ['tableAdminTimeoutMs']);
       assert.strictEqual(e3.message, 'Command timed out after 50ms (tableAdminTimeoutMs timed out)');
     });
 
@@ -244,7 +244,7 @@ describe('unit.lib.api.timeouts', () => {
       const e2 = mkError();
       assert.ok(e2 instanceof TimeoutError);
       assert.deepStrictEqual(e2.info, info(tm));
-      assert.strictEqual(e2.timeoutType, 'keyspaceAdminTimeoutMs');
+      assert.deepStrictEqual(e2.timeoutType, ['keyspaceAdminTimeoutMs']);
       assert.strictEqual(e2.message, 'Command timed out after 50ms (keyspaceAdminTimeoutMs timed out)');
 
       await new Promise(resolve => setTimeout(resolve, 26));
@@ -254,21 +254,21 @@ describe('unit.lib.api.timeouts', () => {
       const e3 = mkError();
       assert.ok(e3 instanceof TimeoutError);
       assert.deepStrictEqual(e3.info, info(tm));
-      assert.strictEqual(e3.timeoutType, 'keyspaceAdminTimeoutMs');
+      assert.deepStrictEqual(e3.timeoutType, ['keyspaceAdminTimeoutMs']);
       assert.strictEqual(e3.message, 'Command timed out after 50ms (keyspaceAdminTimeoutMs timed out)');
     });
   });
 
   parallel('custom', ({ db, dbAdmin }) => {
     it('should return what it was given', () => {
-      const tm = timeouts.custom({ databaseAdminTimeoutMs: 3, requestTimeoutMs: 5 }, () => [1, 'requestTimeoutMs']);
+      const tm = timeouts.custom({ databaseAdminTimeoutMs: 3, requestTimeoutMs: 5 }, () => [1, ['requestTimeoutMs']]);
       let [timeout, mkError] = tm.advance(info(tm));
       assert.strictEqual(timeout, 1);
 
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
+      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs']);
       assert.strictEqual(e.message, 'Command timed out after 5ms (requestTimeoutMs timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
@@ -282,7 +282,7 @@ describe('unit.lib.api.timeouts', () => {
       const e2 = mkError();
       assert.ok(e2 instanceof TimeoutError);
       assert.deepStrictEqual(e2.info, info(tm));
-      assert.strictEqual(e2.timeoutType, 'requestTimeoutMs');
+      assert.deepStrictEqual(e2.timeoutType, ['requestTimeoutMs']);
       assert.strictEqual(e2.message, 'Command timed out after 5ms (requestTimeoutMs timed out)');
     });
 
@@ -290,8 +290,8 @@ describe('unit.lib.api.timeouts', () => {
       const httpClient1 = db._httpClient as HttpClient;
       const httpClient2 = dbAdmin._httpClient as HttpClient;
 
-      const tm1 = <const>[ 0, timeouts.custom({ requestTimeoutMs:  0 }, () => [ 0, 'requestTimeoutMs'])];
-      const tm2 = <const>[-1, timeouts.custom({ requestTimeoutMs: -1 }, () => [-1, 'requestTimeoutMs'])];
+      const tm1 = <const>[ 0, timeouts.custom({ requestTimeoutMs:  0 }, () => [ 0, ['requestTimeoutMs']])];
+      const tm2 = <const>[-1, timeouts.custom({ requestTimeoutMs: -1 }, () => [-1, ['requestTimeoutMs']])];
 
       for (const [ms, tm] of [tm1, tm2]) {
         await assert.rejects(() => httpClient1['_request'](info(tm)), { message: `Command timed out after ${ms}ms (requestTimeoutMs timed out)` });
@@ -300,6 +300,7 @@ describe('unit.lib.api.timeouts', () => {
     });
   });
 
+  // TODO
   // describe('merge', () => {
   //   it('should return the base config if new config is nullish', () => {
   //     const base = { a: 1, b: 2 } as unknown as TimeoutDescriptor;

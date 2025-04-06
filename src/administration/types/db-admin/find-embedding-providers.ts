@@ -297,7 +297,7 @@ export interface EmbeddingProviderModelParameterInfo {
    * The name of the parameter to be passed in.
    *
    * The one exception is the `vectorDimension` parameter, which should be passed into the `dimension` field of the
-   * `vector` block in {@link VectorOptions}.
+   * `vector` block in {@link CollectionVectorOptions}/{@link TableVectorColumnDefinition}.
    *
    * @example
    * ```typescript

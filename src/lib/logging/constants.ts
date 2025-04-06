@@ -13,12 +13,13 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type {
-  DataAPIClientEventMap,
-  LoggingEvent,
-  LoggingOutput,
-} from '@/src/lib/index.js';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents/index.js';
+import type { DataAPIClientEventMap, LoggingEvent, LoggingOutput } from '@/src/lib/index.js';
+import {
+  CommandFailedEvent,
+  CommandStartedEvent,
+  CommandSucceededEvent,
+  CommandWarningsEvent,
+} from '@/src/documents/events.js';
 import {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
@@ -28,7 +29,7 @@ import {
 } from '@/src/administration/events.js';
 import { buildOutputsMap } from '@/src/lib/logging/util.js';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
-import type { InternalLoggingOutputsMap } from '@/src/lib/logging/logger.js';
+import type { InternalLoggingOutputsMap } from '@/src/lib/logging/internal-logger.js';
 import { EqualityProof } from '@/src/lib/utils.js';
 
 /**

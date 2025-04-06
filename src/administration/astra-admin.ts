@@ -24,7 +24,7 @@ import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
-import { HierarchicalEmitter, TokenProvider } from '@/src/lib/index.js';
+import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
 import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 import type { DbOptions } from '@/src/client/index.js';
@@ -64,7 +64,7 @@ import type { AdminCommandEventMap } from '@/src/administration/events.js';
  *
  * @public
  */
-export class AstraAdmin extends HierarchicalEmitter<AdminCommandEventMap> {
+export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
   readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DevOpsAPIHttpClient;
   readonly #environment: 'dev' | 'test' | 'prod';
@@ -75,9 +75,7 @@ export class AstraAdmin extends HierarchicalEmitter<AdminCommandEventMap> {
    * @internal
    */
   constructor(rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions) {
-    super(rootOpts.client);
-    
-    this.#defaultOpts = {
+    const defaultOpts = {
       ...rootOpts,
       adminOptions: AdminOptsHandler.concat([rootOpts.adminOptions, adminOpts]),
       dbOptions: {
@@ -86,16 +84,18 @@ export class AstraAdmin extends HierarchicalEmitter<AdminCommandEventMap> {
       },
     };
 
+    super(rootOpts.client, defaultOpts.adminOptions.logging);
+    
+    this.#defaultOpts = defaultOpts;
     this.#environment = this.#defaultOpts.adminOptions.astraEnv ?? 'prod';
 
     this.#httpClient = new DevOpsAPIHttpClient({
-      logging: this.#defaultOpts.adminOptions.logging,
       baseUrl: this.#defaultOpts.adminOptions.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
-      emitter: this,
+      logger: this,
       fetchCtx: rootOpts.fetchCtx,
       caller: rootOpts.caller,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,
-      additionalHeaders: this.#defaultOpts.adminOptions.additionalHeaders,
+      additionalHeaders: this.#defaultOpts.additionalHeaders,
       timeoutDefaults: Timeouts.cfg.concat([rootOpts.adminOptions.timeoutDefaults, this.#defaultOpts.adminOptions.timeoutDefaults]),
     });
 

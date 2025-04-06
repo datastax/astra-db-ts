@@ -24,8 +24,6 @@ export type SortDirection = 1 | -1;
 /**
  * Specifies the sort criteria for selecting documents.
  *
- * **If you want stricter type-checking and full auto-complete, see {@link StrictSort}.**
- *
  * Can use `1`/`-1` for ascending/descending, or `$vector` for sorting by vector distance.
  *
  * See {@link SortDirection} for all possible sort values.
@@ -50,12 +48,10 @@ export type SortDirection = 1 | -1;
  *
  * @public
  */
-export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string | { $binary: string }>;
+export type Sort = Record<string, SortDirection | string | number[] | DataAPIVector>;
 
 /**
  * Specifies which fields should be included/excluded in the returned documents.
- *
- * **If you want stricter type-checking and full auto-complete, see {@link StrictProjection}.**
  *
  * Can use `1`/`0`, or `true`/`false`.
  *

@@ -15,6 +15,7 @@
 export type * from './delete/delete-many.js';
 export type * from './delete/delete-one.js';
 export type * from './find/find.js';
+export type * from './find/find-and-rerank.js';
 export type * from './find/find-one.js';
 export type * from './find/find-one-delete.js';
 export type * from './find/find-one-replace.js';

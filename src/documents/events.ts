@@ -269,7 +269,7 @@ export class CommandFailedEvent extends CommandEvent {
     return `${this._extraLogInfoAsString()} (${~~this.duration}ms) ERROR: '${this.error.message}'`;
   }
 
-  public override hideDupeFields(): this {
+  public override trimDuplicateFields(): this {
     if (this.error instanceof DataAPIError) {
       return { ...this, error: this.error.withTransientDupesForEvents() };
     }
