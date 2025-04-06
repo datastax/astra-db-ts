@@ -13,9 +13,10 @@
 // limitations under the License.
 
 import type { EmbeddingProviderInfo, EmbeddingProviderModelInfo } from '@/src/administration/index.js';
-import { EmbeddingHeadersProvider } from '@/src/documents/index.js';
 import { ENVIRONMENT } from '@/tests/testlib/index.js';
 import type { VectorizeTestSpec } from '@/tests/integration/documents/vectorize.test.js';
+import type { EmbeddingHeadersProvider} from '@/src/lib/index.js';
+import { HeadersProvider } from '@/src/lib/index.js';
 
 interface ModelBranch {
   providerName: string,
@@ -73,7 +74,7 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
   const branches: AuthBranch[] = [];
 
   const ehp = (Object.entries(spec?.headers ?? []).length)
-    ? new class extends EmbeddingHeadersProvider { getHeaders = () => spec?.headers ?? {}; }
+    ? new class extends HeadersProvider<'embedding'> { getHeaders = () => spec?.headers ?? {}; }
     : null;
 
   if (auth.HEADER?.enabled && ehp) {

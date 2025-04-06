@@ -17,23 +17,31 @@ export * from './fetch/fetch-native.js';
 export type { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from './fetch/fetcher.js';
 export { DEFAULT_KEYSPACE } from './constants.js';
 
-export type {
-  RawDataAPIResponse,
-  OpaqueHttpClient,
-  SomeConstructor,
-} from './types.js';
+export type * from './types.js';
 
 export type {
   BaseSerDesConfig,
   SerDesFn,
+  SerDesFnRet,
 } from './ser-des/ser-des.js';
 
-export * from './ser-des/codecs.js';
+export type {
+  RawCodec,
+  Serializers,
+  Deserializers,
+  SerDesGuard,
+  CustomCodecOpts,
+  CustomCodecSerOpts,
+  DataAPICodec,
+  NominalCodecOpts,
+  TypeCodecOpts,
+} from './ser-des/codecs.js';
 
 export type {
   BaseSerDesCtx,
   BaseSerCtx,
   BaseDesCtx,
+  SerDesTarget,
 } from './ser-des/ctx.js';
 
 export type {

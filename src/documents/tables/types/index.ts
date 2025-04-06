@@ -14,12 +14,14 @@
 
 export type * from './find/find.js';
 export type * from './find/find-one.js';
+export type * from './find/find-and-rerank.js';
 export type * from './indexes/create-index.js';
 export type * from './indexes/create-vector-index.js';
+export type * from './indexes/create-text-index.js';
 export type * from './indexes/drop-index.js';
 export type * from './insert/insert-many.js';
 export type * from './insert/insert-one.js';
-export type * from './row.js';
-export type * from './utils.js';
 export type * from './filter.js';
+export type * from './row.js';
 export type * from './update-filter.js';
+export type * from './utils.js';

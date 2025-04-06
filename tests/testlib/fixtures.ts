@@ -27,7 +27,7 @@ import {
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-  TEST_HTTP_CLIENT,
+  TEST_HTTP_CLIENT, TEST_OPENAI_KEY,
 } from '@/tests/testlib/config.js';
 import type { BaseClientEvent, DataAPIClientEventMap, LoggingConfig } from '@/src/lib/index.js';
 import type { InferTableSchema } from '@/src/db/index.js';
@@ -98,8 +98,8 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
     map: { type: 'map', keyType: 'text', valueType: 'uuid' },
     set: { type: 'set', valueType: 'uuid' },
     list: { type: 'list', valueType: 'uuid' },
-    vector1: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
-    vector2: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
+    vector1: { type: 'vector', dimension: 1024, service: { provider: 'openai', modelName: 'text-embedding-3-small' } },
+    vector2: { type: 'vector', dimension: 1024, service: { provider: 'openai', modelName: 'text-embedding-3-small' } },
   },
   primaryKey: {
     partitionBy: ['text'],
@@ -136,7 +136,10 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
 
   const table = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME);
-  const table_ = db.table<EverythingTableSchemaWithVectorize>(DEFAULT_TABLE_NAME, { keyspace: OTHER_KEYSPACE });
+  const table_ = db.table<EverythingTableSchemaWithVectorize>(DEFAULT_TABLE_NAME, {
+    keyspace: OTHER_KEYSPACE,
+    embeddingApiKey: TEST_OPENAI_KEY,
+  });
 
   const dbAdmin = (ENVIRONMENT === 'astra')
     ? db.admin({ environment: ENVIRONMENT })

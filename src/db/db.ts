@@ -21,20 +21,20 @@ import type { DataAPIEnvironment } from '@/src/lib/types.js';
 import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils.js';
 import type { DbAdmin } from '@/src/administration/index.js';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin.js';
-import type { CreateCollectionOptions } from '@/src/db/types/collections/create-collection.js';
+import type { CreateCollectionOptions } from '@/src/db/types/collections/create.js';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { KeyspaceRef } from '@/src/lib/api/clients/types.js';
 import type { CommandEventMap, FoundRow, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
-import { EmbeddingHeadersProvider, Table } from '@/src/documents/index.js';
+import { Table } from '@/src/documents/index.js';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
-import type { CollectionOptions } from '@/src/db/types/collections/collection-options.js';
-import type { DropCollectionOptions } from '@/src/db/types/collections/drop-collection.js';
-import type { CollectionDescriptor, ListCollectionsOptions } from '@/src/db/types/collections/list-collections.js';
+import type { CollectionOptions } from '@/src/db/types/collections/spawn.js';
+import type { DropCollectionOptions } from '@/src/db/types/collections/drop.js';
+import type { CollectionDescriptor, ListCollectionsOptions } from '@/src/db/types/collections/list.js';
 import type { RunCommandOptions } from '@/src/db/types/command.js';
-import type { TableOptions } from '@/src/db/types/tables/spawn-table.js';
-import type { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create-table.js';
-import type { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema.js';
-import type { DropTableOptions } from '@/src/db/types/tables/drop-table.js';
+import type { TableOptions } from '@/src/db/types/tables/spawn.js';
+import type { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create.js';
+import type { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/infer.js';
+import type { DropTableOptions } from '@/src/db/types/tables/drop.js';
 import type { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/list-tables.js';
 import type { AdminOptions } from '@/src/client/types/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
@@ -47,7 +47,7 @@ import type { ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
-import { HierarchicalEmitter, TokenProvider } from '@/src/lib/index.js';
+import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
 
 /**
  * #### Overview
@@ -119,7 +119,7 @@ import { HierarchicalEmitter, TokenProvider } from '@/src/lib/index.js';
  *
  * @public
  */
-export class Db extends HierarchicalEmitter<CommandEventMap> {
+export class Db extends HierarchicalLogger<CommandEventMap> {
   readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
 
@@ -134,9 +134,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * @internal
    */
   constructor(rootOpts: ParsedRootClientOpts, endpoint: string, dbOpts: ParsedDbOptions) {
-    super(rootOpts.client);
-
-    this.#defaultOpts = {
+    const defaultOpts = {
       ...rootOpts,
       dbOptions: DbOptsHandler.concat([rootOpts.dbOptions, dbOpts]),
       adminOptions: AdminOptsHandler.concatParse([rootOpts.adminOptions], {
@@ -144,26 +142,30 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
       }),
     };
 
+    super(rootOpts.client, defaultOpts.dbOptions.logging);
+
+    this.#defaultOpts = defaultOpts;
+
     this.#keyspace = {
       ref: (rootOpts.environment === 'astra')
         ? this.#defaultOpts.dbOptions.keyspace ?? DEFAULT_KEYSPACE
         : this.#defaultOpts.dbOptions.keyspace ?? undefined,
     };
 
-    endpoint = endpoint.endsWith('/') ? endpoint.replace(/\/+$/, "") : endpoint;
+    endpoint = (endpoint.endsWith('/'))
+      ? endpoint.replace(/\/+$/, "")
+      : endpoint;
 
     this.#httpClient = new DataAPIHttpClient({
       baseUrl: endpoint,
       tokenProvider: this.#defaultOpts.dbOptions.token,
-      embeddingHeaders: EmbeddingHeadersProvider.parse(null),
       baseApiPath: this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
-      emitter: this,
-      logging: this.#defaultOpts.dbOptions.logging,
+      logger: this,
       fetchCtx: rootOpts.fetchCtx,
       keyspace: this.#keyspace,
       caller: rootOpts.caller,
       emissionStrategy: EmissionStrategy.Normal,
-      additionalHeaders: this.#defaultOpts.dbOptions.additionalHeaders,
+      additionalHeaders: this.#defaultOpts.additionalHeaders,
       timeoutDefaults: this.#defaultOpts.dbOptions.timeoutDefaults,
     });
 
@@ -388,7 +390,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
       return new AstraDbAdmin(this, this.#defaultOpts, parsedOpts, this.#defaultOpts.dbOptions.token, this.#endpoint);
     }
 
-    return new DataAPIDbAdmin(this, this.#defaultOpts.client, this.#httpClient, parsedOpts);
+    return new DataAPIDbAdmin(this, this.#defaultOpts.client, this.#httpClient, this.#defaultOpts, parsedOpts);
   }
 
   /**
@@ -531,7 +533,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * @see db.createCollection
    */
   public collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema> {
-    return new Collection(this, this.#httpClient, name, {
+    return new Collection(this, this.#httpClient, name, this.#defaultOpts, {
       ...options,
       serdes: CollSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.collSerdes], options?.serdes),
     });
@@ -613,7 +615,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * @see InferTablePrimaryKey
    */
   public table<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
-    return new Table(this, this.#httpClient, name, {
+    return new Table(this, this.#httpClient, name, this.#defaultOpts, {
       ...options,
       serdes: TableSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.tableSerdes], options?.serdes),
     });

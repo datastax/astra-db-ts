@@ -18,14 +18,13 @@ import { DbAdmin } from '@/src/administration/db-admin.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils.js';
-import type { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants.js';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { Db } from '@/src/db/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info.js';
-import { Logger } from '@/src/lib/logging/logger.js';
-import type { TimeoutManager} from '@/src/lib/api/timeouts/timeouts.js';
+import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
@@ -77,18 +76,18 @@ export class AstraDbAdmin extends DbAdmin {
    * @internal
    */
   constructor(db: Db, rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions, dbToken: ParsedTokenProvider, endpoint: string) {
-    super(rootOpts.client);
+    const loggingConfig = InternalLogger.cfg.concat([rootOpts.adminOptions.logging, adminOpts.logging]);
+    super(rootOpts.client, loggingConfig);
 
     this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);
 
     this.#httpClient = new DevOpsAPIHttpClient({
       baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
-      logging: Logger.cfg.concat([rootOpts.adminOptions.logging, adminOpts.logging]),
       fetchCtx: rootOpts.fetchCtx,
-      emitter: this,
+      logger: this,
       caller: rootOpts.caller,
       tokenProvider: TokenProvider.opts.concat([dbToken, rootOpts.adminOptions.adminToken, adminOpts.adminToken]),
-      additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
+      additionalHeaders: rootOpts.additionalHeaders,
       timeoutDefaults: Timeouts.cfg.concat([rootOpts.adminOptions.timeoutDefaults, adminOpts.timeoutDefaults]),
     });
 
@@ -128,31 +127,6 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public override db(): Db {
     return this.#db;
-  }
-
-  /**
-   * Returns detailed information about the availability and usage of the vectorize embedding providers available on the
-   * current database (may vary based on cloud provider & region).
-   *
-   * @example
-   * ```typescript
-   * const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
-   *
-   * // ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']
-   * console.log(embeddingProviders['openai'].models.map(m => m.name));
-   * ```
-   *
-   * @param options - The options for the timeout of the operation.
-   *
-   * @returns The available embedding providers.
-   */
-  public override async findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult> {
-    const resp = await this.#dataApiHttpClient.executeCommand({ findEmbeddingProviders: {} }, {
-      timeoutManager: this.#httpClient.tm.single('databaseAdminTimeoutMs', options),
-      methodName: 'dbAdmin.findEmbeddingProviders',
-      keyspace: null,
-    });
-    return resp.status as FindEmbeddingProvidersResult;
   }
 
   /**
@@ -345,5 +319,12 @@ export class AstraDbAdmin extends DbAdmin {
     }, tm);
 
     return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
+  }
+
+  /**
+   * @internal
+   */
+  protected override _getDataAPIHttpClient(): DataAPIHttpClient<'admin'> {
+    return this.#dataApiHttpClient;
   }
 }

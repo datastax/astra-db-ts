@@ -118,15 +118,6 @@ export interface DbOptions {
    */
   serdes?: DbSerDesConfig,
   /**
-   * Additional headers to include in the HTTP requests to the DevOps API.
-   *
-   * @remarks
-   * There are more than likely more official/structured ways to set any desired headers, such as through
-   * {@link TokenProvider}s or {@link EmbeddingHeadersProvider}s. This is more of a last-resort option, such
-   * as for enabling feature-flags or other non-standard headers.
-   */
-  additionalHeaders?: Record<string, string>,
-  /**
    * ##### Overview
    *
    * The default timeout options for anything spawned by this {@link Db} instance.

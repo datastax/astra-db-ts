@@ -15,27 +15,27 @@
 
 import assert from 'assert';
 import { describe, it } from '@/tests/testlib/index.js';
-import { AWSEmbeddingHeadersProvider, EmbeddingAPIKeyHeaderProvider } from '@/src/documents/index.js';
+import { AWSEmbeddingHeadersProvider, EmbeddingAPIKeyHeaderProvider } from '@/src/lib/index.js';
 
 describe('unit.documents.embedding-providers', () => {
   describe('EmbeddingAPIKeyHeaderProvider', () => {
     it('should provide the proper header for an api key', () => {
       const ehp = new EmbeddingAPIKeyHeaderProvider('key');
-      assert.deepStrictEqual(ehp.getHeaders(), { 'x-embedding-api-key': 'key' });
+      assert.deepStrictEqual(ehp.getHeaders({ for: 'data-api' }), { 'x-embedding-api-key': 'key' });
     });
 
     it('should provide no headers for a nullish api key', () => {
       const ehp1 = new EmbeddingAPIKeyHeaderProvider(undefined);
       const ehp2 = new EmbeddingAPIKeyHeaderProvider(null);
-      assert.deepStrictEqual(ehp1.getHeaders(), {});
-      assert.deepStrictEqual(ehp2.getHeaders(), {});
+      assert.deepStrictEqual(ehp1.getHeaders({ for: 'data-api' }), {});
+      assert.deepStrictEqual(ehp2.getHeaders({ for: 'data-api' }), {});
     });
   });
 
   describe('AWSEmbeddingHeadersProvider', () => {
     it('should provide the proper headers for the AWS access keys', () => {
       const tp = new AWSEmbeddingHeadersProvider('access', 'secret');
-      assert.deepStrictEqual(tp.getHeaders(), { 'x-embedding-access-id': 'access', 'x-embedding-secret-id': 'secret' });
+      assert.deepStrictEqual(tp.getHeaders({ for: 'data-api' }), { 'x-embedding-access-id': 'access', 'x-embedding-secret-id': 'secret' });
     });
   });
 });

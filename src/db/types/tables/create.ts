@@ -14,7 +14,7 @@
 
 import type { VectorizeServiceOptions } from '@/src/db/index.js';
 import type { WithTimeout } from '@/src/lib/index.js';
-import type { TableOptions } from '@/src/db/types/tables/spawn-table.js';
+import type { TableOptions } from '@/src/db/types/tables/spawn.js';
 
 /**
  * Options for creating a new table (via {@link Db.createTable}).
@@ -52,7 +52,7 @@ export interface CreateTableDefinition<Def extends CreateTableDefinition<Def>> {
   /**
    * The primary key definition for the table.
    */
-  readonly primaryKey: CreateTablePrimaryKeyDefinition<keyof Def['columns'] & string>,
+  readonly primaryKey: TablePrimaryKeyDefinition<keyof Def['columns'] & string>,
 }
 
 /**
@@ -218,11 +218,11 @@ export type LooseCreateTableColumnDefinition =
  * @public
  */
 export type StrictCreateTableColumnDefinition =
-  | ScalarCreateTableColumnDefinition
-  | MapCreateTableColumnDefinition
-  | ListCreateTableColumnDefinition
-  | SetCreateTableColumnDefinition
-  | VectorCreateTableColumnDefinition;
+  | TableScalarColumnDefinition
+  | TableMapColumnDefinition
+  | TableListColumnDefinition
+  | TableSetColumnDefinition
+  | TableVectorColumnDefinition;
 
 /**
  * ##### Overview
@@ -257,7 +257,7 @@ export type StrictCreateTableColumnDefinition =
  *
  * @public
  */
-export interface ScalarCreateTableColumnDefinition {
+export interface TableScalarColumnDefinition {
   type: TableScalarType,
 }
 
@@ -305,7 +305,7 @@ export interface ScalarCreateTableColumnDefinition {
  *
  * @public
  */
-export interface MapCreateTableColumnDefinition {
+export interface TableMapColumnDefinition {
   type: 'map',
   keyType: 'text' | 'ascii',
   valueType: TableScalarType,
@@ -349,7 +349,7 @@ export interface MapCreateTableColumnDefinition {
  *
  * @public
  */
-export interface ListCreateTableColumnDefinition {
+export interface TableListColumnDefinition {
   type: 'list',
   valueType: TableScalarType,
 }
@@ -392,7 +392,7 @@ export interface ListCreateTableColumnDefinition {
  *
  * @public
  */
-export interface SetCreateTableColumnDefinition {
+export interface TableSetColumnDefinition {
   type: 'set',
   valueType: TableScalarType,
 }
@@ -446,7 +446,7 @@ export interface SetCreateTableColumnDefinition {
  *
  * @public
  */
-export interface VectorCreateTableColumnDefinition {
+export interface TableVectorColumnDefinition {
   type: 'vector',
   dimension: number,
   service?: VectorizeServiceOptions,
@@ -513,7 +513,7 @@ export interface VectorCreateTableColumnDefinition {
  *
  * @public
  */
-export type CreateTablePrimaryKeyDefinition<PKCols extends string> =
+export type TablePrimaryKeyDefinition<PKCols extends string> =
   | PKCols
   | FullCreateTablePrimaryKeyDefinition<PKCols>;
 

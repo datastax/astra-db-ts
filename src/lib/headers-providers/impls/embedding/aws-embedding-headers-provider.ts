@@ -12,17 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EmbeddingHeadersProvider } from '@/src/documents/embedding-providers/embedding-headers-provider.js';
+import { StaticHeadersProvider } from '@/src/lib/headers-providers/index.js';
 
 /**
+ * ##### Overview
+ *
  * An embedding headers provider which translates AWS access keys into the appropriate authentication headers for
- * AWS-based embedding providers (bedrock).
+ * AWS-based embedding providers (e.g. `bedrock`).
  *
  * Sets the headers `x-embedding-access-id` and `x-embedding-secret-id`.
  *
  * @example
  * ```typescript
- * const provider = new AWSEmbeddingHeadersProvider('access-key-id', 'secret-access-key');
+ * const provider = new AWSEmbeddingHeadersProvider(
+ *   'access-key-id',
+ *   'secret-access-key',
+ * );
  * const collections = await db.collections('my_coll', { embeddingApiKey: provider });
  * ```
  *
@@ -30,29 +35,18 @@ import { EmbeddingHeadersProvider } from '@/src/documents/embedding-providers/em
  *
  * @public
  */
-export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
-  readonly #headers: Record<string, string>;
-
+export class AWSEmbeddingHeadersProvider extends StaticHeadersProvider<'embedding'> {
   /**
-   * Constructs an instead of the {@link TokenProvider}.
+   * Constructs an instead of the {@link AWSEmbeddingHeadersProvider}.
    *
    * @param accessKeyId - The access key ID part of the AWS access keys
    * @param secretAccessKey - The secret access key part of the AWS access keys
    */
-  constructor(accessKeyId: string, secretAccessKey: string) {
-    super();
-    this.#headers = {
+  public constructor(accessKeyId: string, secretAccessKey: string) {
+    const headers = {
       'x-embedding-access-id': accessKeyId,
       'x-embedding-secret-id': secretAccessKey,
     };
-  }
-
-  /**
-   * Returns the appropriate embedding auth headers.
-   *
-   * @returns the appropriate embedding auth headers.
-   */
-  override getHeaders(): Record<string, string> {
-    return this.#headers;
+    super(headers);
   }
 }

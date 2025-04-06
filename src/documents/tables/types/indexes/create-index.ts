@@ -15,11 +15,16 @@
 import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
+ * @public
+ */
+export type TableCreateIndexColumn<WSchema> = keyof WSchema | Partial<Record<(keyof WSchema & string), `$${string}`>>;
+
+/**
  * Options for creating a new index via {@link Table.createIndex}
  *
  * @public
  */
-export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableCreateIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
   /**
    * Options available for `text` and `ascii` indexes
    */

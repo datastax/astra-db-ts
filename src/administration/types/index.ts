@@ -12,55 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type {
-  AstraAdminBlockingOptions,
-  AstraDbCloudProvider,
-  AstraDbStatus,
-  AstraPollBlockingOptions,
-  AstraNoBlockingOptions,
-} from './admin/admin-common.js';
-
-export type {
-  CreateAstraDatabaseOptions,
-  AstraDatabaseConfig,
-} from './admin/create-database.js';
-
-export type {
-  AstraDropDatabaseOptions,
-} from './admin/drop-database.js';
-
-export type {
-  AstraDbRegionInfo,
-  AstraDbInfo,
-  AstraDbAdminInfo,
-  BaseAstraDbInfo,
-} from './admin/database-info.js';
-
-export type {
-  AstraDbCloudProviderFilter,
-  AstraDbStatusFilter,
-  ListAstraDatabasesOptions,
-} from './admin/list-databases.js';
-
-export type {
-  AstraCreateKeyspaceOptions,
-} from './db-admin/astra-create-keyspace.js';
-
-export type {
-  AstraDropKeyspaceOptions,
-} from './db-admin/astra-drop-keyspace.js';
-
-export type {
-  KeyspaceReplicationOptions,
-  DataAPICreateKeyspaceOptions,
-} from './db-admin/local-create-keyspace.js';
-
-export type {
-  EmbeddingProviderAuthInfo,
-  EmbeddingProviderInfo,
-  EmbeddingProviderModelInfo,
-  EmbeddingProviderModelParameterInfo,
-  EmbeddingProviderTokenInfo,
-  EmbeddingProviderProviderParameterInfo,
-  FindEmbeddingProvidersResult,
-} from './db-admin/find-embedding-providers.js';
+export type * from './admin/admin-common.js';
+export type * from './admin/create-database.js';
+export type * from './admin/drop-database.js';
+export type * from './admin/database-info.js';
+export type * from './admin/list-databases.js';
+export type * from './db-admin/astra-create-keyspace.js';
+export type * from './db-admin/astra-drop-keyspace.js';
+export type * from './db-admin/local-create-keyspace.js';
+export type * from './db-admin/find-embedding-providers.js';
+export type * from './db-admin/find-reranking-providers.js';

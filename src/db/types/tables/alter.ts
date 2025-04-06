@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { SomeRow } from '@/src/documents/index.js';
-import type { CreateTableColumnDefinitions, VectorizeServiceOptions } from '@/src/db/index.js';
+import type { CreateTableColumnDefinitions, RerankingServiceOptions, VectorizeServiceOptions } from '@/src/db/index.js';
 import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
@@ -39,6 +39,8 @@ export interface AlterTableOperations<Schema extends SomeRow> {
   drop?: DropColumnOperation<Schema>,
   addVectorize?: AddVectorizeOperation<Schema>,
   dropVectorize?: DropVectorizeOperation<Schema>,
+  addReranking?: AddRerankingOperation,
+  dropReranking?: DropRerankingOperation,
 }
 
 /**
@@ -51,7 +53,6 @@ export interface AddColumnOperation {
    * The columns to add to the table, of the same format as in `createTable`
    */
   columns: CreateTableColumnDefinitions,
-
   // ifNotExists?: boolean,
 }
 
@@ -92,3 +93,15 @@ export interface DropVectorizeOperation<Schema extends SomeRow> {
   columns: (keyof Schema)[],
   // ifExists?: boolean,
 }
+
+/**
+ * @public
+ */
+export interface AddRerankingOperation {
+  service: RerankingServiceOptions,
+}
+
+/**
+ * @public
+ */
+export type DropRerankingOperation = Record<never, never>;

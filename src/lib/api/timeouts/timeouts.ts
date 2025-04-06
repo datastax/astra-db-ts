@@ -12,23 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { nullish, OneOrMany } from '@/src/lib/index.js';
+import type { nullish, ReadonlyNonEmpty } from '@/src/lib/index.js';
 import type { HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
-import { toArray } from '@/src/lib/utils.js';
-import type { ParsedTimeoutDescriptor} from '@/src/lib/api/timeouts/cfg-handler.js';
+import type { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler.js';
 import { TimeoutCfgHandler } from '@/src/lib/api/timeouts/cfg-handler.js';
 
 /**
- * The timeout categories that caused the timeout.
+ * ##### Overview
  *
- * If the timeout was caused by:
- * - a single timeout category, the category name is returned.
- * - multiple categories, an array of category names is returned.
- * - a plain-number-timeout provided by the user in a single-call method, the string `'provided'` is returned.
+ * The timeouts that timed out.
+ *
+ * Depending on what causes the timeout, the value can be an array of timeout categories, or the string `'provided'`
+ *
+ * ##### Array of timeout categories
+ *
+ * If the timeout occurred due to one or more timeouts from the {@link TimeoutDescriptor},
+ * the array will contain the names of the timeout categories that caused the timeout.
+ *
+ * @example
+ * ```ts
+ * error.timedOutCategories = ['requestTimeoutMs', 'generalMethodTimeoutMs']
+ * ```
+ *
+ * ##### Provided timeout
+ *
+ * If the timeout occurred due to a timeout provided by the user in a **single-call** method, the value will be the literal string `'provided'`.
+ *
+ * The timeout must've been set like the following, for this to be the case:
+ *
+ * ```ts
+ * await coll.insertOne({ ... }, { timeout: 1000 });
+ * ```
+ *
+ * @see DataAPITimeoutError
+ * @see DevOpsAPITimeoutError
  *
  * @public
  */
-export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided';
+export type TimedOutCategories = ReadonlyNonEmpty<keyof TimeoutDescriptor> | 'provided';
 
 /**
  * #### Overview
@@ -46,12 +67,12 @@ export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided'
  * ```ts
  * // The request timeout for all operations is set to 1000ms.
  * const client = new DataAPIClient('...', {
- *   timeoutDefaults: { requestTimeoutMs: 1000 },
+ *   timeoutDefaults: { requestTimeoutMs: 1000 },
  * });
  *
  * // The request timeout for all operations borne from this Db is set to 2000ms.
  * const db = client.db('...', {
- *   timeoutDefaults: { requestTimeoutMs: 2000 },
+ *   timeoutDefaults: { requestTimeoutMs: 2000 },
  * });
  * ```
  *
@@ -73,7 +94,7 @@ export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided'
  *
  * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 2000ms.
  * await coll.insertMany([...], {
- *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
+ *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
  * });
  * ```
  *
@@ -87,7 +108,7 @@ export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided'
  *
  * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 2000ms.
  * await coll.insertMany([...], {
- *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
+ *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
  * });
  * ```
  *
@@ -234,7 +255,7 @@ export interface TimeoutDescriptor {
  *
  * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 2000ms.
  * await coll.insertMany([...], {
- *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
+ *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
  * });
  * ```
  *
@@ -248,7 +269,7 @@ export interface TimeoutDescriptor {
  *
  * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 2000ms.
  * await coll.insertMany([...], {
- *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
+ *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
  * });
  * ```
  *
@@ -327,12 +348,12 @@ export class Timeouts {
 
     const timeout = Math.min(timeouts.requestTimeoutMs, timeouts[key]);
 
-    const type =
+    const type: TimedOutCategories =
       (timeouts.requestTimeoutMs === timeouts[key])
-        ? <const>['requestTimeoutMs', key] :
+        ? ['requestTimeoutMs', key] :
       (timeouts.requestTimeoutMs < timeouts[key])
-        ? 'requestTimeoutMs'
-        : key;
+        ? ['requestTimeoutMs']
+        : [key];
 
     return this.custom(timeouts, () => {
       return [timeout, type];
@@ -340,18 +361,20 @@ export class Timeouts {
   }
 
   public multipart(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {
-    const requestTimeout = ((typeof override?.timeout === 'object')
-      ? override.timeout?.requestTimeoutMs ?? this.baseTimeouts.requestTimeoutMs
-      : this.baseTimeouts.requestTimeoutMs)
-        || EffectivelyInfinity;
+    const _requestTimeout =
+      (typeof override?.timeout === 'object')
+        ? override.timeout?.requestTimeoutMs ?? this.baseTimeouts.requestTimeoutMs
+        : this.baseTimeouts.requestTimeoutMs;
 
-    const overallTimeout =
-      ((typeof override?.timeout === 'object')
+    const _overallTimeout =
+      (typeof override?.timeout === 'object')
         ? override.timeout?.[key] ?? this.baseTimeouts[key] :
       (typeof override?.timeout === 'number')
         ? override.timeout
-        : this.baseTimeouts[key])
-          || EffectivelyInfinity;
+        : this.baseTimeouts[key];
+
+    const requestTimeout = _requestTimeout || EffectivelyInfinity;
+    const overallTimeout = _overallTimeout || EffectivelyInfinity;
 
     const initial = {
       requestTimeoutMs: requestTimeout,
@@ -368,9 +391,9 @@ export class Timeouts {
       const overallLeft = overallTimeout - (Date.now() - started);
 
       if (overallLeft < requestTimeout) {
-        return [overallLeft, key];
+        return [overallLeft, [key]];
       } else if (overallLeft > requestTimeout) {
-        return [requestTimeout, 'requestTimeoutMs'];
+        return [requestTimeout, ['requestTimeoutMs']];
       } else {
         return [overallLeft, ['requestTimeoutMs', key]];
       }
@@ -394,14 +417,14 @@ export class Timeouts {
   public static fmtTimeoutMsg = (tm: TimeoutManager, timeoutTypes: TimedOutCategories) => {
     const timeout = (timeoutTypes === 'provided')
       ? Object.values(tm.initial())[0]
-      : tm.initial()[toArray(timeoutTypes)[0]];
+      : tm.initial()[timeoutTypes[0]];
 
     const types =
       (timeoutTypes === 'provided')
         ? `The timeout provided via \`{ timeout: <number> }\` timed out` :
-      (Array.isArray(timeoutTypes))
+      (timeoutTypes.length > 1)
         ? timeoutTypes.join(' and ') + ' simultaneously timed out'
-        : `${timeoutTypes} timed out`;
+        : `${timeoutTypes[0]} timed out`;
 
     return `Command timed out after ${timeout}ms (${types})`;
   };

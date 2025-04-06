@@ -15,5 +15,5 @@
 
 export type * from './types.js';
 export * from './base-event.js';
-export { HierarchicalEmitter } from './hierarchical-emitter.js';
+export { HierarchicalLogger } from './hierarchical-logger.js';
 export { LoggingEvents, LoggingOutputs } from './constants.js';

@@ -13,6 +13,9 @@
 // limitations under the License.
 
 import { TokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import type { GetHeadersCtx } from '@/src/lib/index.js';
+import { HeadersProvider, PureHeadersProvider } from '@/src/lib/headers-providers/index.js';
+import type { ParsedHeadersProviders } from '@/src/lib/headers-providers/root/opts-handlers.js';
 
 /**
  * The most basic token provider, which simply returns the token it was instantiated with.
@@ -54,5 +57,21 @@ export class StaticTokenProvider extends TokenProvider {
    */
   override getToken(): string {
     return this.#token;
+  }
+
+  /**
+   * @internal
+   */
+  public toHeadersProvider(): ParsedHeadersProviders {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- necessary in this case
+    const tp = this;
+
+    const hp = new (class extends PureHeadersProvider {
+      getHeaders(ctx: GetHeadersCtx) {
+        return tp._mkAuthHeader(ctx)(tp.getToken());
+      }
+    })();
+
+    return HeadersProvider.opts.fromObj.parse(hp);
   }
 }

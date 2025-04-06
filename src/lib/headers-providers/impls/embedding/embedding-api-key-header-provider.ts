@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EmbeddingHeadersProvider } from '@/src/documents/embedding-providers/embedding-headers-provider.js';
 import type { nullish } from '@/src/lib/index.js';
+import { HeadersProvider, StaticHeadersProvider } from '@/src/lib/headers-providers/index.js';
+import { isNullish } from '@/src/lib/utils.js';
 
 /**
+ * ##### Overview
+ *
  * The most basic embedding header provider, used for the vast majority of providers.
  *
  * Generally, anywhere this can be used in the public `astra-db-ts` interfaces, you may also pass in a plain
@@ -27,7 +30,6 @@ import type { nullish } from '@/src/lib/index.js';
  * const collections = await db.collections('my_coll', { embeddingApiKey: provider });
  *
  * // or just
- *
  * const collections = await db.collections('my_coll', { embeddingApiKey: 'api-key' });
  * ```
  *
@@ -35,28 +37,37 @@ import type { nullish } from '@/src/lib/index.js';
  *
  * @public
  */
-export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
-  readonly #headers: Record<string, string>;
-
+export class EmbeddingAPIKeyHeaderProvider extends StaticHeadersProvider<'embedding'> {
   /**
    * Constructs an instead of the {@link EmbeddingAPIKeyHeaderProvider}.
    *
-   * @param apiKey - The api-key/token to regurgitate in `getTokenAsString`
+   * @param apiKey - The api-key/token to regurgitate in `getToken`
    */
-  constructor(apiKey: string | nullish) {
-    super();
-
-    this.#headers = (apiKey)
+  public constructor(apiKey: string | nullish) {
+    const headers = (apiKey)
       ? { 'x-embedding-api-key': apiKey }
       : {};
+    super(headers);
   }
 
   /**
-   * Returns the proper header for the default embedding header authentication, or an empty record if `apiKey` was undefined.
+   * Turns a string embedding api key into a `HeadersProvider<'embedding'>` if necessary.
    *
-   * @returns the proper header for the default embedding header authentication.
+   * Throws an error if it's not a string, nullish, or a `HeadersProvider` already.
+   *
+   * Not intended for external use.
+   *
+   * @internal
    */
-  override getHeaders(): Record<string, string> {
-    return this.#headers;
+  public static parse(provider: unknown, field?: string): HeadersProvider<'embedding'> {
+    if (typeof provider === 'string' || isNullish(provider)) {
+      return new EmbeddingAPIKeyHeaderProvider(provider);
+    }
+
+    if (provider instanceof HeadersProvider) {
+      return provider;
+    }
+
+    throw new TypeError(`Expected ${field ?? 'embedding api key'} to be type string | EmbeddingHeadersProvider | nullish`);
   }
 }

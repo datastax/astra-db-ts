@@ -12,6 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './aws-embedding-headers-provider.js';
-export * from './embedding-api-key-header-provider.js';
-export * from './embedding-headers-provider.js';
+import type { GenericFindAndRerankOptions } from '@/src/documents/index.js';
+
+/**
+ * Options for the collection `findAndRerank` method.
+ *
+ * @see Collection.findAndRerank
+ *
+ * @public
+ */
+export type CollectionFindAndRerankOptions = GenericFindAndRerankOptions;

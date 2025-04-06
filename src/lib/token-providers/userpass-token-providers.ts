@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TokenProvider } from '@/src/lib/token-providers/token-provider.js';
 import { forJSEnv } from '@/src/lib/utils.js';
+import { StaticTokenProvider } from '@/src/lib/token-providers/static-token-provider.js';
 
 /**
  * A token provider which translates a username-password pair into the appropriate authentication token for DSE, HCD.
@@ -30,9 +30,7 @@ import { forJSEnv } from '@/src/lib/utils.js';
  *
  * @public
  */
-export class UsernamePasswordTokenProvider extends TokenProvider {
-  readonly #token: string;
-
+export class UsernamePasswordTokenProvider extends StaticTokenProvider {
   /**
    * Constructs an instead of the {@link TokenProvider}.
    *
@@ -40,17 +38,7 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
    * @param password - The password for the DSE instance
    */
   constructor(username: string, password: string) {
-    super();
-    this.#token = `Cassandra:${encodeB64(username)}:${encodeB64(password)}`;
-  }
-
-  /**
-   * Returns the token in the format `cassandra:[username_b64]:[password_b64]`
-   *
-   * @returns the token in the format `cassandra:[username_b64]:[password_b64]`
-   */
-  override getToken(): string {
-    return this.#token;
+    super(`Cassandra:${encodeB64(username)}:${encodeB64(password)}`);
   }
 }
 

@@ -17,8 +17,8 @@ import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import type { TableCodec} from '@/src/documents/tables/index.js';
 import { $DeserializeForTable, $SerializeForTable, TableCodecs } from '@/src/documents/tables/index.js';
-import { processCodecs } from '@/src/lib/index.js';
 import type { RawTableCodecs } from '@/src/documents/tables/ser-des/codecs.js';
+import { processCodecs } from '@/src/lib/api/ser-des/codecs.js';
 
 describe('unit.documents.tables.ser-des.codecs', () => {
   describe('processCodecs', () => {

@@ -16,7 +16,7 @@
 import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
-parallel('integration.documents.tables.indexes', { drop: 'colls:after' }, ({ db }) => {
+parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db }) => {
   it('should work when createIndex-ing', async () => {
     const table = await db.createTable('create_index_table', {
       definition: {
@@ -37,7 +37,7 @@ parallel('integration.documents.tables.indexes', { drop: 'colls:after' }, ({ db 
     await assert.rejects(() => table.createIndex('val_index', 'val'));
     await assert.doesNotReject(() => table.createIndex('val_index', 'val', { ifNotExists: true }));
 
-    const indexes = await table.listIndexes();
+    const indexes = await db.command({ listIndexes: { options: { explain: true } } }, { table: table.name }).then((res) => res.status!.indexes);
     assert.strictEqual(indexes.length, 1);
 
     const index = indexes[0];
@@ -66,7 +66,7 @@ parallel('integration.documents.tables.indexes', { drop: 'colls:after' }, ({ db 
     await assert.rejects(() => table.createVectorIndex('vec_index', 'vec'));
     await assert.doesNotReject(() => table.createVectorIndex('vec_index', 'vec', { ifNotExists: true }));
 
-    const indexes = await table.listIndexes();
+    const indexes = await db.command({ listIndexes: { options: { explain: true } } }, { table: table.name }).then((res) => res.status!.indexes);
     assert.strictEqual(indexes.length, 1);
 
     const index = indexes[0];
