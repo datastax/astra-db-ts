@@ -16,7 +16,8 @@ import type {
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
   CollectionDeleteOneResult,
-  CollectionFilter, CollectionFindAndRerankOptions,
+  CollectionFilter,
+  CollectionFindAndRerankOptions,
   CollectionFindOneAndDeleteOptions,
   CollectionFindOneAndReplaceOptions,
   CollectionFindOneAndUpdateOptions,
@@ -48,11 +49,11 @@ import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { CommandEventMap, RerankedResult, WithSim } from '@/src/documents/index.js';
-import { CollectionDeleteManyError } from '@/src/documents/index.js';
-import { CollectionUpdateManyError } from '@/src/documents/index.js';
 import {
+  CollectionDeleteManyError,
   CollectionFindCursor,
   CollectionInsertManyError,
+  CollectionUpdateManyError,
   TooManyDocumentsToCountError,
 } from '@/src/documents/index.js';
 import JBI from 'json-bigint';
@@ -61,7 +62,6 @@ import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import { CollectionFindAndRerankCursor } from '@/src/documents/collections/cursors/rerank-cursor.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
-import { TypeErr } from '@/src/documents/utils.js';
 
 const jbi = JBI;
 

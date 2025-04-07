@@ -34,6 +34,8 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
     // @internal
     protected constructor(options: WithTimeout<'generalMethodTimeoutMs'>, mapping?: (doc: any) => T);
     buffered(): number;
+    // @deprecated
+    bufferedCount: 'ERROR: `.bufferedCount()` has been renamed to be simply `.buffered()`';
     // (undocumented)
     abstract clone(): this;
     close(): void;
@@ -60,6 +62,8 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
     protected _nextPageState: QueryState<string>;
     // @internal (undocumented)
     readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
+    // @deprecated
+    readBufferedDocuments: 'ERROR: `.readBufferedDocuments()` has been renamed to be `.consumeBuffer()`';
     rewind(): void;
     get state(): CursorState;
     // @internal (undocumented)
@@ -180,6 +184,8 @@ export interface AdminOptions {
     astraEnv?: 'dev' | 'prod' | 'test';
     endpointUrl?: string;
     logging?: LoggingConfig;
+    // @deprecated
+    monitorCommands?: 'ERROR: `monitorCommands` has been overhauled, and replaced with the `logging` option. Please see its documentation for more information';
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
@@ -432,7 +438,11 @@ export type CollCustomCodecOpts = CustomCodecOpts<CollectionSerCtx, CollectionDe
 export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalLogger<CommandEventMap> {
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: CollectionOptions | undefined);
+    // @deprecated
+    bulkWrite: 'ERROR: `bulkWrite` has been removed; manually perform collection operations to retain the same behavior';
     countDocuments(filter: CollectionFilter<WSchema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
+    // @deprecated
+    deleteAll: 'ERROR: `deleteAll` has been removed; use `deleteMany({})` instead';
     deleteMany(filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult>;
     deleteOne(filter: CollectionFilter<WSchema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult>;
     distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<RSchema>)[Key]>[]>;
@@ -690,6 +700,8 @@ export type CollectionNumberUpdate<Schema> = {
 
 // @public
 export interface CollectionOptions extends WithKeyspace {
+    // @deprecated
+    defaultMaxTimeMS?: 'ERROR: The `defaultMaxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option';
     embeddingApiKey?: string | EmbeddingHeadersProvider;
     logging?: LoggingConfig;
     rerankingApiKey?: string | RerankingHeadersProvider;
@@ -901,6 +913,10 @@ export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout
 
 // @public
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends CollectionDefinition<Schema>, CollectionOptions {
+    // @deprecated
+    checkExists?: 'ERROR: `checkExists` has been removed. It is equivalent to being always `false` now.';
+    // @deprecated
+    maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option';
     // (undocumented)
     timeout?: number | Pick<Partial<TimeoutDescriptor>, 'collectionAdminTimeoutMs'>;
 }
@@ -958,6 +974,8 @@ export type CustomCodecSerOpts<SerCtx> = {
 export interface CustomHttpClientOptions {
     client: 'custom';
     fetcher: Fetcher;
+    // @deprecated
+    maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option';
 }
 
 // @public
@@ -1006,6 +1024,8 @@ export interface DataAPIClientOptions {
     environment?: DataAPIEnvironment;
     httpOptions?: HttpOptions;
     logging?: LoggingConfig;
+    // @deprecated
+    preferHttp2?: 'ERROR: This property is no longer supported. Use `httpOptions` instead with the `fetch-h2` client enabled';
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
@@ -1275,6 +1295,8 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
         environment: Exclude<DataAPIEnvironment, 'astra'>;
     }): DataAPIDbAdmin;
     collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema>;
+    // @deprecated
+    collections: 'ERROR: `.collections` has been removed. Use `.listCollections` with `.map` instead';
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CreateCollectionOptions<WSchema>): Promise<Collection<WSchema, RSchema>>;
     createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
@@ -1302,18 +1324,26 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     get region(): string;
     table<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema>;
     useKeyspace(keyspace: string): void;
+    // @deprecated
+    useNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
 }
 
 // @public
 export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     abstract createKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+    // @deprecated
+    createNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
     abstract db(): Db;
     abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+    // @deprecated
+    dropNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
     findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
     findRerankingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindRerankingProvidersResult>;
     // @internal (undocumented)
     protected abstract _getDataAPIHttpClient(): DataAPIHttpClient<'admin'>;
     abstract listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
+    // @deprecated
+    listNamespaces: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
 }
 
 // @public
@@ -1321,6 +1351,10 @@ export interface DbOptions {
     dataApiPath?: string;
     keyspace?: string | null;
     logging?: LoggingConfig;
+    // @deprecated
+    monitorCommands?: 'ERROR: `monitorCommands` has been overhauled, and replaced with the `logging` option. Please see its documentation for more information';
+    // @deprecated
+    namespace?: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
     // @beta
     serdes?: DbSerDesConfig;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
@@ -1537,6 +1571,8 @@ export interface FetchH2HttpClientOptions {
     client: 'fetch-h2';
     fetchH2: FetchH2Like;
     http1?: FetchH2Http1Options;
+    // @deprecated
+    maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option';
     preferHttp2?: boolean;
 }
 
@@ -1551,6 +1587,8 @@ export interface FetchH2Like {
 // @public
 export interface FetchHttpClientOptions {
     client: 'fetch';
+    // @deprecated
+    maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option';
 }
 
 // @public
@@ -1678,6 +1716,10 @@ export interface GenericDeleteManyResult {
 export interface GenericDeleteOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     sort?: Sort;
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1707,6 +1749,10 @@ export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodT
 export interface GenericFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     projection?: Projection;
     sort?: Sort;
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1715,6 +1761,10 @@ export interface GenericFindOneAndReplaceOptions extends WithTimeout<'generalMet
     returnDocument?: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1723,6 +1773,10 @@ export interface GenericFindOneAndUpdateOptions extends WithTimeout<'generalMeth
     returnDocument?: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1730,6 +1784,10 @@ export interface GenericFindOneOptions extends WithTimeout<'generalMethodTimeout
     includeSimilarity?: boolean;
     projection?: Projection;
     sort?: Sort;
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1740,6 +1798,10 @@ export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'
     projection?: Projection;
     skip?: number;
     sort?: Sort;
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1749,6 +1811,10 @@ export type GenericInsertManyOptions = GenericInsertManyUnorderedOptions | Gener
 export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     chunkSize?: number;
     ordered: true;
+    // @deprecated
+    vector?: 'ERROR: Set the `$vector` field in the docs directly';
+    // @deprecated
+    vectorize?: 'ERROR: Set the `$vectorize` field in the docs directly';
 }
 
 // @public
@@ -1764,6 +1830,10 @@ export interface GenericReplaceOneOptions extends WithTimeout<'generalMethodTime
     sort?: Sort;
     // (undocumented)
     upsert?: boolean;
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1776,6 +1846,10 @@ export interface GenericUpdateManyOptions extends WithTimeout<'generalMethodTime
 export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     sort?: Sort;
     upsert?: boolean;
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1836,7 +1910,10 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
 }
 
 // @public
-export type HttpOptions = FetchH2HttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
+export type HttpOptions = FetchH2HttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions | {
+    client: 'default';
+    ERROR: 'ERROR: fetch-h2 is no longer the default client; it must be set using `client: "fetch-h2"`. See `FetchH2HttpClientOptions` for more information.';
+};
 
 // @public (undocumented)
 export type HybridSort = Record<string, SortDirection | string | number[] | DataAPIVector | HybridSortObject> & {
@@ -2179,6 +2256,8 @@ export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'>
     collection?: string;
     extraLogInfo?: Record<string, unknown>;
     keyspace?: string | null;
+    // @deprecated
+    namespace?: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
     table?: string;
 }
 
@@ -2721,6 +2800,8 @@ export type WithId<T> = T & {
 // @public
 export interface WithKeyspace {
     keyspace?: string;
+    // @deprecated
+    namespace?: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
 }
 
 // @public
@@ -2730,6 +2811,8 @@ export type WithSim<Schema extends SomeDoc> = Schema & {
 
 // @public
 export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
+    // @deprecated
+    maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`';
     timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Timeouts>;
 }
 
