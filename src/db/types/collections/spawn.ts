@@ -95,4 +95,10 @@ export interface CollectionOptions extends WithKeyspace {
    * @see TimeoutDescriptor
    */
   timeoutDefaults?: Partial<TimeoutDescriptor>,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `defaultMaxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option.
+   */
+  defaultMaxTimeMS?: 'ERROR: The `defaultMaxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option',
 }

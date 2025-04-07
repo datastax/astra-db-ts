@@ -48,4 +48,10 @@ export interface WithKeyspace {
    * The keyspace to use for the operation.
    */
   keyspace?: string;
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client.
+   */
+  namespace?: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client',
 }

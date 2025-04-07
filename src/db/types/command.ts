@@ -50,4 +50,10 @@ export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'>
    * A small string to add to the log message for this command (only if you're printing to `stdout`/`stderr` using {@link LoggingConfig}).
    */
   extraLogInfo?: Record<string, unknown>,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client.
+   */
+  namespace?: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client',
 }

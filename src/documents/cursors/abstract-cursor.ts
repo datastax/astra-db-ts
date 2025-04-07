@@ -337,4 +337,18 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
       throw e;
     }
   }
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - `.bufferedCount()` has been renamed to simply be `.buffered()`.
+   */
+  public declare bufferedCount: 'ERROR: `.bufferedCount()` has been renamed to be simply `.buffered()`';
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - `.readBufferedDocuments()` has been renamed to be `.consumeBuffer()`.
+   */
+  public declare readBufferedDocuments: 'ERROR: `.readBufferedDocuments()` has been renamed to be `.consumeBuffer()`';
 }

@@ -30,6 +30,20 @@ export type GenericInsertManyOptions =
   | GenericInsertManyUnorderedOptions
   | GenericInsertManyOrderedOptions;
 
+//    *
+//    * If any document already has a `$vector` field, and this is set, the `$vector` field will be overwritten. It is
+//    * up to the user to ensure that both fields are not set at once.
+//    *
+//    * @deprecated - Prefer to set the `$vector` fields in the docs directly
+//    */
+//   vectors?: (number[] | null | undefined)[],
+//   /**
+//    Akin to {@link InsertManyOrderedOptions.vectors}, but for `$vectorize`.
+//    *
+//    * @deprecated - Prefer to set the `$vectorize` fields in the docs directly
+//    */
+//   vectorize?: (string | null | undefined)[],
+
 /**
  * Options for a generic `insertMany` command using the Data API when `ordered` is `true`.
  *
@@ -56,6 +70,18 @@ export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMet
    * @defaultValue 50
    */
   chunkSize?: number,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Set the `$vector` field in the docs directly.
+   */
+  vector?: 'ERROR: Set the `$vector` field in the docs directly',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Set the `$vectorize` field in the docs directly.
+   */
+  vectorize?: 'ERROR: Set the `$vectorize` field in the docs directly',
 }
 
 /**

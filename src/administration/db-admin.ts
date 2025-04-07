@@ -70,6 +70,13 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
   abstract listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
 
   /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client.
+   */
+  public declare listNamespaces: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
+
+  /**
    * Creates a new, additional, keyspace for this database.
    *
    * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
@@ -100,6 +107,13 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * @returns A promise that resolves when the operation completes.
    */
   abstract createKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client.
+   */
+  public declare createNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
 
   /**
    * Drops a keyspace from this database.
@@ -133,6 +147,13 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * @returns A promise that resolves when the operation completes.
    */
   abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client.
+   */
+  public declare dropNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
 
   /**
    * Returns detailed information about the availability and usage of the vectorize embedding providers available on the

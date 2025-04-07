@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIEnvironment, AdditionalHeaders, LoggingConfig, TimeoutDescriptor } from '@/src/lib/index.js';
+import type { AdditionalHeaders, DataAPIEnvironment, LoggingConfig, TimeoutDescriptor } from '@/src/lib/index.js';
 import type { Caller, HttpOptions, RootAdminOptions, RootDbOptions } from '@/src/client/index.js';
 import type { OneOrMany } from '@/src/lib/types.js';
 
@@ -162,4 +162,10 @@ export interface DataAPIClientOptions {
    * The additional headers set here will be inherited by, and may be overwritten by, the {@link DbOptions.additionalHeaders} and {@link AdminOptions.additionalHeaders} options.
    */
   additionalHeaders?: AdditionalHeaders,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - This property is no longer supported. Use `httpOptions` instead with the `fetch-h2` client enabled.
+   */
+  preferHttp2?: 'ERROR: This property is no longer supported. Use `httpOptions` instead with the `fetch-h2` client enabled',
 }

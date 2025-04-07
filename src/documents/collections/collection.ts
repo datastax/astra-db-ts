@@ -61,6 +61,7 @@ import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import { CollectionFindAndRerankCursor } from '@/src/documents/collections/cursors/rerank-cursor.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
+import { TypeErr } from '@/src/documents/utils.js';
 
 const jbi = JBI;
 
@@ -1531,4 +1532,18 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
   public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - `bulkWrite` has been removed until it is supported on the server side bu the Data API. Please manually perform equivalent collection operations to attain the same behavior.
+   */
+  public declare bulkWrite: 'ERROR: `bulkWrite` has been removed; manually perform collection operations to retain the same behavior';
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - `deleteAll` has been removed to retain Data API consistency. Use `deleteMany({})` instead to retain the same behavior.
+   */
+  public declare deleteAll: 'ERROR: `deleteAll` has been removed; use `deleteMany({})` instead';
 }

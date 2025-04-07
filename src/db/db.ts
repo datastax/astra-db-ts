@@ -1203,4 +1203,18 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client.
+   */
+  public declare useNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - `.collections` has been removed. Use `.listCollections` with `.map` instead (`await db.listCollections({ nameOnly: true }).then(cs => cs.map(c => db.collection(c))`)
+   */
+  public declare collections: 'ERROR: `.collections` has been removed. Use `.listCollections` with `.map` instead';
 }

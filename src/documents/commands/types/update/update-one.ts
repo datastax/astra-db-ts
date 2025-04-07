@@ -45,4 +45,16 @@ export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeo
    * @defaultValue null
    */
   sort?: Sort,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vector: [...] }` instead.
+   */
+  vector?: 'ERROR: Use `sort: { $vector: [...] }` instead',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vectorize: '...' }` instead.
+   */
+  vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead',
 }

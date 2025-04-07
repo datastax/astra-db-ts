@@ -98,4 +98,16 @@ export interface GenericFindOneAndReplaceOptions extends WithTimeout<'generalMet
    * ```
    */
   projection?: Projection,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vector: [...] }` instead.
+   */
+  vector?: 'ERROR: Use `sort: { $vector: [...] }` instead',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vectorize: '...' }` instead.
+   */
+  vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead',
 }

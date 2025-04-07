@@ -115,4 +115,10 @@ export interface AdminOptions {
    * @see TimeoutDescriptor
    */
   timeoutDefaults?: Partial<TimeoutDescriptor>,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - `monitorCommands` has been overhauled, and replaced with the `logging` option. Please see its documentation for more information.
+   */
+  monitorCommands?: 'ERROR: `monitorCommands` has been overhauled, and replaced with the `logging` option. Please see its documentation for more information',
 }
