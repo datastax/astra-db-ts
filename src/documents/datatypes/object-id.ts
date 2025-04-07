@@ -27,7 +27,7 @@ const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
  *
  * @public
  */
-export const oid = (id?: string | number | null) => new ObjectId(id);
+export const oid = (id?: string | number | null | ObjectId) => new ObjectId(id);
 
 /**
  * Represents an ObjectId that can be used as an _id in the DataAPI.
@@ -104,19 +104,19 @@ export class ObjectId implements CollectionCodec<typeof ObjectId> {
    * @param id - The ObjectId string.
    * @param validate - Whether to validate the ObjectId string. Defaults to `true`.
    */
-  constructor(id?: string | number | null, validate = true) {
+  constructor(id?: string | number | ObjectId | null, validate = true) {
     if (validate) {
       if (typeof id === 'string') {
         if (id.length !== 24 || !objectIdRegex.test(id)) {
           throw new Error('ObjectId must be a 24-character hex string');
         }
-      } else if (typeof id !== 'number' && !isNullish(id)) {
-        throw new Error('ObjectId must be a string, number, or nullish');
+      } else if (typeof id !== 'number' && !isNullish(id) && !(id as unknown instanceof ObjectId)) {
+        throw new Error('ObjectId must be a string, number, nullish, or another ObjectId instance');
       }
     }
 
     Object.defineProperty(this, '_raw', {
-      value: (typeof id === 'string') ? id.toLowerCase() : genObjectId(id, ObjectIDGenIndex),
+      value: (typeof id === 'string') ? id.toLowerCase() : (id instanceof ObjectId) ? id._raw : genObjectId(id, ObjectIDGenIndex),
     });
 
     Object.defineProperty(this, $CustomInspect, {

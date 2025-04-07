@@ -2047,14 +2047,14 @@ export class ObjectId implements CollectionCodec<typeof ObjectId> {
         $objectId: string;
     } | undefined)?];
     [$SerializeForTable](): void;
-    constructor(id?: string | number | null, validate?: boolean);
+    constructor(id?: string | number | ObjectId | null, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date;
     toString(): string;
 }
 
 // @public
-export const oid: (id?: string | number | null) => ObjectId;
+export const oid: (id?: string | number | null | ObjectId) => ObjectId;
 
 // @public
 export type OneOrMany<T> = T | readonly T[];

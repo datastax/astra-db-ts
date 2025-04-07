@@ -27,6 +27,7 @@ describe('unit.documents.datatypes.uuid', () => {
         fc.property(fc.uuid(), (generated) => {
           assert.strictEqual(new UUID(generated).toString(), generated);
           assert.strictEqual(uuid(generated).toString(), generated);
+          assert.strictEqual(uuid(uuid(generated)).toString(), generated);
         }),
       );
     });

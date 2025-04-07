@@ -79,10 +79,10 @@ For example, the first path will get flagged, but the second one is okay:
 
 ```bash
 # WARNING
-tests/unit/doucments/__common/find-cursor.ts
+tests/unit/documents/__common/find-cursor.ts
 
 # OK
-tests/unit/doucments/__common/find-cursor.ts
+tests/unit/documents/__common/find-cursor.ts
 ```
 
 ### Check test naming conventions (`test-names`)

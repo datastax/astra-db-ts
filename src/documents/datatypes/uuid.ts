@@ -108,12 +108,12 @@ export class UUID implements DataAPICodec<typeof UUID> {
    */
   constructor(uuid: string | UUID, validate = true, version = 0) {
     if (validate) {
-      if (typeof uuid !== 'string' && !(uuid as unknown instanceof UUID)) {
+      if (typeof uuid === 'string') {
+        if (!_uuid.validate(uuid)) {
+          throw new Error(`UUID '${uuid}' is not a valid UUID`);
+        }
+      } else if (!(uuid as unknown instanceof UUID)) {
         throw new Error(`UUID '${uuid}' must be a string or another UUID instance`);
-      }
-
-      if (!_uuid.validate(uuid)) {
-        throw new Error(`UUID '${uuid}' is not valid`);
       }
     }
 
