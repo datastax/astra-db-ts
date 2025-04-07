@@ -14,7 +14,7 @@
 
 import type { Decoder } from 'decoders';
 import type { EmptyObj, nullish } from '@/src/lib/index.js';
-import { findLast, isNullish } from '@/src/lib/utils.js';
+import { findLast, isNullish, splitWithIncludesCheck } from '@/src/lib/utils.js';
 
 /**
  * @public
@@ -78,7 +78,7 @@ export class OptionsHandler<Types extends OptionsHandlerTypes> {
   }
 
   public parseWithin<Field extends string>(obj: Partial<Record<Field, Types['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Types['Parsed'] {
-    return this.parse(obj?.[field.split('.').at(-1) as Field], field);
+    return this.parse(obj?.[splitWithIncludesCheck(field, '.').at(-1) as Field], field);
   }
 }
 

@@ -3,12 +3,21 @@
 set -e
 
 lib_dir=$(pwd)
+install_pkgs=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     "create" | "destroy" | "show" | "run")
       action="$1"
       name="$2"
+      shift
+      ;;
+    "-i" | "--install")
+      if [ "$action" != "create" ]; then
+        echo "The -i/--install option is only valid with the create action."
+        exit 1
+      fi
+      install_pkgs="$2"
       shift
       ;;
     "list")
@@ -72,6 +81,14 @@ const table = db.table('test_table');
 (async () => {
 
 })();" > index.ts
+
+  for pkg in $(echo "$install_pkgs" | sed "s/,/ /g"); do
+    if [ "$pkg" = "dotenv" ]; then
+      echo "dotenv is already installed."
+    else
+      npm i "$pkg"
+    fi
+  done
 
   echo "Playground '$name' created."
   exit 0

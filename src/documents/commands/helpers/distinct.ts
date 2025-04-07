@@ -13,12 +13,13 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/index.js';
+import { splitWithIncludesCheck } from '@/src/lib/utils.js';
 
 /**
  * @internal
  */
 export const pullSafeProjection4Distinct = (path: string): string => {
-  const split = path.split('.');
+  const split = splitWithIncludesCheck(path, '.');
 
   if (split.some(p => !p)) {
     throw new Error('Path cannot contain empty segments');
@@ -69,7 +70,7 @@ export const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] =
   };
 
   return (doc: SomeDoc) => {
-    extract(path.split('.'), 0, doc);
+    extract(splitWithIncludesCheck(path, '.'), 0, doc);
     return values;
   };
 };

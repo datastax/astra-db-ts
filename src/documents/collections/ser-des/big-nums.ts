@@ -18,6 +18,7 @@ import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 import type { CollectionSerDesConfig } from '@/src/documents/index.js';
 import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
 import type { PathSegment } from '@/src/lib/types.js';
+import { unescapeFieldPath } from '@/src/lib/index.js';
 
 /**
  * @public
@@ -83,7 +84,7 @@ const buildNumCoercionTree = (cfg: CollNumCoercionCfg): NumCoercionTree => {
   const result: NumCoercionTree = Object.create(null);
 
   Object.entries(cfg).forEach(([path, coercion]) => {
-    const keys = path.split('.');
+    const keys = unescapeFieldPath(path);
     let current = result;
 
     keys.forEach((key, index) => {

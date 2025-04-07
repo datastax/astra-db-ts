@@ -188,6 +188,21 @@ export class QueryState<T extends EmptyObj> {
   }
 }
 
+/**
+ * @internal
+ */
 export function isNonEmpty<T>(arr: readonly T[]): arr is NonEmpty<T> {
   return arr.length > 0;
+}
+
+/**
+ * https://github.com/datastax/astra-db-ts/pull/90#discussion_r1985540803
+ *
+ * @internal
+ */
+export function splitWithIncludesCheck(str: string, sep: string): string[] {
+  if (!str.includes(sep)) {
+    return [str];
+  }
+  return str.split(sep);
 }

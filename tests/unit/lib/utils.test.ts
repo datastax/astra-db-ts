@@ -23,7 +23,7 @@ import {
   isNullish,
   jsonTryParse,
   jsonTryStringify,
-  numDigits, QueryState,
+  numDigits, QueryState, splitWithIncludesCheck,
   toArray,
 } from '@/src/lib/utils.js';
 import fc from 'fast-check';
@@ -205,6 +205,21 @@ describe('unit.lib.utils', () => {
             assert.strictEqual(qs.state, QueryState.Found);
             assert.strictEqual(qs.unwrap(), value);
           }
+        }),
+      );
+    });
+  });
+
+  describe('splitWithIncludesCheck', () => {
+    it('should appear the exact same as string.split()', () => {
+      fc.assert(
+        fc.property(fc.string(), fc.string(), (str, sep) => {
+          if (sep === '') {
+            return;
+          }
+          const expected = str.split(sep);
+          const result = splitWithIncludesCheck(str, sep);
+          assert.deepStrictEqual(result, expected);
         }),
       );
     });

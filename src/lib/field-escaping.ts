@@ -58,6 +58,10 @@ export function unescapeFieldPath(path: string): string[] {
     return [];
   }
 
+  if (!path.includes('&') && !path.includes('.')) {
+    return [path];
+  }
+
   if (path.startsWith('.')) {
     throw new Error(`Invalid field path '${path}'; '.' may not appear at the beginning of the path`);
   }
@@ -70,7 +74,7 @@ export function unescapeFieldPath(path: string): string[] {
       if (!segment) {
         throw new Error(`Invalid field path '${path}'; empty segment found at position ${i}`);
       }
-      ret.push(segment.slice()); // Force string flattening
+      ret.push(segment.slice()); // force rope flattening to reduce memory usage slightly
       segment = '';
     }
     else if (path[i] === '&') {
@@ -93,4 +97,3 @@ export function unescapeFieldPath(path: string): string[] {
 
   return ret;
 }
-
