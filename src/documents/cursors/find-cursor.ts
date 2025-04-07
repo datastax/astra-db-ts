@@ -38,6 +38,7 @@ import {
   buildFLCMap,
   buildFLCOption,
   buildFLCPreMapOption,
+  buildFLCSort,
   cloneFLC,
 } from '@/src/documents/cursors/common.js';
 
@@ -128,7 +129,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new sort set.
    */
   public sort(sort: Sort): this {
-    return buildFLCOption(this, 'sort', sort);
+    return buildFLCSort(this, sort);
   }
 
   /**
@@ -144,7 +145,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): this {
-    return buildFLCOption(this, 'limit', limit || Infinity);
+    return buildFLCOption(this, 'limit', limit || undefined);
   }
 
   /**
@@ -172,8 +173,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @returns A new cursor with the new sort vector inclusion setting.
    */
-  public includeSortVector(includeSortVector = true): this {
-    return buildFLCOption(this, 'includeSortVector', includeSortVector);
+  public includeSortVector(includeSortVector?: boolean): this {
+    return buildFLCOption(this, 'includeSortVector', includeSortVector ?? true);
   }
 
   /**
@@ -229,8 +230,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @returns A new cursor with the new similarity setting.
    */
-  public includeSimilarity(includeSimilarity = true): FindCursor<WithSim<TRaw>, WithSim<TRaw>> {
-    return buildFLCPreMapOption(this, 'includeSimilarity', includeSimilarity);
+  public includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>> {
+    return buildFLCPreMapOption(this, 'includeSimilarity', includeSimilarity ?? true);
   }
 
   public map<R>(map: (doc: T) => R): FindCursor<R, TRaw> {
@@ -261,7 +262,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns The sort vector, or `null` if none was used (or if `includeSortVector !== true`).
    */
   public async getSortVector(): Promise<DataAPIVector | null> {
-    if (this._sortVector.isUnattempted() && this._options.includeSortVector) {
+    if (this._sortVector.state === QueryState.Unattempted && this._options.includeSortVector) {
       const reset2idle = this._state === 'idle';
 
       await this._next(true, '.getSortVector');
@@ -271,7 +272,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
       }
     }
 
-    return this._sortVector.unwrap;
+    return this._sortVector.unwrap();
   }
 
   public override clone(): this {
@@ -292,7 +293,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
           includeSortVector: this._options.includeSortVector,
           limit: this._options.limit,
           skip: this._options.skip,
-          pageState: this._nextPageState.unwrap,
+          pageState: this._nextPageState.unwrap(),
         },
       },
     };
@@ -304,6 +305,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
     });
 
     this._nextPageState.swap(raw.data?.nextPageState);
+
+    /* c8 ignore next: don't think it's possible for documents to be nullish, but just in case */
     const buffer = raw.data?.documents ?? [];
 
     for (let i = 0, n = buffer.length; i < n; i++) {

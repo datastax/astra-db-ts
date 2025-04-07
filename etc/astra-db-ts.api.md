@@ -8,8 +8,8 @@ import { BigNumber } from 'bignumber.js';
 import { CollectionSerDesConfig as CollectionSerDesConfig_2 } from '../../documents/collections/ser-des/ser-des.js';
 import { Decoder } from 'decoders';
 import type { DecoderType } from 'decoders';
-import { Monoid as Monoid_2 } from '../../lib/opts-handler.js';
-import { Monoid as Monoid_3 } from '../../../lib/opts-handler.js';
+import { Monoid as Monoid_2 } from '../../lib/opts-handlers.js';
+import { Monoid as Monoid_3 } from '../../../lib/opts-handlers.js';
 import { ParsedLoggingConfig as ParsedLoggingConfig_2 } from '../../lib/logging/cfg-handler.js';
 import { ParsedSerDesConfig } from '../../lib/api/ser-des/cfg-handler.js';
 import { ParsedTimeoutDescriptor } from '../../lib/api/timeouts/cfg-handler.js';
@@ -87,7 +87,7 @@ export interface AddRerankingOperation {
 
 // @public
 export interface AddVectorizeOperation<Schema extends SomeRow> {
-    columns: Partial<Record<keyof Schema, VectorizeServiceOptions>>;
+    columns: Partial<Record<keyof Schema & string, VectorizeServiceOptions>>;
 }
 
 // @public
@@ -95,15 +95,15 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(name: string, requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean);
+    protected constructor(name: string, requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean);
     // (undocumented)
     getMessagePrefix(): string;
     readonly longRunning: boolean;
     readonly method: 'GET' | 'POST' | 'DELETE';
     readonly methodName: string;
     readonly params?: Record<string, any>;
-    readonly path: string;
-    readonly reqBody?: Record<string, any>;
+    readonly requestBody?: Record<string, any>;
+    readonly url: string;
 }
 
 // @public
@@ -118,7 +118,7 @@ export type AdminCommandEventMap = {
 // @public
 export class AdminCommandFailedEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number);
+    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
     // (undocumented)
@@ -130,7 +130,7 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandPollingEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number);
+    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number);
     readonly elapsed: number;
     // (undocumented)
     getMessage(): string;
@@ -143,7 +143,7 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandStartedEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>);
+    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>);
     // (undocumented)
     getMessage(): string;
     // @internal
@@ -154,7 +154,7 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number);
+    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number);
     readonly duration: number;
     // (undocumented)
     getMessage(): string;
@@ -166,7 +166,7 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]);
+    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]);
     // (undocumented)
     getMessage(): string;
     // @internal
@@ -202,6 +202,22 @@ export interface AlterTableOperations<Schema extends SomeRow> {
 // @public
 export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'tableAdminTimeoutMs'> {
     operation: AlterTableOperations<Schema>;
+}
+
+// @public (undocumented)
+export interface AsCollectionCodecClassFns<Class extends SomeConstructor> {
+    // (undocumented)
+    deserializeForCollection: SerDesFn<CollectionDesCtx>;
+    // (undocumented)
+    serializeForCollection: (this: InstanceType<Class>, ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
+}
+
+// @public (undocumented)
+export interface AsTableCodecClassFns<Class extends SomeConstructor> {
+    // (undocumented)
+    deserializeForTable: SerDesFn<TableDesCtx>;
+    // (undocumented)
+    serializeForTable: (this: InstanceType<Class>, ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
 }
 
 // @public
@@ -422,16 +438,16 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<RSchema>)[Key]>[]>;
     drop(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<void>;
     estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
-    find(filter?: CollectionFilter<WSchema>, options?: CollectionFindOptions & {
+    find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions & {
         projection?: never;
     }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
     find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>;
     // (undocumented)
-    findAndRerank(filter?: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & {
+    findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & {
         projection?: never;
-    }): CollectionFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>;
+    }): CollectionFindAndRerankCursor<RerankedResult<RSchema>, RerankedResult<RSchema>>;
     // (undocumented)
-    findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<TRaw, TRaw>;
+    findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<TRaw>, RerankedResult<TRaw>>;
     findOne(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions & {
         projection?: never;
     }): Promise<WithSim<RSchema> | null>;
@@ -474,11 +490,7 @@ export type CollectionCodecClass = (abstract new (...args: any[]) => {
 // @public (undocumented)
 export class CollectionCodecs {
     // (undocumented)
-    static asCodecClass<T>(val: T, builder?: ((val: T & CollectionCodecClass & {
-        prototype: {
-            [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
-        };
-    }) => void)): CollectionCodecClass;
+    static asCodecClass<Class extends SomeConstructor>(clazz: Class, fns?: AsCollectionCodecClassFns<Class>): CollectionCodecClass;
     // (undocumented)
     static custom(opts: CollCustomCodecOpts): RawCollCodecs;
     // (undocumented)
@@ -529,7 +541,7 @@ export interface CollectionDefinition<Schema extends SomeDoc> {
 // @public
 export class CollectionDeleteManyError extends DataAPIError {
     // @internal
-    constructor(cause: unknown, partRes: CollectionDeleteManyResult);
+    constructor(cause: unknown, partialRes: CollectionDeleteManyResult);
     readonly cause: Error;
     name: string;
     readonly partialResult: CollectionDeleteManyResult;
@@ -641,7 +653,7 @@ export type CollectionIndexingOptions<Schema extends SomeDoc> = {
 // @public
 export class CollectionInsertManyError extends DataAPIError {
     // @internal
-    constructor(causes: DataAPIResponseError[], partRes: CollectionInsertManyResult<SomeDoc>);
+    constructor(causes: NonEmpty<DataAPIResponseError>, partRes: CollectionInsertManyResult<SomeDoc>);
     // (undocumented)
     errors(): Error[];
     // (undocumented)
@@ -750,7 +762,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
 // @public
 export class CollectionUpdateManyError extends DataAPIError {
     // @internal
-    constructor(cause: unknown, partRes: CollectionUpdateManyResult<SomeDoc>);
+    constructor(cause: unknown, partialRes: CollectionUpdateManyResult<SomeDoc>);
     readonly cause: Error;
     name: string;
     readonly partialResult: CollectionUpdateManyResult<SomeDoc>;
@@ -876,11 +888,11 @@ export class CommandWarningsEvent extends CommandEvent {
 // @public
 export type ContainsDate<Schema> = IsDate<Schema[keyof Schema]>;
 
-// Warning: (ae-forgotten-export) The symbol "CqlNonGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "CqlGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "CqlType2TSTypeInternal" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "PickCqlType" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type CqlType2TSType<T extends string, Def> = T extends keyof CqlNonGenericType2TSTypeDict ? CqlNonGenericType2TSTypeDict[T] : T extends keyof CqlGenericType2TSTypeDict<Def> ? CqlGenericType2TSTypeDict<Def>[T] : unknown;
+export type CqlType2TSType<Def extends CreateTableColumnDefinitions[string]> = CqlType2TSTypeInternal<PickCqlType<Def>, Def>;
 
 // @public
 export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'> & {
@@ -897,13 +909,13 @@ export interface CreateCollectionOptions<Schema extends SomeDoc> extends Collect
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
 // @public
-export interface CreateTableDefinition<Def extends CreateTableDefinition<Def>> {
+export interface CreateTableDefinition<Def extends CreateTableDefinition<Def> = any> {
     readonly columns: CreateTableColumnDefinitions;
     readonly primaryKey: TablePrimaryKeyDefinition<keyof Def['columns'] & string>;
 }
 
 // @public
-export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition<any>> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
+export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
     // (undocumented)
     definition: Def;
     // (undocumented)
@@ -951,6 +963,7 @@ export interface CustomHttpClientOptions {
 // @public
 export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIBlob | undefined)?];
+    [$SerializeForCollection](): void;
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, ({
         $binary: string;
     } | undefined)?];
@@ -1010,6 +1023,7 @@ export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdmin
 // @public
 export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
     static [$DeserializeForTable](value: string, ctx: TableDesCtx): readonly [0, (DataAPIDate | undefined)?];
+    [$SerializeForCollection](): void;
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(date: Date);
     constructor(date: string);
@@ -1048,6 +1062,7 @@ export class DataAPIDbAdmin extends DbAdmin {
 // @public
 export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIDuration | undefined)?];
+    [$SerializeForCollection](): void;
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(duration: string);
     // @internal
@@ -1136,8 +1151,11 @@ export class DataAPIHttpError extends DataAPIError {
 // @public
 export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIInet | undefined)?];
+    [$SerializeForCollection](): void;
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(address: string, version?: 4 | 6 | null, validate?: boolean);
+    static isIPv4(raw: string): boolean;
+    static isIPv6(raw: string): boolean;
     // (undocumented)
     readonly _raw: string;
     toString(): string;
@@ -1149,11 +1167,15 @@ export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
 // @public
 export class DataAPIResponseError extends DataAPIError {
     // @internal
-    constructor(command: Record<string, any>, rawResponse: RawDataAPIResponse);
+    constructor(command: Record<string, any>, rawResponse: RawDataAPIResponse & {
+        errors: NonEmpty<DataAPIErrorDescriptor>;
+    });
     readonly command: Record<string, any>;
-    get errorDescriptors(): readonly DataAPIErrorDescriptor[];
+    get errorDescriptors(): ReadonlyNonEmpty<DataAPIErrorDescriptor>;
     readonly message: string;
-    readonly rawResponse: RawDataAPIResponse;
+    readonly rawResponse: RawDataAPIResponse & {
+        errors: ReadonlyNonEmpty<DataAPIErrorDescriptor>;
+    };
     get warnings(): readonly DataAPIWarningDescriptor[];
     // @internal (undocumented)
     withTransientDupesForEvents(): {
@@ -1164,6 +1186,7 @@ export class DataAPIResponseError extends DataAPIError {
 // @public
 export class DataAPITime implements TableCodec<typeof DataAPITime> {
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPITime | undefined)?];
+    [$SerializeForCollection](): void;
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(time: Date);
     constructor(time: string);
@@ -1254,11 +1277,12 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CreateCollectionOptions<WSchema>): Promise<Collection<WSchema, RSchema>>;
-    createTable<const Def extends CreateTableDefinition<any>>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
+    createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
     createTable<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void>;
+    readonly endpoint: string;
     get _httpClient(): OpaqueHttpClient;
     get id(): string;
     info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbInfo>;
@@ -1362,20 +1386,12 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
 }
 
 // @public
-export class DevOpsUnexpectedStateError extends DevOpsAPIError {
-    // @internal
-    constructor(message: string, expected: string[], data: SomeDoc | undefined);
-    readonly dbInfo?: Record<string, any>;
-    readonly expected: string[];
-}
-
-// @public
 export interface DropCollectionOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {
 }
 
 // @public
 export interface DropColumnOperation<Schema extends SomeRow> {
-    columns: (keyof Schema)[];
+    columns: (keyof Schema & string)[];
 }
 
 // @public (undocumented)
@@ -1388,7 +1404,7 @@ export interface DropTableOptions extends WithTimeout<'tableAdminTimeoutMs'>, Wi
 
 // @public
 export interface DropVectorizeOperation<Schema extends SomeRow> {
-    columns: (keyof Schema)[];
+    columns: (keyof Schema & string)[];
 }
 
 // @public
@@ -1547,11 +1563,11 @@ export class FetchNative implements Fetcher {
 export type Filter = Record<string, any>;
 
 // @public (undocumented)
-export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankResult<TRaw>> {
+export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankedResult<TRaw>> {
     // @internal
     [$CustomInspect](): string;
     // @internal
-    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
+    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T);
     // (undocumented)
     clone(): this;
     get dataSource(): Table<SomeRow> | Collection;
@@ -1561,12 +1577,18 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     // @internal (undocumented)
     readonly _filter: SerializedFilter;
     // (undocumented)
+    getSortVector(): Promise<DataAPIVector | null>;
+    // (undocumented)
     hybridLimits(hybridLimits: number | Record<string, number>): this;
+    // (undocumented)
+    includeScores(includeScores?: boolean): this;
+    // (undocumented)
+    includeSortVector(includeSortVector?: boolean): this;
     limit(limit: number): this;
     // (undocumented)
     map<R>(map: (doc: T) => R): FindAndRerankCursor<R, TRaw>;
     // @internal (undocumented)
-    protected _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankResult<TRaw>[]>;
+    protected _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankedResult<TRaw>[]>;
     // @internal (undocumented)
     readonly _options: GenericFindAndRerankOptions;
     // @internal (undocumented)
@@ -1574,6 +1596,8 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RRaw, RRaw>;
     // (undocumented)
     rerankOn(rerankOn: string): this;
+    // (undocumented)
+    rerankQuery(rerankQuery: string): this;
     // Warning: (ae-forgotten-export) The symbol "SerDes" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
@@ -1666,10 +1690,16 @@ export interface GenericDeleteOneResult {
 export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     hybridLimits?: number | Record<string, number>;
+    // (undocumented)
+    includeScores?: boolean;
+    // (undocumented)
+    includeSortVector?: boolean;
     limit?: number;
     projection?: Projection;
     // (undocumented)
     rerankOn?: string;
+    // (undocumented)
+    rerankQuery?: string;
     sort?: HybridSort;
 }
 
@@ -1751,6 +1781,9 @@ export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeo
 // @public
 export type GenericUpdateResult<ID, N extends number> = (GuaranteedUpdateResult<N> & UpsertedUpdateResult<ID>) | (GuaranteedUpdateResult<N> & NoUpsertUpdateResult);
 
+// @internal (undocumented)
+export function genObjectId(time: number | nullish, genIndex: number): string;
+
 // @public (undocumented)
 export type GetCollNumCoercionFn = (path: readonly PathSegment[], matches: (path: readonly PathSegment[]) => boolean) => CollNumCoercion;
 
@@ -1806,7 +1839,7 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
 export type HttpOptions = FetchH2HttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
 
 // @public (undocumented)
-export type HybridSort = Sort & {
+export type HybridSort = Record<string, SortDirection | string | number[] | DataAPIVector | HybridSortObject> & {
     $hybrid: string | HybridSortObject;
 };
 
@@ -1828,28 +1861,28 @@ export type IdOf<Doc> = Doc extends {
 } ? Id : SomeId;
 
 // @public
-export const inet: (address: string, version?: 4 | 6) => DataAPIInet;
+export const inet: (address: string, version?: 4 | 6 | null) => DataAPIInet;
 
 // @public
-export type InferrableTable = CreateTableDefinition<any> | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
+export type InferrableTable = CreateTableDefinition | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
 
 // Warning: (ae-forgotten-export) The symbol "InferTablePKFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTablePrimaryKey<T extends InferrableTable> = T extends CreateTableDefinition<any> ? InferTablePKFromDefinition<T> : T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never;
+export type InferTablePrimaryKey<T extends InferrableTable> = T extends CreateTableDefinition ? InferTablePKFromDefinition<T> : T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never;
 
 // Warning: (ae-forgotten-export) The symbol "InferTableSchemaFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTableReadSchema<T extends InferrableTable> = T extends CreateTableDefinition<any> ? FoundRow<InferTableSchemaFromDefinition<T>> : T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never;
+export type InferTableReadSchema<T extends InferrableTable> = T extends CreateTableDefinition ? FoundRow<InferTableSchemaFromDefinition<T>> : T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never;
 
 // @public
-export type InferTableSchema<T extends InferrableTable> = T extends CreateTableDefinition<any> ? InferTableSchemaFromDefinition<T> : T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never;
+export type InferTableSchema<T extends InferrableTable> = T extends CreateTableDefinition ? InferTableSchemaFromDefinition<T> : T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never;
 
 // @public
 export class InvalidEnvironmentError extends Error {
     // @internal
-    constructor(operation: string, currentEnvironment: string, expectedEnvironments: string[], extra?: string);
+    constructor(operation: string, currentEnvironment: string, expectedEnvironments: string[], extra: string);
     readonly currentEnvironment: string;
     readonly expectedEnvironments: string[];
 }
@@ -1885,7 +1918,7 @@ export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTim
     include?: AstraDbStatusFilter;
     limit?: number;
     provider?: AstraDbCloudProviderFilter;
-    skip?: number;
+    startingAfter?: string;
 }
 
 // @public
@@ -2013,14 +2046,15 @@ export class ObjectId implements CollectionCodec<typeof ObjectId> {
     [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, ({
         $objectId: string;
     } | undefined)?];
-    constructor(id?: string | number | null, validate?: boolean);
+    [$SerializeForTable](): void;
+    constructor(id?: string | number | ObjectId | null, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date;
     toString(): string;
 }
 
 // @public
-export const oid: (id?: string | number | null) => ObjectId;
+export const oid: (id?: string | number | null | ObjectId) => ObjectId;
 
 // @public
 export type OneOrMany<T> = T | readonly T[];
@@ -2103,6 +2137,15 @@ export interface Ref<T> {
     ref: T;
 }
 
+// @public (undocumented)
+export class RerankedResult<TRaw> {
+    constructor(document: TRaw, scores: Record<string, number>);
+    // (undocumented)
+    readonly document: TRaw;
+    // (undocumented)
+    readonly scores: Record<string, number>;
+}
+
 // @public
 export class RerankingAPIKeyHeaderProvider extends StaticHeadersProvider<'reranking'> {
     constructor(apiKey: string | nullish);
@@ -2123,15 +2166,6 @@ export interface RerankingServiceOptions {
     parameters?: Record<string, unknown>;
     // (undocumented)
     provider: string;
-}
-
-// @public (undocumented)
-export class RerankResult<TRaw> {
-    constructor(document: TRaw, scores: Record<string, number>);
-    // (undocumented)
-    readonly document: TRaw;
-    // (undocumented)
-    readonly scores: Record<string, number>;
 }
 
 // @public
@@ -2231,7 +2265,7 @@ export type StrictCreateTableColumnDefinition = TableScalarColumnDefinition | Ta
 export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalLogger<CommandEventMap> {
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: TableOptions | undefined);
-    alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>>;
+    alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<WSchema>): Promise<Table<NewWSchema, PKey, NewRSchema>>;
     createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void>;
     createTextIndex(name: string, column: keyof WSchema, options?: TableCreateTextIndexOptions): Promise<void>;
     createVectorIndex(name: string, column: keyof WSchema, options?: TableCreateVectorIndexOptions): Promise<void>;
@@ -2239,16 +2273,10 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     deleteMany(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
     deleteOne(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
     drop(options?: Omit<DropTableOptions, 'keyspace'>): Promise<void>;
-    find(filter?: TableFilter<WSchema>, options?: TableFindOptions & {
+    find(filter: TableFilter<WSchema>, options?: TableFindOptions & {
         projection?: never;
     }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
     find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
-    // (undocumented)
-    findAndRerank(filter?: TableFilter<WSchema>, options?: TableFindAndRerankOptions & {
-        projection?: never;
-    }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>;
-    // (undocumented)
-    findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>;
     findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions & {
         projection?: never;
     }): Promise<WithSim<RSchema> | null>;
@@ -2275,11 +2303,7 @@ export type TableCodecClass = (abstract new (...args: any[]) => {
 // @public (undocumented)
 export class TableCodecs {
     // (undocumented)
-    static asCodecClass<T>(val: T, builder?: ((val: T & TableCodecClass & {
-        prototype: {
-            [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
-        };
-    }) => void)): TableCodecClass;
+    static asCodecClass<Class extends SomeConstructor>(clazz: Class, fns?: AsTableCodecClassFns<Class>): TableCodecClass;
     // (undocumented)
     static custom(opts: TableCustomCodecOpts): RawTableCodecs;
     // (undocumented)
@@ -2435,7 +2459,7 @@ export interface TableIndexOptions {
 // @public
 export class TableInsertManyError extends DataAPIError {
     // @internal
-    constructor(causes: DataAPIResponseError[], partRes: TableInsertManyResult<SomeRow>);
+    constructor(causes: NonEmpty<DataAPIResponseError>, partRes: TableInsertManyResult<SomeRow>);
     // (undocumented)
     errors(): Error[];
     // (undocumented)
@@ -2649,19 +2673,24 @@ export class UUID implements DataAPICodec<typeof UUID> {
         $uuid: string;
     } | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
-    constructor(uuid: string, validate?: boolean, version?: number);
+    constructor(uuid: string | UUID, validate?: boolean, version?: number);
     equals(other: unknown): boolean;
     getTimestamp(): Date | undefined;
     toString(): string;
-    static v1(msecs?: number, nsecs?: number): UUID;
-    static v4(): UUID;
-    static v6(msecs?: number, nsecs?: number): UUID;
-    static v7(msecs?: number): UUID;
+    static v1(this: void, msecs?: number, nsecs?: number): UUID;
+    static v4(this: void): UUID;
+    static v6(this: void, msecs?: number, nsecs?: number): UUID;
+    static v7(this: void, msecs?: number): UUID;
     readonly version: number;
 }
 
 // @public
-export const uuid: (uuid: string | 1 | 4 | 6 | 7) => UUID;
+export const uuid: ((...params: [string] | [UUID]) => UUID) & {
+    v1: typeof UUID.v1;
+    v4: typeof UUID.v4;
+    v6: typeof UUID.v6;
+    v7: typeof UUID.v7;
+};
 
 // @public
 export const vector: (v: DataAPIVectorLike) => DataAPIVector;

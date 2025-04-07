@@ -24,7 +24,7 @@ describe('unit.documents.collections.ser-des.mutate-in-place', () => {
     const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, mutateInPlace: true });
 
     it('should mutate the input object in place', () => {
-      const id = uuid(4);
+      const id = uuid.v4();
 
       const obj = {
         int: 1,
@@ -51,7 +51,7 @@ describe('unit.documents.collections.ser-des.mutate-in-place', () => {
     const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, mutateInPlace: false });
 
     it('should not mutate the input object in place', () => {
-      const id = uuid(4);
+      const id = uuid.v4();
 
       const obj = {
         int: 1,

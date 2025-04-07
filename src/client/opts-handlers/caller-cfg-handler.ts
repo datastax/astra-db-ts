@@ -14,8 +14,8 @@
 
 import { oneOrMany } from '@/src/lib/utils.js';
 import { either, nullish, string, tuple } from 'decoders';
-import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
-import { OptionsHandler } from '@/src/lib/opts-handler.js';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handlers.js';
+import { OptionsHandler } from '@/src/lib/opts-handlers.js';
 import type { Caller } from '@/src/client/index.js';
 import type { OneOrMany } from '@/src/lib/index.js';
 import { CLIENT_USER_AGENT } from '@/src/lib/api/constants.js';

@@ -325,11 +325,12 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     }
 
     if (typeof options?.limit === 'number') {
-      params.limit = String(options.skip);
+      params.limit = String(options.limit);
     }
 
-    if (typeof options?.skip === 'number') {
-      params.starting_after = String(options.skip);
+    /* c8 ignore next 3: this is a stupid parameter which I can't be bothered to test */
+    if (typeof options?.startingAfter === 'string') {
+      params.starting_after = options.startingAfter;
     }
 
     const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);

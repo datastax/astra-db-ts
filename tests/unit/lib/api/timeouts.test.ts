@@ -15,9 +15,11 @@
 
 import assert from 'assert';
 import { describe, it, parallel } from '@/tests/testlib/index.js';
-import type { TimedOutCategories, TimeoutManager} from '@/src/lib/api/timeouts/timeouts.js';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
-import type { HttpClient, HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import type { TimedOutCategories, TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
+import { EffectivelyInfinity, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import type { DataAPIHttpClient, DevOpsAPIHttpClient, HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import fc from 'fast-check';
+import { arbs } from '@/tests/testlib/arbitraries.js';
 
 describe('unit.lib.api.timeouts', () => {
   class TimeoutError extends Error {
@@ -49,75 +51,107 @@ describe('unit.lib.api.timeouts', () => {
     });
 
     it('works w/ override number', () => {
-      const tm = timeouts.single('generalMethodTimeoutMs', { timeout: 100 });
-      const [timeout, mkError] = tm.advance(info(tm));
+      fc.assert(
+        fc.property(fc.nat(), (overrideMs) => {
+          const tm = timeouts.single('generalMethodTimeoutMs', { timeout: overrideMs });
+          const [timeout, mkError] = tm.advance(info(tm));
 
-      assert.strictEqual(timeout, 100);
+          const expectedOverrideMs = overrideMs || EffectivelyInfinity;
+          assert.strictEqual(timeout, expectedOverrideMs);
 
-      const e = mkError();
-      assert.ok(e instanceof TimeoutError);
-      assert.deepStrictEqual(e.info, info(tm));
-      assert.deepStrictEqual(e.timeoutType, 'provided');
-      assert.strictEqual(e.message, 'Command timed out after 100ms (The timeout provided via `{ timeout: <number> }` timed out)');
+          const e = mkError();
+          assert.ok(e instanceof TimeoutError);
+          assert.deepStrictEqual(e.info, info(tm));
+          assert.deepStrictEqual(e.timeoutType, 'provided');
+          assert.strictEqual(e.message, `Command timed out after ${expectedOverrideMs}ms (The timeout provided via \`{ timeout: <number> }\` timed out)`);
 
-      assert.deepStrictEqual(tm.initial(), {
-        generalMethodTimeoutMs: 100,
-        requestTimeoutMs: 100,
-      });
+          assert.deepStrictEqual(tm.initial(), {
+            generalMethodTimeoutMs: expectedOverrideMs,
+            requestTimeoutMs: expectedOverrideMs,
+          });
+        }), {
+          examples: [[0]],
+        },
+      );
     });
 
     it('works w/ partial override object', () => {
-      const tm = timeouts.single('databaseAdminTimeoutMs', { timeout: { generalMethodTimeoutMs: 100, databaseAdminTimeoutMs: 50 } });
-      const [timeout, mkError] = tm.advance(info(tm));
+      fc.assert(
+        fc.property(fc.nat(), fc.nat(), (overrideDA, overrideGM) => {
+          const tm = timeouts.single('databaseAdminTimeoutMs', { timeout: { generalMethodTimeoutMs: overrideGM, databaseAdminTimeoutMs: overrideDA } });
+          const [timeout, mkError] = tm.advance(info(tm));
 
-      assert.strictEqual(timeout, 50);
+          const expectedOverrideDA = overrideDA || EffectivelyInfinity;
+          const expectedOverrideMs = Math.min(Timeouts.Default.requestTimeoutMs, expectedOverrideDA);
+          assert.strictEqual(timeout, expectedOverrideMs);
 
-      const e = mkError();
-      assert.ok(e instanceof TimeoutError);
-      assert.deepStrictEqual(e.info, info(tm));
-      assert.deepStrictEqual(e.timeoutType, ['databaseAdminTimeoutMs']);
-      assert.strictEqual(e.message, 'Command timed out after 50ms (databaseAdminTimeoutMs timed out)');
+          const expectedOverrideField = (Timeouts.Default.requestTimeoutMs > expectedOverrideDA)
+            ? 'databaseAdminTimeoutMs'
+            : 'requestTimeoutMs';
 
-      assert.deepStrictEqual(tm.initial(), {
-        requestTimeoutMs: Timeouts.Default.requestTimeoutMs,
-        databaseAdminTimeoutMs: 50,
-      });
+          const e = mkError();
+          assert.ok(e instanceof TimeoutError);
+          assert.deepStrictEqual(e.info, info(tm));
+
+          if (Timeouts.Default.requestTimeoutMs === expectedOverrideDA) {
+            assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs', 'databaseAdminTimeoutMs']);
+            assert.strictEqual(e.message, `Command timed out after ${expectedOverrideMs}ms (requestTimeoutMs and databaseAdminTimeoutMs simultaneously timed out)`);
+          } else {
+            assert.deepStrictEqual(e.timeoutType, [expectedOverrideField]);
+            assert.strictEqual(e.message, `Command timed out after ${expectedOverrideMs}ms (${expectedOverrideField} timed out)`);
+          }
+
+          assert.deepStrictEqual(tm.initial(), {
+            requestTimeoutMs: Timeouts.Default.requestTimeoutMs,
+            databaseAdminTimeoutMs: expectedOverrideDA,
+          });
+        }), {
+          examples: [
+            [Timeouts.Default.requestTimeoutMs, arbs.one(fc.nat())],
+            [0, 0],
+          ],
+        },
+      );
     });
 
     it('works w/ full override object', () => {
-      const tm = timeouts.single('databaseAdminTimeoutMs', { timeout: { generalMethodTimeoutMs: 100, requestTimeoutMs: 10, databaseAdminTimeoutMs: 50 } });
-      const [timeout, mkError] = tm.advance(info(tm));
+      fc.assert(
+        fc.property(fc.nat(), fc.nat(), fc.nat(), (overrideDA, overrideRT, overrideGM) => {
+          const tm = timeouts.single('databaseAdminTimeoutMs', { timeout: { generalMethodTimeoutMs: overrideGM, requestTimeoutMs: overrideRT, databaseAdminTimeoutMs: overrideDA } });
+          const [timeout, mkError] = tm.advance(info(tm));
 
-      assert.strictEqual(timeout, 10);
+          const expectedOverrideDA = overrideDA || EffectivelyInfinity;
+          const expectedOverrideRT = overrideRT || EffectivelyInfinity;
+          const expectedOverrideMs = Math.min(expectedOverrideRT, expectedOverrideDA);
+          assert.strictEqual(timeout, expectedOverrideMs);
 
-      const e = mkError();
-      assert.ok(e instanceof TimeoutError);
-      assert.deepStrictEqual(e.info, info(tm));
-      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs']);
-      assert.strictEqual(e.message, 'Command timed out after 10ms (requestTimeoutMs timed out)');
+          const expectedOverrideField = (expectedOverrideRT > expectedOverrideDA)
+            ? 'databaseAdminTimeoutMs'
+            : 'requestTimeoutMs';
 
-      assert.deepStrictEqual(tm.initial(), {
-        databaseAdminTimeoutMs: 50,
-        requestTimeoutMs: 10,
-      });
-    });
+          const e = mkError();
+          assert.ok(e instanceof TimeoutError);
+          assert.deepStrictEqual(e.info, info(tm));
 
-    it('works w/ uniform full override object', () => {
-      const tm = timeouts.single('keyspaceAdminTimeoutMs', { timeout: { keyspaceAdminTimeoutMs: Timeouts.Default.requestTimeoutMs } });
-      const [timeout, mkError] = tm.advance(info(tm));
+          if (expectedOverrideRT === expectedOverrideDA) {
+            assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs', 'databaseAdminTimeoutMs']);
+            assert.strictEqual(e.message, `Command timed out after ${expectedOverrideMs}ms (requestTimeoutMs and databaseAdminTimeoutMs simultaneously timed out)`);
+          } else {
+            assert.deepStrictEqual(e.timeoutType, [expectedOverrideField]);
+            assert.strictEqual(e.message, `Command timed out after ${expectedOverrideMs}ms (${expectedOverrideField} timed out)`);
+          }
 
-      assert.strictEqual(timeout, Timeouts.Default.requestTimeoutMs);
-
-      const e = mkError();
-      assert.ok(e instanceof TimeoutError);
-      assert.deepStrictEqual(e.info, info(tm));
-      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs', 'keyspaceAdminTimeoutMs']);
-      assert.strictEqual(e.message, `Command timed out after ${Timeouts.Default.requestTimeoutMs}ms (requestTimeoutMs and keyspaceAdminTimeoutMs simultaneously timed out)`);
-
-      assert.deepStrictEqual(tm.initial(), {
-        keyspaceAdminTimeoutMs: Timeouts.Default.requestTimeoutMs,
-        requestTimeoutMs: Timeouts.Default.requestTimeoutMs,
-      });
+          assert.deepStrictEqual(tm.initial(), {
+            databaseAdminTimeoutMs: expectedOverrideDA,
+            requestTimeoutMs: expectedOverrideRT,
+          });
+        }), {
+          examples: [
+            [123, 123, arbs.one(fc.nat())],
+            [0, 0, 0],
+          ],
+        },
+      );
     });
   });
 
@@ -257,45 +291,63 @@ describe('unit.lib.api.timeouts', () => {
       assert.deepStrictEqual(e3.timeoutType, ['keyspaceAdminTimeoutMs']);
       assert.strictEqual(e3.message, 'Command timed out after 50ms (keyspaceAdminTimeoutMs timed out)');
     });
+
+    it('should set the proper initial timeout', () => {
+      fc.assert(
+        fc.property(fc.option(fc.nat()), fc.option(fc.nat()), fc.option(fc.nat()), (overrideDA, overrideRT, overrideGM) => {
+          const tm = timeouts.multipart('databaseAdminTimeoutMs', { timeout: { generalMethodTimeoutMs: overrideGM, requestTimeoutMs: overrideRT, databaseAdminTimeoutMs: overrideDA } });
+
+          assert.deepStrictEqual(tm.initial(), {
+            databaseAdminTimeoutMs: (overrideDA ?? Timeouts.Default.databaseAdminTimeoutMs) || EffectivelyInfinity,
+            requestTimeoutMs: (overrideRT ?? Timeouts.Default.requestTimeoutMs) || EffectivelyInfinity,
+          });
+        }),
+      );
+    });
   });
 
   parallel('custom', ({ db, dbAdmin }) => {
     it('should return what it was given', () => {
-      const tm = timeouts.custom({ databaseAdminTimeoutMs: 3, requestTimeoutMs: 5 }, () => [1, ['requestTimeoutMs']]);
-      let [timeout, mkError] = tm.advance(info(tm));
-      assert.strictEqual(timeout, 1);
+      const timeoutTypeArb = fc.constantFrom('requestTimeoutMs', 'databaseAdminTimeoutMs');
 
-      const e = mkError();
-      assert.ok(e instanceof TimeoutError);
-      assert.deepStrictEqual(e.info, info(tm));
-      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs']);
-      assert.strictEqual(e.message, 'Command timed out after 5ms (requestTimeoutMs timed out)');
+      fc.assert(
+        fc.property(fc.nat(), fc.nat(), fc.nat(), timeoutTypeArb, (overrideDA, overrideRT, advanceMS, timeoutType) => {
+          const tm = timeouts.custom({ databaseAdminTimeoutMs: overrideDA, requestTimeoutMs: overrideRT }, () => [advanceMS, [timeoutType]]);
 
-      assert.deepStrictEqual(tm.initial(), {
-        databaseAdminTimeoutMs: 3,
-        requestTimeoutMs: 5,
-      });
+          for (let i = 0; i < 10; i++) {
+            const [timeout, mkError] = tm.advance(info(tm));
+            assert.strictEqual(timeout, advanceMS);
 
-      [timeout, mkError] = tm.advance(info(tm));
-      assert.strictEqual(timeout, 1);
+            const e = mkError();
+            assert.ok(e instanceof TimeoutError);
+            assert.deepStrictEqual(e.info, info(tm));
+            assert.deepStrictEqual(e.timeoutType, [timeoutType]);
+            assert.strictEqual(e.message, `Command timed out after ${timeoutType === 'requestTimeoutMs' ? overrideRT : overrideDA}ms (${timeoutType} timed out)`);
 
-      const e2 = mkError();
-      assert.ok(e2 instanceof TimeoutError);
-      assert.deepStrictEqual(e2.info, info(tm));
-      assert.deepStrictEqual(e2.timeoutType, ['requestTimeoutMs']);
-      assert.strictEqual(e2.message, 'Command timed out after 5ms (requestTimeoutMs timed out)');
+            assert.deepStrictEqual(tm.initial(), {
+              databaseAdminTimeoutMs: overrideDA,
+              requestTimeoutMs: overrideRT,
+            });
+          }
+        }), {
+          examples: [[0, 0, 0, arbs.one(timeoutTypeArb)]],
+        },
+      );
     });
 
     it('has the httpclient throw early if timeout <= 0', async () => {
-      const httpClient1 = db._httpClient as HttpClient;
-      const httpClient2 = dbAdmin._httpClient as HttpClient;
+      const httpClient1 = db._httpClient as DataAPIHttpClient;
+      const httpClient2 = dbAdmin._httpClient as DevOpsAPIHttpClient;
 
-      const tm1 = <const>[ 0, timeouts.custom({ requestTimeoutMs:  0 }, () => [ 0, ['requestTimeoutMs']])];
-      const tm2 = <const>[-1, timeouts.custom({ requestTimeoutMs: -1 }, () => [-1, ['requestTimeoutMs']])];
+      const tm1 = <const>[ 0, timeouts.custom({ requestTimeoutMs: +0 }, () => [ 0, ['requestTimeoutMs']])];
+      const tm2 = <const>[ 0, timeouts.custom({ requestTimeoutMs: -0 }, () => [ 0, ['requestTimeoutMs']])];
+      const tm3 = <const>[-1, timeouts.custom({ requestTimeoutMs: -1 }, () => [-1, ['requestTimeoutMs']])];
 
-      for (const [ms, tm] of [tm1, tm2]) {
-        await assert.rejects(() => httpClient1['_request'](info(tm)), { message: `Command timed out after ${ms}ms (requestTimeoutMs timed out)` });
-        await assert.rejects(() => httpClient2['_request'](info(tm)), { message: `Command timed out after ${ms}ms (requestTimeoutMs timed out)` });
+      for (const [ms, tm] of [tm1, tm2, tm3]) {
+        for (let i = 0; i < 10; i++) {
+          await assert.rejects(() => httpClient1['_request'](info(tm)), { message: `Command timed out after ${ms}ms (requestTimeoutMs timed out)` });
+          await assert.rejects(() => httpClient2['_request'](info(tm)), { message: `Command timed out after ${ms}ms (requestTimeoutMs timed out)` });
+        }
       }
     });
   });

@@ -142,39 +142,6 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
   }
 }
 
-/**
- * Error thrown when the DevOps API returns is in an unexpected state (i.e. `'PARKED'` when `'ACTIVE'` or `'PENDING'`
- * was expected).
- *
- * @field dbInfo - The complete database info, which includes the status of the database.
- * @field status - The HTTP status code of the response, if available.
- *
- * @public
- */
-export class DevOpsUnexpectedStateError extends DevOpsAPIError {
-  /**
-   * The expected states that were not met.
-   */
-  public readonly expected: string[];
-
-  /**
-   * The complete database info, which includes the status of the database.
-   */
-  public readonly dbInfo?: Record<string, any>;
-
-  /**
-   * Shouldn't be instantiated directly.
-   *
-   * @internal
-   */
-  constructor(message: string, expected: string[], data: SomeDoc | undefined) {
-    super(message);
-    this.expected = expected;
-    this.dbInfo = data;
-    this.name = 'DevOpsUnexpectedStateError';
-  }
-}
-
 function extractErrorDescriptors(data: Record<string, any> | undefined): DevOpsAPIErrorDescriptor[] {
   const errors: { ID: number, message: string }[] = data?.errors || [];
 

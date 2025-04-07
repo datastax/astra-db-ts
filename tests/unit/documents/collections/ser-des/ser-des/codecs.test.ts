@@ -150,7 +150,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       const IdCodec = CollectionCodecs.forId(Id);
       const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
 
-      const id = new Id(uuid(4));
+      const id = new Id(uuid.v4());
       const doc = { _id: id, value: 1n };
 
       const ser = serdes.serialize(doc);

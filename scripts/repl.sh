@@ -59,7 +59,17 @@ node -i -e "
   const bn = require('bignumber.js');
   const JBI = require('json-bigint');
 
-  let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }] });
+  let fetchNative = new $.FetchNative()
+  let fetchInfo;
+
+  let fetcher = {
+    fetch(info) {
+      fetchInfo = info;
+      return fetchNative.fetch(info);
+    }
+  }
+
+  let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }], httpOptions: { client: 'custom', fetcher } });
   let db = client.db(process.env.CLIENT_DB_URL, { keyspace: '$default_keyspace_name' });
   let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
 
@@ -70,7 +80,9 @@ node -i -e "
     : null;
 
   let coll = db.collection('$default_coll_name');
+  let coll_ = db.collection('$default_coll_name', { keyspace: 'other_keyspace', embeddingApiKey: process.env.TEST_OPENAI_KEY });
   let table = db.table('$default_table_name');
+  let table_ = db.table('$default_table_name', { keyspace: 'other_keyspace', embeddingApiKey: process.env.TEST_OPENAI_KEY });
 
   if (process.env.LOG_ALL_TO_STDOUT) {
     for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed', /.*Warning/]) {
@@ -94,11 +106,27 @@ node -i -e "
   });
 
   Object.defineProperty(this, 'cfa', {
-    get: sp(() => coll.find({}).toArray()),
+    get: sp(() => coll.find({}).project({ '*': 1 }).toArray()),
   });
 
   Object.defineProperty(this, 'tfa', {
-    get: sp(() => table.find({}).toArray()),
+    get: sp(() => table.find({}).project({ '*': 1 }).toArray()),
+  });
+
+  Object.defineProperty(this, 'cda_', {
+    get: sp(() => coll_.deleteMany({})),
+  });
+
+  Object.defineProperty(this, 'tda_', {
+    get: sp(() => table_.deleteMany({})),
+  });
+
+  Object.defineProperty(this, 'cfa_', {
+    get: sp(() => coll_.find({}).project({ '*': 1 }).toArray()),
+  });
+
+  Object.defineProperty(this, 'tfa_', {
+    get: sp(() => table_.find({}).project({ '*': 1 }).toArray()),
   });
 
   const cif = sp(async (doc) => {
@@ -121,9 +149,60 @@ node -i -e "
     return originalEmit.apply(process, arguments);
   };
 
+  const { styleText } = require('node:util');
+  let promisePlusVerbosity = 'low';
+
+  Object.defineProperty(this, 'vl', {
+    get: () => (promisePlusVerbosity = 'low', 0),
+  });
+
+  Object.defineProperty(this, 'vh', {
+    get: () => (promisePlusVerbosity = 'high', 0),
+  });
+
   Promise.prototype[Symbol.toPrimitive] = function() {
     let ok = 1;
-    console.dir(sp(() => this.catch(e => (ok = 0, e)))(), { colors: true });
+
+    switch (promisePlusVerbosity) {
+      case 'high':
+        sp(() => this
+          .then((r) => {
+             console.log(styleText('gray', '\nCommand:'));
+             console.dir(JSON.parse(fetchInfo.body), { colors: true });
+             console.log(styleText('gray', '\nResponse:'));
+             console.dir(r, { colors: true });
+             console.log(styleText('gray', '\nSuccess?:'));
+          })
+          .catch((e) => {
+             ok = 0;
+             console.log(styleText('gray', '\nCommand:'));
+             console.dir(JSON.parse(fetchInfo.body), { colors: true });
+             console.log(styleText('gray', '\nError:'));
+             console.dir(e, { colors: true });
+             console.log(styleText('gray', '\nSuccess?:'));
+          }))()
+
+        break;
+      case 'low':
+        sp(() => this
+          .then((r) => {
+             console.log(styleText('gray', '\nCommand:'));
+             console.dir(JSON.parse(fetchInfo.body), { colors: true });
+             console.log(styleText('gray', '\nResponse:'));
+             console.dir(r, { colors: true });
+             console.log(styleText('gray', '\nSuccess?:'));
+          })
+          .catch((e) => {
+             ok = 0;
+             console.log(styleText('gray', '\nCommand:'));
+             console.dir(JSON.parse(fetchInfo.body), { colors: true });
+             console.log(styleText('gray', '\nError - ' + e.name + ':'));
+             console.log(styleText('red', e.message));
+             console.log(styleText('gray', '\nSuccess?:'));
+          }))()
+        break;
+    }
+
     return ok;
   }
 "

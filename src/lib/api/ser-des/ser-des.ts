@@ -100,7 +100,7 @@ export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends
    * // Before
    * const collection = db.collection<User>('users');
    *
-   * const doc = { name: 'Alice', friends: { john: uuid(4) } };
+   * const doc = { name: 'Alice', friends: { john: uuid.v4() } };
    * await collection.insertOne(doc);
    *
    * console.log(doc); // { name: 'Alice', friends: { john: UUID<4>('...') } }

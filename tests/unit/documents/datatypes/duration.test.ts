@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPIDuration, duration } from '@/src/documents/index.js';
+import { $SerializeForTable, DataAPIDuration, duration } from '@/src/documents/index.js';
 import { describe, it } from '@/tests/testlib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 
@@ -446,6 +446,12 @@ describe('unit.documents.datatypes.duration', () => {
       assert.throws(() => duration('P2Y3W'), SyntaxError);
       assert.throws(() => duration('P0002-00-20'), SyntaxError);
     });
+  });
+
+  it('should property serialize for tables', () => {
+    assert.strictEqual(duration(0, 0, 0)[$SerializeForTable]({ done: <a>(a: a) => a } as any), '0s');
+    assert.strictEqual(duration(1, 1, 1)[$SerializeForTable]({ done: <a>(a: a) => a } as any), '1mo1d1ns');
+    assert.strictEqual(duration(-1, -1, -1n)[$SerializeForTable]({ done: <a>(a: a) => a } as any), '-1mo1d1ns');
   });
 
   it('should inspect properly', () => {

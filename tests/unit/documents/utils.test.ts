@@ -15,81 +15,74 @@
 import assert from 'assert';
 import {
   betterTypeOf,
-  extractDbIdFromUrl,
-  extractRegionFromUrl,
-  mkInvArgsErr,
+  extractDbComponentsFromAstraUrl,
+  mkInvArgsError,
+  mkWrongTypeError,
 } from '@/src/documents/utils.js';
 import { describe, it } from '@/tests/testlib/index.js';
 import { vector } from '@/src/documents/index.js';
 import * as bn from 'bignumber.js';
+import fc, { constantFrom } from 'fast-check';
 
 describe('unit.documents.utils', () => {
-  describe('extractDbIdFromUri', () => {
-    it('should extract the db id from the uri', () => {
-      const endpoint1 = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-      const id1 = extractDbIdFromUrl(endpoint1);
-      assert.strictEqual(id1, 'a5cf1913-b80b-4f44-ab9f-a8b1c98469d0');
+  describe('extractDbComponentsFromAstraUrl', () => {
+    it('should extract the db id and region from valid astra endpoints', () => {
+      const astraEnvArb = constantFrom('astra', 'astra-dev', 'astra-test');
 
-      const endpoint2 = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra-dev.datastax.com';
-      const id2 = extractDbIdFromUrl(endpoint2);
-      assert.strictEqual(id2, 'a5cf1913-b80b-4f44-ab9f-a8b1c98469d0');
+      fc.assert(
+        fc.property(fc.uuid(), fc.stringMatching(/^[a-z_-]+$/), astraEnvArb, (uuid, region, astraEnv) => {
+          const endpoint = `https://${uuid}-${region}.apps.${astraEnv}.datastax.com`;
+          assert.deepStrictEqual(extractDbComponentsFromAstraUrl(endpoint), [uuid, region]);
+        }),
+      );
     });
 
-    it('returned undefined on invalid url', () => {
-      const endpoint1 = 'https://localhost:3000';
-      const id1 = extractDbIdFromUrl(endpoint1);
-      assert.strictEqual(id1, undefined);
+    it('should return empty array for invalid astra endpoints', () => {
+      fc.assert(
+        fc.property(fc.webUrl(), (webURL) => {
+          assert.deepStrictEqual(extractDbComponentsFromAstraUrl(webURL), []);
+        }),
+      );
 
-      const endpoint2 = 'https://z5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-      const id2 = extractDbIdFromUrl(endpoint2);
-      assert.strictEqual(id2, undefined);
-    });
-  });
-
-  describe('extractDbRegionFromUri', () => {
-    it('should extract the db id from the uri', () => {
-      const endpoint1 = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-      const id1 = extractRegionFromUrl(endpoint1);
-      assert.strictEqual(id1, 'ap-south-1');
-
-      const endpoint2 = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra-dev.datastax.com';
-      const id2 = extractRegionFromUrl(endpoint2);
-      assert.strictEqual(id2, 'ap-south-1');
-    });
-
-    it('returned undefined on invalid url', () => {
-      const endpoint1 = 'https://localhost:3000';
-      const id1 = extractRegionFromUrl(endpoint1);
-      assert.strictEqual(id1, undefined);
-
-      const endpoint2 = 'https://a5cf1913-b80b-4f44-ab9f-ap-south-1.apps.astra.datastax.com';
-      const id2 = extractRegionFromUrl(endpoint2);
-      assert.strictEqual(id2, 'south-1');
+      fc.assert(
+        fc.property(fc.string(), (webURL) => {
+          assert.deepStrictEqual(extractDbComponentsFromAstraUrl(webURL), []);
+        }),
+      );
     });
   });
 
   describe('betterTypeOf', () => {
     it('should work', () => {
       const eq = (expected: string, t: unknown) => assert.deepStrictEqual(betterTypeOf(t), expected);
-      eq(          'null', null              );
-      eq(        'Object', {}                );
-      eq(         'Array', []                );
-      eq(         'Array', [1, 2, 3]         );
-      eq(      'function', () => {}          );
-      eq( 'DataAPIVector', vector([1, 2, 3]) );
-      eq(     'BigNumber', bn.BigNumber(123) );
-      eq(      'function', bn.BigNumber      );
-      eq(        'string', 'hello world'     );
-      eq(        'number', 123               );
-      eq(        'bigint', 123n              );
+      eq(              'null', null                );
+      eq(            'Object', {}                  );
+      eq( 'Object[NullProto]', Object.create(null) );
+      eq(             'Array', []                  );
+      eq(             'Array', [1, 2, 3]           );
+      eq(          'function', () => {}            );
+      eq(     'DataAPIVector', vector([1, 2, 3])   );
+      eq(         'BigNumber', bn.BigNumber(123)   );
+      eq(          'function', bn.BigNumber        );
+      eq(            'string', 'hello world'       );
+      eq(            'number', 123                 );
+      eq(            'bigint', 123n                );
     });
   });
 
   describe('mkInvArgsErr', () => {
     it('should work', () => {
-      const err = mkInvArgsErr('fn', [['a', 'number'], ['b', 'string']], bn.BigNumber(3), 'hello');
+      const err = mkInvArgsError('fn', [['a', 'number'], ['b', 'string']], bn.BigNumber(3), 'hello');
       assert(err as unknown instanceof TypeError);
       assert.strictEqual(err.message, 'Invalid argument(s) for `fn(a, b)`; expected (number, string), got (BigNumber, string)');
+    });
+  });
+
+  describe('mkWrongTypeError', () => {
+    it('should work', () => {
+      const err = mkWrongTypeError('name', 'string', bn.BigNumber(123));
+      assert(err as unknown instanceof TypeError);
+      assert.strictEqual(err.message, `Expected 'name' to be of type 'string', but got 'BigNumber' (123)`);
     });
   });
 });

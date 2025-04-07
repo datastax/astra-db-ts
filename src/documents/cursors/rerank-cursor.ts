@@ -14,15 +14,16 @@
 
 import type {
   Collection,
+  DataAPIVector,
   Filter,
   GenericFindAndRerankOptions,
-  GenericFindOptions,
   HybridSort,
   Projection,
   SomeDoc,
   SomeRow,
   Table,
 } from '@/src/documents/index.js';
+import { vector } from '@/src/documents/index.js';
 import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
@@ -35,17 +36,19 @@ import {
   buildFLCMap,
   buildFLCOption,
   buildFLCPreMapOption,
+  buildFLCSort,
   cloneFLC,
 } from '@/src/documents/cursors/common.js';
+import { QueryState } from '@/src/lib/utils.js';
 
-export class RerankResult<TRaw> {
+export class RerankedResult<TRaw> {
   constructor(
     public readonly document: TRaw,
     public readonly scores: Record<string, number>,
   ) {}
 }
 
-export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankResult<TRaw>> {
+export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankedResult<TRaw>> {
   /**
    * @internal
    */
@@ -72,11 +75,16 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   readonly _filter: SerializedFilter;
 
   /**
+   * @internal
+   */
+  private _sortVector = new QueryState<DataAPIVector>();
+
+  /**
    * Should not be instantiated directly.
    *
    * @internal
    */
-  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T) {
     super(options ?? {}, mapping);
     this._parent = parent;
     this._httpClient = parent._httpClient;
@@ -127,7 +135,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new sort set.
    */
   public sort(sort: HybridSort): this {
-    return buildFLCOption(this, 'sort', sort);
+    return buildFLCSort(this, sort);
   }
 
   /**
@@ -143,7 +151,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): this {
-    return buildFLCOption(this, 'limit', limit || Infinity);
+    return buildFLCOption(this, 'limit', limit || undefined);
   }
 
   public hybridLimits(hybridLimits: number | Record<string, number>): this {
@@ -158,8 +166,12 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     return buildFLCOption(this, 'rerankQuery', rerankQuery);
   }
 
-  public includeScores(includeScores: boolean): this {
-    return buildFLCOption(this, 'includeScores', includeScores);
+  public includeScores(includeScores?: boolean): this {
+    return buildFLCOption(this, 'includeScores', includeScores ?? true);
+  }
+
+  public includeSortVector(includeSortVector?: boolean): this {
+    return buildFLCOption(this, 'includeSortVector', includeSortVector ?? true);
   }
 
   /**
@@ -209,6 +221,20 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     return buildFLCMap(this, map);
   }
 
+  public async getSortVector(): Promise<DataAPIVector | null> {
+    if (this._sortVector.state === QueryState.Unattempted && this._options.includeSortVector) {
+      const reset2idle = this._state === 'idle';
+
+      await this._next(true, '.getSortVector');
+
+      if (reset2idle) {
+        this._state = 'idle';
+      }
+    }
+
+    return this._sortVector.unwrap();
+  }
+
   public override clone(): this {
     return cloneFLC(this, this._filter, this._options, this._mapping);
   }
@@ -216,7 +242,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   /**
    * @internal
    */
-  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankResult<TRaw>[]> {
+  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankedResult<TRaw>[]> {
     const command = {
       findAndRerank: {
         filter: this._filter[0],
@@ -228,6 +254,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
           rerankOn: this._options.rerankOn,
           rerankQuery: this._options.rerankQuery,
           includeScores: this._options.includeScores,
+          includeSortVector: this._options.includeSortVector,
         },
       },
     };
@@ -238,12 +265,19 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
       extraLogInfo: extra,
     });
 
+    this._nextPageState.swap(raw.data?.nextPageState);
+
+    /* c8 ignore next: don't think it's possible for documents to be nullish, but just in case */
     const buffer = raw.data?.documents ?? [];
 
     for (let i = 0, n = buffer.length; i < n; i++) {
       const deserialized = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
-      buffer[i] = new RerankResult(deserialized, raw.data?.documentResponses[i] ?? {});
+      buffer[i] = new RerankedResult(deserialized, raw.status?.documentResponses?.[i]?.scores ?? {});
     }
+
+    const sortVector = raw.status?.sortVector;
+    this._sortVector.swap(sortVector ? vector(sortVector) : sortVector);
+    this._options.includeSortVector = false;
 
     return buffer;
   }

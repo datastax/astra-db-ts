@@ -15,6 +15,7 @@
 import type { nullish } from '@/src/lib/index.js';
 import { HeadersProvider, StaticHeadersProvider } from '@/src/lib/headers-providers/index.js';
 import { isNullish } from '@/src/lib/utils.js';
+import { mkWrongTypeError } from '@/src/documents/utils.js';
 
 /**
  * ##### Overview
@@ -44,7 +45,7 @@ export class RerankingAPIKeyHeaderProvider extends StaticHeadersProvider<'rerank
    * @param apiKey - The api-key/token to regurgitate in `getToken`
    */
   public constructor(apiKey: string | nullish) {
-    const headers = (apiKey)
+    const headers = (!isNullish(apiKey))
       ? { 'x-rerank-api-key': apiKey }
       : {};
     super(headers);
@@ -68,6 +69,6 @@ export class RerankingAPIKeyHeaderProvider extends StaticHeadersProvider<'rerank
       return provider;
     }
 
-    throw new TypeError(`Expected ${field ?? 'reranking api key'} to be type string | RerankingHeadersProvider | nullish`);
+    throw mkWrongTypeError(field ?? 'reranking api key', 'string | HeadersProvider<\'reranking\'> | nullish', provider);
   }
 }

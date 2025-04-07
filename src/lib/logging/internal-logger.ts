@@ -64,42 +64,18 @@ export class InternalLogger<Events extends Record<string, BaseClientEvent>> impl
 
   public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
 
-  private readonly _someCommandEventEnabled: boolean = false;
-  private readonly _someAdminCommandEventEnabled: boolean = false;
+  private _someCommandEventEnabled = false;
+  private _someAdminCommandEventEnabled = false;
 
-  private readonly config: InternalLoggingOutputsMap;
+  private _config: InternalLoggingOutputsMap;
+  private readonly _listeners: Partial<Record<keyof Events, ((event: any) => void)[]>> = Object.create(null);
+  private readonly _parent: InternalLogger<Events> | undefined;
+  private readonly _console: ConsoleLike;
 
-  readonly _listeners: Partial<Record<keyof Events, ((event: any) => void)[]>> = {};
-
-  readonly _parent: InternalLogger<Events> | undefined;
-
-  constructor(config: ParsedLoggingConfig | InternalLoggingOutputsMap, parent: InternalLogger<Events> | undefined, private console: ConsoleLike) {
+  constructor(config: ParsedLoggingConfig, parent: InternalLogger<Events> | undefined, console: ConsoleLike) {
     this._parent = parent;
-
-    this.config = ('layers' in config)
-      ? this._buildInternalConfig(config)
-      : config;
-
-    for (const [_eventName, outputs] of Object.entries(this.config)) {
-      if (!outputs) {
-        continue;
-      }
-
-      const eventName = _eventName as keyof DataAPIClientEventMap;
-      const log = this._mkLogFn(outputs);
-
-      if (eventName.startsWith('admin')) {
-        this._someAdminCommandEventEnabled = true;
-      } else {
-        this._someCommandEventEnabled = true;
-      }
-
-      this[eventName] = (...args: any[]) => {
-        const event = new (<any>EventConstructors[eventName])(...args);
-        outputs.event && this._emit(eventName, event);
-        log?.(event);
-      };
-    }
+    this._console = console;
+    this._config = this._buildInternalConfig(config);
   }
 
   public generateCommandRequestId() {
@@ -110,8 +86,8 @@ export class InternalLogger<Events extends Record<string, BaseClientEvent>> impl
     return this._someAdminCommandEventEnabled ? uuid.v4() : '';
   }
 
-  public withUpdatedConfig(config: ParsedLoggingConfig): InternalLogger<Events> {
-    return new InternalLogger(this._updateInternalConfig(this.config, config), this._parent, this.console);
+  public updateLoggingConfig(config: ParsedLoggingConfig) {
+    this._config = this._updateInternalConfig(this._config, config);
   }
 
   public on<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void) {
@@ -132,6 +108,10 @@ export class InternalLogger<Events extends Record<string, BaseClientEvent>> impl
     if (index !== -1) {
       this._listeners[eventName].splice(index, 1);
     }
+
+    if (this._listeners[eventName].length === 0) {
+      delete this._listeners[eventName];
+    }
   }
   
   public removeAllListeners<E extends keyof Events>(eventName?: E) {
@@ -144,7 +124,7 @@ export class InternalLogger<Events extends Record<string, BaseClientEvent>> impl
     }
   }
 
-  private _emit<E extends keyof Events>(eventName: E, event: Events[E]) {
+  public emit<E extends keyof Events>(eventName: E, event: Events[E]) {
     if (this._listeners[eventName]) {
       for (const listener of this._listeners[eventName]) {
         try {
@@ -160,7 +140,7 @@ export class InternalLogger<Events extends Record<string, BaseClientEvent>> impl
     }
 
     if (this._parent && event._propagationState !== PropagationState.Stop) {
-      this._parent._emit(eventName, event);
+      this._parent.emit(eventName, event);
     }
   }
   
@@ -183,18 +163,48 @@ export class InternalLogger<Events extends Record<string, BaseClientEvent>> impl
       }
     }
 
+    this._buildLoggingFunctions(newConfig);
     return newConfig;
   }
 
+  private _buildLoggingFunctions(config: InternalLoggingOutputsMap) {
+    this._someCommandEventEnabled = false;
+    this._someAdminCommandEventEnabled = false;
+
+    for (const [_eventName, outputs] of Object.entries(config)) {
+      const eventName = _eventName as keyof DataAPIClientEventMap;
+
+      if (!outputs) {
+        this[eventName] = undefined;
+        continue;
+      }
+
+      const log = this._mkLogFn(outputs);
+
+      if (eventName.startsWith('admin')) {
+        this._someAdminCommandEventEnabled = true;
+      } else {
+        this._someCommandEventEnabled = true;
+      }
+
+      this[eventName] = (...args: any[]) => {
+        const event = new (<any>EventConstructors[eventName])(...args);
+        outputs.event && this.emit(eventName, event);
+        log?.(event);
+      };
+    }
+  }
+
   private _mkLogFn(outputs: Readonly<Record<LoggingOutput, boolean>>) {
-    if (outputs.stdout) {
-      return (event: BaseClientEvent) => this.console.log(event.format());
-    } else if (outputs.stderr) {
-      return (event: BaseClientEvent) => this.console.error(event.format());
-    } else if (outputs['stdout:verbose']) {
-      return (event: BaseClientEvent) => this.console.log(event.formatVerbose());
-    } else if (outputs['stderr:verbose']) {
-      return (event: BaseClientEvent) => this.console.error(event.formatVerbose());
+    switch (true) {
+      case outputs.stdout:
+        return (event: BaseClientEvent) => this._console.log(event.format());
+      case outputs.stderr:
+        return (event: BaseClientEvent) => this._console.error(event.format());
+      case outputs['stdout:verbose']:
+        return (event: BaseClientEvent) => this._console.log(event.formatVerbose());
+      case outputs['stderr:verbose']:
+        return (event: BaseClientEvent) => this._console.error(event.formatVerbose());
     }
   }
 }

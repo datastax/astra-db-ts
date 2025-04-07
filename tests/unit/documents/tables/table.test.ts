@@ -12,43 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
 import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { Table } from '@/src/documents/index.js';
-import { $CustomInspect } from '@/src/lib/constants.js';
-import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler.js';
-import { TokenProvider } from '@/src/lib/index.js';
+import { Table, TableFindAndRerankCursor, TableFindCursor } from '@/src/documents/index.js';
+import fc from 'fast-check';
+import { unitTestTableSlashColls } from '@/tests/unit/documents/__common/table-slash-coll.js';
+import type { TableOptions } from '@/src/db/index.js';
 
-describe('unit.documents.tables.table', ({ db, client }) => {
-  const opts = RootOptsHandler(TokenProvider.opts.empty, client).parse({});
-
-  describe('initialization', () => {
-    it('should initialize a Table', () => {
-      const table = new Table(db, db._httpClient, 'new_table', opts, undefined);
-      assert.ok(table);
-    });
+describe('unit.documents.tables.table', () => {
+  unitTestTableSlashColls({
+    className: 'Table',
+    mkTSlashC: (db, httpClient, name, rootOpts, tableOpts) => new Table(db, httpClient, name, rootOpts, tableOpts as TableOptions),
+    findCursorClass: TableFindCursor,
+    rerankCursorClass: TableFindAndRerankCursor,
   });
 
-  describe('accessors', () => {
-    it('returns the given keyspace', () => {
-      const table = new Table(db, db._httpClient, 'new_table', opts, { keyspace: 'hello' });
-      assert.strictEqual(table.keyspace, "hello");
+  describe('static', () => {
+    describe('schema', () => {
+      it('returns exactly what it was given', () => {
+        fc.assert(
+          fc.property(fc.anything(), (anything) => {
+            assert.strictEqual(Table.schema(anything as any), anything);
+          }),
+        );
+      });
     });
-
-    it('returns the default keyspace if not set', () => {
-      const table = new Table(db, db._httpClient, 'new_table', opts, undefined);
-      assert.strictEqual(table.keyspace, DEFAULT_KEYSPACE);
-    });
-
-    it('returns the name', () => {
-      const table = new Table(db, db._httpClient, 'new_table', opts, undefined);
-      assert.strictEqual(table.name, 'new_table');
-    });
-  });
-
-  it('should inspect properly', () => {
-    const table = new Table(db, db._httpClient, 'new_table', opts, undefined);
-    assert.strictEqual((table as any)[$CustomInspect](), 'Table(keyspace="default_keyspace",name="new_table")');
   });
 });

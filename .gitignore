@@ -144,3 +144,4 @@ tmp-lib-check
 !examples/astra-db-ts.tgz
 
 .direnv
+.mocha

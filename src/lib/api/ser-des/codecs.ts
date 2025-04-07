@@ -89,8 +89,8 @@ export interface Deserializers<DesCtx> {
  * @internal
  */
 export const processCodecs = <SerCtx, DesCtx>(raw: readonly RawCodec[]): [Serializers<SerCtx>, Deserializers<DesCtx>] => {
-  const serializers: Serializers<SerCtx> = { forName: {}, forPath: {}, forClass: [], forGuard: [] };
-  const deserializers: Deserializers<DesCtx> = { forName: {}, forPath: {}, forType: {}, forGuard: [] };
+  const serializers: Serializers<SerCtx> = { forName: Object.create(null), forPath: Object.create(null), forClass: [], forGuard: [] };
+  const deserializers: Deserializers<DesCtx> = { forName: Object.create(null), forPath: Object.create(null), forType: Object.create(null), forGuard: [] };
 
   for (const codec of raw) {
     appendCodec[codec.tag](codec as never, serializers, deserializers);

@@ -15,7 +15,7 @@
 import { BigNumber } from 'bignumber.js';
 import type { Decoder } from 'decoders';
 import { array, define, either, instanceOf } from 'decoders';
-import type { EmptyObj, nullish } from '@/src/lib/types.js';
+import type { EmptyObj, NonEmpty, nullish } from '@/src/lib/types.js';
 
 /**
  * @internal
@@ -78,14 +78,14 @@ const getJSEnv = () =>
 
 const env = getJSEnv();
 
+/* c8 ignore start: uses a version of forJSEnv which re-checks the env @ every call for testing purposes (allows for "mocking" different js envs) */
 /**
  * @internal
  */
 export const forJSEnv = (typeof process !== 'undefined' && typeof process.env === 'object' && process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
-  /* Version of forJSEnv which re-checks the env @ every call for testing purposes (allows for "mocking" different js envs) */
   ? <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => (...args: Args) => fns[getJSEnv()](...args)
-  /* istanbul ignore else: same logic as above */
   : <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => fns[env];
+/* c8 ignore end */
 
 /**
  * @internal
@@ -128,6 +128,8 @@ export const function_ = define<(...any: any[]) => any>((fn, ok, err) => {
 export const anyInstanceOf = <T>(cls: abstract new (...args: any[]) => T) => instanceOf(cls as any) as Decoder<T>;
 
 /**
+ * **IMPORTANT: Should only handle finite integers**
+ *
  * @internal
  */
 export const numDigits = (n: number) => {
@@ -158,41 +160,49 @@ export function findLast<T>(predicate: (value: T, index: number) => boolean, orE
 /**
  * @internal
  */
-const enum QueryStateState {
-  Unattempted,
-  Found,
-  NotFound,
+export class QueryState<T extends EmptyObj> {
+  public static Unattempted = 0 as const;
+  public static Found = 1 as const;
+  public static NotFound = 2 as const;
+
+  private _state: 0 | 1 | 2 = QueryState.Unattempted;
+  private _value: T | null = null;
+
+  public get state() {
+    return this._state;
+  }
+
+  public swap(value: T | nullish) {
+    if (isNullish(value)) {
+      this._state = QueryState.NotFound;
+      this._value = null;
+    } else {
+      this._state = QueryState.Found;
+      this._value = value;
+    }
+    return this;
+  }
+
+  public unwrap() {
+    return this._value;
+  }
 }
 
 /**
  * @internal
  */
-export class QueryState<T extends EmptyObj> {
-  private _state = QueryStateState.Unattempted;
-  private _value: T | null = null;
+export function isNonEmpty<T>(arr: readonly T[]): arr is NonEmpty<T> {
+  return arr.length > 0;
+}
 
-  public isUnattempted(): this is { get unwrap(): null } {
-    return this._state === QueryStateState.Unattempted;
+/**
+ * https://github.com/datastax/astra-db-ts/pull/90#discussion_r1985540803
+ *
+ * @internal
+ */
+export function splitWithIncludesCheck(str: string, sep: string): string[] {
+  if (!str.includes(sep)) {
+    return [str];
   }
-
-  public isFound(): this is { get unwrap(): T } {
-    return this._state === QueryStateState.Found;
-  }
-
-  public isNotFound(): this is { get unwrap(): null } {
-    return this._state === QueryStateState.NotFound;
-  }
-
-  public swap(value: T | nullish) {
-    if (isNullish(value)) {
-      this._state = QueryStateState.NotFound;
-    } else {
-      this._state = QueryStateState.Found;
-      this._value = value;
-    }
-  }
-
-  public get unwrap() {
-    return this._value;
-  }
+  return str.split(sep);
 }

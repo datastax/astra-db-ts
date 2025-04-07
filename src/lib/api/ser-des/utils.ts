@@ -29,7 +29,10 @@ Did you define [${synName}] as a class property instead of a prototype method?
 
 Don't do this:
 > class Bad { [${synName}] = () => ...; }
- 
+
+Or this:
+> Bad[${synName}] = () => ...;
+
 Do this:
 > class Good { [${synName}]() { ... } }
 
@@ -56,6 +59,36 @@ Do this:
 Or this:
 > Good[${synName}] = () => ...;`);
   }
+};
+
+/**
+ * @internal
+ */
+export const mkTypeUnsupportedForCollectionsError = (type: string, fauxTypeName: string, alternatives: string[]) => {
+  return new Error([
+    `${type} may not be used with collections by default.`,
+    '',
+    'Please use one of the following alternatives:',
+    ...[...alternatives, 'Write a custom codec for ${type} (beta)'].map((alt, i) => `${i + 1}. ${alt}`),
+    '',
+    'See the `CollectionCodecs` class for more information about writing your own collection codec.',
+    '',
+    `Keep in mind that you may need to use CollectionCodecs.forType(...) to create a faux custom type (e.g. { ${fauxTypeName}: <${type}> }) representing a ${type} so that the value may be identifiable as needing to be deserialized back into a ${type} as well`,
+  ].join('\n'));
+};
+
+/**
+ * @internal
+ */
+export const mkTypeUnsupportedForTablesError = (type: string, alternatives: string[]) => {
+  return new Error([
+    `${type} may not be used with tables by default.`,
+    '',
+    'Please use one of the following alternatives:',
+    ...[...alternatives, 'Write a custom codec for ${type} (beta)'].map((alt, i) => `${i + 1}. ${alt}`),
+    '',
+    'See the `TablesCodec` class for more information about writing your own table codec.',
+  ].join('\n'));
 };
 
 /**

@@ -19,9 +19,9 @@ import type {
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db/index.js';
-import type { RawTableCodecs} from '@/src/documents/tables/ser-des/codecs.js';
+import type { RawTableCodecs } from '@/src/documents/tables/ser-des/codecs.js';
 import { TableCodecs } from '@/src/documents/tables/ser-des/codecs.js';
-import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx.js';
+import type { BaseDesCtx, BaseSerCtx } from '@/src/lib/api/ser-des/ctx.js';
 import { NEVERMIND, SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { isBigNumber } from '@/src/lib/utils.js';
@@ -102,7 +102,7 @@ const serialize: SerDesFn<TableSerCtx> = (value, ctx) => {
 
   // Path-based serializers
   for (const pathSer of ctx.serializers.forPath[ctx.path.length] ?? []) {
-    if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+    if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
   }
@@ -111,19 +111,14 @@ const serialize: SerDesFn<TableSerCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameSer = ctx.serializers.forName[key];
 
-  if (nameSer?.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+  if (nameSer?.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
     return resp;
   }
 
   // Type-based & custom serializers
   for (const guardSer of ctx.serializers.forGuard) {
-    if (guardSer.guard(value, ctx)) {
-      const resp = guardSer.fn(value, ctx);
-      (resp.length === 2) && (value = resp[1]);
-
-      if (resp[0] !== NEVERMIND) {
-        return resp;
-      }
+    if (guardSer.guard(value, ctx) && (resp = guardSer.fn(value, ctx))[0] !== NEVERMIND) {
+      return resp;
     }
   }
 
@@ -133,22 +128,14 @@ const serialize: SerDesFn<TableSerCtx> = (value, ctx) => {
     }
   } else if (typeof value === 'object' && value !== null) {
     // Delegate serializer
-    while ($SerializeForTable in value) {
-      const resp = value[$SerializeForTable](ctx);
-
-      if (resp[0] !== NEVERMIND) {
-        return resp;
-      }
-
-      if (resp.length === 2) {
-        value = resp[1];
-      } else break;
+    if (value[$SerializeForTable] && (resp = value[$SerializeForTable](ctx))[0] !== NEVERMIND) {
+      return resp;
     }
 
     // Class-based serializers
     const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-    if (classSer?.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+    if (classSer?.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
@@ -161,15 +148,15 @@ const serialize: SerDesFn<TableSerCtx> = (value, ctx) => {
     ctx.bigNumsPresent = true;
   }
 
-  return ctx.recurse(value);
+  return ctx.recurse();
 };
 
 const deserialize: SerDesFn<TableDesCtx> = (value, ctx) => {
   let resp: ReturnType<SerDesFn<unknown>> = null!;
 
   // Path-based deserializers
-  for (const pathSer of ctx.deserializers.forPath[ctx.path.length] ?? []) {
-    if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+  for (const pathDes of ctx.deserializers.forPath[ctx.path.length] ?? []) {
+    if (pathMatches(pathDes.path, ctx.path) && pathDes.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
   }
@@ -178,23 +165,18 @@ const deserialize: SerDesFn<TableDesCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameDes = ctx.deserializers.forName[key];
 
-  if (nameDes?.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+  if (nameDes?.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
     return resp;
   }
 
   // Custom deserializers
   for (const guardDes of ctx.deserializers.forGuard) {
-    if (guardDes.guard(value, ctx)) {
-      const resp = guardDes.fn(value, ctx);
-      (resp.length === 2) && (value = resp[1]);
-
-      if (resp[0] !== NEVERMIND) {
-        return resp;
-      }
+    if (guardDes.guard(value, ctx) && (resp = guardDes.fn(value, ctx))[0] !== NEVERMIND) {
+      return resp;
     }
   }
 
-  if (key === '' || value === null) {
+  if (ctx.path.length === 0 || value === null) {
     return ctx.recurse(value);
   }
 
@@ -202,7 +184,7 @@ const deserialize: SerDesFn<TableDesCtx> = (value, ctx) => {
   const type = resolveAbsType(ctx);
   const typeDes = type && ctx.deserializers.forType[type];
 
-  if (typeDes && typeDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+  if (typeDes && typeDes.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
     return resp;
   }
 
@@ -213,7 +195,7 @@ const codecs = TableSerDes.cfg.parse({ codecs: Object.values(TableCodecs.Default
 
 function populateSparseData(ctx: TableDesCtx) {
   for (const key in ctx.tableSchema) {
-    if (key in ctx.rootObj) {
+    if (Object.prototype.hasOwnProperty.call(ctx.rootObj, key)) {
       continue;
     }
 
@@ -244,7 +226,8 @@ function resolveAbsType({ path, tableSchema }: TableDesCtx): string | undefined 
       if (path.length === 3) {
         return (path[2] === 0 ? (column as any).keyType : (column as any).valueType);
       }
-    } else if (path.length === 2) {
+    }
+    else if (path.length === 2) {
       return (column as any).valueType;
     }
   }

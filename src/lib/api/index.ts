@@ -37,12 +37,8 @@ export type {
   TypeCodecOpts,
 } from './ser-des/codecs.js';
 
-export type {
-  BaseSerDesCtx,
-  BaseSerCtx,
-  BaseDesCtx,
-  SerDesTarget,
-} from './ser-des/ctx.js';
+export type { BaseSerDesCtx, BaseSerCtx, BaseDesCtx } from './ser-des/ctx.js';
+export { SerDesTarget } from './ser-des/ctx.js';
 
 export type {
   TimeoutDescriptor,

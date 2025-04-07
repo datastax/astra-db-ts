@@ -18,7 +18,7 @@ import type { RawDataAPIResponse, WithTimeout } from '@/src/lib/api/index.js';
 import { DEFAULT_KEYSPACE, type OpaqueHttpClient } from '@/src/lib/api/index.js';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
 import type { DataAPIEnvironment } from '@/src/lib/types.js';
-import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils.js';
+import { extractDbComponentsFromAstraUrl } from '@/src/documents/utils.js';
 import type { DbAdmin } from '@/src/administration/index.js';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin.js';
 import type { CreateCollectionOptions } from '@/src/db/types/collections/create.js';
@@ -123,10 +123,14 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
 
-  readonly #endpoint: string;
   readonly #keyspace: KeyspaceRef;
   readonly #id?: string;
   readonly #region?: string;
+
+  /**
+   * The endpoint of the database.
+   */
+  public readonly endpoint!: string;
 
   /**
    * Use {@link DataAPIClient.db} to obtain an instance of this class.
@@ -169,12 +173,14 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
       timeoutDefaults: this.#defaultOpts.dbOptions.timeoutDefaults,
     });
 
-    this.#id = extractDbIdFromUrl(endpoint);
-    this.#region = extractRegionFromUrl(endpoint);
-    this.#endpoint = endpoint;
+    [this.#id, this.#region] = extractDbComponentsFromAstraUrl(endpoint);
+
+    Object.defineProperty(this, 'endpoint', {
+      value: endpoint,
+    });
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `Db(endpoint="${this.#endpoint}",keyspace="${this.keyspace}")`,
+      value: () => `Db(endpoint="${this.endpoint}",keyspace="${this.keyspace}")`,
     });
   }
 
@@ -227,7 +233,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
       throw new InvalidEnvironmentError('db.id', this.#defaultOpts.environment, ['astra'], 'non-Astra databases have no appropriate ID');
     }
     if (!this.#id) {
-      throw new Error(`Unexpected AstraDB endpoint URL '${this.#endpoint}'—database ID unable to be parsed`);
+      throw new Error(`Unexpected AstraDB endpoint URL '${this.endpoint}'—database ID unable to be parsed`);
     }
     return this.#id;
   }
@@ -244,7 +250,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
       throw new InvalidEnvironmentError('db.region', this.#defaultOpts.environment, ['astra'], 'non-Astra databases have no appropriate region');
     }
     if (!this.#region) {
-      throw new Error(`Unexpected AstraDB endpoint URL '${this.#endpoint}'—database region unable to be parsed`);
+      throw new Error(`Unexpected AstraDB endpoint URL '${this.endpoint}'—database region unable to be parsed`);
     }
     return this.#region;
   }
@@ -387,7 +393,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     }
 
     if (environment === 'astra') {
-      return new AstraDbAdmin(this, this.#defaultOpts, parsedOpts, this.#defaultOpts.dbOptions.token, this.#endpoint);
+      return new AstraDbAdmin(this, this.#defaultOpts, parsedOpts, this.#defaultOpts.dbOptions.token, this.endpoint);
     }
 
     return new DataAPIDbAdmin(this, this.#defaultOpts.client, this.#httpClient, this.#defaultOpts, parsedOpts);
@@ -427,7 +433,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
 
     const data = await this.admin().info(options);
 
-    const region = this.#endpoint
+    const region = this.endpoint
       .split('.')[0]
       .split('https://')[1]
       .split('-')
@@ -442,7 +448,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
       environment: data.environment,
       cloudProvider: data.cloudProvider,
       region: region,
-      apiEndpoint: this.#endpoint,
+      apiEndpoint: this.endpoint,
       raw: data.raw.info,
     };
   }
@@ -826,7 +832,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * @see InferTablePrimaryKey
    * @see CreateTableDefinition
    */
-  public async createTable<const Def extends CreateTableDefinition<any>>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
+  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
 
   /**
    * ##### Overview (explicit-schema version)

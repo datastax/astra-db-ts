@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { FetcherResponseInfo, RawDataAPIResponse, TimeoutDescriptor } from '@/src/lib/index.js';
+import type {
+  FetcherResponseInfo,
+  NonEmpty,
+  RawDataAPIResponse,
+  ReadonlyNonEmpty,
+  TimeoutDescriptor,
+} from '@/src/lib/index.js';
 import type {
   CollectionDeleteManyResult,
   CollectionInsertManyResult,
@@ -335,18 +341,19 @@ export class DataAPIResponseError extends DataAPIError {
    * }
    * ```
    */
-  public readonly rawResponse: RawDataAPIResponse;
+  public readonly rawResponse: RawDataAPIResponse & { errors: ReadonlyNonEmpty<DataAPIErrorDescriptor> };
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(command: Record<string, any>, rawResponse: RawDataAPIResponse) {
-    const errorDescriptors = rawResponse.errors!;
+  constructor(command: Record<string, any>, rawResponse: RawDataAPIResponse & { errors: NonEmpty<DataAPIErrorDescriptor> }) {
+    const errorDescriptors = rawResponse.errors;
 
     const message = (errorDescriptors[0]?.message)
       ? `${errorDescriptors[0].message}${errorDescriptors.length > 1 ? ` (+ ${errorDescriptors.length - 1} more errors)` : ''}`
+      /* c8 ignore next: not sure if this is possible but just in case */
       : `Something went wrong (${errorDescriptors.length} errors)`;
 
     super(message);
@@ -361,8 +368,8 @@ export class DataAPIResponseError extends DataAPIError {
    * This will likely be a singleton list in many cases, such as for `insertOne` or `deleteOne` commands, but may be
    * longer for bulk operations like `insertMany` which may have multiple insertion errors.
    */
-  public get errorDescriptors(): readonly DataAPIErrorDescriptor[] {
-    return this.rawResponse.errors ?? [];
+  public get errorDescriptors(): ReadonlyNonEmpty<DataAPIErrorDescriptor> {
+    return this.rawResponse.errors;
   }
 
   /**
@@ -430,15 +437,23 @@ export class CollectionInsertManyError extends DataAPIError {
   name = 'CollectionInsertManyError';
 
   readonly #partialResult: CollectionInsertManyResult<SomeDoc>;
-  readonly #causes: DataAPIResponseError[];
+  readonly #causes: NonEmpty<DataAPIResponseError>;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  public constructor(causes: DataAPIResponseError[], partRes: CollectionInsertManyResult<SomeDoc>) {
-    super('');
+  public constructor(causes: NonEmpty<DataAPIResponseError>, partRes: CollectionInsertManyResult<SomeDoc>) {
+    const errorDescriptor = causes[0].errorDescriptors[0];
+    const numErrors = causes.reduce((acc, e) => acc + e.errorDescriptors.length, 0);
+
+    const message = (errorDescriptor?.message)
+      ? `${errorDescriptor.message}${numErrors > 1 ? ` (+ ${numErrors - 1} more errors)` : ''}`
+      /* c8 ignore next: not sure if this is possible but just in case */
+      : `Something went wrong (${numErrors} errors)`;
+
+    super(message);
     this.#partialResult = partRes;
     this.#causes = causes;
   }
@@ -475,15 +490,23 @@ export class TableInsertManyError extends DataAPIError {
   name = 'TableInsertManyError';
 
   readonly #partialResult: TableInsertManyResult<SomeRow>;
-  readonly #causes: DataAPIResponseError[];
+  readonly #causes: NonEmpty<DataAPIResponseError>;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  public constructor(causes: DataAPIResponseError[], partRes: TableInsertManyResult<SomeRow>) {
-    super('');
+  public constructor(causes: NonEmpty<DataAPIResponseError>, partRes: TableInsertManyResult<SomeRow>) {
+    const errorDescriptor = causes[0].errorDescriptors[0];
+    const numErrors = causes.reduce((acc, e) => acc + e.errorDescriptors.length, 0);
+
+    const message = (errorDescriptor?.message)
+      ? `${errorDescriptor.message}${numErrors > 1 ? ` (+ ${numErrors - 1} more errors)` : ''}`
+      /* c8 ignore next: not sure if this is possible but just in case */
+      : `Something went wrong (${numErrors} errors)`;
+
+    super(message);
     this.#partialResult = partRes;
     this.#causes = causes;
   }
@@ -530,10 +553,11 @@ export class CollectionUpdateManyError extends DataAPIError {
   /**
    * @internal
    */
-  public constructor(cause: unknown, partRes: CollectionUpdateManyResult<SomeDoc>) {
-    super('');
-    this.partialResult = partRes;
-    this.cause = NonErrorError.asError(cause);
+  public constructor(cause: unknown, partialRes: CollectionUpdateManyResult<SomeDoc>) {
+    const errorCause = NonErrorError.asError(cause);
+    super(errorCause.message);
+    this.partialResult = partialRes;
+    this.cause = errorCause;
   }
 }
 
@@ -570,9 +594,10 @@ export class CollectionDeleteManyError extends DataAPIError {
   /**
    * @internal
    */
-  public constructor(cause: unknown, partRes: CollectionDeleteManyResult) {
-    super('');
-    this.partialResult = partRes;
-    this.cause = NonErrorError.asError(cause);
+  public constructor(cause: unknown, partialRes: CollectionDeleteManyResult) {
+    const errorCause = NonErrorError.asError(cause);
+    super(errorCause.message);
+    this.partialResult = partialRes;
+    this.cause = errorCause;
   }
 }

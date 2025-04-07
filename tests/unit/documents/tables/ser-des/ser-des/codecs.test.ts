@@ -27,8 +27,8 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
 
       const visit = (arr: unknown[], v: unknown) => (value: unknown) => (arr.push(v ?? value), ctxNevermind());
       const serdesFns = (v: unknown = null) => ({ serialize: visit(serPaths, v), deserialize: visit(desPaths, v) });
-      const uuid1 = uuid(1);
-      const uuid4 = uuid(4);
+      const uuid1 = uuid.v1();
+      const uuid4 = uuid.v4();
 
       const serdes = new TableSerDes({
         ...TableSerDes.cfg.empty,

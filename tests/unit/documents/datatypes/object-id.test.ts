@@ -29,6 +29,11 @@ describe('unit.documents.datatypes.object-id', () => {
     assert.strictEqual(objectId.toString(), '507f191e810c19729de860ea');
   });
 
+  it('should properly construct an ObjectId from another ObjectId', () => {
+    const objectId = new ObjectId(oid('507f191e810c19729de860ea'));
+    assert.strictEqual(objectId.toString(), '507f191e810c19729de860ea');
+  });
+
   it('should properly generate an ObjectId', () => {
     const objectId = new ObjectId();
     assert.strictEqual(objectId.toString().length, 24);

@@ -19,6 +19,7 @@ import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants.js';
+import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { Db } from '@/src/db/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
@@ -210,7 +211,7 @@ export class AstraDbAdmin extends DbAdmin {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
-      methodName: 'dmAdmin.createKeyspace',
+      methodName: 'dbAdmin.createKeyspace',
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
@@ -311,7 +312,7 @@ export class AstraDbAdmin extends DbAdmin {
     return this.#httpClient;
   }
 
-  async #info(methodName: string, tm: TimeoutManager): Promise<AstraDbAdminInfo> {
+  async #info(methodName: DevOpsAPIRequestInfo['methodName'], tm: TimeoutManager): Promise<AstraDbAdminInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${this.#db.id}`,

@@ -20,6 +20,7 @@ import type { SomeDoc, SomeId, SomeRow } from '@/src/documents/index.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import type { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
+import { isNonEmpty } from '@/src/lib/utils.js';
 
 /**
  * @internal
@@ -84,10 +85,6 @@ export const insertManyUnordered = async <ID>(
       const endIdx = Math.min(localI + chunkSize, documents.length);
       masterIndex += chunkSize;
 
-      if (localI >= endIdx) {
-        break;
-      }
-
       const slice = documents.slice(localI, endIdx);
 
       const extraLogInfo = (documents.length === slice.length)
@@ -105,7 +102,7 @@ export const insertManyUnordered = async <ID>(
   });
   await Promise.all(promises);
 
-  if (errors.length > 0) {
+  if (isNonEmpty(errors)) {
     throw new err(errors, {
       insertedIds: insertedIds as (SomeRow[] & SomeId[]),
       insertedCount: insertedIds.length,
@@ -158,18 +155,20 @@ const insertMany = async <ID>(
     err = e;
   }
 
+  /* c8 ignore next: don't think it's possible for documentResponses to be null, but just in case */
   const documentResponses = raw.status?.documentResponses ?? [];
   const errors = raw.errors;
 
   const insertedIds: ID[] = [];
 
   for (let i = 0, n = documentResponses.length; i < n; i++) {
-    const docResp = documentResponses[i];
-    if (docResp.status === "OK") {
-      insertedIds.push(serdes.deserialize(docResp._id, raw, SerDesTarget.InsertedId));
-    } else if (docResp.errorIdx) {
-      docResp.error = errors![docResp.errorIdx];
-      delete docResp.errorIdx;
+    const response = documentResponses[i];
+
+    if (response.status === "OK") {
+      insertedIds.push(serdes.deserialize(response._id, raw, SerDesTarget.InsertedId));
+    } else if ('errorsIdx' in response) {
+      response.error = errors![response.errorsIdx];
+      delete response.errorsIdx;
     }
   }
 

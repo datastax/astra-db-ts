@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
-import { OptionsHandler } from '@/src/lib/opts-handler.js';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handlers.js';
+import { OptionsHandler } from '@/src/lib/opts-handlers.js';
 import type { DataAPIClient, DataAPIClientOptions } from '@/src/client/index.js';
 import { HeadersProvider, TokenProvider } from '@/src/lib/index.js';
 import { exact } from 'decoders';

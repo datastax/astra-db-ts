@@ -14,102 +14,142 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
+import type { DataAPIBlobLike } from '@/src/documents/index.js';
 import { blob, DataAPIBlob } from '@/src/documents/index.js';
 import { describe, it } from '@/tests/testlib/index.js';
-
-const BUFF = Buffer.from([0x0, 0x1, 0x2]);
-const ARR_BUFF = new Uint8Array(BUFF).buffer;
-const BINARY = { $binary: 'AAEC' };
+import fc from 'fast-check';
+import { arbs } from '@/tests/testlib/arbitraries.js';
+import { AlwaysAvailableBuffer } from '@/tests/testlib/utils.js';
 
 describe('unit.documents.datatypes.blob', () => {
+  const blobLikeArb = fc.oneof(
+    arbs.validBase46().map((base64) => Buffer.from(base64, 'base64')),
+    arbs.validBase46().map((base64) => new Uint8Array(Buffer.from(base64, 'base64')).buffer),
+    arbs.validBase46().map((base64) => ({ $binary: base64 })),
+  );
+
+  const allBlobLikeArb = arbs.validBase46().map((base64) => {
+    const buffer = AlwaysAvailableBuffer.from(base64, 'base64');
+
+    return <const>[
+      buffer,
+      new Uint8Array(buffer).buffer,
+      { $binary: base64 },
+    ];
+  });
+
   describe('construction', () => {
     it('should create blobs of each type', () => {
-      const blobLikes = [BUFF, ARR_BUFF, BINARY];
-
-      for (const blobLike of blobLikes) {
-        const full = new DataAPIBlob(blobLike);
-        const shorthand = blob(blobLike);
-        assert.deepStrictEqual(full.raw(), blobLike);
-        assert.deepStrictEqual(shorthand.raw(), blobLike);
-        assert.deepStrictEqual(full.raw(), shorthand.raw());
-      }
+      fc.assert(
+        fc.property(blobLikeArb, (blobLike) => {
+          assert.deepStrictEqual(new DataAPIBlob(blobLike).raw(), blobLike);
+          assert.deepStrictEqual(blob(blobLike).raw(), blobLike);
+          assert.deepStrictEqual(blob(blob(blobLike)).raw(), blobLike);
+        }),
+      );
     });
 
-    it('should create a blob from another blob', () => {
-      const blobLikes = [BUFF, ARR_BUFF, BINARY];
-
-      for (const blobLike of blobLikes) {
-        const original = new DataAPIBlob(blobLike);
-        const copy = blob(original);
-        assert.deepStrictEqual(original.raw(), copy.raw());
-      }
+    it('should error on invalid values', () => {
+      fc.assert(
+        fc.property(fc.anything(), (invalid) => {
+          fc.pre(!DataAPIBlob.isBlobLike(invalid));
+          assert.throws(() => new DataAPIBlob(invalid as DataAPIBlobLike));
+        }),
+      );
     });
 
-    it('should error on invalid type', () => {
-      assert.throws(() => new DataAPIBlob({} as any));
-    });
-
-    it('should allow on invalid type on validation: false', () => {
-      const blb = new DataAPIBlob({} as any, false);
-      assert.deepStrictEqual(blb.raw(), {});
+    it('should allow invalid values on validation: false', () => {
+      fc.assert(
+        fc.property(fc.anything(), (invalid) => {
+          const blb = new DataAPIBlob(invalid as DataAPIBlobLike, false);
+          assert.deepStrictEqual(blb.raw(), invalid);
+        }),
+      );
     });
   });
 
   it('should get the byte length of all types', () => {
-    const blobs = [blob(BUFF), blob(ARR_BUFF), blob(BINARY), blob(blob(BUFF))];
+    fc.assert(
+      fc.property(allBlobLikeArb, (bls) => {
+        const expectedLength = bls[0].length;
 
-    for (const blb of blobs) {
-      assert.strictEqual(blb.byteLength, 3);
-    }
+        for (const blb of bls) {
+          assert.strictEqual(blob(blb).byteLength, expectedLength);
+          assert.strictEqual(blob(blob(blb)).byteLength, expectedLength);
+        }
+      }),
+    );
   });
 
   it('should convert between all types on the server', () => {
-    const blobs = [blob(BUFF), blob(ARR_BUFF), blob(BINARY), blob(blob(BUFF))];
+    fc.assert(
+      fc.property(allBlobLikeArb, ([buff, arrBuff, binary]) => {
+        const blobs = [blob(buff), blob(arrBuff), blob(binary), blob(blob(buff))];
 
-    for (const blb of blobs) {
-      assert.strictEqual(blb.asBase64(), BINARY.$binary);
-      assert.deepStrictEqual(blb.asBuffer(), BUFF);
-      assert.deepStrictEqual(blb.asArrayBuffer(), ARR_BUFF);
-    }
+        for (const blb of blobs) {
+          assert.strictEqual(blb.asBase64(), binary.$binary);
+          assert.deepStrictEqual(blb.asBuffer(), buff);
+          assert.deepStrictEqual(blb.asArrayBuffer(), arrBuff);
+        }
+      }),
+    );
   });
 
-  // Technically the browser doesn't have the Buffer, but the "absent Buffer" case is tested in the next test anyways
+  // Technically the browser doesn't have the Buffer, but the "absent Buffer" case is tested in the next test anyway
   it('should convert between compatible types in the browser', { pretendEnv: 'browser' }, () => {
-    const blobs = [blob(BUFF), blob(ARR_BUFF), blob(BINARY), blob(blob(ARR_BUFF))];
+    fc.assert(
+      fc.property(allBlobLikeArb, ([buff, arrBuff, binary]) => {
+        const blobs = [blob(buff), blob(arrBuff), blob(binary), blob(blob(buff))];
 
-    for (const blb of blobs) {
-      assert.strictEqual(blb.asBase64(), BINARY.$binary);
-      assert.deepStrictEqual(blb.asBuffer(), BUFF);
-      assert.deepStrictEqual(blb.asArrayBuffer(), ARR_BUFF);
-    }
+        for (const blb of blobs) {
+          assert.strictEqual(blb.asBase64(), binary.$binary);
+          assert.deepStrictEqual(blb.asBuffer(), buff);
+          assert.deepStrictEqual(blb.asArrayBuffer(), arrBuff);
+        }
+      }),
+    );
   });
 
   // This is mainly just testing to see what happens if both Buffer and window are undefined
   it('should throw various conversion errors in unknown environments', { pretendEnv: 'unknown' }, () => {
-    assert.throws(() => blob(BUFF).asBase64());
-    assert.throws(() => blob(BUFF).asBuffer());
-    assert.throws(() => blob(BUFF).asArrayBuffer());
+    fc.assert(
+      fc.property(allBlobLikeArb, ([buff, arrBuff, binary]) => {
+        assert.throws(() => blob(buff).asBase64());
+        assert.throws(() => blob(buff).asBuffer());
+        assert.throws(() => blob(buff).asArrayBuffer());
 
-    assert.throws(() => blob(ARR_BUFF).asBase64());
-    assert.throws(() => blob(ARR_BUFF).asBuffer());
-    assert.ok(blob(ARR_BUFF).asArrayBuffer());
+        assert.throws(() => blob(arrBuff).asBase64());
+        assert.throws(() => blob(arrBuff).asBuffer());
+        assert.deepStrictEqual(blob(arrBuff).asArrayBuffer(), arrBuff);
 
-    assert.ok(blob(BINARY).asBase64());
-    assert.throws(() => blob(BINARY).asBuffer());
-    assert.throws(() => blob(BINARY).asArrayBuffer());
+        assert.deepStrictEqual(blob(binary).asBase64(), binary.$binary);
+        assert.throws(() => blob(binary).asBuffer());
+        assert.throws(() => blob(binary).asArrayBuffer());
+      }),
+    );
   });
 
   it('should throw on Buffer not available', { pretendEnv: 'browser' }, () => {
-    const blb = new DataAPIBlob(BUFF);
+    const blb = new DataAPIBlob(Buffer.from([0x0, 0x1, 0x2]));
+
     const origBuffer = globalThis.Buffer;
     delete (<any>globalThis).Buffer;
-    assert.throws(() => blb.asBuffer());
-    globalThis.Buffer = origBuffer;
+
+    try {
+      assert.throws(() => blb.asBuffer());
+    } finally {
+      globalThis.Buffer = origBuffer;
+    }
   });
 
   it('should have a working toString()', () => {
-    assert.strictEqual(blob(BUFF).toString(), 'DataAPIBlob(typeof raw=Buffer, byteLength=3)');
-    assert.strictEqual(blob(ARR_BUFF).toString(), 'DataAPIBlob(typeof raw=ArrayBuffer, byteLength=3)');
-    assert.strictEqual(blob(BINARY).toString(), 'DataAPIBlob(typeof raw=base64, byteLength=3)');
+    fc.assert(
+      fc.property(allBlobLikeArb, ([buff, arrBuff, binary]) => {
+        assert.strictEqual(blob(buff).toString(), `DataAPIBlob(typeof raw=Buffer, byteLength=${buff.length})`);
+        assert.strictEqual(blob(arrBuff).toString(), `DataAPIBlob(typeof raw=ArrayBuffer, byteLength=${buff.length})`);
+        assert.strictEqual(blob(binary).toString(), `DataAPIBlob(typeof raw=base64, byteLength=${buff.length})`);
+        assert.strictEqual(blob(blob(binary)).toString(), `DataAPIBlob(typeof raw=base64, byteLength=${buff.length})`);
+      }),
+    );
   });
 });

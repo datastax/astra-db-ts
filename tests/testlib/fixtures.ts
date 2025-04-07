@@ -17,6 +17,7 @@
 // + import { Client } from '@/src/client';
 // And now it's not even needed anymore :(
 
+import * as fetchH2 from 'fetch-h2';
 import { DataAPIClient } from '@/src/client/index.js';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
 import {
@@ -27,12 +28,15 @@ import {
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-  TEST_HTTP_CLIENT, TEST_OPENAI_KEY,
+  TEST_HTTP_CLIENT, TEST_OPENAI_KEY, VECTORIZE_VECTOR_LENGTH,
 } from '@/tests/testlib/config.js';
 import type { BaseClientEvent, DataAPIClientEventMap, LoggingConfig } from '@/src/lib/index.js';
 import type { InferTableSchema } from '@/src/db/index.js';
 import * as util from 'node:util';
 import { Table } from '@/src/documents/index.js';
+import { memoizeRequests } from '@/tests/testlib/utils.js';
+import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants.js';
+import { extractAstraEnvironment } from '@/src/administration/utils.js';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
@@ -98,8 +102,8 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
     map: { type: 'map', keyType: 'text', valueType: 'uuid' },
     set: { type: 'set', valueType: 'uuid' },
     list: { type: 'list', valueType: 'uuid' },
-    vector1: { type: 'vector', dimension: 1024, service: { provider: 'openai', modelName: 'text-embedding-3-small' } },
-    vector2: { type: 'vector', dimension: 1024, service: { provider: 'openai', modelName: 'text-embedding-3-small' } },
+    vector1: { type: 'vector', dimension: VECTORIZE_VECTOR_LENGTH, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+    vector2: { type: 'vector', dimension: VECTORIZE_VECTOR_LENGTH, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
   },
   primaryKey: {
     partitionBy: ['text'],
@@ -107,7 +111,7 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
   },
 });
 
-export const initTestObjects = (opts?: TestObjectsOptions) => {
+export function initTestObjects(opts?: TestObjectsOptions) {
   const {
     httpClient = TEST_HTTP_CLIENT,
     env = ENVIRONMENT,
@@ -119,26 +123,30 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   const clientType = httpClient?.split(':')[0];
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-    httpOptions: clientType ? { preferHttp2, client: <any>clientType } : undefined,
+    httpOptions: clientType ? { preferHttp2, client: <any>clientType, fetchH2 } : undefined,
     timeoutDefaults: { requestTimeoutMs: 60000 },
     dbOptions: { keyspace: DEFAULT_KEYSPACE },
+    adminOptions: { endpointUrl: DEFAULT_DEVOPS_API_ENDPOINTS[extractAstraEnvironment(TEST_APPLICATION_URI)] },
     environment: env,
     logging,
   });
 
-  for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEventMap)[]) {
+  for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed', 'adminCommandStarted', 'adminCommandWarnings', 'adminCommandPolling'] as (keyof DataAPIClientEventMap)[]) {
     client.on(event, (e: BaseClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
   }
 
   const db = client.db(TEST_APPLICATION_URI);
 
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
-  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
+  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, {
+    embeddingApiKey: TEST_OPENAI_KEY,
+    keyspace: OTHER_KEYSPACE,
+  });
 
   const table = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME);
   const table_ = db.table<EverythingTableSchemaWithVectorize>(DEFAULT_TABLE_NAME, {
-    keyspace: OTHER_KEYSPACE,
     embeddingApiKey: TEST_OPENAI_KEY,
+    keyspace: OTHER_KEYSPACE,
   });
 
   const dbAdmin = (ENVIRONMENT === 'astra')
@@ -150,7 +158,17 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     : null!;
 
   return { client, db, collection, collection_, dbAdmin, table, table_, admin };
-};
+}
+
+export function initMemoizedTestObjects(opts?: TestObjectsOptions) {
+  const objs = initTestObjects(opts);
+
+  Object.values(objs)
+    .filter(o => '_httpClient' in o)
+    .forEach(memoizeRequests);
+
+  return objs;
+}
 
 export const initCollectionWithFailingClient = () => {
   const { collection } = initTestObjects();

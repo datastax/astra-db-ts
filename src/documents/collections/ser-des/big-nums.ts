@@ -18,6 +18,7 @@ import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 import type { CollectionSerDesConfig } from '@/src/documents/index.js';
 import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
 import type { PathSegment } from '@/src/lib/types.js';
+import { unescapeFieldPath } from '@/src/lib/index.js';
 
 /**
  * @public
@@ -80,14 +81,14 @@ const collNumCoercionFnFromCfg = (cfg: CollNumCoercionCfg): GetCollNumCoercionFn
 };
 
 const buildNumCoercionTree = (cfg: CollNumCoercionCfg): NumCoercionTree => {
-  const result: NumCoercionTree = {};
+  const result: NumCoercionTree = Object.create(null);
 
   Object.entries(cfg).forEach(([path, coercion]) => {
-    const keys = path.split('.');
+    const keys = unescapeFieldPath(path);
     let current = result;
 
     keys.forEach((key, index) => {
-      current[key] ??= {};
+      current[key] ??= Object.create(null);
 
       if (index === keys.length - 1) {
         current[key][$NumCoercion] = coercion;
@@ -100,7 +101,7 @@ const buildNumCoercionTree = (cfg: CollNumCoercionCfg): NumCoercionTree => {
   return result;
 };
 
-const findMatchingPath = (path: readonly PathSegment[], tree: NumCoercionTree | undefined): CollNumCoercion | undefined => {
+const findMatchingPath = (path: readonly PathSegment[], tree: NumCoercionTree): CollNumCoercion | undefined => {
   let coercion: CollNumCoercion | undefined = undefined;
 
   for (let i = 0; tree && i <= path.length; i++) {
@@ -176,8 +177,16 @@ export const coerceBigNumber = (value: BigNumber, path: readonly PathSegment[], 
     case 'bignumber':
       return value;
     case 'string':
-    case 'number_or_string':
       return value.toString();
+    case 'number_or_string': {
+      const asNum = value.toNumber();
+
+      if (!value.isEqualTo(asNum)) {
+        return value.toString();
+      }
+
+      return asNum;
+    }
   }
 };
 
@@ -201,7 +210,7 @@ export const coerceNumber = (value: number, path: readonly PathSegment[], getNum
     case 'bignumber':
       return BigNumber(value);
     case 'string':
-      return value.toString();
+      return String(value);
     case 'number':
     case 'strict_number':
     case 'number_or_string':

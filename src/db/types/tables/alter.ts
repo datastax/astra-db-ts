@@ -65,7 +65,7 @@ export interface DropColumnOperation<Schema extends SomeRow> {
   /**
    * The columns to drop from the table.
    */
-  columns: (keyof Schema)[],
+  columns: (keyof Schema & string)[],
   // ifExists?: boolean,
 }
 
@@ -78,7 +78,8 @@ export interface AddVectorizeOperation<Schema extends SomeRow> {
   /**
    * The options for vectorize-ing each column.
    */
-  columns: Partial<Record<keyof Schema, VectorizeServiceOptions>>,
+  columns: Partial<Record<keyof Schema & string, VectorizeServiceOptions>>,
+  // ifNotExists?: boolean,
 }
 
 /**
@@ -90,7 +91,7 @@ export interface DropVectorizeOperation<Schema extends SomeRow> {
   /**
    * The columns to disable vectorize on.
    */
-  columns: (keyof Schema)[],
+  columns: (keyof Schema & string)[],
   // ifExists?: boolean,
 }
 

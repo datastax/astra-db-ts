@@ -78,7 +78,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     {
       client.once('adminCommandStarted', (event) => {
         commandStartedEvent = true;
-        assert.strictEqual(event.path, '/databases');
+        assert.strictEqual(event.url, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
         assert.strictEqual(event.longRunning, true);
         assert.strictEqual(event.params, undefined);
@@ -87,7 +87,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
       client.once('adminCommandPolling', (event) => {
         commandPollingEvent = true;
-        assert.strictEqual(event.path, '/databases');
+        assert.strictEqual(event.url, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
         assert.strictEqual(event.longRunning, true);
         assert.strictEqual(event.params, undefined);
@@ -97,7 +97,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
       client.once('adminCommandSucceeded', (event) => {
         commandSucceededEvent = true;
-        assert.strictEqual(event.path, '/databases');
+        assert.strictEqual(event.url, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
         assert.strictEqual(event.longRunning, true);
         assert.strictEqual(event.params, undefined);

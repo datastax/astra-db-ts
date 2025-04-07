@@ -63,3 +63,5 @@ export const LOGGING_PRED: (e: BaseClientEvent, isGlobal: boolean) => boolean = 
   : () => false;
 
 export const SKIP_PRELUDE = !!process.env.SKIP_PRELUDE || false;
+
+export const VECTORIZE_VECTOR_LENGTH = 4096;

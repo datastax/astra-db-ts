@@ -34,13 +34,15 @@ import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-h
 import type { DbAdmin } from '@/src/administration/index.js';
 import { NonErrorError } from '@/src/lib/errors.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
+import { isNonEmpty } from '@/src/lib/utils.js';
 
 type ClientKind = 'admin' | 'normal';
 
 /**
  * @internal
  */
-type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName: string } : EmptyObj) & {
+type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName: DevOpsAPIRequestInfo['methodName'] } : EmptyObj) & {
   keyspace?: string | null,
   timeoutManager: TimeoutManager,
   bigNumsPresent?: boolean,
@@ -100,21 +102,21 @@ export const EmissionStrategy: EmissionStrategies = {
   }),
   Admin: (logger) => ({
     emitCommandStarted(reqId, info, opts) {
-      logger.adminCommandStarted?.(reqId, adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
+      logger.adminCommandStarted?.(reqId, '', adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
     },
     emitCommandFailed(reqId, info, _, error, started, opts) {
-      logger.adminCommandFailed?.(reqId, adaptInfo4Devops(info, opts.methodName), true, error, started);
+      logger.adminCommandFailed?.(reqId, '', adaptInfo4Devops(info, opts.methodName), true, error, started);
     },
     emitCommandSucceeded(reqId, info, resp, started, opts) {
-      logger.adminCommandSucceeded?.(reqId, adaptInfo4Devops(info, opts.methodName), true, resp, started);
+      logger.adminCommandSucceeded?.(reqId, '', adaptInfo4Devops(info, opts.methodName), true, resp, started);
     },
     emitCommandWarnings(reqId, info, warnings, opts) {
-      logger.adminCommandWarnings?.(reqId, adaptInfo4Devops(info, opts.methodName), true, warnings);
+      logger.adminCommandWarnings?.(reqId, '', adaptInfo4Devops(info, opts.methodName), true, warnings);
     },
   }),
 };
 
-const adaptInfo4Devops = (info: DataAPIRequestInfo, methodName: string) => (<const>{
+const adaptInfo4Devops = (info: DataAPIRequestInfo, methodName: DevOpsAPIRequestInfo['methodName']) => (<const>{
   method: 'POST',
   data: info.command,
   path: info.url,
@@ -276,6 +278,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
           ? this.bigNumHack?.parser.parse(resp.body)
           : JSON.parse(resp.body)
+        /* c8 ignore next: exceptional case */
         : {};
 
       clonedData = requestId
@@ -288,8 +291,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         this.emissionStrategy.emitCommandWarnings?.(requestId, info, warnings, options);
       }
 
-      if (data.errors && data.errors.length > 0) {
-        // throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data, warnings);
+      if (data.errors && isNonEmpty(data.errors)) {
         throw new DataAPIResponseError(info.command, data);
       }
 

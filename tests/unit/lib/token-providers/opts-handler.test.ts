@@ -15,9 +15,10 @@
 import assert from 'assert';
 import { describe, it, TEST_APPLICATION_TOKEN } from '@/tests/testlib/index.js';
 import { StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib/index.js';
-import { OptionParseError } from '@/src/lib/opts-handler.js';
-import { ensureMonoidalHandlerIsActuallyAMonoid } from '@/tests/testlib/opts-handler/validate-monoid.js';
+import { OptionParseError } from '@/src/lib/opts-handlers.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import { validateLawsOf } from '@/tests/testlib/laws.js';
+import fc from 'fast-check';
 
 describe('unit.lib.token-providers.opts-handler', () => {
   describe('parse', () => {
@@ -76,6 +77,6 @@ describe('unit.lib.token-providers.opts-handler', () => {
       assert.deepStrictEqual(TokenProvider.opts.concat([emp, emp, tp3, emp]), tp3);
     });
 
-    ensureMonoidalHandlerIsActuallyAMonoid(TokenProvider.opts, [tp1, tp2, tp3, tp4]);
+    validateLawsOf.monoid(TokenProvider.opts, fc.constantFrom(tp1, tp2, tp3, tp4, emp, tp1));
   });
 });

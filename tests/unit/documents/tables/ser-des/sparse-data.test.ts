@@ -16,44 +16,37 @@
 import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
+import fc from 'fast-check';
+import { arbs } from '@/tests/testlib/arbitraries.js';
+import type { StrictCreateTableColumnDefinition } from '@/src/db/index.js';
 
 describe('unit.documents.tables.ser-des.sparse-data', () => {
-  const schema = {
-    int: { type: 'int' },
-    text: { type: 'text' },
-    map: { type: 'map', keyType: 'text', valueType: 'text' },
-    set: { type: 'set', valueType: 'text' },
-    list: { type: 'list', valueType: 'text' },
-  };
-
   describe('sparseData: true', () => {
     const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, sparseData: true });
 
     it('should leave populated fields populated', () => {
-      const resp = serdes.deserialize({
-        int: 1,
-        text: 'text',
-        map: { key: 'value' },
-        set: ['value'],
-        list: ['value'],
-      }, {
-        status: { projectionSchema: schema },
-      });
+      fc.assert(
+        fc.property(arbs.tableDefinitionAndRow({ partialRow: true }), ([schema, row]) => {
+          const [serializedRow] = serdes.serialize(row);
 
-      assert.deepStrictEqual(resp, {
-        int: 1,
-        text: 'text',
-        map: new Map([['key', 'value']]),
-        set: new Set(['value']),
-        list: ['value'],
-      });
+          const resp = serdes.deserialize(serializedRow, {
+            status: { projectionSchema: schema },
+          });
+
+          assert.deepStrictEqual(resp, serializedRow);
+        }),
+      );
     });
 
-    it('should not populated unpopulated fields', () => {
-      const resp = serdes.deserialize({}, {
-        status: { projectionSchema: schema },
-      });
-      assert.deepStrictEqual(resp, {});
+    it('should not populate unpopulated fields', () => {
+      fc.assert(
+        fc.property(arbs.tableDefinitionAndRow(), ([schema]) => {
+          const resp = serdes.deserialize({}, {
+            status: { projectionSchema: schema },
+          });
+          assert.deepStrictEqual(resp, {});
+        }),
+      );
     });
   });
 
@@ -61,16 +54,30 @@ describe('unit.documents.tables.ser-des.sparse-data', () => {
     const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, sparseData: false });
 
     it('should populate all fields', () => {
-      const resp = serdes.deserialize({}, {
-        status: { projectionSchema: schema },
-      });
-      assert.deepStrictEqual(resp, {
-        int: null,
-        text: null,
-        map: new Map(),
-        set: new Set(),
-        list: [],
-      });
+      const defaultForType = (def: StrictCreateTableColumnDefinition) => {
+        switch (def.type) {
+          case 'map':
+            return new Map();
+          case 'set':
+            return new Set();
+          case 'list':
+            return [];
+          default:
+            return null;
+        }
+      };
+
+      fc.assert(
+        fc.property(arbs.tableDefinitionAndRow(), ([schema]) => {
+          const resp = serdes.deserialize({}, {
+            status: { projectionSchema: schema },
+          });
+
+          const expected = Object.fromEntries(Object.entries(schema).map(([k, v]) => [k, defaultForType(v)]));
+
+          assert.deepStrictEqual(resp, expected);
+        }),
+      );
     });
   });
 });

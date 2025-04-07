@@ -14,11 +14,13 @@
 
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { forJSEnv } from '@/src/lib/utils.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
-import { mkInvArgsErr } from '@/src/documents/utils.js';
+import { mkInvArgsError } from '@/src/documents/utils.js';
 import type { SomeConstructor } from '@/src/lib/index.js';
+import { mkTypeUnsupportedForCollectionsError } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * Represents a `Buffer` type, if available.
@@ -58,6 +60,17 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
   private readonly _raw!: Exclude<DataAPIBlobLike, DataAPIBlob>;
 
   /**
+   * Errorful implementation of `$SerializeForCollection` for {@link TableCodec}
+   *
+   * Throws a human-readable error message warning that this datatype may not be used with collections without writing a custom ser/des codec.
+   */
+  public [$SerializeForCollection]() {
+    throw mkTypeUnsupportedForCollectionsError('DataAPIBlob', '_blob', [
+      'Use another blob representation, such as a base64 string',
+    ]);
+  };
+
+  /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}
    */
   public [$SerializeForTable](ctx: TableSerCtx) {
@@ -83,7 +96,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    */
   public constructor(blob: DataAPIBlobLike, validate = true) {
     if (validate && !DataAPIBlob.isBlobLike(blob)) {
-      throw mkInvArgsErr('new DataAPIBlob', [['blob', 'DataAPIBlob | ArrayBuffer | Buffer | { $binary: string }']], blob);
+      throw mkInvArgsError('new DataAPIBlob', [['blob', 'DataAPIBlob | ArrayBuffer | Buffer | { $binary: string }']], blob);
     }
 
     Object.defineProperty(this, '_raw', {

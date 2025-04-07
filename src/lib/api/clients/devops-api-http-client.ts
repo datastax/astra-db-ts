@@ -17,7 +17,6 @@ import { HttpClient } from '@/src/lib/api/clients/index.js';
 import {
   DevOpsAPIResponseError,
   DevOpsAPITimeoutError,
-  DevOpsUnexpectedStateError,
 } from '@/src/administration/errors.js';
 import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
 import { HttpMethods } from '@/src/lib/api/constants.js';
@@ -36,7 +35,7 @@ export interface DevOpsAPIRequestInfo {
   method: HttpMethodStrings,
   data?: Record<string, any>,
   params?: Record<string, string>,
-  methodName: string,
+  methodName: `${'admin' | 'dbAdmin'}.${string}`,
 }
 
 /**
@@ -92,7 +91,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
 
     const requestId = this.logger.internal.generateAdminCommandRequestId();
 
-    this.logger.internal.adminCommandStarted?.(requestId, req, isLongRunning, timeoutManager.initial());
+    this.logger.internal.adminCommandStarted?.(requestId, this.baseUrl, req, isLongRunning, timeoutManager.initial());
 
     const started = performance.now();
     const resp = await this._executeRequest(req, timeoutManager, started, requestId);
@@ -103,7 +102,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
 
     await this._awaitStatus(id, req, info, started, requestId);
 
-    this.logger.internal.adminCommandSucceeded?.(requestId, req, isLongRunning, resp, started);
+    this.logger.internal.adminCommandSucceeded?.(requestId, this.baseUrl, req, isLongRunning, resp, started);
 
     return resp;
   }
@@ -115,7 +114,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       const url = this.baseUrl + req.path;
 
       if (!isLongRunning) {
-        this.logger.internal.adminCommandStarted?.(requestId, req, isLongRunning, timeoutManager.initial());
+        this.logger.internal.adminCommandStarted?.(requestId, this.baseUrl, req, isLongRunning, timeoutManager.initial());
       }
 
       started ||= performance.now();
@@ -136,7 +135,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       }
 
       if (!isLongRunning) {
-        this.logger.internal.adminCommandSucceeded?.(requestId, req, false, data, started);
+        this.logger.internal.adminCommandSucceeded?.(requestId, this.baseUrl, req, false, data, started);
       }
 
       return {
@@ -146,7 +145,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       };
     } catch (thrown) {
       const err = NonErrorError.asError(thrown);
-      this.logger.internal.adminCommandFailed?.(requestId, req, isLongRunning, err, started);
+      this.logger.internal.adminCommandFailed?.(requestId, this.baseUrl, req, isLongRunning, err, started);
       throw err;
     }
   }
@@ -160,13 +159,13 @@ export class DevOpsAPIHttpClient extends HttpClient {
     let waiting = false;
 
     for (let i = 1; i++;) {
-      /* istanbul ignore next: exceptional case that can't be manually reproduced */
+      /* c8 ignore next 3: exceptional case that can't be manually reproduced */
       if (waiting) {
         continue;
       }
       waiting = true;
 
-      this.logger.internal.adminCommandPolling?.(requestId, req, started, pollInterval, i);
+      this.logger.internal.adminCommandPolling?.(requestId, this.baseUrl, req, started, pollInterval, i);
 
       const resp = await this.request({
         method: HttpMethods.Get,
@@ -178,14 +177,15 @@ export class DevOpsAPIHttpClient extends HttpClient {
         break;
       }
 
-      /* istanbul ignore next: exceptional case that can't be manually reproduced */
+      /* c8 ignore start: exceptional case that can't be manually reproduced */
       if (!info.legalStates.includes(resp.data?.status)) {
         const okStates = [info.target, ...info.legalStates];
-        const error = new DevOpsUnexpectedStateError(`Created database is not in any legal state [${okStates.join(',')}]`, okStates, resp.data);
+        const error = new Error(`Created database is not in any legal state [${okStates.join(',')}]; current state: ${resp.data?.status}`);
 
-        this.logger.internal.adminCommandFailed?.(requestId, req, true, error, started);
+        this.logger.internal.adminCommandFailed?.(requestId, this.baseUrl, req, true, error, started);
         throw error;
       }
+      /* c8 ignore end */
 
       await new Promise<void>((resolve) => {
         setTimeout(() => {

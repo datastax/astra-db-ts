@@ -22,8 +22,9 @@ import {
   LoggingEvents,
   LoggingOutputs,
 } from '@/src/lib/logging/constants.js';
-import { OptionParseError } from '@/src/lib/opts-handler.js';
-import { ensureMonoidalHandlerIsActuallyAMonoid } from '@/tests/testlib/opts-handler/validate-monoid.js';
+import { OptionParseError } from '@/src/lib/opts-handlers.js';
+import { validateLawsOf } from '@/tests/testlib/laws.js';
+import fc from 'fast-check';
 
 describe('unit.lib.logging.cfg-handler', () => {
   describe('parse', () => {
@@ -127,18 +128,23 @@ describe('unit.lib.logging.cfg-handler', () => {
     });
   });
 
-  describe('concat', () => {
-    const layer1 = InternalLogger.cfg.parse('all');
-    const layer2 = InternalLogger.cfg.parse([{ events: 'all', emits: ['stderr'] }]);
-    const layer3 = InternalLogger.cfg.parse([{ events: ['commandFailed', 'adminCommandFailed'], emits: [] }]);
-    const layer4 = layer1;
+  describe('monoidal laws', () => {
+    const layers = [
+      InternalLogger.cfg.empty,
+      InternalLogger.cfg.parse('all'),
+      InternalLogger.cfg.parse([{ events: 'all', emits: ['stderr'] }]),
+      InternalLogger.cfg.parse([{ events: ['commandFailed', 'adminCommandFailed'], emits: [] }]),
+      InternalLogger.cfg.parse([{ events: /Failed/, emits: ['event', 'stderr:verbose'] }]),
+      InternalLogger.cfg.parse('commandSucceeded'),
+      InternalLogger.cfg.parse('all'),
+    ];
 
     it('should properly concatenate layers from left to right', () => {
-      assert.deepStrictEqual(InternalLogger.cfg.concat([layer1, layer2, layer3, layer4]), {
-        layers: [layer1.layers, layer2.layers, layer3.layers, layer4.layers].flat(),
+      assert.deepStrictEqual(InternalLogger.cfg.concat(layers), {
+        layers: layers.map(l => l.layers).flat(),
       });
     });
 
-    ensureMonoidalHandlerIsActuallyAMonoid(InternalLogger.cfg, [layer1, layer2, layer3, layer4]);
+    validateLawsOf.monoid(InternalLogger.cfg, fc.constantFrom(...layers));
   });
 });

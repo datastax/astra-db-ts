@@ -14,9 +14,11 @@
 
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { DataAPITime, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { DataAPIDuration } from '@/src/documents/index.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
-import { mkInvArgsErr } from '@/src/documents/utils.js';
+import { mkInvArgsError } from '@/src/documents/utils.js';
+import { mkTypeUnsupportedForCollectionsError } from '@/src/lib/api/ser-des/utils.js';
 
 const MillisecondsPerDay = 1000 * 60 * 60 * 24;
 
@@ -63,7 +65,7 @@ const MillisecondsPerDay = 1000 * 60 * 60 * 24;
  * // Create a `DataAPIDate` from a year and a valid day of the year
  * DataAPIDate.ofYearDay(2004, 258) // '2004-09-14'
  *
- * // Create a `DataAPIDate` given the number of days since the epoch (may be negative)
+ * // Create a `DataAPIDate` given the number of days since the epoch (can be negative)
  * DataAPIDate.ofEpochDay(12675) // '2004-09-14'
  * ```
  *
@@ -110,6 +112,18 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    * Must be a valid day for the given month.
    */
   readonly date: number;
+
+  /**
+   * Errorful implementation of `$SerializeForCollection` for {@link TableCodec}
+   *
+   * Throws a human-readable error message warning that this datatype may not be used with collections without writing a custom ser/des codec.
+   */
+  public [$SerializeForCollection]() {
+    throw mkTypeUnsupportedForCollectionsError('DataAPIDate', '_date', [
+      'Use a native Javascript Date object',
+      'Use another date representation, such as a string, or an object containing the year, month, and date',
+    ]);
+  };
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}
@@ -296,13 +310,13 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
           this.date = i1.getDate();
         }
         else {
-          throw mkInvArgsErr('new DataAPIDate', [['date', 'string | Date']], i1);
+          throw mkInvArgsError('new DataAPIDate', [['date', 'string | Date']], i1);
         }
         break;
       }
       case 3: {
         if (typeof i1 !== 'number' || typeof i2 !== 'number' || typeof i3 !== 'number') {
-          throw mkInvArgsErr('new DataAPIDate', [['year', 'number'], ['month', 'number'], ['date', 'number']], i1, i2, i3);
+          throw mkInvArgsError('new DataAPIDate', [['year', 'number'], ['month', 'number'], ['date', 'number']], i1, i2, i3);
         }
         validateDate(1, i1, i2, i3);
         this.year = i1;
@@ -626,7 +640,7 @@ const validateDate = (sign: number, year: number, month: number, date: number): 
 
 const ofYearDay = (year: unknown, dayOfYear: unknown): Date => {
   if (typeof year !== 'number' || typeof dayOfYear !== 'number') {
-    throw mkInvArgsErr('DataAPIDate.ofYearDay', [['year', 'number'], ['dayOfYear', 'number']], year, dayOfYear);
+    throw mkInvArgsError('DataAPIDate.ofYearDay', [['year', 'number'], ['dayOfYear', 'number']], year, dayOfYear);
   }
 
   if (!Number.isInteger(year) || !Number.isInteger(dayOfYear)) {
@@ -649,7 +663,7 @@ const ofYearDay = (year: unknown, dayOfYear: unknown): Date => {
 
 const ofEpochDay = (epochDays: unknown): Date => {
   if (typeof epochDays !== 'number') {
-    throw mkInvArgsErr('DataAPIDate.ofEpochDay', [['epochDays', 'number']], epochDays);
+    throw mkInvArgsError('DataAPIDate.ofEpochDay', [['epochDays', 'number']], epochDays);
   }
 
   if (!Number.isInteger(epochDays)) {

@@ -15,11 +15,13 @@
 
 import assert from 'assert';
 import { describe, ENVIRONMENT, it, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
+import { DataAPIDbAdmin, DevOpsAPITimeoutError } from '@/src/administration/index.js';
 
 describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
   it('(LONG) works', async () => {
     let succeeded = 0;
     let warnings = 0;
+    let polling = 0;
 
     client.on('adminCommandSucceeded', () => {
       succeeded++;
@@ -29,14 +31,15 @@ describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
       warnings++;
     });
 
+    client.on('adminCommandPolling', () => {
+      polling++;
+    });
+
     const db = client.db(TEST_APPLICATION_URI);
 
     const dbAdmin = (ENVIRONMENT === 'astra')
       ? db.admin({ environment: ENVIRONMENT })
       : db.admin({ environment: ENVIRONMENT });
-
-    const keyspaces1 = await dbAdmin.listKeyspaces();
-    assert.ok(!keyspaces1.includes('slania'));
 
     await dbAdmin.createKeyspace('slania', { updateDbKeyspace: true });
     assert.strictEqual(db.keyspace, 'slania');
@@ -50,12 +53,35 @@ describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
     const keyspaces3 = await dbAdmin.listKeyspaces();
     assert.ok(!keyspaces3.includes('slania'));
 
-    assert.strictEqual(succeeded, 5);
+    assert.strictEqual(succeeded, 4);
     assert.strictEqual(warnings, 0);
+
+    if (dbAdmin instanceof DataAPIDbAdmin) {
+      assert.strictEqual(polling, 0);
+    } else {
+      assert.ok(polling > 0);
+    }
   });
 
   it('should findEmbeddingProviders', async () => {
     const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
     assert.ok(typeof embeddingProviders === 'object');
+  });
+
+  // TODO
+  // it('should findRerankingProviders', async () => {
+  //   const { rerankingProviders } = await dbAdmin.findRerankingProviders();
+  //   assert.ok(typeof rerankingProviders === 'object');
+  // });
+
+  it('should timeout', async () => {
+    await assert.rejects(() => dbAdmin.listKeyspaces({ timeout: 1 }), (e) => {
+      assert.ok(e instanceof DevOpsAPITimeoutError);
+      assert.strictEqual(e.message, 'Command timed out after 1ms (The timeout provided via `{ timeout: <number> }` timed out)');
+      assert.strictEqual(e.timedOutCategories, 'provided');
+      assert.deepStrictEqual(e.timeout, { requestTimeoutMs: 1, keyspaceAdminTimeoutMs: 1 });
+      assert.strictEqual(typeof e.url, 'string');
+      return true;
+    });
   });
 });

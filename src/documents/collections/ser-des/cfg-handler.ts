@@ -20,8 +20,8 @@ import {
   serdesMonoidSchema,
   serDesTransform,
 } from '@/src/lib/api/ser-des/cfg-handler.js';
-import type { OptionsHandlerTypes } from '@/src/lib/opts-handler.js';
-import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
+import type { OptionsHandlerTypes } from '@/src/lib/opts-handlers.js';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handlers.js';
 import type { CollNumCoercionCfg, CollectionSerDesConfig, GetCollNumCoercionFn } from '@/src/documents/index.js';
 import { function_ } from '@/src/lib/utils.js';
 

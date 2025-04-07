@@ -81,7 +81,7 @@ export type EventFormatter = (event: DataAPIClientEvent, fullMessage: string) =>
 /**
  * ##### Overview
  *
- * The base class of all events that may be emitted/logged by some {@link HierarchicalEmitter} (e.g. a `DataAPIClient`, `DbAdmin`, `Collection`, etc.)
+ * The base class of all events that may be emitted/logged by some {@link HierarchicalLogger} (e.g. a `DataAPIClient`, `DbAdmin`, `Collection`, etc.)
  *
  * Using events over direct logging allows for more flexibility in how the events are handled, such as:
  * - Logging to different outputs (e.g., files, external log aggregators)
@@ -234,7 +234,7 @@ export abstract class BaseClientEvent {
    * @returns The formatted event string.
    */
   public format(formatter: EventFormatter = BaseClientEvent._defaultFormatter): string {
-    return formatter(this as any, this.getMessagePrefix() + this.getMessage());
+    return formatter(this as any, this.getMessagePrefix() + ' ' + this.getMessage());
   }
 
   protected static formatVerboseTransientKeys: string[];

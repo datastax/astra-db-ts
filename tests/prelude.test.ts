@@ -13,7 +13,13 @@
 // limitations under the License.
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
-import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE, SKIP_PRELUDE } from '@/tests/testlib/config.js';
+import {
+  DEFAULT_COLLECTION_NAME,
+  DEFAULT_TABLE_NAME,
+  OTHER_KEYSPACE,
+  SKIP_PRELUDE,
+  VECTORIZE_VECTOR_LENGTH,
+} from '@/tests/testlib/config.js';
 import {
   EverythingTableSchema,
   EverythingTableSchemaWithVectorize,
@@ -54,14 +60,17 @@ before(async () => {
   
   const createTCPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
-      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, keyspace })
-        .then(c => c.deleteMany({}));
+      await db.createCollection(DEFAULT_COLLECTION_NAME, {
+        vector: (keyspace === DEFAULT_KEYSPACE) ? { dimension: 5, metric: 'cosine' } : { dimension: VECTORIZE_VECTOR_LENGTH, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+        keyspace,
+      }).then(c => c.deleteMany({}));
 
       const table = await db.createTable(DEFAULT_TABLE_NAME, {
         definition: (keyspace === DEFAULT_KEYSPACE) ? EverythingTableSchema : EverythingTableSchemaWithVectorize,
         ifNotExists: true,
         keyspace,
       });
+      await table.deleteMany({});
 
       if (keyspace === DEFAULT_KEYSPACE) {
         await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector' as keyof InferTableSchema<typeof table>, { options: { metric: 'dot_product' }, ifNotExists: true });

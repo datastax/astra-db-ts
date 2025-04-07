@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { nullish, oneOf } from 'decoders';
-import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
-import { OptionsHandler } from '@/src/lib/opts-handler.js';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handlers.js';
+import { OptionsHandler } from '@/src/lib/opts-handlers.js';
 import { type DataAPIEnvironment, DataAPIEnvironments } from '@/src/lib/index.js';
 
 /**

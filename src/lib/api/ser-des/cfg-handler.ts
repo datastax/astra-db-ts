@@ -15,8 +15,8 @@
 import type { Decoder } from 'decoders';
 import { array, boolean, inexact, oneOf, optional } from 'decoders';
 import type { BaseSerDesConfig, RawCodec } from '@/src/lib/index.js';
-import type { Parsed, Unparse } from '@/src/lib/opts-handler.js';
-import { monoids } from '@/src/lib/opts-handler.js';
+import type { Parsed, Unparse } from '@/src/lib/opts-handlers.js';
+import { monoids } from '@/src/lib/opts-handlers.js';
 
 /**
  * @internal

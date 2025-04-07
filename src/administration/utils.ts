@@ -36,18 +36,18 @@ export const extractAstraEnvironment = (endpoint: string) => {
  * @internal
  */
 export const buildAstraDatabaseAdminInfo = (raw: SomeDoc, environment: 'dev' | 'prod' | 'test'): AstraDbAdminInfo => {
-  const regions = raw.info.datacenters?.map((dc: any): AstraDbRegionInfo => ({
+  const regions = raw.info.datacenters.map((dc: any): AstraDbRegionInfo => ({
     name: dc.region,
     apiEndpoint: buildAstraEndpoint(raw.id, dc.region, environment),
     createdAt: new Date(dc.dateCreated),
-  })) ?? [];
+  }));
 
   return {
     id: raw.id,
     name: raw.info.name,
     orgId: raw.orgId,
     ownerId: raw.ownerId,
-    keyspaces: raw.info.keyspaces ?? [],
+    keyspaces: /* c8 ignore next: can't reproduce, but just in case */ raw.info.keyspaces ?? [],
     environment: environment,
     cloudProvider: raw.info.cloudProvider!,
     createdAt: new Date(raw.creationTime),

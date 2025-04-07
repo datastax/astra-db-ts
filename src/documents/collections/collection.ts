@@ -47,7 +47,9 @@ import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type { CommandEventMap, WithSim } from '@/src/documents/index.js';
+import type { CommandEventMap, RerankedResult, WithSim } from '@/src/documents/index.js';
+import { CollectionDeleteManyError } from '@/src/documents/index.js';
+import { CollectionUpdateManyError } from '@/src/documents/index.js';
 import {
   CollectionFindCursor,
   CollectionInsertManyError,
@@ -491,7 +493,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @returns A summary of what changed.
    */
   public async updateMany(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<RSchema>> {
-    return this.#commands.updateMany(filter, update, options);
+    return this.#commands.updateMany(filter, update, options, (e, result) => new CollectionUpdateManyError(e, result));
   }
 
   /**
@@ -632,7 +634,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @returns How many documents were deleted.
    */
   public async deleteMany(filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult> {
-    return this.#commands.deleteMany(filter, options);
+    return this.#commands.deleteMany(filter, options, (e, result) => new CollectionDeleteManyError(e, result));
   }
 
   /**
@@ -886,9 +888,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     return this.#commands.find(filter, options, CollectionFindCursor);
   }
 
-  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
+  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<RerankedResult<RSchema>, RerankedResult<RSchema>>
 
-  public findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<TRaw, TRaw>
+  public findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<TRaw>, RerankedResult<TRaw>>
 
   public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<SomeDoc> {
     return this.#commands.findAndRerank(filter, options, CollectionFindAndRerankCursor);
@@ -1485,7 +1487,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   public async options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>> {
-    const resp = await this.#db.listCollections({ timeout: options?.timeout, keyspace: this.keyspace });
+    const resp = await this.#db.listCollections({ ...options, keyspace: this.keyspace });
 
     const collection = resp.find((c) => c.name === this.name);
 

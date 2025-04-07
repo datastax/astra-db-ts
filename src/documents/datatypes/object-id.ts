@@ -15,7 +15,10 @@
 import { isNullish } from '@/src/lib/utils.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { CollectionCodec, CollectionDesCtx, CollectionSerCtx } from '@/src/documents/index.js';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
+import { mkTypeUnsupportedForTablesError } from '@/src/lib/api/ser-des/utils.js';
+import type { nullish } from '@/src/lib/index.js';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
@@ -24,7 +27,7 @@ const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
  *
  * @public
  */
-export const oid = (id?: string | number | null) => new ObjectId(id);
+export const oid = (id?: string | number | null | ObjectId) => new ObjectId(id);
 
 /**
  * Represents an ObjectId that can be used as an _id in the DataAPI.
@@ -69,6 +72,17 @@ export class ObjectId implements CollectionCodec<typeof ObjectId> {
   private readonly _raw!: string;
 
   /**
+   * Errorful implementation of `$SerializeForTable` for {@link TableCodec}
+   *
+   * Throws a human-readable error message warning that this datatype may not be used with tables without writing a custom ser/des codec.
+   */
+  public [$SerializeForTable]() {
+    throw mkTypeUnsupportedForTablesError('ObjectId', [
+      'Use another object ID representation, such as a string',
+    ]);
+  };
+
+  /**
    * Implementation of `$SerializeForCollection` for {@link TableCodec}
    */
   public [$SerializeForCollection](ctx: CollectionSerCtx) {
@@ -90,19 +104,19 @@ export class ObjectId implements CollectionCodec<typeof ObjectId> {
    * @param id - The ObjectId string.
    * @param validate - Whether to validate the ObjectId string. Defaults to `true`.
    */
-  constructor(id?: string | number | null, validate = true) {
+  constructor(id?: string | number | ObjectId | null, validate = true) {
     if (validate) {
       if (typeof id === 'string') {
         if (id.length !== 24 || !objectIdRegex.test(id)) {
           throw new Error('ObjectId must be a 24-character hex string');
         }
-      } else if (typeof id !== 'number' && !isNullish(id)) {
-        throw new Error('ObjectId must be a string, number, or nullish');
+      } else if (typeof id !== 'number' && !isNullish(id) && !(id as unknown instanceof ObjectId)) {
+        throw new Error('ObjectId must be a string, number, nullish, or another ObjectId instance');
       }
     }
 
     Object.defineProperty(this, '_raw', {
-      value: (typeof id === 'string') ? id.toLowerCase() : genObjectId(id),
+      value: (typeof id === 'string') ? id.toLowerCase() : (id instanceof ObjectId) ? id._raw : genObjectId(id, ObjectIDGenIndex),
     });
 
     Object.defineProperty(this, $CustomInspect, {
@@ -156,13 +170,16 @@ const HexTable = Array.from({ length: 256 }, (_, i) => {
   return (i <= 15 ? '0' : '') + i.toString(16);
 });
 
-let index = ~~(Math.random() * 0xFFFFFF);
+let ObjectIDGenIndex = ~~(Math.random() * 0xFFFFFF);
 
-function genObjectId(time?: number | null): string {
+/**
+ * @internal
+ */
+export function genObjectId(time: number | nullish, genIndex: number): string {
   time ??= ~~(Date.now() / 1000);
   time = time % 0xFFFFFFFF;
 
-  index = (index + 1) % 0xFFFFFF;
+  ObjectIDGenIndex = (genIndex + 1) % 0xFFFFFF;
 
   let hexString = '';
 
@@ -175,9 +192,9 @@ function genObjectId(time?: number | null): string {
   hexString += HexTable[(RAND_ID & 0xFF)];
   hexString += HexTable[((PID >> 8) & 0xFF)];
   hexString += HexTable[(PID & 0xFF)];
-  hexString += HexTable[((index >> 16) & 0xFF)];
-  hexString += HexTable[((index >> 8) & 0xFF)];
-  hexString += HexTable[(index & 0xFF)];
+  hexString += HexTable[((ObjectIDGenIndex >> 16) & 0xFF)];
+  hexString += HexTable[((ObjectIDGenIndex >> 8) & 0xFF)];
+  hexString += HexTable[(ObjectIDGenIndex & 0xFF)];
 
   return hexString;
 }

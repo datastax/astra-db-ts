@@ -34,11 +34,11 @@ import type {
   GenericUpdateOneOptions,
   GenericUpdateResult,
   SomeDoc,
+  SomeId,
   SomeRow,
   Table,
   UpdateFilter,
 } from '@/src/documents/index.js';
-import { CollectionDeleteManyError, CollectionUpdateManyError, DataAPIResponseError } from '@/src/documents/index.js';
 import type { nullish, WithTimeout } from '@/src/lib/index.js';
 import type { InsertManyErrorConstructor } from '@/src/documents/commands/helpers/insertion.js';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion.js';
@@ -55,12 +55,12 @@ import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 export class CommandImpls<ID> {
   private readonly _httpClient: DataAPIHttpClient;
   private readonly _serdes: SerDes;
-  private readonly _tOrC: Table<SomeRow> | Collection;
+  private readonly _parent: Table<SomeRow> | Collection;
 
-  constructor(tOrC: Table<SomeRow> | Collection, httpClient: DataAPIHttpClient, serdes: SerDes) {
+  constructor(parent: Table<SomeRow> | Collection, httpClient: DataAPIHttpClient, serdes: SerDes) {
     this._httpClient = httpClient;
     this._serdes = serdes;
-    this._tOrC = tOrC;
+    this._parent = parent;
   }
 
   public async insertOne(_document: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | nullish): Promise<GenericInsertOneResult<ID>> {
@@ -114,7 +114,7 @@ export class CommandImpls<ID> {
     return coalesceUpsertIntoUpdateResult(mkUpdateResult(resp), resp);
   }
 
-  public async updateMany(_filter: Filter, _update: UpdateFilter, options?: GenericUpdateManyOptions): Promise<GenericUpdateResult<ID, number>> {
+  public async updateMany(_filter: Filter, _update: UpdateFilter, options: GenericUpdateManyOptions | nullish, mkError: (e: unknown, result: GenericUpdateResult<SomeId, number>) => Error): Promise<GenericUpdateResult<ID, number>> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
     const update = this._serdes.serialize(_update, SerDesTarget.Update);
 
@@ -138,20 +138,12 @@ export class CommandImpls<ID> {
           timeoutManager,
         });
 
-        command.updateMany.options.pageState = resp.status?.nextPageState ;
-        commonResult.modifiedCount += resp.status?.modifiedCount ?? 0;
-        commonResult.matchedCount += resp.status?.matchedCount ?? 0;
+        command.updateMany.options.pageState = resp.status?.nextPageState;
+        commonResult.modifiedCount += resp.status?.modifiedCount;
+        commonResult.matchedCount += resp.status?.matchedCount;
       }
     } catch (e) {
-      if (e instanceof DataAPIResponseError) {
-        const combinedResult = {
-          matchedCount: commonResult.matchedCount + (e.rawResponse.status?.matchedCount ?? 0),
-          modifiedCount: commonResult.modifiedCount + (e.rawResponse.status?.modifiedCount ?? 0),
-        };
-        throw new CollectionUpdateManyError(e, coalesceUpsertIntoUpdateResult(combinedResult, e.rawResponse));
-      } else {
-        throw new CollectionUpdateManyError(e, coalesceUpsertIntoUpdateResult(commonResult, {}));
-      }
+      throw mkError(e, coalesceUpsertIntoUpdateResult(commonResult, {}));
     }
 
     return coalesceUpsertIntoUpdateResult(commonResult, resp);
@@ -196,14 +188,14 @@ export class CommandImpls<ID> {
     };
   }
 
-  public async deleteMany(_filter: Filter, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<GenericDeleteManyResult> {
+  public async deleteMany(_filter: Filter, options: WithTimeout<'generalMethodTimeoutMs'> | nullish, mkError: (e: unknown, result: GenericDeleteManyResult) => Error): Promise<GenericDeleteManyResult> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
     const command = mkBasicCmd('deleteMany', {
       filter: filter[0],
     });
 
-    const isDeleteAll = Object.keys(command.filter ?? {}).length === 0;
+    const isDeleteAll = Object.keys(_filter).length === 0;
 
     const timeoutManager = this._httpClient.tm.multipart('generalMethodTimeoutMs', options);
     let resp, numDeleted = 0;
@@ -215,16 +207,11 @@ export class CommandImpls<ID> {
           bigNumsPresent: filter[1],
           extraLogInfo: isDeleteAll ? { deleteAll: true } : undefined,
         });
+        /* c8 ignore next: don't think it's possible for deletedCount to be undefined, but just in case */
         numDeleted += resp.status?.deletedCount ?? 0;
       }
     } catch (e) {
-      const extraDeletedCount = (e instanceof DataAPIResponseError)
-        ? e.rawResponse.status?.deletedCount ?? 0
-        : 0;
-
-      throw new CollectionDeleteManyError(e, {
-        deletedCount: numDeleted + extraDeletedCount,
-      });
+      throw mkError(e, { deletedCount: numDeleted });
     }
 
     return {
@@ -233,11 +220,11 @@ export class CommandImpls<ID> {
   }
 
   public find<Cursor extends FindCursor<SomeDoc>>(filter: Filter, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
-    return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
+    return new cursor(this._parent, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
   }
 
   public findAndRerank<Cursor extends FindAndRerankCursor<SomeDoc>>(filter: Filter, options: GenericFindAndRerankOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindAndRerankCursor<SomeDoc>>) => Cursor): Cursor {
-    return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
+    return new cursor(this._parent, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
   }
 
   public async findOne<Schema>(_filter: Filter, options?: GenericFindOneOptions): Promise<Schema | null> {
@@ -317,6 +304,7 @@ export class CommandImpls<ID> {
 
   public async distinct(key: string, filter: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
     const projection = pullSafeProjection4Distinct(key);
+    /* c8 ignore next: not sure why this is being flagged as not run during tests, but it is */
     const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 }, timeout: options?.timeout }, mkCursor);
 
     const seen = new Set<unknown>();

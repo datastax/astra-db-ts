@@ -24,9 +24,13 @@ export class NonErrorError extends Error {
 
   public constructor(value: unknown) {
     const valueType = betterTypeOf(value);
-    const valueString = jsonTryStringify(value, `${value}`);
 
-    super(`Non-error value thrown; type='${valueType}' stringified='${valueString}'`);
+    try {
+      const valueString = jsonTryStringify(value, `${value}`);
+      super(`Non-error value thrown; type='${valueType}' toString='${value}' JSON.stringified='${valueString}'`);
+    } catch (_) {
+      super(`Non-error value thrown; type='${valueType}'`); // catch to prevent property tests from failing if obj toString is not a function
+    }
 
     this.value = value;
   }

@@ -45,11 +45,10 @@ import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
-import { TableFindAndRerankCursor } from '@/src/documents/tables/cursors/rerank-cursor.js';
-import type { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
 import type { TableCreateTextIndexOptions } from '@/src/documents/tables/types/indexes/create-text-index.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import { NonErrorError } from '@/src/lib/errors.js';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -115,7 +114,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * await db.table<User>('users').insertOne({
  *   id: '123',
- *   friends: new Map([['Alice', uuid(4)]]), // or UUID.v4()
+ *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
  *   vector: vector([1, 2, 3]), // or new DataAPIVector([...])
  * });
  * ```
@@ -144,7 +143,7 @@ const jbi = JBI({ storeAsString: true });
  * const res = await db.table<User, UserPK>('users').insertOne({
  *   id: '123',
  *   dob: date(), // or new DataAPIDate(new Date())
- *   friends: new Map([['Alice', uuid(4)]]), // or UUID.v4()
+ *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
  * });
  * ```
  *
@@ -340,7 +339,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * // Insert a row with a specific ID
    * await table.insertOne({ id: 'text-id', name: 'John Doe' });
-   * await table.insertOne({ id: UUID.v7(), name: 'Dane Joe' }); // or uuid(7)
+   * await table.insertOne({ id: UUID.v7(), name: 'Dane Joe' }); // or uuid.v7()
    *
    * // Insert a row with a vector
    * // DataAPIVector class enables faster ser/des
@@ -414,8 +413,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * import { uuid, vector, ... } from '@datastax/astra-db-ts';
    *
    * await table1.insertMany([
-   *   { id: uuid(4), name: 'John Doe' }, // or UUID.v4()
-   *   { id: uuid(7), name: 'Jane Doe' },
+   *   { id: uuid.v4(), name: 'John Doe' }, // or UUID.v4()
+   *   { id: uuid.v7(), name: 'Jane Doe' },
    * ]);
    *
    * // Insert a row with a vector
@@ -664,7 +663,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @returns A promise which resolves once the operation is completed.
    */
   public async deleteMany(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
-    await this.#commands.deleteMany(filter, timeout);
+    await this.#commands.deleteMany(filter, timeout, (e) => NonErrorError.asError(e));
   }
 
   /**
@@ -918,13 +917,13 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     return this.#commands.find(filter, options, TableFindCursor);
   }
 
-  public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions & { projection?: never }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
-
-  public findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>
-
-  public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions): TableFindAndRerankCursor<SomeRow> {
-    return this.#commands.findAndRerank(filter, options, TableFindAndRerankCursor);
-  }
+  // public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions & { projection?: never }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
+  //
+  // public findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>
+  //
+  // public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions): TableFindAndRerankCursor<SomeRow> {
+  //   return this.#commands.findAndRerank(filter, options, TableFindAndRerankCursor);
+  // }
 
   /**
    * ##### Overview
@@ -1187,7 +1186,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns The table with the new schema type.
    */
-  public async alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>> {
+  public async alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<WSchema>): Promise<Table<NewWSchema, PKey, NewRSchema>> {
     await this.#httpClient.executeCommand({
       alterTable: {
         operation: options.operation,
@@ -1224,16 +1223,18 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @returns A promise which resolves once the index is created.
    */
   public async createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void> {
+    const includeOptions = !!options?.options && Object.keys(options.options).length > 0;
+    
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
         definition: {
           column,
-          options: {
-            caseSensitive: options?.options?.caseSensitive,
-            normalize: options?.options?.normalize,
-            ascii: options?.options?.ascii,
-          },
+          options: includeOptions ? {
+            caseSensitive: options.options?.caseSensitive,
+            normalize: options.options?.normalize,
+            ascii: options.options?.ascii,
+          } : undefined,
         },
         options: {
           ifNotExists: options?.ifNotExists,
@@ -1279,6 +1280,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     });
   }
 
+  /* c8 ignore start: not in data api yet */
   /**
    * ##### Overview
    *
@@ -1312,6 +1314,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
   }
+  /* c8 ignore end */
 
   /**
    * ##### Overview

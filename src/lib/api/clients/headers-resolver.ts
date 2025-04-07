@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// noinspection ExceptionCaughtLocallyJS
 
 import type { ParsedHeadersProviders } from '@/src/lib/headers-providers/root/opts-handlers.js';
 import { type GetHeadersCtx, HeadersProvider, PureHeadersProvider } from '@/src/lib/index.js';
@@ -25,7 +24,7 @@ export class HeadersResolver {
   constructor(target: 'data-api' | 'devops-api', additionalHeaders: ParsedHeadersProviders, baseHeaders: Record<string, any>) {
     const queue = this._mkResolveQueue(target, additionalHeaders);
 
-    if (queue.length === 1 && !(queue[0] instanceof HeadersProvider)) {
+    if (queue.length <= 1 && !(queue[0] instanceof HeadersProvider)) {
       this._resolveStrategy = new StaticHeadersResolveStrategy({ ...baseHeaders, ...queue[0] });
     } else {
       this._resolveStrategy = new DynamicHeadersResolveStrategy(target, baseHeaders, queue);
@@ -65,8 +64,7 @@ export class HeadersResolver {
  * @internal
  */
 class StaticHeadersResolveStrategy {
-  constructor(private readonly _headers: Record<string, string>) {
-  }
+  constructor(private readonly _headers: Record<string, string>) {}
 
   public resolve(): Record<string, string> {
     return this._headers;
@@ -81,8 +79,7 @@ class DynamicHeadersResolveStrategy {
     private readonly _target: 'data-api' | 'devops-api',
     private readonly _baseHeaders: Record<string, any>,
     private readonly _resolveQueue: (Record<string, string | undefined> | HeadersProvider)[],
-  ) {
-  }
+  ) {}
 
   public async resolve(): Promise<Record<string, string>> {
     const headers = { ...this._baseHeaders };

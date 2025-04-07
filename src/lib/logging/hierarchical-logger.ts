@@ -83,7 +83,7 @@ export class HierarchicalLogger<Events extends Record<string, BaseClientEvent>> 
   }
 
   public updateLoggingConfig(config: LoggingConfig) {
-    this.internal = this.internal.withUpdatedConfig(InternalLogger.cfg.parse(config));
+    this.internal.updateLoggingConfig(InternalLogger.cfg.parse(config));
   }
 
   /**

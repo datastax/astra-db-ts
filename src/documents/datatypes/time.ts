@@ -14,8 +14,10 @@
 
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { DataAPIDate, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
-import { mkInvArgsErr } from '@/src/documents/utils.js';
+import { mkInvArgsError } from '@/src/documents/utils.js';
+import { mkTypeUnsupportedForCollectionsError } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * ##### Overview
@@ -115,6 +117,18 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    * Must be between 0-999,999,999.
    */
   readonly nanoseconds: number;
+
+  /**
+   * Errorful implementation of `$SerializeForCollection` for {@link TableCodec}
+   *
+   * Throws a human-readable error message warning that this datatype may not be used with collections without writing a custom ser/des codec.
+   */
+  public [$SerializeForCollection]() {
+    throw mkTypeUnsupportedForCollectionsError('DataAPITime', '_time', [
+      'Use a native Javascript Date object',
+      'Use another time representation, such as a string, or an object containing the hours, minutes, seconds, and nanoseconds',
+    ]);
+  };
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}
@@ -296,7 +310,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
           this.nanoseconds = i1.getMilliseconds() * 1_000_000;
         }
         else {
-          throw mkInvArgsErr('new DataAPITime', [['time', 'string | Date']], i1);
+          throw mkInvArgsError('new DataAPITime', [['time', 'string | Date']], i1);
         }
         break;
       }
@@ -312,7 +326,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
           validateTime(this.hours, this.minutes, this.seconds, this.nanoseconds);
         }
         else {
-          throw mkInvArgsErr('new DataAPIDate', [['hour', 'number'], ['minute', 'number'], ['second', 'number?'], ['nanosecond', 'number?']], i1, i2, i3, i4);
+          throw mkInvArgsError('new DataAPIDate', [['hour', 'number'], ['minute', 'number'], ['second', 'number?'], ['nanosecond', 'number?']], i1, i2, i3, i4);
         }
         break;
       }
@@ -368,7 +382,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
     base ||= new Date();
 
     if (base instanceof Date) {
-      return new Date(base?.getFullYear() || 0, base?.getMonth() || 0, base?.getDate() || 0, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
+      return new Date(base.getFullYear(), base.getMonth(), base.getDate(), this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
     }
 
     return new Date(base.year, base.month - 1, base.date, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
@@ -599,7 +613,7 @@ const validateTime = (hours: number, minutes: number, seconds: number, nanosecon
 
 const ofSecondOfDay = (s: unknown): [number, number, number, number] => {
   if (typeof s !== 'number') {
-    throw mkInvArgsErr('DataAPITime.ofSecondOfDay', [['secondOfDay', 'number']], s);
+    throw mkInvArgsError('DataAPITime.ofSecondOfDay', [['secondOfDay', 'number']], s);
   }
 
   if (!Number.isInteger(s)) {
@@ -620,7 +634,7 @@ const ofSecondOfDay = (s: unknown): [number, number, number, number] => {
 
 const ofNanoOfDay = (ns: unknown): [number, number, number, number] => {
   if (typeof ns !== 'number') {
-    throw mkInvArgsErr('DataAPITime.ofNanoOfDay', [['nanoOfDay', 'number']], ns);
+    throw mkInvArgsError('DataAPITime.ofNanoOfDay', [['nanoOfDay', 'number']], ns);
   }
 
   if (!Number.isInteger(ns)) {

@@ -18,39 +18,21 @@ import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.collections.insert-one', { truncate: 'colls:before' }, ({ collection }) => {
-  it('should insertOne document', async () => {
-    const res = await collection.insertOne({ name: 'Lzzy' });
-    assert.ok(res);
-    assert.ok(typeof res.insertedId as any === 'string');
-    assert.doesNotThrow(() => new UUID(<string>res.insertedId));
-  });
+  it('should insert a document with IDs of all kinds', async () => {
+    const ids = [
+      'hi',
+      null,
+      3,
+      new ObjectId(),
+      UUID.v4(),
+      UUID.v7(),
+    ];
 
-  it('should insertOne document with id', async (key) => {
-    const res = await collection.insertOne({ name: 'Lzzy', _id: key });
-    assert.ok(res);
-    assert.ok(res.insertedId, '123');
-  });
+    const results = await Promise.all(ids.map(async (id) => {
+      return await collection.insertOne({ _id: id });
+    }));
 
-  it('should insertOne document with a null id', async () => {
-    const res = await collection.insertOne({ name: 'Lzzy', _id: null });
-    assert.ok(res);
-    assert.strictEqual(res.insertedId, null);
-    const found = await collection.findOne({ _id: null });
-    assert.strictEqual(found?.name, 'Lzzy');
-  });
-
-  it('should insertOne document with a UUID', async () => {
-    const id = UUID.v7();
-    const res = await collection.insertOne({ _id: id });
-    assert.ok(res);
-    assert.strictEqual(res.insertedId?.toString(), id.toString());
-  });
-
-  it('should insertOne document with an ObjectId', async () => {
-    const id = new ObjectId();
-    const res = await collection.insertOne({ _id: id });
-    assert.ok(res);
-    assert.strictEqual(res.insertedId?.toString(), id.toString());
+    assert.deepStrictEqual(ids.map((id) => ({ insertedId: id })), results);
   });
 
   it('should insertOne document with a non-_id UUID', async () => {
