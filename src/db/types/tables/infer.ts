@@ -16,14 +16,15 @@ import type { Table } from '@/src/documents/tables/table.js';
 import type {
   CreateTableColumnDefinitions,
   CreateTableDefinition,
-  TablePrimaryKeyDefinition,
   FullCreateTablePrimaryKeyDefinition,
+  TablePrimaryKeyDefinition,
 } from '@/src/db/types/tables/create.js';
 import type { EmptyObj } from '@/src/lib/types.js';
 import type {
   DataAPIBlob,
   DataAPIDate,
-  DataAPIDuration, DataAPIInet,
+  DataAPIDuration,
+  DataAPIInet,
   DataAPITime,
   FoundRow,
   SomeRow,
@@ -48,6 +49,8 @@ export type InferrableTable =
   | ((..._: any[]) => Table<SomeRow>)
   | Promise<Table<SomeRow>>
   | Table<SomeRow>;
+
+export type TypeOverrides = Partial<Record<keyof CqlNonGenericType2TSTypeDict | keyof CqlGenericType2TSTypeDict<any, any>, unknown>>;
 
 /**
  * Automagically extracts a table's schema from some Table<Schema>-like type, most useful when performing a
@@ -120,18 +123,20 @@ export type InferrableTable =
  *
  * @public
  */
-export type InferTableSchema<T extends InferrableTable> =
+export type InferTableSchema<T extends InferrableTable, Overrides extends TypeOverrides = Record<never, never>> =
   T extends CreateTableDefinition
-    ? InferTableSchemaFromDefinition<T> :
-  T extends (..._: any[]) => Promise<Table<infer Schema, any, any>>
-    ? Schema :
-  T extends (..._: any[]) => Table<infer Schema, any, any>
-    ? Schema :
-  T extends Promise<Table<infer Schema, any, any>>
-    ? Schema :
-  T extends Table<infer Schema, any, any>
-    ? Schema
-    : never;
+    ? InferTableSchemaFromDefinition<T, Overrides> :
+  Record<never, never> extends Overrides
+    ? T extends (..._: any[]) => Promise<Table<infer Schema, any, any>>
+        ? Schema :
+      T extends (..._: any[]) => Table<infer Schema, any, any>
+        ? Schema :
+      T extends Promise<Table<infer Schema, any, any>>
+        ? Schema :
+      T extends Table<infer Schema, any, any>
+        ? Schema
+        : never
+    : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
 
 /**
  * Automagically extracts a table's primary key from some Table<Schema>-like type, most useful when performing a
@@ -141,18 +146,20 @@ export type InferTableSchema<T extends InferrableTable> =
  *
  * @public
  */
-export type InferTablePrimaryKey<T extends InferrableTable> =
+export type InferTablePrimaryKey<T extends InferrableTable, Overrides extends TypeOverrides = Record<never, never>> =
   T extends CreateTableDefinition
-    ? InferTablePKFromDefinition<T> :
-  T extends (..._: any[]) => Promise<Table<any, infer PKey, any>>
-    ? PKey :
-  T extends (..._: any[]) => Table<any, infer PKey, any>
-    ? PKey :
-  T extends Promise<Table<any, infer PKey, any>>
-    ? PKey :
-  T extends Table<any, infer PKey, any>
-    ? PKey
-    : never;
+    ? InferTablePKFromDefinition<T, Overrides> :
+  Record<never, never> extends Overrides
+    ? T extends (..._: any[]) => Promise<Table<any, infer PKey, any>>
+        ? PKey :
+      T extends (..._: any[]) => Table<any, infer PKey, any>
+        ? PKey :
+      T extends Promise<Table<any, infer PKey, any>>
+        ? PKey :
+      T extends Table<any, infer PKey, any>
+        ? PKey
+        : never
+    : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
 
 /**
  * Automagically extracts a table's read-schema from some Table<Schema>-like type, most useful when performing a
@@ -162,29 +169,31 @@ export type InferTablePrimaryKey<T extends InferrableTable> =
  *
  * @public
  */
-export type InferTableReadSchema<T extends InferrableTable> =
+export type InferTableReadSchema<T extends InferrableTable, Overrides extends TypeOverrides = Record<never, never>> =
   T extends CreateTableDefinition
-    ? FoundRow<InferTableSchemaFromDefinition<T>> :
-  T extends (..._: any[]) => Promise<Table<any, any, infer Schema>>
-    ? Schema :
-  T extends (..._: any[]) => Table<any, any, infer Schema>
-    ? Schema :
-  T extends Promise<Table<any, any, infer Schema>>
-    ? Schema :
-  T extends Table<any, any, infer Schema>
-    ? Schema
-    : never;
-
+    ? FoundRow<InferTableSchemaFromDefinition<T, Overrides>> :
+  Record<never, never> extends Overrides
+    ? T extends (..._: any[]) => Promise<Table<any, any, infer Schema>>
+        ? Schema :
+      T extends (..._: any[]) => Table<any, any, infer Schema>
+        ? Schema :
+      T extends Promise<Table<any, any, infer Schema>>
+        ? Schema :
+      T extends Table<any, any, infer Schema>
+        ? Schema
+        : never
+    : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
+S
 type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
 
-type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition<FullDef>> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>>;
+type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition<FullDef>, Overrides extends TypeOverrides> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns'], Overrides>>, Overrides>>;
 
-type InferTablePKFromDefinition<FullDef extends CreateTableDefinition<FullDef>> = Normalize<MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>;
+type InferTablePKFromDefinition<FullDef extends CreateTableDefinition<FullDef>, Overrides extends TypeOverrides> = Normalize<MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns'], Overrides>>>;
 
-type MkColumnTypes<Cols extends CreateTableColumnDefinitions, PK extends Record<string, any>> = {
-  -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<Cols[P]> & {};
+type MkColumnTypes<Cols extends CreateTableColumnDefinitions, PK extends Record<string, any>, Overrides extends TypeOverrides> = {
+  -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<Cols[P], Overrides> & {};
 } & {
-  -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<Cols[P]>;
+  -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<Cols[P], Overrides>;
 }
 
 type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends FullCreateTablePrimaryKeyDefinition<any> = NormalizePK<FullDef['primaryKey']>> = Normalize<
@@ -205,8 +214,8 @@ type NormalizePK<PK extends TablePrimaryKeyDefinition<any>> =
     ? PK
     : never;
 
-type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
-  -readonly [P in keyof Columns]: CqlType2TSType<Columns[P]>;
+type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions, Overrides extends TypeOverrides> = {
+  -readonly [P in keyof Columns]: CqlType2TSType<Columns[P], Overrides>;
 };
 
 /**
@@ -236,18 +245,21 @@ type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
  *
  * @public
  */
-export type CqlType2TSType<Def extends CreateTableColumnDefinitions[string]> = CqlType2TSTypeInternal<PickCqlType<Def>, Def>
+export type CqlType2TSType<Def extends CreateTableColumnDefinitions[string], Overrides extends TypeOverrides = Record<never, never>> =
+  CqlType2TSTypeInternal<PickCqlType<Def>, Def, Overrides>
 
 type PickCqlType<Def> =
   Def extends { type: infer Type }
     ? Type
     : Def;
 
-type CqlType2TSTypeInternal<T, Def> =
-  T extends keyof CqlNonGenericType2TSTypeDict
-    ? CqlNonGenericType2TSTypeDict[T] :
-  T extends keyof CqlGenericType2TSTypeDict<Def>
-    ? CqlGenericType2TSTypeDict<Def>[T]
+type CqlType2TSTypeInternal<Type, Def, Overrides extends TypeOverrides> =
+  Type extends keyof Overrides
+    ? Overrides[Type] :
+  Type extends keyof CqlNonGenericType2TSTypeDict
+    ? CqlNonGenericType2TSTypeDict[Type] :
+  Type extends keyof CqlGenericType2TSTypeDict<Def, Overrides>
+    ? CqlGenericType2TSTypeDict<Def, Overrides>[Type]
     : unknown;
 
 interface CqlNonGenericType2TSTypeDict {
@@ -274,26 +286,26 @@ interface CqlNonGenericType2TSTypeDict {
   varint: bigint | null,
 }
 
-interface CqlGenericType2TSTypeDict<Def> {
-  map: CqlMapType2TsType<Def>,
-  list: CqlListType2TsType<Def>,
-  set: CqlSetType2TsType<Def>,
+interface CqlGenericType2TSTypeDict<Def, Overrides extends TypeOverrides> {
+  map: CqlMapType2TsType<Def, Overrides>,
+  list: CqlListType2TsType<Def, Overrides>,
+  set: CqlSetType2TsType<Def, Overrides>,
   vector: CqlVectorType2TsType<Def> | null,
 }
 
-type CqlMapType2TsType<Def> =
+type CqlMapType2TsType<Def, Overrides extends TypeOverrides> =
   Def extends { keyType: infer KeyType extends string, valueType: infer ValueType extends string }
-    ? Map<CqlType2TSTypeInternal<KeyType, never> & {}, CqlType2TSTypeInternal<ValueType, never> & {}>
+    ? Map<CqlType2TSTypeInternal<KeyType, never, Overrides> & {}, CqlType2TSTypeInternal<ValueType, never, Overrides> & {}>
     : TypeErr<'Invalid generics definition for \'map\'; should have keyType and valueType set as scalar CQL types (e.g. \'text\')'>;
 
-type CqlListType2TsType<Def> =
+type CqlListType2TsType<Def, Overrides extends TypeOverrides> =
   Def extends { valueType: infer ValueType extends string }
-    ? (CqlType2TSTypeInternal<ValueType, never> & {})[]
+    ? (CqlType2TSTypeInternal<ValueType, never, Overrides> & {})[]
     : TypeErr<'Invalid generics definition for \'list\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
 
-type CqlSetType2TsType<Def> =
+type CqlSetType2TsType<Def, Overrides extends TypeOverrides> =
   Def extends { valueType: infer ValueType extends string }
-    ? Set<CqlType2TSTypeInternal<ValueType, never> & {}>
+    ? Set<CqlType2TSTypeInternal<ValueType, never, Overrides> & {}>
     : TypeErr<'Invalid generics definition for \'set\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlVectorType2TsType<Def> =
