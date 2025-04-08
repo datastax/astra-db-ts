@@ -42,7 +42,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
+export interface CreateDataAPIKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
   replication?: KeyspaceReplicationOptions,
   updateDbKeyspace?: boolean,
 }

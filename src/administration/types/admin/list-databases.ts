@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { AstraDbCloudProvider, AstraDbStatus } from '@/src/administration/types/index.js';
+import type { AstraDatabaseCloudProvider, AstraDatabaseStatus } from '@/src/administration/types/index.js';
 import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
@@ -20,14 +20,14 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export type AstraDbStatusFilter = AstraDbStatus | 'ALL' | 'NONTERMINATED';
+export type AstraDbStatusFilter = AstraDatabaseStatus | 'ALL' | 'NONTERMINATED';
 
 /**
  * Represents all possible cloud providers that you can filter by.
  *
  * @public
  */
-export type AstraDbCloudProviderFilter = AstraDbCloudProvider | 'ALL';
+export type AstraDbCloudProviderFilter = AstraDatabaseCloudProvider | 'ALL';
 
 /**
  * Represents the options for listing databases.

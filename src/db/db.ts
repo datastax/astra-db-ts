@@ -39,7 +39,7 @@ import type { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/l
 import type { AdminOptions } from '@/src/client/types/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import { InvalidEnvironmentError } from '@/src/db/errors.js';
-import type { AstraDbInfo } from '@/src/administration/types/admin/database-info.js';
+import type { AstraPartialDatabaseInfo } from '@/src/administration/types/admin/database-info.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.js';
@@ -426,7 +426,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbInfo> {
+  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraPartialDatabaseInfo> {
     if (this.#defaultOpts.environment !== 'astra') {
       throw new InvalidEnvironmentError('db.info()', this.#defaultOpts.environment, ['astra'], 'info() is only available for Astra databases');
     }

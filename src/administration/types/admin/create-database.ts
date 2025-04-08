@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { AstraAdminBlockingOptions, AstraDbCloudProvider } from '@/src/administration/types/index.js';
+import type { AstraAdminBlockingOptions, AstraDatabaseCloudProvider } from '@/src/administration/types/index.js';
 
 
 import type { DbOptions } from '@/src/client/index.js';
@@ -35,7 +35,7 @@ export interface AstraDatabaseConfig {
   /**
    * Cloud provider where the database lives
    */
-  cloudProvider?: AstraDbCloudProvider,
+  cloudProvider?: AstraDatabaseCloudProvider,
   /**
    * The cloud region where the database is located.
    */

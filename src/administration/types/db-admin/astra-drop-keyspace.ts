@@ -20,4 +20,4 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export type AstraDropKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'>;
+export type DropAstraKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'>;

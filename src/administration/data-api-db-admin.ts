@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import type { DataAPICreateKeyspaceOptions } from '@/src/administration/types/index.js';
+import type { CreateDataAPIKeyspaceOptions } from '@/src/administration/types/index.js';
 import { DbAdmin } from '@/src/administration/db-admin.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
@@ -154,7 +154,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createKeyspace(keyspace: string, options?: DataAPICreateKeyspaceOptions): Promise<void> {
+  public override async createKeyspace(keyspace: string, options?: CreateDataAPIKeyspaceOptions): Promise<void> {
     if (options?.updateDbKeyspace) {
       this.#db.useKeyspace(keyspace);
     }

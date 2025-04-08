@@ -43,4 +43,4 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export type AstraCreateKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'> & { updateDbKeyspace?: boolean };
+export type CreateAstraKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'> & { updateDbKeyspace?: boolean };

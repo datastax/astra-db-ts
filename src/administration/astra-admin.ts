@@ -25,7 +25,7 @@ import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/s
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
-import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info.js';
+import type { AstraFullDatabaseInfo } from '@/src/administration/types/admin/database-info.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 import type { DbOptions } from '@/src/client/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
@@ -275,7 +275,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo> {
+  public async dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraFullDatabaseInfo> {
     const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
 
     const resp = await this.#httpClient.request({
@@ -313,7 +313,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * @param options - The options to filter the databases by.
    * @returns A list of the complete information for all the databases matching the given filter.
    */
-  public async listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraDbAdminInfo[]> {
+  public async listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraFullDatabaseInfo[]> {
     const params = {} as Record<string, string>;
 
     if (typeof options?.include === 'string') {

@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import type { AstraCreateKeyspaceOptions, AstraDropKeyspaceOptions } from '@/src/administration/types/index.js';
+import type { CreateAstraKeyspaceOptions, DropAstraKeyspaceOptions } from '@/src/administration/types/index.js';
 import { DbAdmin } from '@/src/administration/db-admin.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
@@ -23,7 +23,7 @@ import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { Db } from '@/src/db/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info.js';
+import type { AstraFullDatabaseInfo } from '@/src/administration/types/admin/database-info.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
@@ -145,7 +145,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo> {
+  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraFullDatabaseInfo> {
     const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
     return this.#info('dbAdmin.info', tm);
   }
@@ -201,7 +201,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void> {
+  public override async createKeyspace(keyspace: string, options?: CreateAstraKeyspaceOptions): Promise<void> {
     if (options?.updateDbKeyspace) {
       this.#db.useKeyspace(keyspace);
     }
@@ -253,7 +253,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropKeyspace(keyspace: string, options?: AstraDropKeyspaceOptions): Promise<void> {
+  public override async dropKeyspace(keyspace: string, options?: DropAstraKeyspaceOptions): Promise<void> {
     const tm = this.#httpClient.tm.multipart('keyspaceAdminTimeoutMs', options);
 
     await this.#httpClient.requestLongRunning({
@@ -291,7 +291,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @remarks Use with caution. Use a surge protector. Don't say I didn't warn you.
    */
-  public async drop(options?: AstraDropKeyspaceOptions): Promise<void> {
+  public async drop(options?: DropAstraKeyspaceOptions): Promise<void> {
     const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
     await this.#httpClient.requestLongRunning({
@@ -312,7 +312,7 @@ export class AstraDbAdmin extends DbAdmin {
     return this.#httpClient;
   }
 
-  async #info(methodName: DevOpsAPIRequestInfo['methodName'], tm: TimeoutManager): Promise<AstraDbAdminInfo> {
+  async #info(methodName: DevOpsAPIRequestInfo['methodName'], tm: TimeoutManager): Promise<AstraFullDatabaseInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${this.#db.id}`,
