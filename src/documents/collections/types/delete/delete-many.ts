@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { GenericDeleteManyResult } from '@/src/documents/index.js';
+import type { GenericDeleteManyOptions, GenericDeleteManyResult } from '@/src/documents/index.js';
+
+export type CollectionDeleteManyOptions = GenericDeleteManyOptions;
 
 /**
  * Represents the result of a delete command.

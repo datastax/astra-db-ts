@@ -12,15 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
-
-export type GenericInsertOneOptions = WithTimeout<'generalMethodTimeoutMs'>;
+import type { GenericUpdateOneOptions } from '@/src/documents/index.js';
 
 /**
- * Shouldn't be used by the user directly.
+ * Options for an `updateOne` command on a collection.
  *
- * @internal
+ * @field upsert - If true, perform an insert if no documents match the filter.
+ * @field sort - The sort order to pick which document to update if the filter selects multiple documents.
+ * @field timeout - The timeout override for this method
+ *
+ * @see Collection.updateOne
+ *
+ * @public
  */
-export interface GenericInsertOneResult<ID> {
-  insertedId: ID,
-}
+export type TableUpdateOneOptions = Omit<GenericUpdateOneOptions, 'upsert' | 'sort' | 'vector' | 'vectorize'>;

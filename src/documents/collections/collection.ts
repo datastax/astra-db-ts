@@ -13,9 +13,13 @@
 // limitations under the License.
 
 import type {
+  CollectionCountDocumentsOptions,
+  CollectionDeleteManyOptions,
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
   CollectionDeleteOneResult,
+  CollectionDistinctOptions,
+  CollectionEstimatedDocumentCountOptions,
   CollectionFilter,
   CollectionFindAndRerankOptions,
   CollectionFindOneAndDeleteOptions,
@@ -25,6 +29,7 @@ import type {
   CollectionFindOptions,
   CollectionInsertManyOptions,
   CollectionInsertManyResult,
+  CollectionInsertOneOptions,
   CollectionInsertOneResult,
   CollectionReplaceOneOptions,
   CollectionReplaceOneResult,
@@ -39,16 +44,21 @@ import type {
   MaybeId,
   NoId,
   SomeDoc,
-  ToDotNotation,
   WithId,
 } from '@/src/documents/collections/types/index.js';
-import type { CollectionDefinition, CollectionOptions, Db } from '@/src/db/index.js';
+import type {
+  CollectionDefinition,
+  CollectionOptions,
+  Db,
+  DropCollectionOptions,
+  WithKeyspace,
+} from '@/src/db/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
 import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type { CommandEventMap, RerankedResult, WithSim } from '@/src/documents/index.js';
+import type { CommandEventMap, RerankedResult, ToDotNotation, WithSim } from '@/src/documents/index.js';
 import {
   CollectionDeleteManyError,
   CollectionFindCursor,
@@ -266,7 +276,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns The ID of the inserted document.
    */
-  public async insertOne(document: MaybeId<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<RSchema>> {
+  public async insertOne(document: MaybeId<WSchema>, options?: CollectionInsertOneOptions): Promise<CollectionInsertOneResult<RSchema>> {
     return this.#commands.insertOne(document, options);
   }
 
@@ -642,7 +652,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns How many documents were deleted.
    */
-  public async deleteMany(filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult> {
+  public async deleteMany(filter: CollectionFilter<WSchema>, options?: CollectionDeleteManyOptions): Promise<CollectionDeleteManyResult> {
     return this.#commands.deleteMany(filter, options, (e, result) => new CollectionDeleteManyError(e, result));
   }
 
@@ -891,7 +901,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns a {@link FindCursor} which can be iterated over.
    */
-  public find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>
+  public find<TRaw extends SomeDoc = Partial<WithSim<RSchema>>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>
 
   public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc> {
     return this.#commands.find(filter, options, CollectionFindCursor);
@@ -1184,7 +1194,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns A list of all the unique values selected by the given `key`
    */
-  public async distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<RSchema>)[Key]>[]> {
+  public async distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: CollectionDistinctOptions): Promise<Flatten<(SomeDoc & ToDotNotation<RSchema>)[Key]>[]> {
     return this.#commands.distinct(key, filter, options, CollectionFindCursor);
   }
 
@@ -1233,7 +1243,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @throws TooManyDocumentsToCountError - If the number of documents counted exceeds the provided limit.
    */
-  public async countDocuments(filter: CollectionFilter<WSchema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
+  public async countDocuments(filter: CollectionFilter<WSchema>, upperBound: number, options?: CollectionCountDocumentsOptions): Promise<number> {
     return this.#commands.countDocuments(filter, upperBound, options, TooManyDocumentsToCountError);
   }
 
@@ -1258,7 +1268,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns The estimated number of documents in the collection
    */
-  public async estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
+  public async estimatedDocumentCount(options?: CollectionEstimatedDocumentCountOptions): Promise<number> {
     return this.#commands.estimatedDocumentCount(options);
   }
 
@@ -1530,7 +1540,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
-  public async drop(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<void> {
+  public async drop(options?: Omit<DropCollectionOptions, keyof WithKeyspace>): Promise<void> {
     await this.#db.dropCollection(this.name, { keyspace: this.keyspace, ...options });
   }
 

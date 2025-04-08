@@ -183,7 +183,7 @@ export type InferTableReadSchema<T extends InferrableTable, Overrides extends Ty
         ? Schema
         : never
     : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
-S
+
 type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
 
 type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition<FullDef>, Overrides extends TypeOverrides> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns'], Overrides>>, Overrides>>;

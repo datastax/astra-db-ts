@@ -18,14 +18,14 @@ import type {
   SomeRow,
   TableCreateIndexColumn,
   TableCreateIndexOptions,
-  TableCreateVectorIndexOptions,
+  TableCreateVectorIndexOptions, TableDeleteManyOptions, TableDeleteOneOptions,
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
   TableInsertManyOptions,
-  TableInsertManyResult,
+  TableInsertManyResult, TableInsertOneOptions,
   TableInsertOneResult,
-  TableUpdateFilter,
+  TableUpdateFilter, TableUpdateOneOptions,
   WithSim,
 } from '@/src/documents/index.js';
 import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
@@ -37,7 +37,7 @@ import type {
   Db,
   DropTableOptions,
   ListTableDefinition,
-  TableOptions,
+  TableOptions, WithKeyspace,
 } from '@/src/db/index.js';
 import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
@@ -395,12 +395,12 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * ```
    *
    * @param row - The row to insert.
-   * @param timeout - The timeout for this operation.
+   * @param options - The options for this operation.
    *
    * @returns The primary key of the inserted row.
    */
-  public async insertOne(row: WSchema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<PKey>> {
-    return this.#commands.insertOne(row, timeout);
+  public async insertOne(row: WSchema, options?: TableInsertOneOptions): Promise<TableInsertOneResult<PKey>> {
+    return this.#commands.insertOne(row, options);
   }
 
   /**
@@ -591,12 +591,12 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @param filter - A filter to select the row to update.
    * @param update - The update to apply to the selected row.
-   * @param timeout - The timeout for this operation.
+   * @param options - The options for this operation.
    *
    * @returns A promise which resolves once the operation is completed.
    */
-  public async updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
-    await this.#commands.updateOne(filter, update, timeout);
+  public async updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, options?: TableUpdateOneOptions): Promise<void> {
+    await this.#commands.updateOne(filter, update, options);
   }
 
   /**
@@ -623,12 +623,12 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
    *
    * @param filter - A filter to select the row to delete.
-   * @param timeout - The timeout for this operation.
+   * @param options - The options for this operation.
    *
    * @returns A promise which resolves once the operation is completed.
    */
-  public async deleteOne(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
-    await this.#commands.deleteOne(filter, timeout);
+  public async deleteOne(filter: TableFilter<WSchema>, options?: TableDeleteOneOptions): Promise<void> {
+    await this.#commands.deleteOne(filter, options);
   }
 
   /**
@@ -658,12 +658,12 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
    *
    * @param filter - A filter to select the row(s) to delete.
-   * @param timeout - The timeout for this operation.
+   * @param options - The options for this operation.
    *
    * @returns A promise which resolves once the operation is completed.
    */
-  public async deleteMany(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
-    await this.#commands.deleteMany(filter, timeout, (e) => NonErrorError.asError(e));
+  public async deleteMany(filter: TableFilter<WSchema>, options?: TableDeleteManyOptions): Promise<void> {
+    await this.#commands.deleteMany(filter, options, (e) => NonErrorError.asError(e));
   }
 
   /**
@@ -1372,7 +1372,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
-  public async drop(options?: Omit<DropTableOptions, 'keyspace'>): Promise<void> {
+  public async drop(options?: Omit<DropTableOptions, keyof WithKeyspace>): Promise<void> {
     await this.#db.dropTable(this.name, { ...options, keyspace: this.keyspace });
   }
 

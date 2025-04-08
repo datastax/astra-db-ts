@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+export type * from './delete/delete-one.js';
+export type * from './delete/delete-many.js';
 export type * from './find/find.js';
 export type * from './find/find-one.js';
 export type * from './find/find-and-rerank.js';
@@ -21,6 +23,7 @@ export type * from './indexes/create-text-index.js';
 export type * from './indexes/drop-index.js';
 export type * from './insert/insert-many.js';
 export type * from './insert/insert-one.js';
+export type * from './update/update-one.js';
 export type * from './filter.js';
 export type * from './row.js';
 export type * from './update-filter.js';

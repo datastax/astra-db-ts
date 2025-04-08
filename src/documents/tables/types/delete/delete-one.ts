@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
-
-export type GenericInsertOneOptions = WithTimeout<'generalMethodTimeoutMs'>;
+import type { GenericDeleteOneOptions } from '@/src/documents/index.js';
 
 /**
- * Shouldn't be used by the user directly.
+ * Represents the options for the deleteOne command.
  *
- * @internal
+ * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
+ * @field timeout - The timeout override for this method
+ *
+ * @see Collection.deleteOne
+ *
+ * @public
  */
-export interface GenericInsertOneResult<ID> {
-  insertedId: ID,
-}
+export type TableDeleteOneOptions = Omit<GenericDeleteOneOptions, 'sort' | 'vector' | 'vectorize'>;

@@ -12,15 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { GenericDeleteManyOptions } from '@/src/documents/index.js';
 
-export type GenericInsertOneOptions = WithTimeout<'generalMethodTimeoutMs'>;
-
-/**
- * Shouldn't be used by the user directly.
- *
- * @internal
- */
-export interface GenericInsertOneResult<ID> {
-  insertedId: ID,
-}
+export type TableDeleteManyOptions = GenericDeleteManyOptions;
