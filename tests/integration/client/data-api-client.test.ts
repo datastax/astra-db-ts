@@ -136,20 +136,20 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvents[1].commandName, 'deleteOne');
       assert.strictEqual(succeededEvents[1].commandName, 'deleteOne');
 
-      assert.strictEqual(startedEvents[0].keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(succeededEvents[0].keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(startedEvents[1].keyspace, OTHER_KEYSPACE);
-      assert.strictEqual(succeededEvents[1].keyspace, OTHER_KEYSPACE);
+      assert.strictEqual(startedEvents[0].target.keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(succeededEvents[0].target.keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(startedEvents[1].target.keyspace, OTHER_KEYSPACE);
+      assert.strictEqual(succeededEvents[1].target.keyspace, OTHER_KEYSPACE);
 
-      assert.strictEqual(startedEvents[0].source, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(succeededEvents[0].source, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(startedEvents[1].source, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(succeededEvents[1].source, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvents[0].target.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(succeededEvents[0].target.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvents[1].target.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(succeededEvents[1].target.collection, DEFAULT_COLLECTION_NAME);
 
-      assert.strictEqual(startedEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(succeededEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(startedEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(succeededEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvents[0].target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(succeededEvents[0].target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvents[1].target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(succeededEvents[1].target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
       assert.deepStrictEqual(startedEvents[0].timeout, { generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       assert.ok(succeededEvents[0].duration > 0);
@@ -161,8 +161,8 @@ describe('integration.client.data-api-client', () => {
       assert.deepStrictEqual(startedEvents[1].command, { deleteOne: { filter: { name: 'Chthonic' } } });
       assert.deepStrictEqual(startedEvents[1].command, { deleteOne: { filter: { name: 'Chthonic' } } });
 
-      assert.ok(succeededEvents[0].resp?.status?.insertedIds instanceof Array);
-      assert.ok(typeof succeededEvents[1].resp?.status?.deletedCount === 'number');
+      assert.ok(succeededEvents[0].response?.status?.insertedIds instanceof Array);
+      assert.ok(typeof succeededEvents[1].response?.status?.deletedCount === 'number');
 
       assert.deepStrictEqual(stdout[0].substring(19), succeededEvents[0].format().substring(19)); // chops off timestamp
       assert.deepStrictEqual(stdout[1].substring(19), succeededEvents[1].format().substring(19));
@@ -206,14 +206,14 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.commandName, 'insertOne');
       assert.strictEqual(failedEvent.commandName, 'insertOne');
 
-      assert.strictEqual(startedEvent.keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(failedEvent.keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(startedEvent.target.keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(failedEvent.target.keyspace, DEFAULT_KEYSPACE);
 
-      assert.strictEqual(startedEvent.source, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(failedEvent.source, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvent.target.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(failedEvent.target.collection, DEFAULT_COLLECTION_NAME);
 
-      assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvent.target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(failedEvent.target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
       assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       assert.ok(failedEvent.duration > 0);
@@ -259,14 +259,14 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.commandName, 'insertOne');
       assert.strictEqual(failedEvent.commandName, 'insertOne');
 
-      assert.strictEqual(startedEvent.keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(failedEvent.keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(startedEvent.target.keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(failedEvent.target.keyspace, DEFAULT_KEYSPACE);
 
-      assert.strictEqual(startedEvent.source, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(failedEvent.source, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvent.target.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(failedEvent.target.collection, DEFAULT_COLLECTION_NAME);
 
-      assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvent.target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(failedEvent.target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
       assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeoutMs: 1, requestTimeoutMs: 1 });
       assert.ok(failedEvent.duration > 0);

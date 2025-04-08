@@ -158,7 +158,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
 
     const { insertedId } = await table.insertOne(book);
     assert.deepStrictEqual(cse.command.insertOne.document, serialized);
-    assert.deepStrictEqual(cse.resp.status?.insertedIds, [[book.isbn.unwrap]]);
+    assert.deepStrictEqual(cse.response.status?.insertedIds, [[book.isbn.unwrap]]);
     assert.deepStrictEqual(insertedId, { isbn: book.isbn });
 
     const found = await table.findOne({ isbn: book.isbn });
@@ -274,7 +274,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
 
     const { insertedId } = await table.insertOne(book);
     assert.deepStrictEqual(cse.command.insertOne.document, serialized);
-    assert.deepStrictEqual(cse.resp.status?.insertedIds, [[book.isbn.unwrap]]);
+    assert.deepStrictEqual(cse.response.status?.insertedIds, [[book.isbn.unwrap]]);
     assert.deepStrictEqual(insertedId, { isbn: book.isbn });
 
     const found = await table.findOne({ isbn: book.isbn });

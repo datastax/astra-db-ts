@@ -79,7 +79,7 @@ parallel('integration.administration.events', () => {
           (dbAdmin instanceof AstraDbAdmin) ? spec.validateEventAstra?.(dbAdmin, e) : spec.validateEventDAPI?.(dbAdmin, e);
 
           assert.strictEqual(e.name, spec.eventName[0].toUpperCase() + spec.eventName.slice(1));
-          assert.strictEqual(e.params, undefined);
+          assert.strictEqual(e.requestParams, undefined);
         }
 
         emissions.length = 0;

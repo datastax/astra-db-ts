@@ -21,7 +21,7 @@ import {
   RerankingAPIKeyHeaderProvider,
   TokenProvider,
 } from '@/src/lib/index.js';
-import type { CommandEventTarget, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
+import type { DataAPIWarningDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
 import { Collection, DataAPIHttpError, DataAPIResponseError, DataAPITimeoutError } from '@/src/documents/index.js';
 import type { HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types.js';
 import { HttpClient } from '@/src/lib/api/clients/http-client.js';
@@ -57,11 +57,11 @@ type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName
 export interface DataAPIRequestInfo {
   url: string,
   collection: string | undefined,
+  table: string | undefined,
   keyspace: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
   bigNumsPresent: boolean | undefined,
-  target: CommandEventTarget,
 }
 
 /**
@@ -71,7 +71,7 @@ type EmissionStrategy<Kind extends ClientKind> = (logger: InternalLogger<any>) =
   emitCommandStarted?(requestId: string, info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
   emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse | undefined, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
   emitCommandSucceeded?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
-  emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
+  emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIWarningDescriptor[], opts: ExecCmdOpts<Kind>): void,
 }
 
 /**
@@ -217,34 +217,26 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
       throw new Error('Can\'t provide both `table` and `collection` as options to DataAPIHttpClient.executeCommand()');
     }
 
-    const collection = options.collection || options.table || this.collectionName || this.tableName;
+    const collection = options.collection || this.collectionName;
+    const table = options.table || this.tableName;
     const keyspace = options.keyspace === undefined ? this.keyspace?.ref : options.keyspace;
 
     if (keyspace === undefined) {
       throw new Error('Db is missing a required keyspace; be sure to set one with client.db(..., { keyspace }), or db.useKeyspace()');
     }
 
-    if (keyspace === null && collection) {
+    if (keyspace === null && (collection || table)) {
       throw new Error('Keyspace may not be `null` when a table or collection is provided to DataAPIHttpClient.executeCommand()');
     }
-
-    const target =
-      (options.collection || this.collectionName)
-        ? 'collection' :
-      (options.table || this.tableName)
-        ? 'table' :
-      (keyspace)
-        ? 'keyspace'
-        : 'database';
 
     const info: DataAPIRequestInfo = {
       url: this.baseUrl,
       collection: collection,
+      table: table,
       keyspace: keyspace,
       command: command,
       timeoutManager: options.timeoutManager,
       bigNumsPresent: options.bigNumsPresent,
-      target: target,
     };
 
     const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';

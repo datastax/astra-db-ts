@@ -291,11 +291,11 @@ parallel('integration.lib.logging.lifecycle', () => {
     validateEvents: {
       adminCommandStarted(e: BaseClientEvent) {
         assert.ok(e instanceof AdminCommandStartedEvent);
-        assert.strictEqual(e.methodName, 'admin.listDatabases');
+        assert.strictEqual(e.invokingMethod, 'admin.listDatabases');
       },
       adminCommandSucceeded(e: BaseClientEvent) {
         assert.ok(e instanceof AdminCommandSucceededEvent);
-        assert.strictEqual(e.methodName, 'admin.listDatabases');
+        assert.strictEqual(e.invokingMethod, 'admin.listDatabases');
       },
     },
   });
@@ -309,11 +309,11 @@ parallel('integration.lib.logging.lifecycle', () => {
     validateEvents: {
       adminCommandStarted(e: BaseClientEvent) {
         assert.ok(e instanceof AdminCommandStartedEvent);
-        assert.strictEqual(e.methodName, 'dbAdmin.listKeyspaces');
+        assert.strictEqual(e.invokingMethod, 'dbAdmin.listKeyspaces');
       },
       adminCommandSucceeded(e: BaseClientEvent) {
         assert.ok(e instanceof AdminCommandSucceededEvent);
-        assert.strictEqual(e.methodName, 'dbAdmin.listKeyspaces');
+        assert.strictEqual(e.invokingMethod, 'dbAdmin.listKeyspaces');
       },
     },
   });
