@@ -566,7 +566,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
  * @public
  */
 export const date = Object.assign(
-  (...params: [string] | [Date] | [number, number, number]) => new DataAPIDate(...<[any]>params),
+  (...params: [string] | [Date] | [DataAPIDate] | [number, number, number]): DataAPIDate => (params[0] instanceof DataAPIDate) ? params[0] : new DataAPIDate(...<[any]>params),
   {
     now: DataAPIDate.now,
     utcnow: DataAPIDate.utcnow,

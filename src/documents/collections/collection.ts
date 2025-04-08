@@ -70,16 +70,22 @@ const jbi = JBI;
  *
  * Represents the interface to a collection in a Data-API-enabled database.
  *
- * **This shouldn't be directly instantiated, but rather created via {@link Db.createCollection} or {@link Db.collection}**.
+ * **This shouldn't be directly instantiated, but rather spawned via {@link Db.createCollection} or {@link Db.collection}**.
  *
  * #### Typing & Types
  *
  * Collections are inherently untyped, but you can provide your own client-side compile-time schema for type inference
  * and early-bug-catching purposes.
  *
- * A `Collection` is typed as `Collection<Schema extends SomeDoc = SomeDoc>`, where:
- * - `Schema` is the user-intended type of the documents in the collection.
- * - `SomeDoc` is set to `Record<string, any>`, representing any valid JSON object.
+ * **NOTE: For most intents & purposes (unless you're using custom ser/des), you can ignore the (generally negligible) difference between `WSchema` and `RSchema`, and treat `Collection` as if it were typed as `Collection<Schema>`**.
+ *
+ * A `Collection` is typed as `Collection<WSchema, RSchema>`, where:
+ * - `WSchema` is the type of the row as it's written to the table (the "write" schema)
+ *    - This includes inserts, filters, sorts, etc.
+ *  - `RSchema` is the type of the row as it's read from the table (the "read" schema)
+ *    - This includes finds
+ *    - Unless custom ser/des is used, it is nearly exactly the same as `WSchema`
+ *    - This defaults to `FoundDoc<WSchema>` (see {@link FoundDoc})
  *
  * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
  *
@@ -106,9 +112,11 @@ const jbi = JBI;
  * });
  * ```
  *
+ * The full list of relevant datatypes (for collections) include: {@link UUID}, {@link ObjectId}, {@link Date}, and {@link DataAPIVector}.
+ *
  * ###### Typing the `_id`
  *
- * The `_id` field of the document may be any valid JSON scalar (including {@link Date}s, {@link UUID}s, and {@link ObjectId}s)
+ * The `_id` field of the document may be any valid JSON scalar (including {@link Date}, {@link UUID}, and {@link ObjectId})
  *
  * See {@link CollectionDefaultIdOptions} for more info on setting default `_id`s
  *

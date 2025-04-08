@@ -24,7 +24,7 @@ import { mkTypeUnsupportedForCollectionsError } from '@/src/lib/api/ser-des/util
  *
  * @public
  */
-export const inet = (address: string, version?: 4 | 6 | null) => new DataAPIInet(address, version);
+export const inet = (address: string | DataAPIInet, version?: 4 | 6 | null) => new DataAPIInet(address, version);
 
 /**
  * Represents an `inet` column for Data API tables.
@@ -106,27 +106,29 @@ export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
    *
    * @throws TypeError If the address is not a valid IPv4 or IPv6 address
    */
-  public constructor(address: string, version?: 4 | 6 | null, validate = true) { // ::1 => 0:0:0:0:0:0:0:1
+  public constructor(address: string | DataAPIInet, version?: 4 | 6 | null, validate = true) { // ::1 => 0:0:0:0:0:0:0:1
+    const addressStr = (address instanceof DataAPIInet) ? address._raw : address;
+
     if (validate) {
       switch (version) {
         case 4:
-          if (!DataAPIInet.isIPv4(address)) {
+          if (!DataAPIInet.isIPv4(addressStr)) {
             throw new Error(`'${address}' is not a valid IPv4 address`);
           }
           break;
         case 6:
-          if (!DataAPIInet.isIPv6(address)) {
+          if (!DataAPIInet.isIPv6(addressStr)) {
             throw new Error(`'${address}' is not a valid IPv6 address`);
           }
           break;
         default:
-          if (!(version = DataAPIInet.isIPv4(address) ? 4 : DataAPIInet.isIPv6(address) ? 6 : null)) {
+          if (!(version = DataAPIInet.isIPv4(addressStr) ? 4 : DataAPIInet.isIPv6(addressStr) ? 6 : null)) {
             throw new Error(`'${address}' is not a valid IPv4 or IPv6 address`);
           }
       }
     }
 
-    this._raw = address.toLowerCase();
+    this._raw = addressStr.toLowerCase();
     this._version = version;
 
     Object.defineProperty(this, $CustomInspect, {

@@ -539,7 +539,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
  * @public
  */
 export const time = Object.assign(
-  (...params: [string] | [Date] | [number, number, number?, number?]) => new DataAPITime(...<[any]>params),
+  (...params: [string] | [DataAPITime] | [Date] | [number, number, number?, number?]): DataAPITime => (params[0] instanceof DataAPITime) ? params[0] : new DataAPITime(...<[any]>params),
   {
     now: DataAPITime.now,
     utcnow: DataAPITime.utcnow,

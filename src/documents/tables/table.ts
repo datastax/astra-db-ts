@@ -89,7 +89,7 @@ const jbi = JBI({ storeAsString: true });
  *  - `RSchema` is the type of the row as it's read from the table (the "read" schema)
  *    - This includes finds
  *    - Unless custom ser/des is used, it is nearly exactly the same as `WSchema`
- *    - It defaults to `FoundRow<WSchema>` (see {@link FoundRow})
+ *    - This defaults to `FoundRow<WSchema>` (see {@link FoundRow})
  *
  * See {@link FoundRow} for more info about the differences, but again, for most intents & purposes, you can ignore this, and pretend they were
  *

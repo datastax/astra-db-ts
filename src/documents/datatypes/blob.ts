@@ -43,7 +43,7 @@ export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | MaybeBuffer | { $binar
  *
  * @public
  */
-export const blob = (blob: DataAPIBlobLike) => new DataAPIBlob(blob);
+export const blob = (blob: DataAPIBlobLike): DataAPIBlob => (blob instanceof DataAPIBlob) ? blob : new DataAPIBlob(blob);
 
 /**
  * Represents a `blob` column for Data API tables.

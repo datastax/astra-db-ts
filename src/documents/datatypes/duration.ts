@@ -683,7 +683,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
  * @public
  */
 export const duration = Object.assign(
-  (...params: [string] | [number, number, number | bigint]) => new DataAPIDuration(...<[any]>params),
+  (...params: [string] | [DataAPIDuration] | [number, number, number | bigint]): DataAPIDuration => (params[0] instanceof DataAPIDuration) ? params[0] : new DataAPIDuration(...<[any]>params),
   { builder: DataAPIDuration.builder },
 );
 

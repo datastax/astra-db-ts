@@ -86,7 +86,7 @@ export interface TableOptions extends WithKeyspace {
    * ##### Defaults
    *
    * The default timeout options are as follows:
-   * - `requestTimeoutMs`: 10000
+   * - `requestTimeoutMs`: 15000
    * - `generalMethodTimeoutMs`: 30000
    * - `collectionAdminTimeoutMs`: 60000
    * - `tableAdminTimeoutMs`: 30000

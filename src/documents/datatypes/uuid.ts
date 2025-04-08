@@ -220,7 +220,7 @@ export class UUID implements DataAPICodec<typeof UUID> {
  * @public
  */
 export const uuid = Object.assign(
-  (...params: [string] | [UUID]) => new UUID(...<[any]>params),
+  (uuid: string | UUID): UUID => (uuid instanceof UUID) ? uuid : new UUID(uuid),
   {
     v1: UUID.v1,
     v4: UUID.v4,
