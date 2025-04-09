@@ -19,7 +19,7 @@ import type { Fetcher, FetchH2Like } from '@/src/lib/index.js';
  *
  * The options available for the {@link DataAPIClient} related to making HTTP requests.
  *
- * There are three different behaviours for setting the client:
+ * There are three different behaviors for setting the client:
  * - `client: 'fetch'` or not setting the `httpOptions` at all
  *   - This will use the native `fetch` API
  * - `client: 'fetch-h2'`

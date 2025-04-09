@@ -17,6 +17,7 @@ import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http
 import type { DataAPIWarningDescriptor } from '@/src/documents/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
+import { NonEmpty, ReadonlyNonEmpty } from '@/src/lib/index.js';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -296,14 +297,14 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
   /**
    * The warnings that occurred.
    */
-  public readonly warnings: DataAPIWarningDescriptor[];
+  public readonly warnings: ReadonlyNonEmpty<DataAPIWarningDescriptor>;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIWarningDescriptor[]) {
+  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: NonEmpty<DataAPIWarningDescriptor>) {
     super('AdminCommandWarnings', requestId, baseUrl, info, longRunning);
     this.warnings = warnings;
   }

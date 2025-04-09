@@ -197,7 +197,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * ###### Disclaimer
  *
- * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
+ * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviors and easily-preventable errors.*
  *
  * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
  *

@@ -101,7 +101,7 @@ import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
  *
  * ###### Astra vs. non-Astra
  *
- * The `Db` class is designed to work with both Astra and non-Astra databases. However, there are some differences in behaviour between the two:
+ * The `Db` class is designed to work with both Astra and non-Astra databases. However, there are some differences in behavior between the two:
  * - Astra DBs have an ID & region, which can be accessed using `db.id` and `db.region` respectively
  * - Astra DBs have a `db.info()` method, which provides detailed information about the database
  * - The `db.admin()` method will return differently depending on the environment
@@ -524,7 +524,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * **Collections are inherently untyped**
    *
-   * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
+   * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviors and easily-preventable errors.**
    *
    * **There is no runtime type validation or enforcement of the schema.**
    *
@@ -606,7 +606,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * ###### Disclaimer
    *
-   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
+   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviors and easily-preventable errors.*
    *
    * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
    *
@@ -717,7 +717,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * **Collections are inherently untyped**
    *
-   * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
+   * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviors and easily-preventable errors.**
    *
    * **There is no runtime type validation or enforcement of the schema.**
    *
@@ -817,7 +817,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * ##### Disclaimer
    *
-   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
+   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviors and easily-preventable errors.*
    *
    * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
    *
@@ -892,7 +892,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * ##### Disclaimer
    *
-   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
+   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviors and easily-preventable errors.*
    *
    * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
    *

@@ -20,14 +20,14 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export type AstraDbStatusFilter = AstraDatabaseStatus | 'ALL' | 'NONTERMINATED';
+export type AstraDatabaseStatusFilter = AstraDatabaseStatus | 'ALL' | 'NONTERMINATED';
 
 /**
  * Represents all possible cloud providers that you can filter by.
  *
  * @public
  */
-export type AstraDbCloudProviderFilter = AstraDatabaseCloudProvider | 'ALL';
+export type AstraDatabaseCloudProviderFilter = AstraDatabaseCloudProvider | 'ALL';
 
 /**
  * Represents the options for listing databases.
@@ -43,11 +43,11 @@ export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTim
   /**
    * Allows filtering so that databases in listed states are returned.
    */
-  include?: AstraDbStatusFilter,
+  include?: AstraDatabaseStatusFilter,
   /**
    * Allows filtering so that databases from a given provider are returned.
    */
-  provider?: AstraDbCloudProviderFilter,
+  provider?: AstraDatabaseCloudProviderFilter,
   /**
    * Optional parameter for pagination purposes. Specify the number of items for one page of data.
    *

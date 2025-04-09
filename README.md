@@ -221,10 +221,10 @@ const admin = client.admin();
   // list info about all databases
   const databases = await admin.listDatabases();
   const dbInfo = databases[0];
-  console.log(dbInfo.info.name, dbInfo.id, dbInfo.info.region);
+  console.log(dbInfo.name, dbInfo.id, dbInfo.regions);
 
   // list keyspaces for the first database
-  const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.info.region);
+  const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.regions[0].name);
   console.log(await dbAdmin.listKeyspaces());
 })();
 ```

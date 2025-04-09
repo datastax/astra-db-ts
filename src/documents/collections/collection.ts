@@ -163,7 +163,7 @@ const jbi = JBI;
  *
  * **Collections are inherently untyped**
  *
- * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
+ * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviors and easily-preventable errors.**
  *
  * **There is no runtime type validation or enforcement of the schema.**
  *
@@ -1157,7 +1157,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * a lot of records that match, so it's recommended to use distinct on simple values whenever performance or number
    * of records is a concern.
    *
-   * For details on the behaviour of "distinct" in conjunction with real-time changes in the collection contents, see
+   * For details on the behavior of "distinct" in conjunction with real-time changes in the collection contents, see
    * the remarks on the `find` command.
    *
    * @example

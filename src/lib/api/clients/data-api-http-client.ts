@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type { InternalLogger } from '@/src/lib/logging/internal-logger.js';
-import type { RawDataAPIResponse } from '@/src/lib/index.js';
+import type { NonEmpty, RawDataAPIResponse } from '@/src/lib/index.js';
 import {
   EmbeddingAPIKeyHeaderProvider,
   HeadersProvider,
@@ -71,7 +71,7 @@ type EmissionStrategy<Kind extends ClientKind> = (logger: InternalLogger<any>) =
   emitCommandStarted?(requestId: string, info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
   emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse | undefined, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
   emitCommandSucceeded?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
-  emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIWarningDescriptor[], opts: ExecCmdOpts<Kind>): void,
+  emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: NonEmpty<DataAPIWarningDescriptor>, opts: ExecCmdOpts<Kind>): void,
 }
 
 /**

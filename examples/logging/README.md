@@ -7,7 +7,7 @@
 >
 > Previous versions of `astra-db-ts` had only event-based, emitted through the `DataAPIClient`, if `dbOptions.monitorCommands` were `true`.
 
-`astra-db-ts` provides a highly configurable logging system with two main behaviours:
+`astra-db-ts` provides a highly configurable logging system with two main behaviors:
 - Logging directly to `stdout`/`stderr`
 - Emitting events for you to handle in your own way
 

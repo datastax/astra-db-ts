@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type RawDataAPIResponse } from '@/src/lib/index.js';
+import { NonEmpty, type RawDataAPIResponse, ReadonlyNonEmpty } from '@/src/lib/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { DataAPIWarningDescriptor } from '@/src/documents/errors.js';
@@ -312,14 +312,14 @@ export class CommandWarningsEvent extends CommandEvent {
   /**
    * The warnings that occurred.
    */
-  public readonly warnings: DataAPIWarningDescriptor[];
+  public readonly warnings: ReadonlyNonEmpty<DataAPIWarningDescriptor>;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, warnings: DataAPIWarningDescriptor[]) {
+  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, warnings: NonEmpty<DataAPIWarningDescriptor>) {
     super('CommandWarnings', requestId, info, extra);
     this.warnings = warnings;
   }

@@ -12,106 +12,134 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { LitUnion } from '@/src/lib/index.js';
+
 /**
- * Represents the available cloud providers that Astra offers.
+ * Represents the available cloud providers that DataStax Astra offers for database hosting.
  *
  * @public
  */
 export type AstraDatabaseCloudProvider = 'AWS' | 'GCP' | 'AZURE';
 
 /**
- * Represents all possible statuses of a database.
+ * Represents the possible statuses of a database.
+ *
+ * For future compatability reasons, the enumeration is intentionally left open-ended, in case statuses may be added or modified in the future.
  *
  * @public
  */
-export type AstraDatabaseStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING';
+export type AstraDatabaseStatus = LitUnion<'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING'>;
 
 /**
- * The options representing the blocking behavior of many admin operations.
+ * ##### Overview
  *
- * Said operations are typically require polling to determine completion. They may or may not be
- * extremely long-running, depending on the operation, but they are not instantaneous.
+ * Options controlling the blocking behavior of certain admin operations.
  *
- * The default behavior is to block until the operation is complete, with a `pollInterval` determined on a
- * method-by-method basis, but able to be overridden.
+ * Some admin operations require repeatedly polling the database's status to check if said operation is complete.
+ * These operations may be long- or short-running, but they are not instantaneous.
  *
- * Otherwise, it can be made "non-blocking" by setting `blocking` to `false`, where it's up to the caller
- * to determine when the operation is complete.
+ * By default, these operations **block** until completion, with a method-defined polling interval that can be overridden.
+ *
+ * Alternatively, you can opt for **non-blocking** behavior, in which case the operation returns immediately, leaving it up to the caller to manually determine completion.
+ *
+ * ---
+ *
+ * ##### Blocking
+ *
+ * When `blocking` is `true` (default), the operation will **not return** until it is *fully complete*.
+ * Completion is determined by polling the database's status at a regular interval.
+ *
+ * You can customize the polling interval using the `pollInterval` option (in milliseconds).
  *
  * @example
- * ```typescript
+ * ```ts
  * // Will block by default until the operation is complete.
- * const dbAdmin1 = await admin.createDatabase({...});
+ * const dbAdmin1 = await admin.createDatabase({ ... });
  *
- * // Will not block until the operation is complete.
- * // Still returned an AstraDbAdmin object, but it's not very useful
- * // until the operation completes.
- * const dbAdmin2 = await admin.createDatabase({...}, {
- *   blocking: false,
- * });
- *
- * // Blocks with a custom poll interval (per 5s).
- * const dbAdmin3 = await admin.createDatabase({...}, {
- *   blocking: true,
- *   pollInterval: 5000,
+ * // Blocks with a custom poll interval (e.g. every 5 seconds).
+ * const dbAdmin2 = await admin.createDatabase({ ... }, {
+ *   pollInterval: 5000,
  * });
  * ```
  *
- * @remarks
- * By "blocking", we mean that the operation will not return until the operation is complete, which is
- * determined by polling the operation at a regular interval. "Non-blocking" means that the operation
- * makes the initial request, but then returns immediately, leaving it up to the caller to determine
- * when the operation is complete.
+ * ---
  *
- * If it's chosen not to block, keep in mind that the objects that the operation returns may not be
- * fully usable, or even usable at all, until the operation is complete. createDatabase, for example,
- * returns an AstraDbAdmin object, but there's no initialized database for it to work on until the
- * database is fully created.
+ * ##### Non-blocking
  *
- * @field blocking - Whether to block the operation until it is complete.
- * @field pollInterval - The interval at which to poll the operation for completion.
+ * When `blocking` is `false`, the operation returns immediately after initiating the request.
+ * It becomes your responsibility to check when the operation has completed.
+ *
+ * **Important:** In this mode, *resources will still not be usable until the operation finishes.*
+ *
+ * For instance:
+ * - `createDatabase` returns an `AstraDbAdmin` object, but it won’t point to an active database until creation is complete.
+ * - `createKeyspace` won't actually allow you to use that keyspace until the database is back to active.
+ *
+ * @example
+ * ```ts
+ * // Will return immediately without waiting for operation completion
+ * //
+ * // The AstraDbAdmin object is still returned, but it's not very useful
+ * // until the operation completes.
+ * const dbAdmin3 = await admin.createDatabase({...}, {
+ *   blocking: false,
+ * });
+ * ```
+ *
+ * ---
+ *
+ * @field blocking - Whether to block the operation until it is complete *(default: `true`)*
+ * @field pollInterval - The interval (in milliseconds) at which to poll the operation for completion *(optional)*
  *
  * @public
  */
+
 export type AstraAdminBlockingOptions =
   | AstraPollBlockingOptions
   | AstraNoBlockingOptions;
 
 /**
- * The options representing the blocking behavior of many admin operations.
+ * ##### Overview (See {@link AstraAdminBlockingOptions})
  *
- * @field blocking - True or omitted to block until the operation is complete.
- * @field pollInterval - The interval (in MS) at which to poll the operation for completion.
+ * This is one of the possible shapes for {@link AstraAdminBlockingOptions}, specifying **blocking** behavior.
  *
- * @see AstraAdminBlockingOptions
+ * In this mode, operations will poll the database's status until the operation is fully complete.
+ *
+ * **Refer to {@link AstraAdminBlockingOptions} for full behavior details and examples.**
  *
  * @public
  */
 export interface AstraPollBlockingOptions {
   /**
-   * True or omitted to block until the operation is complete.
+   * Whether to block the operation until it is complete.
+   *
+   * Set `blocking` to `true` or leave it unset to enable blocking, having the method poll until completion.
    */
   blocking?: true,
   /**
-   * The interval (in MS) at which to poll the operation for completion.
+   * How often (in milliseconds) to poll the operation's status until it completes.
    *
-   * The default is determined on a method-by-method basis.
+   * Optional; if not set, a default poll interval, determined on a method-by-method basis, will be used.
    */
   pollInterval?: number,
 }
 
 /**
- * The options representing the blocking behavior of many admin operations.
+ * ##### Overview (See {@link AstraAdminBlockingOptions})
  *
- * @field blocking - False to not block until the operation is complete.
+ * This is one of the possible shapes for {@link AstraAdminBlockingOptions}, specifying **non-blocking** behavior.
  *
- * @see AstraAdminBlockingOptions
+ * In this mode, the operation returns immediately after initiating the request. Completion must be checked manually.
+ *
+ * **Refer to {@link AstraAdminBlockingOptions} for full behavior details, examples, and important caveats.**
  *
  * @public
  */
 export interface AstraNoBlockingOptions {
   /**
-   * False to not block until the operation is complete.
+   * Whether to block the operation until it is complete.
+   *
+   * Set `blocking` to `false` to disable blocking, and have the method return without waiting for completion.
    */
-  blocking: false,
+  blocking: false;
 }
