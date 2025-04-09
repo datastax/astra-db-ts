@@ -82,7 +82,7 @@ const jbi = JBI;
  *
  * **This shouldn't be directly instantiated, but rather spawned via {@link Db.createCollection} or {@link Db.collection}**.
  *
- * #### Typing & Types
+ * #### Typing & Datatypes
  *
  * Collections are inherently untyped, but you can provide your own client-side compile-time schema for type inference
  * and early-bug-catching purposes.
@@ -907,8 +907,62 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     return this.#commands.find(filter, options, CollectionFindCursor);
   }
 
+  /**
+   * ##### Overview (preview)
+   *
+   * Finds documents in a collection through a retrieval process that uses a reranker model to combine results from a vector similarity search and a lexical-based search (aka a "hybrid search").
+   *
+   * **Disclaimer: this method is currently in preview/beta in this release of the client.**
+   *
+   * @example
+   * ```ts
+   * // With vectorize
+   * const cursor = await coll.findAndRerank({})
+   *   .sort({ $hybrid: 'what is a dog?' })
+   *   .includeScores();
+   *
+   * // Using your own vectors
+   * const cursor = await coll.findAndRerank({})
+   *   .sort({ $hybrid: { $vector: vector([...]), $lexical: 'what is a dog?' } })
+   *   .rerankOn('$lexical')
+   *   .rerankQuery('I like dogs');
+   *
+   * for await (const res of cursor) {
+   *   console.log(cursor.document, cursor.scores);
+   * }
+   * ```
+   *
+   * @beta
+   */
   public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<RerankedResult<RSchema>, RerankedResult<RSchema>>
 
+  /**
+   * ##### Overview (preview)
+   *
+   * Finds documents in a collection through a retrieval process that uses a reranker model to combine results from a vector similarity search and a lexical-based search (aka a "hybrid search").
+   *
+   * **Disclaimer: this method is currently in preview/beta in this release of the client.**
+   *
+   * @example
+   * ```ts
+   * // With vectorize
+   * const cursor = await coll.findAndRerank({})
+   *   .sort({ $hybrid: 'what is a dog?' })
+   *   .includeScores();
+   *
+   * // Using your own vectors
+   * const cursor = await coll.findAndRerank({})
+   *   .sort({ $hybrid: { $vector: vector([...]), $lexical: 'what is a dog?' } })
+   *   .rerankOn('$lexical')
+   *   .rerankQuery('I like dogs');
+   *
+   * for await (const res of cursor) {
+   *   console.log(cursor.document, cursor.scores);
+   * }
+   * ```
+   *
+   * @beta
+   */
   public findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<TRaw>, RerankedResult<TRaw>>
 
   public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<SomeDoc> {

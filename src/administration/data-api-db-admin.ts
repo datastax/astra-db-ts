@@ -85,7 +85,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @example
    * ```typescript
    * const dbAdmin = client.admin().dbAdmin('<endpoint>', {
-   *   keyspace: 'my-keyspace',
+   *   keyspace: 'my_keyspace',
    *   useHttp2: false,
    * });
    *

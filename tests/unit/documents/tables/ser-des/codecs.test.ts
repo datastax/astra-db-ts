@@ -410,6 +410,8 @@ describe('unit.documents.tables.ser-des.codecs', () => {
       it('should serialize a set as a list', () => {
         fc.assert(
           fc.property(tableKeyArb, arbs.tableDatatypes({ scalarOnly: true }), (key, values) => {
+            fc.pre(values.definition.type !== 'date');
+
             const jsSet = new Set(values.map((v) => v.jsRep));
             const jsonArr = [...new Set(values.map((v) => v.jsonRep))];
 

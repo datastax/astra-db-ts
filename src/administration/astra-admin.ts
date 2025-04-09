@@ -121,7 +121,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * const db1 = admin.db('https://<db_id>-<region>.apps.astra.datastax.com');
    *
    * const db2 = admin.db('https://<db_id>-<region>.apps.astra.datastax.com', {
-   *   keyspace: 'my-keyspace',
+   *   keyspace: 'my_keyspace',
    *   useHttp2: false,
    * });
    * ```
@@ -154,7 +154,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * const db1 = admin.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1');
    *
    * const db2 = admin.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', {
-   *   keyspace: 'my-keyspace',
+   *   keyspace: 'my_keyspace',
    *   useHttp2: false,
    * });
    * ```
@@ -197,7 +197,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * const dbAdmin1 = admin.dbAdmin('https://<db_id>-<region>...');
    *
    * const dbAdmin2 = admin.dbAdmin('https://<db_id>-<region>...', {
-   *   keyspace: 'my-keyspace',
+   *   keyspace: 'my_keyspace',
    *   useHttp2: false,
    * });
    * ```
@@ -233,7 +233,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * const dbAdmin1 = admin.dbAdmin('a6a1d8d6-...-377566f345bf', 'us-east1');
    *
    * const dbAdmin2 = admin.dbAdmin('a6a1d8d6-...-377566f345bf', 'us-east1', {
-   *   keyspace: 'my-keyspace',
+   *   keyspace: 'my_keyspace',
    *   useHttp2: false,
    * });
    * ```

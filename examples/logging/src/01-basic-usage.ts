@@ -7,7 +7,7 @@ import { DataAPIClient } from '@datastax/astra-db-ts';
 // -----===<{ STEP 1: Instantiate the client }>===-----
 
 // Instantiate the client & db with logging defaults enabled
-// See the documentation for `DataAPILoggingConfig` for more information on the available options
+// See the documentation for `LoggingConfig` for more information on the available options
 // (or hover over the `logging` property in your IDE!)
 const client = new DataAPIClient({ logging: 'all' });
 const db = client.db(process.env.ASTRA_DB_ENDPOINT!, { token: process.env.ASTRA_DB_TOKEN });

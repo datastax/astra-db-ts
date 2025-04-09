@@ -56,8 +56,8 @@ type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName
  */
 export interface DataAPIRequestInfo {
   url: string,
-  collection: string | undefined,
-  table: string | undefined,
+  tOrC: string | undefined,
+  tOrCType: 'table' | 'collection' | undefined,
   keyspace: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
@@ -217,22 +217,21 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
       throw new Error('Can\'t provide both `table` and `collection` as options to DataAPIHttpClient.executeCommand()');
     }
 
-    const collection = options.collection || this.collectionName;
-    const table = options.table || this.tableName;
+    const tOrC = options.collection || options.table || this.collectionName || this.tableName;
     const keyspace = options.keyspace === undefined ? this.keyspace?.ref : options.keyspace;
 
     if (keyspace === undefined) {
       throw new Error('Db is missing a required keyspace; be sure to set one with client.db(..., { keyspace }), or db.useKeyspace()');
     }
 
-    if (keyspace === null && (collection || table)) {
+    if (keyspace === null && tOrC) {
       throw new Error('Keyspace may not be `null` when a table or collection is provided to DataAPIHttpClient.executeCommand()');
     }
 
     const info: DataAPIRequestInfo = {
       url: this.baseUrl,
-      collection: collection,
-      table: table,
+      tOrC: tOrC,
+      tOrCType: !tOrC ? undefined : tOrC === (options.table || this.tableName) ? 'table' : 'collection',
       keyspace: keyspace,
       command: command,
       timeoutManager: options.timeoutManager,
@@ -240,7 +239,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     };
 
     const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
-    const collectionPath = info.collection ? `/${info.collection}` : '';
+    const collectionPath = info.tOrC ? `/${info.tOrC}` : '';
     info.url += keyspacePath + collectionPath;
 
     const requestId = this.logger.internal.generateCommandRequestId();

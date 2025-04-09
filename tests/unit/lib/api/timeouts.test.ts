@@ -157,7 +157,7 @@ describe('unit.lib.api.timeouts', () => {
 
   parallel('multipart', () => {
     it('(LONG) works w/ override number', async () => {
-      const tm = timeouts.multipart('generalMethodTimeoutMs', { timeout: 10001 });
+      const tm = timeouts.multipart('generalMethodTimeoutMs', { timeout: Timeouts.Default.requestTimeoutMs + 1 });
       let [timeout, mkError] = tm.advance(info(tm));
       assert.strictEqual(timeout, Timeouts.Default.requestTimeoutMs);
 
@@ -169,14 +169,14 @@ describe('unit.lib.api.timeouts', () => {
 
       assert.deepStrictEqual(tm.initial(), {
         requestTimeoutMs: Timeouts.Default.requestTimeoutMs,
-        generalMethodTimeoutMs: 10001,
+        generalMethodTimeoutMs: Timeouts.Default.requestTimeoutMs + 1,
       });
 
-      await new Promise(resolve => setTimeout(resolve, 5001));
+      await new Promise(resolve => setTimeout(resolve, 7501));
       [timeout] = tm.advance(info(tm));
-      assert.ok(timeout <= 5000.5);
+      assert.ok(timeout <= 7500.5);
 
-      await new Promise(resolve => setTimeout(resolve, 5001));
+      await new Promise(resolve => setTimeout(resolve, 7501));
       [timeout, mkError] = tm.advance(info(tm));
       assert.ok(timeout <= 0);
 
@@ -184,7 +184,7 @@ describe('unit.lib.api.timeouts', () => {
       assert.ok(e2 instanceof TimeoutError);
       assert.deepStrictEqual(e2.info, info(tm));
       assert.deepStrictEqual(e2.timeoutType, ['generalMethodTimeoutMs']);
-      assert.strictEqual(e2.message, 'Command timed out after 10001ms (generalMethodTimeoutMs timed out)');
+      assert.strictEqual(e2.message, `Command timed out after ${Timeouts.Default.requestTimeoutMs + 1}ms (generalMethodTimeoutMs timed out)`);
     });
 
     it('(LONG) works w/ partial override object', async () => {

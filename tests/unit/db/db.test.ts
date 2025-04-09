@@ -201,11 +201,11 @@ describe('unit.db.db', () => {
         db.admin();
       });
       assert.doesNotThrow(() => {
-        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DEMO_APPLICATION_URI);
+        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db('https://localhost:3000');
         db.admin({ environment: 'dse' });
       });
       assert.doesNotThrow(() => {
-        const db = new DataAPIClient('dummy_token', { environment: 'other' }).db(DEMO_APPLICATION_URI);
+        const db = new DataAPIClient('dummy_token', { environment: 'other' }).db('https://localhost:3000');
         db.admin({ environment: 'other' });
       });
     });

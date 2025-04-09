@@ -30,49 +30,87 @@ import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
  * ##### Overview
  *
  * The main entrypoint into working with the Data API. It sits at the top of the
- * [conceptual hierarchy](https://github.com/datastax/astra-db-ts/tree/signature-cleanup?tab=readme-ov-file#abstraction-diagram)
+ * [conceptual hierarchy](https://github.com/datastax/astra-db-ts/tree/b2b79c15a388d2373e884e8921530d81f3593431?tab=readme-ov-file#high-level-architecture)
  * of the SDK.
  *
  * The client may take in a default token, which can be overridden by a stronger/weaker token when spawning a new
  * {@link Db} or {@link AstraAdmin} instance.
  *
- * It also takes in a set of default options (see {@link DataAPIClientOptions}) that may also generally be overridden as necessary.
- *
- * **Depending on the Data API backend used, you may need to set the environment option to "dse", "hcd", etc.** See
- * {@link DataAPIEnvironment} for all possible backends. It defaults to "astra".
+ * It also takes in a set of default options (see {@link DataAPIClientOptions}) that may also generally be overridden in lower classes.
  *
  * @example
  * ```typescript
  * // Client with default token
- * const client1 = new DataAPIClient('AstraCS:...');
+ * const client = new DataAPIClient('<token>');
+ * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
  *
  * // Client with no default token; must provide token in .db() or .admin()
- * const client2 = new DataAPIClient();
+ * const client = new DataAPIClient();
+ * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com', { token });
  *
- * // Client connecting to a local DSE instance
- * const dseToken = new UsernamePasswordTokenProvider('username', 'password');
- * const client3 = new DataAPIClient(dseToken, { environment: 'dse' });
+ * const coll = await db.collection('my_collection');
  *
- * const db1 = client1.db('https://<db_id>-<region>.apps.astra.datastax.com');
- * const db2 = client1.db('<db_id>', '<region>');
- *
- * const coll = await db1.collections('my-collections');
- *
- * const admin1 = client1.admin();
- * const admin2 = client1.admin({ adminToken: '<stronger_token>' });
+ * const admin1 = client.admin();
+ * const admin2 = client.admin({ adminToken: '<stronger_token>' });
  *
  * console.log(await coll.insertOne({ name: 'John Joe' }));
  * console.log(await admin1.listDatabases());
  * ```
  *
+ * ---
+ *
+ * ##### The options hierarchy
+ *
+ * Like the class hierarchy aforementioned, the options for each class also form an [adjacent hierarchy](https://github.com/datastax/astra-db-ts/tree/b2b79c15a388d2373e884e8921530d81f3593431?tab=readme-ov-file#options-hierarchy).
+ *
+ * The options for any class are a deep merge of the options for the class itself and the options for its parent classes.
+ *
+ * For example, you may set default {@link CollectionOptions.logging} options in {@link DataAPIClientOptions.logging}, and override them in the {@link CollectionOptions} themselves as desired.
+ *
+ * @example
+ * ```ts
+ * const client = new DataAPIClient({
+ *   logging: [{ events: 'all', emits: 'event' }],
+ * });
+ * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com', { token });
+ *
+ * // Everything will still be emitted as an event,
+ * // But now, `commandFailed` events from this collection will also log to stderr
+ * const coll = db.collection('<name>', {
+ *   logging: [{ events: 'commandFailed', emits: ['event', 'stderr'] }],
+ * });
+ * ```
+ *
+ * ---
+ *
+ * ##### Non-Astra support (DSE, HCD, etc.)
+ *
+ * Depending on the Data API backend used, you may need to set the environment option in certain places to "dse", "hcd", etc.
+ *
+ * See {@link DataAPIEnvironment} for all possible backends; it defaults to "astra" if not specified.
+ *
+ * Currently, if you're not using Astra, you need to specify the environment when:
+ * - Creating the {@link DataAPIClient}
+ * - Using {@link Db.admin}
+ *
+ * @example
+ * ```ts
+ * // Client connecting to a local DSE instance
+ * const dseToken = new UsernamePasswordTokenProvider('username', 'password');
+ * const client = new DataAPIClient(dseToken, { environment: 'dse' });
+ * ```
+ *
  * @public
  *
  * @see DataAPIEnvironment
+ * @see DataAPIClientOptions
  */
 export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
   readonly #options: ParsedRootClientOpts;
 
   /**
+   * ##### Overview
+   *
    * Constructs a new instance of the {@link DataAPIClient} without a default token. The token will instead need to
    * be specified when calling `.db()` or `.admin()`.
    *
@@ -83,10 +121,10 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * const client = new DataAPIClient();
    *
    * // OK
-   * const db1 = client.db('<db_id>', '<region>', { token: 'AstraCS:...' });
+   * const db1 = client.db('<endpoint>', { token: '<token>' });
    *
    * // Will throw error as no token is ever provided
-   * const db2 = client.db('<db_id>', '<region>');
+   * const db2 = client.db('<endpoint>');
    * ```
    *
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
@@ -94,6 +132,8 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
   constructor(options?: DataAPIClientOptions)
 
   /**
+   * ##### Overview
+   *
    * Constructs a new instance of the {@link DataAPIClient} with a default token. This token will be used everywhere
    * if no overriding token is provided in `.db()` or `.admin()`.
    *
@@ -104,10 +144,10 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * const client = new DataAPIClient('<default_token>');
    *
    * // OK
-   * const db1 = client.db('<db_id>', '<region>', { token: '<weaker_token>' });
+   * const db1 = client.db('<endpoint>', { token: '<weaker_token>' });
    *
    * // OK; will use <default_token>
-   * const db2 = client.db('<db_id>', '<region>');
+   * const db2 = client.db('<endpoint>');
    * ```
    *
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
@@ -138,28 +178,52 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
   }
 
   /**
+   * ##### Overview
+   *
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
    *
-   * **NB. This method does not validate the existence of the database—it simply creates a reference.**
+   * ---
    *
-   * This endpoint should include the protocol and the hostname, but not the path. It's typically in the form of
-   * `https://<db_id>-<region>.apps.astra.datastax.com`, but it can be used with DSE or any other Data-API-compatible
-   * endpoint.
+   * ##### Disclaimer
    *
-   * The given options will override any default options set when creating the {@link DataAPIClient} through
-   * a deep merge (i.e. unset properties in the options object will just default to the default options).
+   * This method does *not* validate the existence of the database—it simply creates a reference.**
+   *
+   * Note that this does not perform any I/O or validation on if the endpoint is valid or not. It's up to the user to
+   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
+   * instead.
+   *
+   * ---
+   *
+   * ##### The API endpoint
+   *
+   * This endpoint should include the protocol and the hostname, but not the path.
+   *
+   * If you're using Astra, this will typically be of the form `https://<db_id>-<region>.apps.astra.datastax.com` (the exception being private endpoints); any other database may have a completely unique domain.
+   *
+   * Spawning a db via just an ID and region is no longer supported in `astra-db-ts 2.0+`. Use the {@link buildAstraEndpoint} to create the endpoint if you need to.
+   *
+   * @example
+   * ```ts
+   * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
+   * ```
+   *
+   * ---
+   *
+   * ##### The options hierarchy
+   *
+   * The options for the {@link Db} instance are a deep merge of the options for the {@link DataAPIClient} and the options for the {@link Db} itself.
+   *
+   * Any options provided to {@link DbOptions} may generally also be overridden in any spawned classes' options (e.g. {@link CollectionOptions}).
    *
    * @example
    * ```typescript
-   * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
-   *
-   * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
-   *   keyspace: 'my-keyspace',
-   *   useHttp2: false,
+   * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
+   *   keyspace: 'my_keyspace',
+   *   token: 'AstraCS:...',
    * });
    *
-   * const db3 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
-   *   token: 'AstraCS:...'
+   * const coll = db.collection('my_coll', {
+   *   keyspace: 'other_keyspace',
    * });
    * ```
    *
@@ -174,17 +238,19 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * @returns A new {@link Db} instance.
    */
   public db(endpoint: string, options?: DbOptions): Db {
+    if (typeof options as unknown === 'string') {
+      throw new Error(`.db() no longer allows the .db('<id>', '<region>') overload; please pass in the full endpoint url (e.g. .db('<endpoint>')). You may use the exported \`buildAstraEndpoint\` utility function if you need to create an endpoint from just an ID and a region.`);
+    }
     return new Db(this.#options, endpoint, DbOptsHandler.parse(options));
   }
 
   /**
+   * ##### Overview (Astra-only)
+   *
    * Spawns a new {@link AstraAdmin} instance using the given options to work with the DevOps API (for admin
    * work such as creating/managing databases).
    *
-   * **NB. This method is only available for Astra databases.**
-   *
-   * The given options will override any default options set when creating the {@link DataAPIClient} through
-   * a deep merge (i.e. unset properties in the options object will just default to the default options).
+   * **Note: this method is only available for Astra databases.**
    *
    * @example
    * ```typescript
@@ -194,6 +260,12 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * const dbs = await admin1.listDatabases();
    * console.log(dbs);
    * ```
+   *
+   * ---
+   *
+   * ##### The options hierarchy
+   *
+   * The options for the {@link AstraAdmin} instance are a deep merge of the options for the {@link DataAPIClient} and the options for the {@link AstraAdmin} itself.
    *
    * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
@@ -207,24 +279,34 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
   }
 
   /**
+   * ##### Overview
+   *
    * Closes the client and disconnects all underlying connections. This should be called when the client is no longer
    * needed to free up resources.
    *
    * The client will be no longer usable after this method is called.
    *
-   * @remarks
    * This method is idempotent and can be called multiple times without issue.
    *
-   * --
+   * @example
+   * ```ts
+   * const client = new DataAPIClient(...);
+   * await client.close();
+   *
+   * // Error: Can't make requests on a closed client
+   * const coll = client.db(...).collection(...);
+   * await coll.findOne();
+   * ```
+   * ---
+   *
+   * ##### When to call this method
    *
    * For most users, this method isn't necessary to call, as resources will be freed up when the
-   * server is shut down or the process is killed. However, it's useful in long-running processes or when you want to
-   * free up resources immediately.
+   * server is shut down or the process is killed.
    *
-   * --
+   * However, it's useful in long-running processes or when you want to free up resources immediately.
    *
-   * Think of it as using malloc or using a file descriptor. Freeing them isn't always strictly necessary for
-   * long-running usages, but it's there for when you need it.
+   * Think of it as using malloc or using a file descriptor. Freeing them isn't *strictly* necessary when they're used for the duration of the program, but it's there for when you need it.
    *
    * @returns A promise that resolves when the client has been closed.
    */

@@ -39,7 +39,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * @example
    * ```typescript
    * const dbAdmin = client.admin().dbAdmin('<endpoint>', {
-   *   keyspace: 'my-keyspace',
+   *   keyspace: 'my_keyspace',
    *   useHttp2: false,
    * });
    *

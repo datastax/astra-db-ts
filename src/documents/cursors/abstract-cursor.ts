@@ -18,7 +18,13 @@ import type { TimeoutManager, Timeouts, WithTimeout } from '@/src/lib/api/timeou
 import { QueryState } from '@/src/lib/utils.js';
 
 /**
- * An exception that may be thrown whenever something goes wrong with a cursor.
+ * ##### Overview
+ *
+ * A generic exception that may be thrown whenever something non-request-related goes wrong with a cursor.
+ *
+ * Errors like {@link DataAPIResponseError}s and {@link DataAPITimeoutError}s which occur during an actually request of the cursor will still be thrown directly.
+ *
+ * This error is intended for errors more-so related to validation & the cursor's lifecycle.
  *
  * @public
  */
@@ -47,7 +53,9 @@ export class CursorError extends DataAPIError {
 }
 
 /**
- * Represents the status of a cursor.
+ * ##### Overview
+ *
+ * Represents the status of some {@link AbstractCursor}.
  *
  * | Status         | Description                                                                        |
  * |----------------|------------------------------------------------------------------------------------|
@@ -57,10 +65,37 @@ export class CursorError extends DataAPIError {
  *
  * @public
  *
- * @see FindCursor.state
+ * @see AbstractCursor.state
  */
 export type CursorState = 'idle' | 'started' | 'closed';
 
+/**
+ * ##### Overview
+ *
+ * Represents some lazy, abstract iterable cursor over any arbitrary data, which may or may not be paginated.
+ *
+ * **Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}/{@link Collection.find}, or their {@link Table} alternatives.**
+ *
+ * ---
+ *
+ * ##### Typing
+ *
+ * **For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.**
+ *
+ * **If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.**
+ *
+ * In full, the cursor is typed as `FindCursor<T, TRaw>`, where
+ * - `T` is the type of the mapped records, and
+ * - `TRaw` is the type of the raw records before any mapping.
+ *
+ * If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping is done using the {@link FindCursor.map} method.
+ *
+ * @see CollectionFindCursor
+ * @see CollectionFindAndRerankCursor
+ * @see TableFindCursor
+ *
+ * @public
+ */
 export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal

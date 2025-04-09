@@ -17,7 +17,7 @@ import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http
 import type { DataAPIWarningDescriptor } from '@/src/documents/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
-import { NonEmpty, ReadonlyNonEmpty } from '@/src/lib/index.js';
+import type { NonEmpty, ReadonlyNonEmpty } from '@/src/lib/index.js';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the

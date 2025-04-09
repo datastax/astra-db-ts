@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { NonEmpty, type RawDataAPIResponse, ReadonlyNonEmpty } from '@/src/lib/index.js';
+import type { NonEmpty, ReadonlyNonEmpty } from '@/src/lib/index.js';
+import { type RawDataAPIResponse } from '@/src/lib/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { DataAPIWarningDescriptor } from '@/src/documents/errors.js';
@@ -72,10 +73,8 @@ const mkCommandEventTarget = (info: DataAPIRequestInfo): Readonly<CommandEventTa
     target.keyspace = info.keyspace;
   }
 
-  if (info.collection) {
-    target.collection = info.collection;
-  } else if (info.table) {
-    target.table = info.table;
+  if (info.tOrCType) {
+    target[info.tOrCType] = info.tOrC;
   }
 
   return target;
@@ -133,7 +132,7 @@ export abstract class CommandEvent extends BaseClientEvent {
   public override getMessagePrefix() {
     const source = this.target.collection || this.target.table;
 
-    return (source)
+    return (source === undefined)
       ? `${this.target.keyspace ?? '<no_keyspace>'}::${this.commandName}`
       : `${source}::${this.commandName}`;
   }
