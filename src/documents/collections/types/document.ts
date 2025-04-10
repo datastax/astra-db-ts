@@ -74,3 +74,7 @@ export interface VectorizeDoc extends VectorDoc {
    */
   $vectorize?: string,
 }
+
+export interface LexicalDoc {
+  $lexical?: string,
+}

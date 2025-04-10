@@ -15,7 +15,7 @@
 /**
  * @public
  */
-export interface RerankingServiceOptions {
+export interface RerankServiceOptions {
   provider: string,
   modelName: string,
   authentication?: Record<string, unknown>,

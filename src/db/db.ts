@@ -24,7 +24,7 @@ import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin.js';
 import type { CreateCollectionOptions } from '@/src/db/types/collections/create.js';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { KeyspaceRef } from '@/src/lib/api/clients/types.js';
-import type { CommandEventMap, FoundRow, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
+import { CommandEventMap, FoundRow, ObjectId, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
 import { Table } from '@/src/documents/index.js';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
 import type { CollectionOptions } from '@/src/db/types/collections/spawn.js';
