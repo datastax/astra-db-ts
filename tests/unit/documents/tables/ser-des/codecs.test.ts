@@ -322,17 +322,41 @@ describe('unit.documents.tables.ser-des.codecs', () => {
         );
       });
 
-      // TODO: Update when Data API supports alist maps
-      it('should serialize a map as an object', () => {
+      it('should serialize a map as an alist if it has >0 entries', () => {
+        fc.assert(
+          fc.property(tableKeyArb, anyKVsArb, (key, [keys, values]) => {
+            const map = new Map(keys.map((k, i) => [k.jsRep, values[i].jsRep]));
+            fc.pre(map.size > 0);
+
+            const expectedObj = [...new Map(keys.map((k, i) => [k.jsonRep, values[i].jsonRep]))];
+            fc.pre(map.size === expectedObj.length);
+
+            const bigNumsPresent = keys.some((k) => k.jsRep instanceof BigNumber) || values.some((v) => v.jsRep instanceof BigNumber);
+
+            assert.deepStrictEqual(serdes.serialize({ [key]: map }), [{ [key]: expectedObj }, bigNumsPresent]);
+          }),
+        );
+      });
+
+      // TODO - change when https://github.com/stargate/data-api/issues/2005 resolved
+      it('should serialize a map as an empty object if it has 0 entries', () => {
+        fc.assert(
+          fc.property(tableKeyArb, (key) => {
+            assert.deepStrictEqual(serdes.serialize({ [key]: new Map }), [{ [key]: {} }, false]);
+          }),
+        );
+      });
+
+      // TODO - change when https://github.com/stargate/data-api/issues/2005 resolved
+      it('should serialize a normal object as an object normally', () => {
         fc.assert(
           fc.property(tableKeyArb, stringKVsArb, (key, [keys, values]) => {
-            const map = new Map(keys.map((k, i) => [k, values[i].jsRep]));
-
+            const obj = Object.fromEntries(keys.map((k, i) => [k, values[i].jsRep]));
             const expectedObj = Object.fromEntries(keys.map((k, i) => [k, values[i].jsonRep]));
 
             const bigNumsPresent = values.some((v) => v.jsRep instanceof BigNumber);
 
-            assert.deepStrictEqual(serdes.serialize({ [key]: map }), [{ [key]: expectedObj }, bigNumsPresent]);
+            assert.deepStrictEqual(serdes.serialize({ [key]: obj }), [{ [key]: expectedObj }, bigNumsPresent]);
           }),
         );
       });
@@ -410,10 +434,10 @@ describe('unit.documents.tables.ser-des.codecs', () => {
       it('should serialize a set as a list', () => {
         fc.assert(
           fc.property(tableKeyArb, arbs.tableDatatypes({ scalarOnly: true }), (key, values) => {
-            fc.pre(values.definition.type !== 'date');
 
             const jsSet = new Set(values.map((v) => v.jsRep));
             const jsonArr = [...new Set(values.map((v) => v.jsonRep))];
+            fc.pre(jsSet.size === jsonArr.length);
 
             const bigNumsPresent = values.some((v) => v.jsRep instanceof BigNumber);
 

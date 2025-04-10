@@ -125,7 +125,11 @@ export class TableCodecs {
     map: TableCodecs.forType('map', {
       serializeClass: Map,
       serialize: (value, ctx) => {
-        return ctx.recurse(Object.fromEntries(value));
+        if (value.size) {
+          return ctx.recurse([...value.entries()]);
+        } else {
+          return ctx.done({});  // BUG https://github.com/stargate/data-api/issues/2005 - can not pass an empty array for a map
+        }
       },
       deserialize(_, ctx) {
         /* c8 ignore next: not in data api yet */
