@@ -669,111 +669,6 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * ##### Projection
    *
-   * This overload of {@link Collection.find} is used for when no projection is provided, and it is safe to assume the returned documents are going to be of type `Schema`.
-   *
-   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `Partial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the document may not be of the same type as `Schema`.
-   *
-   * ##### Filtering
-   *
-   * The filter can contain a variety of operators & combinators to select the documents. See {@link CollectionFilter} for much more information.
-   *
-   * If the filter is empty, all documents in the collection will be returned (up to any provided/implied limit).
-   *
-   * ##### Find by vector search
-   *
-   * If the collection has vector search enabled, you can find the most relevant documents by providing a vector in the sort option.
-   *
-   * Vector ANN searches cannot return more than a set number of documents, which, at the time of writing, is 1000 items.
-   *
-   * @example
-   * ```ts
-   * await collection.insertMany([
-   *   { name: 'John Doe', $vector: [.12, .52, .32] },
-   *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
-   *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
-   * ]);
-   *
-   * const cursor = collection.find({}, {
-   *   sort: { $vector: [.12, .52, .32] },
-   * });
-   *
-   * // Returns 'John Doe'
-   * console.log(await cursor.next());
-   * ```
-   *
-   * ##### Sorting
-   *
-   * The sort option can be used to sort the documents returned by the cursor. See {@link Sort} for more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
-   *
-   * If the sort option is not provided, there is no guarantee as to the order of the documents returned.
-   *
-   * When providing a non-vector sort, the Data API will return a smaller number of documents, set to 20 at the time of writing, and stop there. The returned documents are the top results across the whole collection according to the requested criterion.
-   *
-   * @example
-   * ```ts
-   * await collection.insertMany([
-   *   { name: 'John Doe', age: 1, height: 168 },
-   *   { name: 'John Doe', age: 2, height: 42 },
-   * ]);
-   *
-   * const cursor = collection.find({}, {
-   *   sort: { age: 1, height: -1 },
-   * });
-   *
-   * // Returns 'John Doe' (age 2, height 42), 'John Doe' (age 1, height 168)
-   * console.log(await cursor.toArray());
-   * ```
-   *
-   * ##### Other options
-   *
-   * Other available options include `skip`, `limit`, `includeSimilarity`, and `includeSortVector`. See {@link CollectionFindOptions} and {@link FindCursor} for more information.
-   *
-   * If you prefer, you may also set these options using a fluent interface on the {@link FindCursor} itself.
-   *
-   * @example
-   * ```ts
-   * // cursor :: FindCursor<string>
-   * const cursor = collection.find({})
-   *   .sort({ $vector: [.12, .52, .32] })
-   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
-   *   .includeSimilarity(true)
-   *   .map(doc => `${doc.name} (${doc.age})`);
-   * ```
-   *
-   * @remarks
-   * When not specifying sorting criteria at all (by vector or otherwise),
-   * the cursor can scroll through an arbitrary number of documents as
-   * the Data API and the client periodically exchange new chunks of documents.
-   *
-   * --
-   *
-   * It should be noted that the behavior of the cursor in the case documents
-   * have been added/removed after the `find` was started depends on database
-   * internals, and it is not guaranteed, nor excluded, that such "real-time"
-   * changes in the data would be picked up by the cursor.
-   *
-   * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
-   * @param options - The options for this operation.
-   *
-   * @returns a {@link FindCursor} which can be iterated over.
-   */
-  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions & { projection?: never }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>
-
-  /**
-   * ##### Overview
-   *
-   * Find documents in the collection, optionally matching the provided filter.
-   *
-   * @example
-   * ```ts
-   * const cursor = await collection.find({ name: 'John Doe' });
-   * const docs = await cursor.toArray();
-   * ```
-   *
-   * ##### Projection
-   *
    * This overload of {@link Collection.find} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
    *
    * In this case, the user must provide an explicit projection type, or the type of the documents will be `Partial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
@@ -901,10 +796,8 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns a {@link FindCursor} which can be iterated over.
    */
-  public find<TRaw extends SomeDoc = Partial<WithSim<RSchema>>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>
-
-  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc> {
-    return this.#commands.find(filter, options, CollectionFindCursor);
+  public find<T extends SomeDoc = WithSim<RSchema>, TRaw extends T = T>(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<T, TRaw> {
+    return this.#commands.find(filter, options, CollectionFindCursor) as CollectionFindCursor<T, TRaw>;
   }
 
   /**
@@ -934,126 +827,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @beta
    */
-  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & { projection?: never }): CollectionFindAndRerankCursor<RerankedResult<RSchema>, RerankedResult<RSchema>>
-
-  /**
-   * ##### Overview (preview)
-   *
-   * Finds documents in a collection through a retrieval process that uses a reranker model to combine results from a vector similarity search and a lexical-based search (aka a "hybrid search").
-   *
-   * **Disclaimer: this method is currently in preview/beta in this release of the client.**
-   *
-   * @example
-   * ```ts
-   * // With vectorize
-   * const cursor = await coll.findAndRerank({})
-   *   .sort({ $hybrid: 'what is a dog?' })
-   *   .includeScores();
-   *
-   * // Using your own vectors
-   * const cursor = await coll.findAndRerank({})
-   *   .sort({ $hybrid: { $vector: vector([...]), $lexical: 'what is a dog?' } })
-   *   .rerankOn('$lexical')
-   *   .rerankQuery('I like dogs');
-   *
-   * for await (const res of cursor) {
-   *   console.log(cursor.document, cursor.scores);
-   * }
-   * ```
-   *
-   * @beta
-   */
-  public findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<TRaw>, RerankedResult<TRaw>>
-
-  public findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<SomeDoc> {
-    return this.#commands.findAndRerank(filter, options, CollectionFindAndRerankCursor);
+  public findAndRerank<T extends SomeDoc = RSchema, TRaw extends T = T>(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<T>, TRaw> {
+    return this.#commands.findAndRerank(filter, options, CollectionFindAndRerankCursor) as CollectionFindAndRerankCursor<RerankedResult<T>, TRaw>;
   }
-
-  /**
-   * ##### Overview
-   *
-   * Find a single document in the collection, optionally matching the provided filter.
-   *
-   * @example
-   * ```ts
-   * const doc = await collection.findOne({ name: 'John Doe' });
-   * ```
-   *
-   * ##### Projection
-   *
-   * This overload of {@link Collection.findOne} is used for when no projection is provided, and it is safe to assume the returned document is going to be of type `Schema`.
-   *
-   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `Partial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the document may not be of the same type as `Schema`.
-   *
-   * ##### Filtering
-   *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} for much more information.
-   *
-   * If the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
-   *
-   * ##### Find by vector search
-   *
-   * If the collection has vector search enabled, you can find the most relevant document by providing a vector in the sort option.
-   *
-   * @example
-   * ```ts
-   * await collection.insertMany([
-   *   { name: 'John Doe', $vector: [.12, .52, .32] },
-   *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
-   *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
-   * ]);
-   *
-   * const doc = collection.findOne({}, {
-   *   sort: { $vector: [.12, .52, .32] },
-   * });
-   *
-   * // 'John Doe'
-   * console.log(doc.name);
-   * ```
-   *
-   * ##### Sorting
-   *
-   * The sort option can be used to pick the most relevant document. See {@link Sort} for more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
-   *
-   * If the sort option is not provided, there is no guarantee as to which of the documents which matches the filter is returned.
-   *
-   * @example
-   * ```ts
-   * await collection.insertMany([
-   *   { name: 'John Doe', age: 1, height: 168 },
-   *   { name: 'John Doe', age: 2, height: 42 },
-   * ]);
-   *
-   * const doc = collection.findOne({}, {
-   *   sort: { age: 1, height: -1 },
-   * });
-   *
-   * // 'John Doe' (age 2, height 42)
-   * console.log(doc.name);
-   * ```
-   *
-   * ##### Other options
-   *
-   * Other available options include `includeSimilarity`. See {@link CollectionFindOneOptions} for more information.
-   *
-   * If you want to get `skip` or `includeSortVector` as well, use {@link Collection.find} with a `limit: 1` instead.
-   *
-   * @example
-   * ```ts
-   * const doc = await cursor.findOne({}, {
-   *   sort: { $vector: [.12, .52, .32] },
-   *   includeSimilarity: true,
-   * });
-   * ```
-   *
-   * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
-   * @param options - The options for this operation.
-   *
-   * @returns A document matching the criterion, or `null` if no such document exists.
-   */
-  public async findOne(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions & { projection?: never }): Promise<WithSim<RSchema> | null>
 
   /**
    * ##### Overview
@@ -1174,9 +950,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns A document matching the criterion, or `null` if no such document exists.
    */
-  public async findOne<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOneOptions): Promise<TRaw | null>
-
-  public async findOne(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions): Promise<SomeDoc | null> {
+  public async findOne<TRaw extends SomeDoc = WithSim<RSchema>>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions): Promise<TRaw | null> {
     return this.#commands.findOne(filter, options);
   }
 
@@ -1608,7 +1382,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
   /**
    * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
    *
-   * @deprecated - `bulkWrite` has been removed until it is supported on the server side bu the Data API. Please manually perform equivalent collection operations to attain the same behavior.
+   * @deprecated - `bulkWrite` has been removed until it is supported on the server side by the Data API. Please manually perform equivalent collection operations to attain the same behavior.
    */
   public declare bulkWrite: 'ERROR: `bulkWrite` has been removed; manually perform collection operations to retain the same behavior';
 

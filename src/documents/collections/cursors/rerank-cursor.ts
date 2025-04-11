@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Collection, CollectionFilter, Projection, SomeDoc } from '@/src/documents/index.js';
+import type { Collection, CollectionFilter, Projection, RerankedResult, SomeDoc } from '@/src/documents/index.js';
 import { FindAndRerankCursor } from '@/src/documents/index.js';
 
 /**
@@ -109,7 +109,7 @@ export class CollectionFindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ex
     return super.filter(filter);
   }
 
-  declare public project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => CollectionFindAndRerankCursor<RRaw, RRaw>;
+  declare public project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => CollectionFindAndRerankCursor<RerankedResult<RRaw>, RRaw>;
 
   declare public map: <R>(map: (doc: T) => R) => CollectionFindAndRerankCursor<R, TRaw>;
 }

@@ -18,15 +18,18 @@ import type {
   SomeRow,
   TableCreateIndexColumn,
   TableCreateIndexOptions,
-  TableCreateVectorIndexOptions, TableDeleteManyOptions, TableDeleteOneOptions,
+  TableCreateVectorIndexOptions,
+  TableDeleteManyOptions,
+  TableDeleteOneOptions,
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
   TableInsertManyOptions,
-  TableInsertManyResult, TableInsertOneOptions,
+  TableInsertManyResult,
+  TableInsertOneOptions,
   TableInsertOneResult,
-  TableUpdateFilter, TableUpdateOneOptions,
-  WithSim,
+  TableUpdateFilter,
+  TableUpdateOneOptions, WithSim,
 } from '@/src/documents/index.js';
 import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
@@ -37,7 +40,8 @@ import type {
   Db,
   DropTableOptions,
   ListTableDefinition,
-  TableOptions, WithKeyspace,
+  TableOptions,
+  WithKeyspace,
 } from '@/src/db/index.js';
 import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
@@ -227,7 +231,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
   public readonly keyspace!: string;
 
   /**
-   * ##### Overview (TS 5.0+)
+   * ##### Overview
    *
    * Strongly types the creation of a `const` new {@link CreateTableDefinition} schema.
    *
@@ -261,26 +265,6 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * type User = InferTableSchema<typeof UserSchema>;
    *
    * // And now `User` can be used wherever.
-   * const main = async () => {
-   *   const table = await db.createTable('users', { definition: UserSchema });
-   *   const found: User | null = await table.findOne({});
-   * };
-   * ```
-   *
-   * ##### Pre-TS 5.0
-   *
-   * If you're not using TS 5.0+, you'll need to manually do the following.
-   *
-   * However, this is not recommended whenever possible, as type errors due to invalid schemas will not be properly localized.
-   *
-   * ```ts
-   * const UserSchema = <const>{
-   *   columns: { ... },
-   *   primaryKey: ...,
-   * };
-   *
-   * type User = InferTableSchema<typeof UserSchema>;
-   *
    * const main = async () => {
    *   const table = await db.createTable('users', { definition: UserSchema });
    *   const found: User | null = await table.findOne({});
@@ -679,111 +663,6 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * ##### Projection
    *
-   * This overload of {@link Table.find} is used for when no projection is provided, and it is safe to assume the returned rows are going to be of type `Schema`.
-   *
-   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `Partial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the row may not be of the same type as `Schema`.
-   *
-   * ##### Filtering
-   *
-   * The filter can contain a variety of operators & combinators to select the rows. See {@link TableFilter} for much more information.
-   *
-   * If the filter is empty, all rows in the table will be returned (up to any provided/implied limit).
-   *
-   * ##### Find by vector search
-   *
-   * If the table has vector search enabled, you can find the most relevant rows by providing a vector in the sort option.
-   *
-   * Vector ANN searches cannot return more than a set number of rows, which, at the time of writing, is 1000 items.
-   *
-   * @example
-   * ```ts
-   * await table.insertMany([
-   *   { name: 'John Doe', vector: [.12, .52, .32] },
-   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
-   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
-   * ]);
-   *
-   * const cursor = table.find({}, {
-   *   sort: { vector: [.12, .52, .32] },
-   * });
-   *
-   * // Returns 'John Doe'
-   * console.log(await cursor.next());
-   * ```
-   *
-   * ##### Sorting
-   *
-   * The sort option can be used to sort the rows returned by the cursor. See {@link Sort} for more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
-   *
-   * If the sort option is not provided, there is no guarantee as to the order of the rows returned.
-   *
-   * When providing a non-vector sort, the Data API will return a smaller number of rows, set to 20 at the time of writing, and stop there. The returned rows are the top results across the whole table according to the requested criterion.
-   *
-   * @example
-   * ```ts
-   * await table.insertMany([
-   *   { name: 'John Doe', age: 1, height: 168 },
-   *   { name: 'John Doe', age: 2, height: 42 },
-   * ]);
-   *
-   * const cursor = table.find({}, {
-   *   sort: { age: 1, height: -1 },
-   * });
-   *
-   * // Returns 'John Doe' (age 2, height 42), 'John Doe' (age 1, height 168)
-   * console.log(await cursor.toArray());
-   * ```
-   *
-   * ##### Other options
-   *
-   * Other available options include `skip`, `limit`, `includeSimilarity`, and `includeSortVector`. See {@link TableFindOptions} and {@link FindCursor} for more information.
-   *
-   * If you prefer, you may also set these options using a fluent interface on the {@link FindCursor} itself.
-   *
-   * @example
-   * ```ts
-   * // cursor :: FindCursor<string>
-   * const cursor = table.find({})
-   *   .sort({ vector: [.12, .52, .32] })
-   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
-   *   .includeSimilarity(true)
-   *   .map(doc => `${doc.name} (${doc.age})`);
-   * ```
-   *
-   * @remarks
-   * When not specifying sorting criteria at all (by vector or otherwise),
-   * the cursor can scroll through an arbitrary number of rows as
-   * the Data API and the client periodically exchange new chunks of rows.
-   *
-   * --
-   *
-   * It should be noted that the behavior of the cursor in the case rows
-   * have been added/removed after the `find` was started depends on database
-   * internals, and it is not guaranteed, nor excluded, that such "real-time"
-   * changes in the data would be picked up by the cursor.
-   *
-   * @param filter - A filter to select the rows to find. If not provided, all rows will be returned.
-   * @param options - The options for this operation.
-   *
-   * @returns a {@link FindCursor} which can be iterated over.
-   */
-  public find(filter: TableFilter<WSchema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
-
-  /**
-   * ##### Overview
-   *
-   * Find rows in the table, optionally matching the provided filter.
-   *
-   * @example
-   * ```ts
-   * const cursor = await table.find({ name: 'John Doe' });
-   * const docs = await cursor.toArray();
-   * ```
-   *
-   * ##### Projection
-   *
    * This overload of {@link Table.find} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
    *
    * In this case, the user must provide an explicit projection type, or the type of the rows will be `Partial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
@@ -911,105 +790,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns a {@link FindCursor} which can be iterated over.
    */
-  public find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
-
-  public find(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<SomeRow> {
-    return this.#commands.find(filter, options, TableFindCursor);
+  public find<T extends SomeRow = WithSim<RSchema>, TRaw extends T = T>(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<T, TRaw> {
+    return this.#commands.find(filter, options, TableFindCursor) as TableFindCursor<T, TRaw>;
   }
-
-  // public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions & { projection?: never }): TableFindAndRerankCursor<WithSim<RSchema>, WithSim<RSchema>>
-  //
-  // public findAndRerank<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindAndRerankOptions): TableFindAndRerankCursor<TRaw, TRaw>
-  //
-  // public findAndRerank(filter: TableFilter<WSchema>, options?: TableFindAndRerankOptions): TableFindAndRerankCursor<SomeRow> {
-  //   return this.#commands.findAndRerank(filter, options, TableFindAndRerankCursor);
-  // }
-
-  /**
-   * ##### Overview
-   *
-   * Find a single row in the table, optionally matching the provided filter.
-   *
-   * @example
-   * ```ts
-   * const doc = await table.findOne({ name: 'John Doe' });
-   * ```
-   *
-   * ##### Projection
-   *
-   * This overload of {@link Table.findOne} is used for when no projection is provided, and it is safe to assume the returned row is going to be of type `Schema`.
-   *
-   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `Partial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the row may not be of the same type as `Schema`.
-   *
-   * ##### Filtering
-   *
-   * The filter can contain a variety of operators & combinators to select the row. See {@link TableFilter} for much more information.
-   *
-   * If the filter is empty, and no {@link Sort} is present, it's undefined as to which row is selected.
-   *
-   * ##### Find by vector search
-   *
-   * If the table has vector search enabled, you can find the most relevant row by providing a vector in the sort option.
-   *
-   * @example
-   * ```ts
-   * await table.insertMany([
-   *   { name: 'John Doe', vector: [.12, .52, .32] },
-   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
-   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
-   * ]);
-   *
-   * const doc = table.findOne({}, {
-   *   sort: { vector: [.12, .52, .32] },
-   * });
-   *
-   * // 'John Doe'
-   * console.log(doc.name);
-   * ```
-   *
-   * ##### Sorting
-   *
-   * The sort option can be used to pick the most relevant row. See {@link Sort} for more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
-   *
-   * If the sort option is not provided, there is no guarantee as to which of the rows which matches the filter is returned.
-   *
-   * @example
-   * ```ts
-   * await table.insertMany([
-   *   { name: 'John Doe', age: 1, height: 168 },
-   *   { name: 'John Doe', age: 2, height: 42 },
-   * ]);
-   *
-   * const doc = table.findOne({}, {
-   *   sort: { age: 1, height: -1 },
-   * });
-   *
-   * // 'John Doe' (age 2, height 42)
-   * console.log(doc.name);
-   * ```
-   *
-   * ##### Other options
-   *
-   * Other available options include `includeSimilarity`. See {@link TableFindOneOptions} for more information.
-   *
-   * If you want to get `skip` or `includeSortVector` as well, use {@link Table.find} with a `limit: 1` instead.
-   *
-   * @example
-   * ```ts
-   * const doc = await cursor.findOne({}, {
-   *   sort: { vector: [.12, .52, .32] },
-   *   includeSimilarity: true,
-   * });
-   * ```
-   *
-   * @param filter - A filter to select the rows to find. If not provided, all rows will be returned.
-   * @param options - The options for this operation.
-   *
-   * @returns A row matching the criterion, or `null` if no such row exists.
-   */
-  public async findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions & { projection?: never }): Promise<WithSim<RSchema> | null>;
 
   /**
    * ##### Overview
@@ -1130,9 +913,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns A row matching the criterion, or `null` if no such row exists.
    */
-  public async findOne<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOneOptions): Promise<TRaw | null>;
-
-  public async findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<SomeRow | null> {
+  public async findOne<TRaw extends SomeRow = WithSim<RSchema>>(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<TRaw | null> {
     return this.#commands.findOne(filter, options);
   }
 

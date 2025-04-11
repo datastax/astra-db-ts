@@ -238,12 +238,12 @@ export class DataAPITimeoutError extends DataAPIError {
  * await collections.insertMany('<100_length_array>');
  *
  * try {
- *   await collections.countDocuments({}, 50);
+ *   await collections.countDocuments({}, 50);
  * } catch (e) {
- *   if (e instanceof TooManyDocumentsToCountError) {
- *     console.log(e.limit); // 50
- *     console.log(e.hitServerLimit); // false
- *   }
+ *   if (e instanceof TooManyDocumentsToCountError) {
+ *     console.log(e.limit); // 50
+ *     console.log(e.hitServerLimit); // false
+ *   }
  * }
  * ```
  *
@@ -311,9 +311,9 @@ export class DataAPIResponseError extends DataAPIError {
    * @example
    * ```typescript
    * {
-   *   insertOne: {
-   *     document: { _id: 'doc10', name: 'Document 10' },
-   *   },
+   *   insertOne: {
+   *     document: { _id: 'doc10', name: 'Document 10' },
+   *   },
    * }
    * ```
    */
@@ -325,19 +325,19 @@ export class DataAPIResponseError extends DataAPIError {
    * @example
    * ```typescript
    * {
-   *   status: {
-   *     insertedIds: [ 'id1', 'id2', 'id3']
-   *   },
-   *   errors: [
-   *     {
-   *       family: 'REQUEST',
-   *       scope: 'DOCUMENT',
-   *       errorCode: 'DOCUMENT_ALREADY_EXISTS',
-   *       id: 'e4be94b6-e8b5-4652-961b-5c9fe12d2f1a',
-   *       title: 'Document already exists with the given _id',
-   *       message: 'Document already exists with the given _id',
-   *     },
-   *   ]
+   *   status: {
+   *     insertedIds: [ 'id1', 'id2', 'id3']
+   *   },
+   *   errors: [
+   *     {
+   *       family: 'REQUEST',
+   *       scope: 'DOCUMENT',
+   *       errorCode: 'DOCUMENT_ALREADY_EXISTS',
+   *       id: 'e4be94b6-e8b5-4652-961b-5c9fe12d2f1a',
+   *       title: 'Document already exists with the given _id',
+   *       message: 'Document already exists with the given _id',
+   *     },
+   *   ]
    * }
    * ```
    */
@@ -393,7 +393,7 @@ export class DataAPIResponseError extends DataAPIError {
 /**
  * ##### Overview
  *
- * Represents an error that occurred during an `insertMany` operation (which may be paginated).
+ * Represents an error that occurred during a (potentially paginated) `insertMany` operation on a {@link Collection}.
  *
  * Contains the inserted IDs of the documents that were successfully inserted, as well as the cumulative errors
  * that occurred during the operation.
@@ -404,29 +404,29 @@ export class DataAPIResponseError extends DataAPIError {
  * @example
  * ```ts
  * try {
- *   await collection.insertMany([
- *     { _id: 'id1', desc: 'An innocent little document' },
- *     { _id: 'id2', name: 'Another little document minding its own business' },
- *     { _id: 'id2', name: 'A mean document commiting _identity theft' },
- *     { _id: 'id3', name: 'A document that will never see the light of day-tabase' },
- *   ], { ordered: true });
+ *   await collection.insertMany([
+ *     { _id: 'id1', desc: 'An innocent little document' },
+ *     { _id: 'id2', desc: 'Another little document minding its own business' },
+ *     { _id: 'id2', desc: 'A mean document commiting _identity theft' },
+ *     { _id: 'id3', desc: 'A document that will never see the light of day-tabase' },
+ *   ], { ordered: true });
  * } catch (e) {
- *   if (e instanceof CollectionInsertManyError) {
- *     console.log(e.message); // "Document already exists with the given _id"
- *     console.log(e.partialResult.insertedIds); // ['id1', 'id2']
- *   }
+ *   if (e instanceof CollectionInsertManyError) {
+ *     console.log(e.message); // "Document already exists with the given _id"
+ *     console.log(e.insertedIds()); // ['id1', 'id2']
+ *     console.log(e.errors()); // [DataAPIResponseError(...)]
+ *   }
  * }
  * ```
  *
+ * ---
+ *
  * ##### Collections vs Tables
  *
- * There is a sister {@link TableInsertManyError} class that is used for `insertMany` operations on tables. It's
- * identical in structure, but just uses the appropriate {@link TableInsertManyResult} type.
+ * There is a sister {@link TableInsertManyError} class that is used for `insertMany` operations on tables. It's identical in structure, but uses the appropriate {@link SomeRow} type for the IDs.
  *
- * @field message - A human-readable message describing the *first* error
- * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
- * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
- * @field partialResult - The partial result of the `InsertMany` operation that was performed
+ * @see Collection.insertMany
+ * @see TableInsertManyError
  *
  * @public
  */
@@ -468,18 +468,42 @@ export class CollectionInsertManyError extends DataAPIError {
 }
 
 /**
- * Represents an error that occurred during an `insertMany` operation (which is, generally, paginated).
+ * ##### Overview
  *
- * Contains the inserted IDs of the documents that were successfully inserted, as well as the cumulative errors
+ * Represents an error that occurred during a (potentially paginated) `insertMany` operation on a {@link Table}.
+ *
+ * Contains the inserted primary keys of the documents that were successfully inserted, as well as the cumulative errors
  * that occurred during the operation.
  *
  * If the operation was ordered, the `insertedIds` will be in the same order as the documents that were attempted to
  * be inserted.
  *
- * @field message - A human-readable message describing the *first* error
- * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
- * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
- * @field partialResult - The partial result of the `InsertMany` operation that was performed
+ * @example
+ * ```ts
+ * try {
+ *   await table.insertMany([
+ *     { id: 'id1', desc: 'An innocent little document' },
+ *     { id: 'id2', desc: 'Another little document minding its own business' },
+ *     { id: 'id2', desc: 'A mean document commiting _identity theft' },
+ *     { id: 'id3', desc: 'A document that will never see the light of day-tabase' },
+ *   ], { ordered: true });
+ * } catch (e) {
+ *   if (e instanceof TableInsertManyError) {
+ *     console.log(e.message); // "Document already exists with the given _id"
+ *     console.log(e.insertedIds()); // [{ id: 'id1' }, { id: 'id2' }]
+ *     console.log(e.errors()); // [DataAPIResponseError(...)]
+ *   }
+ * }
+ * ```
+ *
+ * ---
+ *
+ * ##### Collections vs Tables
+ *
+ * There is a sister {@link CollectionInsertManyError} class that is used for `insertMany` operations on collections. It's identical in structure, but uses the appropriate {@link SomeId} type for the IDs.
+ *
+ * @see Table.insertMany
+ * @see CollectionInsertManyError
  *
  * @public
  */

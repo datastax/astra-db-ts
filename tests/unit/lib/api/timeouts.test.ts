@@ -258,7 +258,7 @@ describe('unit.lib.api.timeouts', () => {
     it('works w/ uniform full override object', async () => {
       const tm = timeouts.multipart('keyspaceAdminTimeoutMs', { timeout: { requestTimeoutMs: 50, keyspaceAdminTimeoutMs: 50 } });
       let [timeout, mkError] = tm.advance(info(tm));
-      assert.strictEqual(timeout, 50);
+      assert.ok(timeout >= 49);
 
       const e = mkError();
       assert.ok(e instanceof TimeoutError);

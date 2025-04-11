@@ -88,6 +88,33 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
       assert.strictEqual(res2.keyspace, OTHER_KEYSPACE);
     });
 
+    it('(RERANKING) should create a collection with reranking/lexical enabled', async () => {
+      const res = await db.createCollection('coll_8c', {
+        vector: {
+          metric: "cosine",
+          service: {
+            provider: 'upstageAI',
+            modelName: 'solar-embedding-1-large',
+          },
+        },
+        lexical: {
+          enabled: true,
+          analyzer: "STANDARD",
+        },
+        rerank: {
+          enabled: true,
+          service: {
+            provider: "nvidia",
+            modelName: "nvidia/llama-3.2-nv-rerankqa-1b-v2",
+          },
+        },
+      });
+      assert.ok(res);
+
+      assert.strictEqual(res.name, 'coll_8c');
+      assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
+    });
+
     it('(ASTRA) should work even when instantiated weirdly', async () => {
       const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { keyspace: '123123123', dataApiPath: 'King' } })
         .admin({ adminToken: 'dummy-token' })
@@ -96,9 +123,9 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
         .admin({ adminToken: 'tummy-token', astraEnv: 'dev' })
         .db();
 
-      const res = await db.createCollection('coll_8c', { indexing: { deny: ['*'] }, timeout: 60000 });
+      const res = await db.createCollection('coll_9c', { indexing: { deny: ['*'] }, timeout: 60000 });
       assert.ok(res);
-      assert.strictEqual(res.name, 'coll_8c');
+      assert.strictEqual(res.name, 'coll_9c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
     });
   });

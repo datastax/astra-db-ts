@@ -12,9 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Projection, SomeRow, Table, TableFilter } from '@/src/documents/index.js';
+import type { Projection, RerankedResult, SomeRow, Table, TableFilter } from '@/src/documents/index.js';
 import { FindAndRerankCursor } from '@/src/documents/index.js';
 
+/**
+ * Not yet available
+ *
+ * @internal
+ */
 export class TableFindAndRerankCursor<T, TRaw extends SomeRow = SomeRow> extends FindAndRerankCursor<T, TRaw> {
   public get dataSource(): Table<SomeRow> {
     return this._parent as Table<SomeRow>;
@@ -24,7 +29,7 @@ export class TableFindAndRerankCursor<T, TRaw extends SomeRow = SomeRow> extends
     return super.filter(filter);
   }
 
-  declare public project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindAndRerankCursor<RRaw, RRaw>;
+  declare public project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindAndRerankCursor<RerankedResult<RRaw>, RRaw>;
 
   declare public map: <R>(map: (doc: T) => R) => TableFindAndRerankCursor<R, TRaw>;
 }

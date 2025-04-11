@@ -27,14 +27,14 @@ export type SomeDoc = Record<string, any>;
 
 /**
  * Utility type for a document that wishes to leverage raw vector capabilities.
- * 
+ *
  * @example
  * ```typescript
  * export interface Idea extends VectorDoc {
  *   category: string,
  *   idea: string,
  * }
- * 
+ *
  * db.collections<Idea>('ideas').insertOne({
  *   category: 'doors',
  *   idea: 'Upside down doors',

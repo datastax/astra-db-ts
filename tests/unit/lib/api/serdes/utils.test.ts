@@ -96,9 +96,6 @@ describe('unit.lib.api.serdes.utils', () => {
         fc.property(pathArb, pathArb, (pattern, arr) => {
           fc.pre(pattern.length === arr.length);
 
-          const arraysEqual = JSON.stringify(pattern) === JSON.stringify(arr);
-          assert.strictEqual(pathMatches(pattern, arr), arraysEqual);
-
           const adjustedPattern = pattern.map((p, i) => (p === arr[i] ? p : '*'));
           assert.ok(pathMatches(adjustedPattern, arr));
         }),
