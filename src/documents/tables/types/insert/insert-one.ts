@@ -14,57 +14,85 @@
 
 import type { GenericInsertOneOptions, SomeRow } from '@/src/documents/index.js';
 
+/**
+ * ##### Overview
+ *
+ * The options for an `insertOne` command on a {@link Table}.
+ *
+ * @example
+ * ```ts
+ * const result = await table.insertOne({
+ *   id: 'john1234'
+ *   name: 'John',
+ * }, {
+ *   timeout: 10000,
+ * });
+ * ```
+ *
+ * @see Table.insertOne
+ * @see TableInsertOneResult
+ *
+ * @public
+ */
 export type TableInsertOneOptions = GenericInsertOneOptions;
 
 /**
  * ##### Overview
  *
- * Represents the result of an `insertOne` command on a table.
+ * The options for an `insertOne` command on a {@link Table}.
  *
- * ##### Primary Key Inference
+ * @example
+ * ```ts
+ * const res = await table.insertOne({
+ *   id: '123',
+ *   name: 'John'
+ * });
  *
- * The type of the primary key of the table is inferred from the second `PKey` type-param of the table.
+ * console.log(res.insertedId); // { id: '123' }
+ * ```
  *
- * If not present, it defaults to `Partial<RSchema>` to keep the result type consistent.
+ * ---
+ *
+ * ##### The primary key type
+ *
+ * The type of the primary key of the table is inferred from the second type-param of the {@link Table}.
+ *
+ * If not set, it defaults to `Partial<RSchema>` to keep the result type consistent.
+ *
+ * See {@link InferTablePrimaryKey} about automatically inferring the primary key type from a {@link CreateTableDefinition}.
  *
  * @example
  * ```ts
  * interface User {
- *   id: string,
- *   name: string,
- *   dob?: DataAPIDate,
+ *   id: string,
+ *   name: string,
+ *   dob?: DataAPIDate,
  * }
  *
  * type UserPKey = Pick<User, 'id'>;
  *
  * const table = db.table<User, UserPKey>('table');
+ * const res = await table.insertOne({ id: '123', name: 'Alice' });
  *
  * // res.insertedId is of type { id: string }
- * const res = await table.insertOne({ id: '123', name: 'Alice' });
  * console.log(res.insertedId.id); // '123'
+ * console.log(res.insertedId.name); // type error
  * ```
  *
- * @example
- * ```ts
- * const table = db.table<User>('table');
- *
- * // res.insertedId is of type Partial<User>
- * const res = await table.insertOne({ id: '123', name: 'Alice' });
- * console.log(res.insertedId.id); // '123'
- * console.log(res.insertedId.key); // undefined
- * ```
- *
- * @field insertedId - The primary key of the inserted document.
+ * @field insertedId - The primary key of the inserted row.
  *
  * @see Table.insertOne
+ * @see TableInsertOneOptions
  *
  * @public
  */
 export interface TableInsertOneResult<PKey extends SomeRow> {
   /**
-   * The primary key of the inserted document.
+   * ##### Overview
    *
-   * See {@link TableInsertOneResult} for more info about this type and how it's inferred.
+   * The primary key of the inserted (or upserted) row. This will be the same value as the primary key which was present in the row which was just inserted.
+   *
+   * See the {@link TableInsertOneOptions} for more information about the primary key.
    */
   insertedId: PKey;
 }

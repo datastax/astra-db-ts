@@ -43,11 +43,9 @@ export type WithId<T> = T & { _id: IdOf<T> }
 /**
  * Represents a document as it's returned by the database by default.
  *
- * Shorthand type for `WithSim` & `WithId`.
- *
  * @public
  */
-export type FoundDoc<Doc> = WithId<Omit<Doc, '$vector' | '$vectorize'>>;
+export type FoundDoc<Doc> = { _id: IdOf<Doc> } & NoId<Omit<Doc, '$vector' | '$vectorize'>>;
 
 /**
  * Represents a doc that doesn't have an `_id`

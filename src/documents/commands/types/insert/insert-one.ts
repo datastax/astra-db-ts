@@ -14,6 +14,26 @@
 
 import type { WithTimeout } from '@/src/lib/index.js';
 
+/**
+ * ##### Overview
+ *
+ * The options for a generic `updateOne` command performed on the Data API.
+ *
+ * @example
+ * ```ts
+ * const result = await collection.insertOne({
+ *   name: 'John',
+ *   age: 30,
+ * }, {
+ *   timeout: 10000,
+ * });
+ * ```
+ *
+ * @see CollectionInsertOneOptions
+ * @see TableInsertOneOptions
+ *
+ * @public
+ */
 export type GenericInsertOneOptions = WithTimeout<'generalMethodTimeoutMs'>;
 
 /**

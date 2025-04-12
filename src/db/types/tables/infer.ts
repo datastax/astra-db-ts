@@ -40,6 +40,7 @@ import type { BigNumber } from 'bignumber.js';
  *
  * @see InferTableSchema
  * @see InferTablePrimaryKey
+ * @see InferTableReadSchema
  *
  * @public
  */
@@ -71,7 +72,7 @@ export type TypeOverrides = Partial<Record<keyof CqlNonGenericType2TSTypeDict | 
  *
  * @example
  * ```ts
- * const mkUserTable = () => db.createTable('users', {
+ * const UserSchema = Table.schema({
  *   definition: {
  *     columns: {
  *       name: 'text',
@@ -91,8 +92,8 @@ export type TypeOverrides = Partial<Record<keyof CqlNonGenericType2TSTypeDict | 
  * });
  *
  * // Type inference is as simple as that
- * type User = InferTableSchema<typeof mkUserTable>;
- * type UserPK = InferTablePrimaryKey<typeof mkUserTable>;
+ * type User = InferTableSchema<typeof UserSchema>;
+ * type UserPK = InferTablePrimaryKey<typeof UserSchema>;
  *
  * // Utility types for demonstration purposes
  * type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
@@ -116,7 +117,9 @@ export type TypeOverrides = Partial<Record<keyof CqlNonGenericType2TSTypeDict | 
  *
  * // And now `User` can be used wherever.
  * const main = async () => {
- *   const table: Table<User> = await mkUserTable();
+ *   const table: Table<User> = await db.createTable('users', {
+ *     definition: UserSchema,
+ *   });
  *   const found: User | null = await table.findOne({});
  * };
  * ```

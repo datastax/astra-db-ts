@@ -15,7 +15,9 @@
 import type { GenericUpdateOneOptions, GenericUpdateResult, IdOf } from '@/src/documents/index.js';
 
 /**
- * Options for an `updateOne` command on a collection.
+ * ##### Overview
+ *
+ * The options for an `updateOne` command on a collection.
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to update if the filter selects multiple documents.

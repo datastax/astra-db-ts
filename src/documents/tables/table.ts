@@ -57,7 +57,7 @@ import { NonErrorError } from '@/src/lib/errors.js';
 const jbi = JBI({ storeAsString: true });
 
 /**
- * #### Overview
+ * ##### Overview
  *
  * Represents the interface to a table in a Data-API-enabled database.
  *
@@ -65,24 +65,12 @@ const jbi = JBI({ storeAsString: true });
  *
  * @example
  * ```ts
- * // Basic creation of a dynamically typed table
- * // (If you don't provide `SomeRow` explicitly, it will
- * // attempt to infer the Table's type from the definition)
- * const table = await db.createTable<SomeRow>('users', {
- *   definition: {
- *     columns: {
- *       id: 'text',
- *       name: 'text',
- *     },
- *     primaryKey: 'id',
- *   },
- * });
- *
- * // or (also dynamically typed)
- * const table = db.table('users');
+ * const table = db.table<Type?>('my_table');
  * ```
  *
- * #### Typing & Types
+ * ---
+ *
+ * ##### Typing {@link Table}
  *
  * **NOTE: For most intents & purposes (unless you're using custom ser/des), you can ignore the (generally negligible) difference between `WSchema` and `RSchema`, and treat `Table` as if it were typed as `Table<Schema, PKey>`**.
  *
@@ -95,39 +83,9 @@ const jbi = JBI({ storeAsString: true });
  *    - Unless custom ser/des is used, it is nearly exactly the same as `WSchema`
  *    - This defaults to `FoundRow<WSchema>` (see {@link FoundRow})
  *
- * See {@link FoundRow} for more info about the differences, but again, for most intents & purposes, you can ignore this, and pretend they were
+ * ---
  *
- * ###### Custom datatypes
- *
- * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
- *
- * For example:
- *  - `'map<k, v>'` is represented by a native JS `Map<K, V>`
- *  - `'vector'` is represented by an `astra-db-ts` provided `DataAPIVector`
- *  - `'date'` is represented by an `astra-db-ts` provided `DataAPIDate`
- *
- * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
- *
- * @example
- * ```ts
- * interface User {
- *   id: string,
- *   friends: Map<string, UUID>, // UUID is also `astra-db-ts` provided
- *   vector: DataAPIVector,
- * }
- *
- * await db.table<User>('users').insertOne({
- *   id: '123',
- *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
- *   vector: vector([1, 2, 3]), // or new DataAPIVector([...])
- * });
- * ```
- *
- * ###### Big numbers disclaimer
- *
- * When `varint`s or `decimal`s are present in the schema, and when you're serializing `bigint`s and {@link BigNumber}s, it will automatically enable usage of a bignumber-friendly JSON library which is capable of serializing/deserializing these numbers without loss of precision, but is much slower than the native JSON library (but, realistically, the difference is likely negligible).
- *
- * ###### Typing the key
+ * ##### Typing the key
  *
  * The primary key of the table should be provided as a second type parameter to `Table`.
  *
@@ -136,22 +94,24 @@ const jbi = JBI({ storeAsString: true });
  * @example
  * ```ts
  * interface User {
- *   id: string,   // Partition key
- *   dob: DataAPIDate, // Clustering (partition sort) key
- *   friends: Map<string, UUID>,
+ *   id: string,   // Partition key
+ *   dob: DataAPIDate, // Clustering (partition sort) key
+ *   friends: Map<string, UUID>,
  * }
  *
  * type UserPK = Pick<User, 'id' | 'dob'>;
  *
  * // res.insertedId is of type { id: string }
  * const res = await db.table<User, UserPK>('users').insertOne({
- *   id: '123',
- *   dob: date(), // or new DataAPIDate(new Date())
- *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
+ *   id: '123',
+ *   dob: date(), // or new DataAPIDate(new Date())
+ *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
  * });
  * ```
  *
- * ###### `db.createTable` type inference
+ * ---
+ *
+ * ##### `db.createTable` type inference
  *
  * When creating a table through {@link Db.createTable}, and not using any custom datatypes (see next session), you can actually use the {@link InferTableSchema} & {@link InferTablePrimaryKey} utility types to infer the schema of the table from the table creation.
  *
@@ -159,47 +119,84 @@ const jbi = JBI({ storeAsString: true });
  *
  * @example
  * ```ts
+ * const UserSchema = Table.schema({
+ *   columns: {
+ *     id: 'text',
+ *     dob: 'date',
+ *     friends: { type: 'map', keyType: 'text', valueType: 'uuid' },
+ *   },
+ *   primaryKey: {
+ *     partitionBy: ['id'],
+ *     partitionSort: { dob: -1 }
+ *   },
+ * });
+ *
  * // equivalent to:
  * // type User = {
  * //   id: string,
  * //   dob: DataAPIDate,
  * //   friends?: Map<string, UUID>, // Optional since it's not in the primary key
  * // }
- * type User = InferTableSchema<typeof mkTable>;
+ * type User = InferTableSchema<typeof UserSchema>;
  *
  * // equivalent to:
  * // type UserPK = Pick<User, 'id' | 'dob'>;
  * type UserPK = InferTablePrimaryKey<typeof mkTable>;
  *
- * const mkUsersTable = () => db.createTable('users', {
- *   definition: {
- *     columns: {
- *       id: 'text',
- *       dob: 'date',
- *       friends: { type: 'map', keyType: 'text', valueType: 'uuid' },
- *     },
- *     primaryKey: {
- *       partitionBy: ['id'],
- *       partitionSort: { dob: -1 }
- *     },
- *   },
- * });
- *
  * async function main() {
- *   const table: Table<User, UserPK> = await mkUsersTable();
- *   // ... use table
+ *   const table: Table<User, UserPK> = await db.createTable('users', {
+ *     definition: UserSchema,
+ *   });
  * }
  * ```
  *
- * ###### Custom datatypes
+ * ---
+ *
+ * ##### Datatypes
+ *
+ * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+ *
+ * For example:
+ *  - `'map<k, v>'` is represented by a native JS {@link Map}
+ *  - `'vector'` is represented by an `astra-db-ts` provided {@link DataAPIVector}
+ *  - `'date'` is represented by an `astra-db-ts` provided {@link DataAPIDate}
+ *
+ * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
+ *
+ * @example
+ * ```ts
+ * interface User {
+ *   id: string,
+ *   friends: Map<string, UUID>, // UUID is also `astra-db-ts` provided
+ *   vector: DataAPIVector,
+ * }
+ *
+ * await db.table<User>('users').insertOne({
+ *   id: '123',
+ *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
+ *   vector: vector([1, 2, 3]), // or new DataAPIVector([...])
+ * });
+ * ```
+ *
+ * The full list of relevant datatypes (for tables) include: {@link DataAPIBlob}, {@link DataAPIDate}, {@link DataAPITime}, {@link DataAPIVector}, {@link DataAPIInet}, {@link DataAPIDuration}, {@link UUID}, {@link Map}, {@link Set}, and {@link BigNumber}.
+ *
+ * ---
+ *
+ * ##### Big numbers disclaimer
+ *
+ * When `varint`s or `decimal`s are present in the schema (when you're serializing `bigint`s and {@link BigNumber}s), it will automatically enable usage of a bignumber-friendly JSON library which is capable of serializing/deserializing these numbers without loss of precision, but is much slower than the native JSON library (but, realistically, the difference is likely negligible).
+ *
+ * ---
+ *
+ * ##### Custom datatypes
  *
  * You can plug in your own custom datatypes, as well as enable many other features by providing some custom serialization/deserialization logic through the `serdes` option in {@link TableOptions}, {@link DbOptions}, and/or {@link DataAPIClientOptions.dbOptions}.
  *
  * Note however that this is currently not entirely stable, and should be used with caution.
  *
- * See the official DataStax documentation for more info.
+ * ---
  *
- * ###### Disclaimer
+ * ##### Disclaimer
  *
  * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviors and easily-preventable errors.*
  *
@@ -221,12 +218,22 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
   readonly #db: Db;
 
   /**
-   * The name of the table. Unique per keyspace.
+   * ##### Overview
+   *
+   * The user-provided, case-sensitive. name of the table
+   *
+   * This is unique among all tables and collections in its keyspace, but not necessarily unique across the entire database.
+   *
+   * It is up to the user to ensure that this table really exists.
    */
   public readonly name!: string;
 
   /**
-   * The keyspace that the table resides in.
+   * ##### Overview
+   *
+   * The keyspace where the table resides in.
+   *
+   * It is up to the user to ensure that this keyspace really exists, and that this table is in it.
    */
   public readonly keyspace!: string;
 
@@ -237,6 +244,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * Unlike writing the table definition inline in `createTable` and using `InferTableSchema` on the `Table` itself, this method:
    *   - Allows you to define your schemas separately, outside an async context
+   *   - Allows you to override the type of specific datatypes
    *   - Provides type errors if any primary keys don't use a valid column
    *
    * Similar to using `const Schema = { ... } as const [satisfies CreateTableDefinition<any>]`.
@@ -334,6 +342,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * await table.insertOne({ id: 1, name: 'Jane Doe', vector: "Hey there!" });
    * ```
    *
+   * ---
+   *
    * ##### Upsert behavior
    *
    * When inserting a row with a primary key that already exists, the new row will be merged with the existing row, with the new values taking precedence.
@@ -355,6 +365,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * await table.findOne({ id: '123' }); // { id: '123', col2: 'me2' }
    * ```
    *
+   * ---
+   *
    * ##### The primary key
    *
    * The type of the primary key of the table is inferred from the second `PKey` type-param of the table.
@@ -364,9 +376,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @example
    * ```ts
    * interface User {
-   *   id: string,
-   *   name: string,
-   *   dob?: DataAPIDate,
+   *   id: string,
+   *   name: string,
+   *   dob?: DataAPIDate,
    * }
    *
    * type UserPKey = Pick<User, 'id'>;
@@ -397,15 +409,15 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * import { uuid, vector, ... } from '@datastax/astra-db-ts';
    *
    * await table1.insertMany([
-   *   { id: uuid.v4(), name: 'John Doe' }, // or UUID.v4()
-   *   { id: uuid.v7(), name: 'Jane Doe' },
+   *   { id: uuid.v4(), name: 'John Doe' }, // or UUID.v4()
+   *   { id: uuid.v7(), name: 'Jane Doe' },
    * ]);
    *
    * // Insert a row with a vector
    * // DataAPIVector class enables faster ser/des
    * await table2.insertMany([
-   *   { name: 'bob', vector: vector([.12, .52, .32]) }, // or new DataAPIVector([...])
-   *   { name: 'alice', vector: vector([.12, .52, .32]), tags: new Set(['cool']) },
+   *   { name: 'bob', vector: vector([.12, .52, .32]) }, // or new DataAPIVector([...])
+   *   { name: 'alice', vector: vector([.12, .52, .32]), tags: new Set(['cool']) },
    * ], { ordered: true });
    * ```
    *
@@ -436,9 +448,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * // Since insertion is ordered, the last unique value for each
    * // primary key will be the one that remains in the table.
    * await table.insertMany([
-   *   { id: '123', col1: 'I exist' },
-   *   { id: '123', col1: 'I am new' },
-   *   { id: '123', col2: 'me2' },
+   *   { id: '123', col1: 'I exist' },
+   *   { id: '123', col1: 'I am new' },
+   *   { id: '123', col2: 'me2' },
    * ], { ordered: true });
    *
    * await table.findOne({ id: '123' }); // { id: '123', col1: 'I am new', col2: 'me2' }
@@ -447,8 +459,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * // which value will remain in the table for each primary key,
    * // as concurrent insertions may occur.
    * await table.insertMany([
-   *   { id: '123', col1: null },
-   *   { id: '123', col1: 'hi' },
+   *   { id: '123', col1: null },
+   *   { id: '123', col1: 'hi' },
    * ]);
    *
    * // coll1 may technically be either 'hi' or null
@@ -472,9 +484,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @example
    * ```ts
    * interface User {
-   *   id: string,
-   *   name: string,
-   *   dob?: DataAPIDate,
+   *   id: string,
+   *   name: string,
+   *   dob?: DataAPIDate,
    * }
    *
    * type UserPKey = Pick<User, 'id'>;
@@ -483,8 +495,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * // res.insertedIds is of type { id: string }[]
    * const res = await table.insertMany([
-   *   { id: '123', thing: 'Sunrise' },
-   *   { id: '456', thing: 'Miso soup' },
+   *   { id: '123', thing: 'Sunrise' },
+   *   { id: '456', thing: 'Miso soup' },
    * ]);
    * console.log(res.insertedIds[0].id); // '123'
    * ```
@@ -678,7 +690,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * // Defaulting to `Partial<User>` when projection is not provided
    * const cursor = await table.find({}, {
-   *   projection: { car: 1 },
+   *   projection: { car: 1 },
    * });
    *
    * // next :: { car?: { make?: string, model?: string } }
@@ -687,7 +699,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * // Explicitly providing the projection type
    * const cursor = await table.find<Pick<User, 'car'>>({}, {
-   *   projection: { car: 1 },
+   *   projection: { car: 1 },
    * });
    *
    * // next :: { car: { make: string, model: string } }
@@ -696,7 +708,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * // Projection existence can not be inferred
    * function mkFind(projection?: Projection) {
-   *   return table.find({}, { projection });
+   *   return table.find({}, { projection });
    * }
    *
    * // next :: Partial<User>
@@ -719,13 +731,13 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @example
    * ```ts
    * await table.insertMany([
-   *   { name: 'John Doe', vector: [.12, .52, .32] },
-   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
-   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
+   *   { name: 'John Doe', vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
    * ]);
    *
    * const cursor = table.find({}, {
-   *   sort: { vector: [.12, .52, .32] },
+   *   sort: { vector: [.12, .52, .32] },
    * });
    *
    * // Returns 'John Doe'
@@ -745,12 +757,12 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @example
    * ```ts
    * await table.insertMany([
-   *   { name: 'John Doe', age: 1, height: 168 },
-   *   { name: 'John Doe', age: 2, height: 42 },
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
    * ]);
    *
    * const cursor = table.find({}, {
-   *   sort: { age: 1, height: -1 },
+   *   sort: { age: 1, height: -1 },
    * });
    *
    * // Returns 'John Doe' (age 2, height 42), 'John Doe' (age 1, height 168)
@@ -767,10 +779,10 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * ```ts
    * // cursor :: FindCursor<string>
    * const cursor = table.find({})
-   *   .sort({ vector: [.12, .52, .32] })
-   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
-   *   .includeSimilarity(true)
-   *   .map(doc => `${doc.name} (${doc.age})`);
+   *   .sort({ vector: [.12, .52, .32] })
+   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
+   *   .includeSimilarity(true)
+   *   .map(doc => `${doc.name} (${doc.age})`);
    * ```
    *
    * @remarks
@@ -821,7 +833,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * // Defaulting to `Partial<User>` when projection is not provided
    * const doc = await table.findOne({}, {
-   *   projection: { car: 1 },
+   *   projection: { car: 1 },
    * });
    *
    * // doc :: { car?: { make?: string, model?: string } }
@@ -829,7 +841,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * // Explicitly providing the projection type
    * const doc = await table.findOne<Pick<User, 'car'>>({}, {
-   *   projection: { car: 1 },
+   *   projection: { car: 1 },
    * });
    *
    * // doc :: { car: { make: string, model: string } }
@@ -837,7 +849,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * // Projection existence can not be inferred
    * function findOne(projection?: Projection) {
-   *   return table.findOne({}, { projection });
+   *   return table.findOne({}, { projection });
    * }
    *
    * // doc :: Partial<User>
@@ -858,13 +870,13 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @example
    * ```ts
    * await table.insertMany([
-   *   { name: 'John Doe', vector: [.12, .52, .32] },
-   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
-   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
+   *   { name: 'John Doe', vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
    * ]);
    *
    * const doc = table.findOne({}, {
-   *   sort: { vector: [.12, .52, .32] },
+   *   sort: { vector: [.12, .52, .32] },
    * });
    *
    * // 'John Doe'
@@ -882,12 +894,12 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @example
    * ```ts
    * await table.insertMany([
-   *   { name: 'John Doe', age: 1, height: 168 },
-   *   { name: 'John Doe', age: 2, height: 42 },
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
    * ]);
    *
    * const doc = table.findOne({}, {
-   *   sort: { age: 1, height: -1 },
+   *   sort: { age: 1, height: -1 },
    * });
    *
    * // 'John Doe' (age 2, height 42)

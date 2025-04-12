@@ -76,13 +76,20 @@ import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-
 const jbi = JBI;
 
 /**
- * #### Overview
+ * ##### Overview
  *
  * Represents the interface to a collection in a Data-API-enabled database.
  *
  * **This shouldn't be directly instantiated, but rather spawned via {@link Db.createCollection} or {@link Db.collection}**.
  *
- * #### Typing & Datatypes
+ * @example
+ * ```ts
+ * const collection = db.collection<Type?>('my_collection');
+ * ```
+ *
+ * ---
+ *
+ * ##### Typing {@link Collection}
  *
  * Collections are inherently untyped, but you can provide your own client-side compile-time schema for type inference
  * and early-bug-catching purposes.
@@ -97,34 +104,9 @@ const jbi = JBI;
  *    - Unless custom ser/des is used, it is nearly exactly the same as `WSchema`
  *    - This defaults to `FoundDoc<WSchema>` (see {@link FoundDoc})
  *
- * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+ * ---
  *
- * For example:
- * - `$date` is represented by a native JS `Date`
- * - `$uuid` is represented by a `UUID` class provided by `astra-db-ts`
- * - `$vector` is represented by a `DataAPIVector` class provided by `astra-db-ts`
- *
- * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
- *
- * @example
- * ```ts
- * interface User {
- *   _id: string,
- *   dob: Date,
- *   friends?: Record<string, UUID>, // UUID is also `astra-db-ts` provided
- *   vector: DataAPIVector,
- * }
- *
- * await db.collection<User>('users').insertOne({
- *   _id: '123',
- *   dob: new Date(),
- *   vector: new DataAPIVector([1, 2, 3]), // This can also be passed as a number[]
- * });
- * ```
- *
- * The full list of relevant datatypes (for collections) include: {@link UUID}, {@link ObjectId}, {@link Date}, and {@link DataAPIVector}.
- *
- * ###### Typing the `_id`
+ * ##### Typing the `_id`
  *
  * The `_id` field of the document may be any valid JSON scalar (including {@link Date}, {@link UUID}, and {@link ObjectId})
  *
@@ -133,33 +115,68 @@ const jbi = JBI;
  * @example
  * ```ts
  * interface User {
- *   _id: UUID,
- *   name: string,
+ *   _id: UUID,
+ *   name: string,
  * }
  *
  * const coll = await db.createCollection<User>('users', {
- *   defaultId: { type: 'uuid' },
+ *   defaultId: { type: 'uuid' },
  * });
  *
  * const resp = await coll.insertOne({ name: 'Alice' });
  * console.log(resp.insertedId.version) // 4
  * ```
  *
- * ###### Big numbers
+ * ---
+ *
+ * ##### Datatypes
+ *
+ * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+ *
+ * For example:
+ * - `$date` is represented by a native JS {@link Date}
+ * - `$uuid` is represented by an `astra-db-ts` provided {@link UUID}
+ * - `$vector` is represented by an `astra-db-ts` provided {@link DataAPIVector}
+ *
+ * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
+ *
+ * @example
+ * ```ts
+ * interface User {
+ *   _id: string,
+ *   dob: Date,
+ *   friends?: Record<string, UUID>, // UUID is also `astra-db-ts` provided
+ *   $vector: DataAPIVector,
+ * }
+ *
+ * await db.collection<User>('users').insertOne({
+ *   _id: '123',
+ *   dob: new Date(),
+ *   $vector: new DataAPIVector([1, 2, 3]), // This can also be passed as a number[]
+ * });
+ * ```
+ *
+ * The full list of relevant datatypes (for collections) include: {@link UUID}, {@link ObjectId}, {@link Date}, {@link DataAPIVector} and {@link BigNumber}.
+ *
+ * ---
+ *
+ * ##### Big numbers
  *
  * By default, big numbers (`bigint`s and {@link BigNumber}s from `bignumber.js`) are disabled, and will error when attempted to be serialized, and will lose precision when deserialized.
  *
  * See {@link CollectionSerDesConfig.enableBigNumbers} for more information on enabling big numbers in collections.
  *
- * ###### Custom datatypes
+ * ---
+ *
+ * ##### Custom datatypes
  *
  * You can plug in your own custom datatypes, as well as enable many other features by providing some custom serialization/deserialization logic through the `serdes` option in {@link CollectionOptions}, {@link DbOptions}, and/or {@link DataAPIClientOptions.dbOptions}.
  *
  * Note however that this is currently not entirely stable, and should be used with caution.
  *
- * See the official DataStax documentation for more info.
+ * ---
  *
- * ###### Disclaimer
+ * ##### Disclaimer
  *
  * **Collections are inherently untyped**
  *
@@ -182,12 +199,22 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
   readonly #db: Db;
 
   /**
-   * The name of the collection. Unique per keyspace.
+   * ##### Overview
+   *
+   * The user-provided, case-sensitive. name of the collection
+   *
+   * This is unique among all tables and collections in its keyspace, but not necessarily unique across the entire database.
+   *
+   * It is up to the user to ensure that this collection really exists.
    */
   public readonly name!: string;
 
   /**
-   * The keyspace that the collection resides in.
+   * ##### Overview
+   *
+   * The keyspace where the collection resides in.
+   *
+   * It is up to the user to ensure that this keyspace really exists, and that this collection is in it.
    */
   public readonly keyspace!: string;
 
@@ -245,13 +272,17 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * await collection.insertOne({ _id: 1, name: 'Jane Doe', $vectorize: "Hey there!" });
    * ```
    *
+   * ---
+   *
    * ##### The `_id` field
    *
-   * If the document does not contain an `_id` field, the server will generate an id for the document. The type of the id may be specified in {@link CollectionDefinition.defaultId} at collection creation, otherwise it'll just be a raw UUID string. This generation does not mutate the document.
+   * If the document does not contain an `_id` field, the server will generate an id for the document.
+   * - The type of the generated id may be specified in {@link CollectionDefinition.defaultId} at collection creation, otherwise it'll just be a raw UUID string.
+   * - This generation does not mutate the document.
    *
    * If an `_id` is provided which corresponds to a document that already exists in the collection, a {@link DataAPIResponseError} is raised, and the insertion fails.
    *
-   * If you prefer to upsert instead, see {@link Collection.replaceOne}.
+   * If you prefer to upsert a document instead, see {@link Collection.replaceOne}.
    *
    * @example
    * ```typescript
@@ -264,7 +295,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * // Or if the collection has a default ID
    * const collection = db.createCollection('users', {
-   *   defaultId: { type: 'uuid' },
+   *   defaultId: { type: 'uuid' },
    * });
    *
    * const resp = await collection.insertOne({ name: 'Lemmy' });
@@ -288,8 +319,8 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * await collection.insertMany([
-   *   { _id: '1', name: 'John Doe' },
-   *   { name: 'Jane Doe' },
+   *   { _id: '1', name: 'John Doe' },
+   *   { name: 'Jane Doe' },
    * ]);
    * ```
    *
@@ -320,11 +351,11 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * // will throw an InsertManyError after the 2nd doc is inserted with a duplicate key
    * // the 3rd doc will never attempt to be inserted
    * await collection.insertMany([
-   *   { _id: '1', name: 'John Doe' },
-   *   { _id: '1', name: 'John Doe' },
-   *   { _id: '2', name: 'Jane Doe' },
+   *   { _id: '1', name: 'John Doe' },
+   *   { _id: '1', name: 'John Doe' },
+   *   { _id: '2', name: 'Jane Doe' },
    * ], {
-   *   ordered: true,
+   *   ordered: true,
    * });
    * ```
    *
@@ -340,25 +371,25 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * ```typescript
    * // Insert documents with autogenerated IDs
    * await collection.insertMany([
-   *   { name: 'John Doe' },
-   *   { name: 'Jane Doe' },
+   *   { name: 'John Doe' },
+   *   { name: 'Jane Doe' },
    * ]);
    *
    * // Use the inserted IDs (generated or not)
    * const resp = await collection.insertMany([
-   *   { name: 'Lemmy' },
-   *   { name: 'Kilmister' },
+   *   { name: 'Lemmy' },
+   *   { name: 'Kilmister' },
    * ]);
    * console.log(resp.insertedIds);
    *
    * // Or if the collection has a default ID
    * const collection = db.createCollection('users', {
-   *   defaultId: { type: 'objectId' },
+   *   defaultId: { type: 'objectId' },
    * });
    *
    * const resp = await collection.insertMany([
-   *   { name: 'Lynyrd' },
-   *   { name: 'Skynyrd' },
+   *   { name: 'Lynyrd' },
+   *   { name: 'Skynyrd' },
    * ]);
    *
    * console.log(resp.insertedIds[0].getTimestamp());
@@ -401,13 +432,13 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * const resp = await collection.updateOne(
-   *   { _id: 42 },
-   *   { $set: { age: 27 }, $setOnInsert: { name: 'Kasabian' } },
-   *   { upsert: true },
+   *   { _id: 42 },
+   *   { $set: { age: 27 }, $setOnInsert: { name: 'Kasabian' } },
+   *   { upsert: true },
    * );
    *
    * if (resp.upsertedCount) {
-   *   console.log(resp.upsertedId); // 42
+   *   console.log(resp.upsertedId); // 42
    * }
    * ```
    *
@@ -431,9 +462,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * await collection.insertOne({ name: 'John Doe', $vector: [.12, .52, .32] });
    *
    * await collection.updateOne(
-   *   { name: 'John Doe' },
-   *   { $set: { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" } },
-   *   { sort: { $vector: [.09, .58, .21] } },
+   *   { name: 'John Doe' },
+   *   { $set: { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" } },
+   *   { sort: { $vector: [.09, .58, .21] } },
    * );
    * ```
    *
@@ -467,13 +498,13 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * const resp = await collection.updateMany(
-   *   { name: 'Kasabian' },
-   *   { $set: { age: 27 }, $setOnInsert: { _id: 42 } },
-   *   { upsert: true },
+   *   { name: 'Kasabian' },
+   *   { $set: { age: 27 }, $setOnInsert: { _id: 42 } },
+   *   { upsert: true },
    * );
    *
    * if (resp.upsertedCount) {
-   *   console.log(resp.upsertedId); // 42
+   *   console.log(resp.upsertedId); // 42
    * }
    * ```
    *
@@ -499,9 +530,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * await collection.insertOne({ name: 'John Doe', $vector: [.12, .52, .32] });
    *
    * await collection.updateMany(
-   *   { name: 'John Doe' },
-   *   { $set: { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" } },
-   *   { sort: { $vector: [.09, .58, .21] } },
+   *   { name: 'John Doe' },
+   *   { $set: { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" } },
+   *   { sort: { $vector: [.09, .58, .21] } },
    * );
    * ```
    *
@@ -533,13 +564,13 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * const resp = await collection.replaceOne(
-   *   { _id: 42 },
-   *   { name: 'Jessica' },
-   *   { upsert: true },
+   *   { _id: 42 },
+   *   { name: 'Jessica' },
+   *   { upsert: true },
    * );
    *
    * if (resp.upsertedCount) {
-   *   console.log(resp.upsertedId); // 42
+   *   console.log(resp.upsertedId); // 42
    * }
    * ```
    *
@@ -558,9 +589,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * await collection.insertOne({ name: 'John Doe', $vector: [.12, .52, .32] });
    *
    * await collection.replaceOne(
-   *   { name: 'John Doe' },
-   *   { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" },
-   *   { sort: { $vector: [.09, .58, .21] } },
+   *   { name: 'John Doe' },
+   *   { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" },
+   *   { sort: { $vector: [.09, .58, .21] } },
    * );
    * ```
    *
@@ -618,8 +649,8 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * await collection.insertMany([
-   *   { name: 'John Doe', age: 1 },
-   *   { name: 'John Doe', age: 2 },
+   *   { name: 'John Doe', age: 1 },
+   *   { name: 'John Doe', age: 2 },
    * ]);
    * await collection.deleteMany({ name: 'John Doe' });
    * ```
@@ -639,8 +670,8 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * await collection.insertMany([
-   *   { name: 'John Doe' },
-   *   { name: 'Jane Doe' },
+   *   { name: 'John Doe' },
+   *   { name: 'Jane Doe' },
    * ]);
    *
    * const resp = await collection.deleteMany({});
@@ -684,7 +715,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * // Defaulting to `Partial<User>` when projection is not provided
    * const cursor = await collection.find({}, {
-   *   projection: { car: 1 },
+   *   projection: { car: 1 },
    * });
    *
    * // next :: { car?: { make?: string, model?: string } }
@@ -693,7 +724,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * // Explicitly providing the projection type
    * const cursor = await collection.find<Pick<User, 'car'>>({}, {
-   *   projection: { car: 1 },
+   *   projection: { car: 1 },
    * });
    *
    * // next :: { car: { make: string, model: string } }
@@ -702,7 +733,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * // Projection existence can not be inferred
    * function mkFind(projection?: Projection) {
-   *   return collection.find({}, { projection });
+   *   return collection.find({}, { projection });
    * }
    *
    * // next :: Partial<User>
@@ -725,13 +756,13 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * await collection.insertMany([
-   *   { name: 'John Doe', $vector: [.12, .52, .32] },
-   *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
-   *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
+   *   { name: 'John Doe', $vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
    * ]);
    *
    * const cursor = collection.find({}, {
-   *   sort: { $vector: [.12, .52, .32] },
+   *   sort: { $vector: [.12, .52, .32] },
    * });
    *
    * // Returns 'John Doe'
@@ -751,12 +782,12 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * await collection.insertMany([
-   *   { name: 'John Doe', age: 1, height: 168 },
-   *   { name: 'John Doe', age: 2, height: 42 },
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
    * ]);
    *
    * const cursor = collection.find({}, {
-   *   sort: { age: 1, height: -1 },
+   *   sort: { age: 1, height: -1 },
    * });
    *
    * // Returns 'John Doe' (age 2, height 42), 'John Doe' (age 1, height 168)
@@ -773,10 +804,10 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * ```ts
    * // cursor :: FindCursor<string>
    * const cursor = collection.find({})
-   *   .sort({ $vector: [.12, .52, .32] })
-   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
-   *   .includeSimilarity(true)
-   *   .map(doc => `${doc.name} (${doc.age})`);
+   *   .sort({ $vector: [.12, .52, .32] })
+   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
+   *   .includeSimilarity(true)
+   *   .map(doc => `${doc.name} (${doc.age})`);
    * ```
    *
    * @remarks
@@ -858,7 +889,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * // Defaulting to `Partial<User>` when projection is not provided
    * const doc = await collection.findOne({}, {
-   *   projection: { car: 1 },
+   *   projection: { car: 1 },
    * });
    *
    * // doc :: { car?: { make?: string, model?: string } }
@@ -866,7 +897,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * // Explicitly providing the projection type
    * const doc = await collection.findOne<Pick<User, 'car'>>({}, {
-   *   projection: { car: 1 },
+   *   projection: { car: 1 },
    * });
    *
    * // doc :: { car: { make: string, model: string } }
@@ -874,7 +905,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * // Projection existence can not be inferred
    * function findOne(projection?: Projection) {
-   *   return collection.findOne({}, { projection });
+   *   return collection.findOne({}, { projection });
    * }
    *
    * // doc :: Partial<User>
@@ -895,13 +926,13 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * await collection.insertMany([
-   *   { name: 'John Doe', $vector: [.12, .52, .32] },
-   *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
-   *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
+   *   { name: 'John Doe', $vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
    * ]);
    *
    * const doc = collection.findOne({}, {
-   *   sort: { $vector: [.12, .52, .32] },
+   *   sort: { $vector: [.12, .52, .32] },
    * });
    *
    * // 'John Doe'
@@ -919,12 +950,12 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * await collection.insertMany([
-   *   { name: 'John Doe', age: 1, height: 168 },
-   *   { name: 'John Doe', age: 2, height: 42 },
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
    * ]);
    *
    * const doc = collection.findOne({}, {
-   *   sort: { age: 1, height: -1 },
+   *   sort: { age: 1, height: -1 },
    * });
    *
    * // 'John Doe' (age 2, height 42)
@@ -991,16 +1022,16 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```typescript
    * await collection.insertMany([
-   *   { letter: { value: 'a' }, car: [1] },
-   *   { letter: { value: 'b' }, car: [2, 3] },
-   *   { letter: { value: 'a' }, car: [2], bus: 'no' },
+   *   { letter: { value: 'a' }, car: [1] },
+   *   { letter: { value: 'b' }, car: [2, 3] },
+   *   { letter: { value: 'a' }, car: [2], bus: 'no' },
    * ]);
    *
    * // ['a', 'b']
    * const distinct = await collection.distinct('letter.value');
    *
    * await collection.insertOne({
-   *   x: [{ y: 'Y', 0: 'ZERO' }],
+   *   x: [{ y: 'Y', 0: 'ZERO' }],
    * });
    *
    * // ['Y']
@@ -1045,8 +1076,8 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```typescript
    * await collection.insertMany([
-   *   { name: 'John Doe' },
-   *   { name: 'Jane Doe' },
+   *   { name: 'John Doe' },
+   *   { name: 'Jane Doe' },
    * ]);
    *
    * const count = await collection.countDocuments({}, 1000);
@@ -1124,9 +1155,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * await collection.insertOne({ _id: '1', name: 'John Doe', age: 3 });
    *
    * const doc = await collection.findOneAndReplace<{ name: string }>(
-   *   { _id: '1' },
-   *   { name: 'Dohn Joe' },
-   *   { projection: { name: 1, _id: 0 } },
+   *   { _id: '1' },
+   *   { name: 'Dohn Joe' },
+   *   { projection: { name: 1, _id: 0 } },
    * );
    *
    * // Prints { name: 'Dohn Joe' }
@@ -1140,9 +1171,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * const resp = await collection.findOneAndReplace(
-   *   { _id: 42 },
-   *   { name: 'Jessica' },
-   *   { upsert: true },
+   *   { _id: 42 },
+   *   { name: 'Jessica' },
+   *   { upsert: true },
    * );
    *
    * console.log(resp); // null, b/c no previous document was found
@@ -1159,9 +1190,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * await collection.insertOne({ _id: '1', name: 'John Doe' });
    *
    * const after = await collection.findOneAndReplace(
-   *   { _id: '1' },
-   *   { name: 'Jane Doe' },
-   *   { returnDocument: 'after' },
+   *   { _id: '1' },
+   *   { name: 'Jane Doe' },
+   *   { returnDocument: 'after' },
    * );
    *
    * // Prints { _id: '1', name: 'Jane Doe' }
@@ -1208,8 +1239,8 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * await collection.insertOne({ _id: '1', name: 'John Doe', age: 3 });
    *
    * const doc = await collection.findOneAndDelete<{ name: string }>(
-   *   { _id: '1' },
-   *   { projection: { name: 1, _id: 0 } },
+   *   { _id: '1' },
+   *   { projection: { name: 1, _id: 0 } },
    * );
    *
    * // Prints { name: 'John Doe' }
@@ -1255,9 +1286,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * await collection.insertOne({ _id: '1', name: 'John Doe', age: 3 });
    *
    * const doc = await collection.findOneAndUpdate<{ name: string }>(
-   *   { _id: '1' },
-   *   { $set: { name: 'Jane Doe' } },
-   *   { projection: { name: 1, _id: 0 } },
+   *   { _id: '1' },
+   *   { $set: { name: 'Jane Doe' } },
+   *   { projection: { name: 1, _id: 0 } },
    * );
    *
    * // Prints { name: 'John Doe' }
@@ -1271,9 +1302,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @example
    * ```ts
    * const resp = await collection.findOneAndUpdate(
-   *   { _id: 42 },
-   *   { $set: { name: 'Jessica' } },
-   *   { upsert: true },
+   *   { _id: 42 },
+   *   { $set: { name: 'Jessica' } },
+   *   { upsert: true },
    * );
    *
    * console.log(resp); // null, b/c no previous document was found
@@ -1290,9 +1321,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * await collection.insertOne({ _id: '1', name: 'John Doe' });
    *
    * const after = await collection.findOneAndUpdate(
-   *   { _id: '1' },
-   *   { $set: { name: 'Jane Doe' } },
-   *   { returnDocument: 'after' },
+   *   { _id: '1' },
+   *   { $set: { name: 'Jane Doe' } },
+   *   { returnDocument: 'after' },
    * );
    *
    * // Prints { _id: '1', name: 'Jane Doe' }
