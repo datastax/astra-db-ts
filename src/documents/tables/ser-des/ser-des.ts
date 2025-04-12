@@ -31,21 +31,21 @@ import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
 
 /**
- * @public
+ * @beta
  */
 export interface TableSerCtx extends BaseSerCtx<TableSerCtx> {
   bigNumsPresent: boolean,
 }
 
 /**
- * @public
+ * @beta
  */
 export interface TableDesCtx extends BaseDesCtx<TableDesCtx> {
   tableSchema: ListTableColumnDefinitions,
 }
 
 /**
- * @public
+ * @beta
  */
 export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDesCtx> {
   sparseData?: boolean,

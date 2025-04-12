@@ -27,21 +27,21 @@ import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
 
 /**
- * @public
+ * @beta
  */
 export interface CollectionSerCtx extends BaseSerCtx<CollectionSerCtx> {
   bigNumsEnabled: boolean,
 }
 
 /**
- * @public
+ * @beta
  */
 export interface CollectionDesCtx extends BaseDesCtx<CollectionDesCtx> {
   getNumCoercionForPath?: GetCollNumCoercionFn,
 }
 
 /**
- * @public
+ * @beta
  */
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCtx, CollectionDesCtx> {
   enableBigNumbers?: GetCollNumCoercionFn | CollNumCoercionCfg,

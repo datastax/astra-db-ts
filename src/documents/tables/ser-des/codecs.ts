@@ -49,27 +49,27 @@ export type TableCodecClass =
 export type TableCodec<Class extends TableCodecClass> = InstanceType<Class>;
 
 /**
- * @public
+ * @beta
  */
 export type RawTableCodecs = readonly RawCodec<TableSerCtx, TableDesCtx>[] & { phantom?: 'This codec is only valid for tables' };
 
 /**
- * @public
+ * @beta
  */
 export type TableNominalCodecOpts = NominalCodecOpts<TableSerCtx, TableDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export type TableTypeCodecOpts = TypeCodecOpts<TableSerCtx, TableDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export type TableCustomCodecOpts = CustomCodecOpts<TableSerCtx, TableDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export class TableCodecs {
   public static Defaults = {

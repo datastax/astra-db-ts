@@ -200,12 +200,16 @@ export interface DbSerDesConfig {
    * Advanced & currently somewhat unstable features related to customizing spawned tables' ser/des behavior at a lower level.
    *
    * Use with caution. See official DataStax documentation for more info.
+   *
+   * @beta
    */
   table?: Omit<TableSerDesConfig, 'mutateInPlace'>,
   /**
    * Advanced & currently somewhat unstable features related to customizing spawned collections' ser/des behavior at a lower level.
    *
    * Use with caution. See official DataStax documentation for more info.
+   *
+   * @beta
    */
   collection?: Omit<CollectionSerDesConfig, 'mutateInPlace'>,
   /**

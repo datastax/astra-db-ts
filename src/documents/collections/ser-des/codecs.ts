@@ -45,27 +45,27 @@ export type CollectionCodecClass =
 export type CollectionCodec<Class extends CollectionCodecClass> = InstanceType<Class>;
 
 /**
- * @public
+ * @beta
  */
 export type RawCollCodecs = readonly RawCodec<CollectionSerCtx, CollectionDesCtx>[] & { phantom?: 'This codec is only valid for collections' };
 
 /**
- * @public
+ * @beta
  */
 export type CollNominalCodecOpts = NominalCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export type CollTypeCodecOpts = TypeCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export type CollCustomCodecOpts = CustomCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export class CollectionCodecs {
   public static Defaults = {
