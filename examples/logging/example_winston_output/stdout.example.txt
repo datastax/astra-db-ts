@@ -1,0 +1,5 @@
+2025-04-07 14:09:50 [astra-db-ts] [bec513b6] [CommandStarted]: default_keyspace::createTable {name=fw_logging_example_table,ifNotExists=true}
+2025-04-07 14:09:51 [astra-db-ts] [bec513b6] [CommandSucceeded]: default_keyspace::createTable {name=fw_logging_example_table,ifNotExists=true} (1676ms)
+2025-04-07 14:09:52 [astra-db-ts] [614d64cf] [CommandFailed]: fw_logging_example_table::findOne (306ms) ERROR: "Invalid filter expression: filter clause path ('$invalid') cannot start with `$`"
+2025-04-07 14:09:52 [astra-db-ts] [665a4133] [CommandStarted]: default_keyspace::dropTable {name=fw_logging_example_table,ifExists=false}
+2025-04-07 14:09:54 [astra-db-ts] [665a4133] [CommandSucceeded]: default_keyspace::dropTable {name=fw_logging_example_table,ifExists=false} (1635ms)

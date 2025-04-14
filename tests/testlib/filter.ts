@@ -14,22 +14,27 @@
 
 import process from 'node:process';
 
-export const FILTER_STATE = {
+const FILTER_STATE = {
   SOFT_OK: 1,
   SOFT_NO: 2,
   HARD_OK: 3,
   HARD_NO: 4,
 };
 
-export const TEST_FILTER = (() => {
-  const rawFilters = (process.env.CLIENT_TESTS_FILTER ?? '').slice(0, -1).split('" ').filter(Boolean);
+const RAW_FILTERS = (process.env.CLIENT_TESTS_FILTER ?? '')
+  .slice(0, -1)
+  .split('" ')
+  .filter(Boolean)
+  .map((rawFilter) => (<const>{
+    type: rawFilter.startsWith('f') ? 'match' : 'regex',
+    inverted: rawFilter[1] === 'i',
+    filter: rawFilter.split('"')[1],
+  }));
 
-  const filters = rawFilters
-    .map((rawFilter) => (<const>{
-      type: rawFilter[0] === 'f' ? 'match' : 'regex',
-      inverted: rawFilter[1] === 'i',
-      filter: rawFilter.split('"')[1],
-    }))
+const FILTER_COMBINATOR = (process.env.CLIENT_TESTS_FILTER_COMBINATOR ?? 'and') as 'and' | 'or';
+
+export const TEST_FILTER = (() => {
+  const filters = RAW_FILTERS
     .map((info) => {
       const filter = (info.type === 'regex')
         ? buildRegexFilter(info.filter)
@@ -43,9 +48,7 @@ export const TEST_FILTER = (() => {
         : (name: string) => (filter(name) ? FILTER_STATE.HARD_OK : FILTER_STATE.SOFT_NO);
     });
 
-  const combinator = (process.env.CLIENT_TESTS_FILTER_COMBINATOR ?? 'and') as 'and' | 'or';
-
-  const testFn = (combinator === 'and')
+  const testFn = (FILTER_COMBINATOR === 'and')
     ? buildAndTestFn(filters)
     : buildOrTestFn(filters);
 

@@ -12,20 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { it, parallel } from '@/tests/testlib';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
-parallel('integration.documents.collections.find-one-and-delete', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.find-one-and-delete', { truncate: 'colls:before' }, ({ collection }) => {
   it('should findOneAndDelete', async () => {
     const res = await collection.insertOne({ name: 'kamelot' });
     const docId = res.insertedId;
     const resp = await collection.findOneAndDelete(
       { '_id': docId },
-      { includeResultMetadata: true },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value?._id, docId);
-    assert.strictEqual(resp.value.name, 'kamelot');
+    assert.strictEqual(resp?._id, docId);
+    assert.strictEqual(resp.name, 'kamelot');
   });
 
   it('should findOneAndDelete with a projection', async (key) => {
@@ -37,10 +35,10 @@ parallel('integration.documents.collections.find-one-and-delete', { truncateColl
 
     const res = await collection.findOneAndDelete(
       { name: 'a', key },
-      { projection: { name: 1 }, includeResultMetadata: true },
+      { projection: { name: 1 } },
     );
-    assert.strictEqual(res.value?.name, 'a');
-    assert.strictEqual(res.value.age, undefined);
+    assert.strictEqual(res?.name, 'a');
+    assert.strictEqual(res.age, undefined);
   });
 
   it('should findOneAndDelete with sort', async (key) => {
@@ -52,15 +50,15 @@ parallel('integration.documents.collections.find-one-and-delete', { truncateColl
 
     const res1 = await collection.findOneAndDelete(
       { key },
-      { sort: { name: 1 }, includeResultMetadata: true },
+      { sort: { name: 1 } },
     );
-    assert.strictEqual(res1.value?.name, 'a');
+    assert.strictEqual(res1?.name, 'a');
 
     const res2 = await collection.findOneAndDelete(
       { key },
-      { sort: { name: -1 }, includeResultMetadata: true },
+      { sort: { name: -1 } },
     );
-    assert.deepStrictEqual(res2.value?.name, 'c');
+    assert.deepStrictEqual(res2?.name, 'c');
   });
 
   it('should not return metadata when includeResultMetadata is false', async (key) => {
@@ -68,7 +66,6 @@ parallel('integration.documents.collections.find-one-and-delete', { truncateColl
 
     const res = await collection.findOneAndDelete(
       { name: 'a', key },
-      { includeResultMetadata: false },
     );
 
     assert.deepStrictEqual(res, { _id: res?._id, name: 'a', key });
@@ -86,47 +83,20 @@ parallel('integration.documents.collections.find-one-and-delete', { truncateColl
 
   it('should findOneAndDelete with $vector sort', async (key) => {
     await collection.insertMany([
-      { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
-      { name: 'c', $vector: [-.1, -.2, -.3, -.4, -.5], key },
+      { name: 'a', $vector: [1.0, 1.0, 0.9, 1.0, 1.0], key },
+      { name: 'c', $vector: [-.4, -.2, -.3, -.4, -.1], key },
       { name: 'b', $vector: [-.1, -.2, -.3, -.4, -.5], key },
     ]);
 
     const res = await collection.findOneAndDelete(
       { key },
-      { sort: { $vector: [1, 1, 1, 1, 1] }, includeResultMetadata: true },
+      { sort: { $vector: [1, 1, 1, 1, 1] } },
     );
-    assert.strictEqual(res.value?.name, 'a');
+    assert.strictEqual(res?.name, 'a');
   });
 
-  it('should findOneAndDelete with vector sort in option', async (key) => {
-    await collection.insertMany([
-      { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
-      { name: 'c', $vector: [-.1, -.2, -.3, -.4, -.5], key },
-      { name: 'b', $vector: [-.1, -.2, -.3, -.4, -.5], key },
-    ]);
-
-    const res = await collection.findOneAndDelete(
-      { key },
-      { vector: [1, 1, 1, 1, 1], includeResultMetadata: true },
-    );
-    assert.strictEqual(res.value?.name, 'a');
-  });
-
-  it('should error when both sort and vector are provided', async () => {
-    await assert.rejects(async () => {
-      await collection.findOneAndDelete({}, { sort: { name: 1 }, vector: [1, 1, 1, 1, 1] });
-    }, /Can't use both `sort` and `vector` options at once; if you need both, include a \$vector key in the sort object/);
-  });
-
-  it('should error when both sort and vectorize are provided', async () => {
-    await assert.rejects(async () => {
-      await collection.findOneAndDelete({}, { sort: { name: 1 }, vectorize: 'American Idiot is a good song' });
-    }, /Can't use both `sort` and `vectorize` options at once; if you need both, include a \$vectorize key in the sort object/);
-  });
-
-  it('should error when both vector and vectorize are provided', async () => {
-    await assert.rejects(async () => {
-      await collection.findOneAndDelete({}, { vector: [1, 1, 1, 1, 1], vectorize: 'American Idiot is a good song' });
-    }, /Cannot set both vectors and vectorize options/);
+  it('should return null if no document is found', async (key) => {
+    const res = await collection.findOneAndDelete({ key });
+    assert.strictEqual(res, null);
   });
 });

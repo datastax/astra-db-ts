@@ -12,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FetcherResponseInfo } from '@/src/lib/api/fetch/types';
+import type { DataAPIErrorDescriptor, DataAPIWarningDescriptor } from '@/src/documents/errors.js';
 
 /**
- * Response object from an API call
- *
- * @deprecated - Use {@link FetcherResponseInfo} instead (synonymous type)
+ * Unstable backdoor to some class's internal HTTP client. No guarantees are made about this type.
  *
  * @public
  */
-export type CuratedAPIResponse = FetcherResponseInfo;
+export type OpaqueHttpClient = any;
 
 /**
  * The response format of a 2XX-status Data API call
@@ -32,13 +30,24 @@ export interface RawDataAPIResponse {
   /**
    * A response data holding documents that were returned as the result of a command.
    */
-  status?: Record<string, any>,
+  readonly status?: Record<string, any>,
   /**
    * Status objects, generally describe the side effects of commands, such as the number of updated or inserted documents.
    */
-  errors?: any[],
+  readonly errors?: DataAPIErrorDescriptor[],
   /**
    * Array of objects or null (Error)
    */
-  data?: Record<string, any>,
+  readonly data?: Record<string, any>,
+  /**
+   * Array of objects or null (Error)
+   */
+  readonly warnings?: DataAPIWarningDescriptor[],
 }
+
+/**
+ * Represents some, _any_, constructor (e.g. `Error`, `Map`, or `MyCustomClass`).
+ *
+ * @public
+ */
+export type SomeConstructor = abstract new (...args: any[]) => any;

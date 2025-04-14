@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type TypedEmitter from 'typed-emitter';
-import type { DataAPICommandEvents } from '@/src/documents';
-import type { FetchCtx } from '@/src/lib/api/fetch/types';
-import type { HttpMethods } from '@/src/lib/api/constants';
-import type { Ref } from '@/src/lib/types';
-import type { TimeoutManager } from '@/src/lib/api/timeout-managers';
+import type { FetchCtx } from '@/src/lib/api/fetch/fetcher.js';
+import type { HttpMethods } from '@/src/lib/api/constants.js';
+import type { Ref } from '@/src/lib/types.js';
+import type { MkTimeoutError, TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
+import type { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler.js';
+import type { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler.js';
+import type { DataAPIClientEventMap, HierarchicalLogger } from '@/src/lib/index.js';
+import type { ParsedHeadersProviders } from '@/src/lib/headers-providers/root/opts-handlers.js';
 
 /**
  * @internal
@@ -25,16 +27,13 @@ import type { TimeoutManager } from '@/src/lib/api/timeout-managers';
 export interface HTTPClientOptions {
   baseUrl: string,
   baseApiPath?: string | null,
-  emitter: TypedEmitter<DataAPICommandEvents>,
-  monitorCommands: boolean,
+  logger: HierarchicalLogger<DataAPIClientEventMap>,
   fetchCtx: FetchCtx,
-  userAgent: string,
+  caller: ParsedCaller,
+  additionalHeaders: ParsedHeadersProviders,
+  timeoutDefaults: ParsedTimeoutDescriptor,
+  mkTimeoutError: MkTimeoutError,
 }
-
-/**
- * @internal
- */
-export type HeaderProvider = () => (Promise<Record<string, string>> | Record<string, string>);
 
 /**
  * @internal

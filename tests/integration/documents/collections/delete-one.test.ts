@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { it, parallel } from '@/tests/testlib';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
-parallel('integration.documents.collections.delete-one', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.delete-one', { truncate: 'colls:before' }, ({ collection }) => {
   it('should deleteOne document', async () => {
     const res = await collection.insertOne({});
     const deleteOneResp = await collection.deleteOne({ _id: res.insertedId });

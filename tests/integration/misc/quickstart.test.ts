@@ -13,23 +13,30 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIClient } from '@/src/client';
-import { ObjectId, UUID, VectorDoc } from '@/src/documents';
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { it, parallel } from '@/tests/testlib';
+import { DataAPIClient } from '@/src/client/index.js';
+import { ObjectId, UUID } from '@/src/documents/index.js';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
+import {
+  ENVIRONMENT,
+  it,
+  OTHER_KEYSPACE,
+  parallel,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { ENVIRONMENT, OTHER_KEYSPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
 
-parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
+parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
   it('(LONG) works for the quickstart', async () => {
-    interface Idea extends VectorDoc {
+    interface Idea {
       idea: string,
+      $vector?: number[],
     }
 
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
     const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
 
-    const collection = await db.createCollection<Idea>('vector_5_collection', { vector: { dimension: 5, metric: 'cosine' }, maxTimeMS: 60000 });
+    const collection = await db.createCollection<Idea>('vector_5_collection', { vector: { dimension: 5, metric: 'cosine' }, timeout: 60000 });
 
     const ideas = [
       {
@@ -61,7 +68,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
     );
 
     const cursor = collection.find({}, {
-      vector: [0.1, 0.15, 0.3, 0.12, 0.05],
+      sort: { $vector: [0.1, 0.15, 0.3, 0.12, 0.05] },
       includeSimilarity: true,
       limit: 2,
     });
@@ -86,11 +93,14 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
 
     const databases = await admin.listDatabases();
     const dbInfo = databases.find(db => db.id === id);
-    assert.ok(dbInfo?.info.name);
+    assert.ok(dbInfo?.name);
     assert.strictEqual(dbInfo.id, id);
-    assert.strictEqual(dbInfo.info.region, region);
+    assert.strictEqual(dbInfo.regions.length, 1);
+    assert.strictEqual(dbInfo.regions[0].name, region);
+    assert.strictEqual(dbInfo.regions[0].apiEndpoint, TEST_APPLICATION_URI);
+    assert.ok(dbInfo.regions[0].createdAt as unknown instanceof Date);
 
-    const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.info.region);
+    const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.regions[0].name);
     const keyspaces = await dbAdmin.listKeyspaces();
     assert.ok(keyspaces.includes(DEFAULT_KEYSPACE));
     assert.ok(keyspaces.includes(OTHER_KEYSPACE));
@@ -108,7 +118,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
     const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
 
-    const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' }, maxTimeMS: 60000 });
+    const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' }, timeout: 60000 });
 
     await collection.insertOne({ _id: new ObjectId("65fd9b52d7fabba03349d013"), name: 'John' });
 

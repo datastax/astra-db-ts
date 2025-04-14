@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { it, parallel } from '@/tests/testlib';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
-parallel('integration.documents.collections.find-one-and-replace', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.find-one-and-replace', { truncate: 'colls:before' }, ({ collection }) => {
   it('should findOneAndReplace', async () => {
     const res = await collection.insertOne({ name: 'kamelot' });
     const docId = res.insertedId;
@@ -24,12 +24,10 @@ parallel('integration.documents.collections.find-one-and-replace', { truncateCol
       { name: 'soad' },
       {
         returnDocument: 'after',
-        includeResultMetadata: true,
       },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value?._id, docId);
-    assert.strictEqual(resp.value.name, 'soad');
+    assert.strictEqual(resp?._id, docId);
+    assert.strictEqual(resp.name, 'soad');
   });
 
   it('should findOneAndReplace with returnDocument before', async () => {
@@ -40,12 +38,10 @@ parallel('integration.documents.collections.find-one-and-replace', { truncateCol
       { name: 'ignea' },
       {
         returnDocument: 'before',
-        includeResultMetadata: true,
       },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value?._id, docId);
-    assert.strictEqual(resp.value.name, 'clash');
+    assert.strictEqual(resp?._id, docId);
+    assert.strictEqual(resp.name, 'clash');
   });
 
   it('should findOneAndReplace with upsert true', async (key) => {
@@ -54,14 +50,12 @@ parallel('integration.documents.collections.find-one-and-replace', { truncateCol
       { _id: _id },
       { age: 13 },
       {
-        includeResultMetadata: true,
         returnDocument: 'after',
         upsert: true,
       },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value?._id, _id);
-    assert.strictEqual(resp.value.age, 13);
+    assert.strictEqual(resp?._id, _id);
+    assert.strictEqual(resp.age, 13);
   });
 
   it('should findOneAndReplace with upsert true and returnDocument before', async (key) => {
@@ -69,13 +63,11 @@ parallel('integration.documents.collections.find-one-and-replace', { truncateCol
       { _id: key },
       { age: 13 },
       {
-        includeResultMetadata: true,
         returnDocument: 'before',
         upsert: true,
       },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value, null);
+    assert.strictEqual(resp, null);
   });
 
   it('should findOneAndReplace with an empty doc', async () => {
@@ -89,10 +81,9 @@ parallel('integration.documents.collections.find-one-and-replace', { truncateCol
       {
         sort: { name: 1 },
         returnDocument: 'after',
-        includeResultMetadata: true,
       },
     );
-    assert.deepStrictEqual(res.value, { _id: res.value?._id });
+    assert.deepStrictEqual(res, { _id: res?._id });
   });
 
   it('should findOneAndReplace with a projection', async (key) => {
@@ -105,10 +96,10 @@ parallel('integration.documents.collections.find-one-and-replace', { truncateCol
     const res = await collection.findOneAndReplace(
       { name: 'a', key },
       { name: 'b', key },
-      { projection: { name: 1 }, returnDocument: 'after', includeResultMetadata: true },
+      { projection: { name: 1 }, returnDocument: 'after' },
     );
-    assert.strictEqual(res.value?.name, 'b');
-    assert.strictEqual(res.value.age, undefined);
+    assert.strictEqual(res?.name, 'b');
+    assert.strictEqual(res.age, undefined);
   });
 
   it('should findOneAndReplace with sort', async (key) => {
@@ -121,16 +112,16 @@ parallel('integration.documents.collections.find-one-and-replace', { truncateCol
     const res1 = await collection.findOneAndReplace(
       { key },
       { name: 'aaa', key },
-      { sort: { name: 1 }, includeResultMetadata: true },
+      { sort: { name: 1 } },
     );
-    assert.strictEqual(res1.value?.name, 'a');
+    assert.strictEqual(res1?.name, 'a');
 
     const res2 = await collection.findOneAndReplace(
       { key },
       { name: 'ccc', key },
-      { sort: { name: -1 }, includeResultMetadata: true },
+      { sort: { name: -1 } },
     );
-    assert.deepStrictEqual(res2.value?.name, 'c');
+    assert.deepStrictEqual(res2?.name, 'c');
   });
 
   it('should not return metadata when includeResultMetadata is false', async (key) => {
@@ -139,7 +130,7 @@ parallel('integration.documents.collections.find-one-and-replace', { truncateCol
     const res = await collection.findOneAndReplace(
       { name: 'a', key },
       { name: 'b', key },
-      { returnDocument: 'after', includeResultMetadata: false },
+      { returnDocument: 'after' },
     );
     assert.strictEqual(res?.name, 'b');
   });
@@ -166,41 +157,13 @@ parallel('integration.documents.collections.find-one-and-replace', { truncateCol
     const res = await collection.findOneAndReplace(
       { key },
       { name: 'aaa', key },
-      { sort: { $vector: [1, 1, 1, 1, 1] }, includeResultMetadata: true },
+      { sort: { $vector: [1, 1, 1, 1, 1] } },
     );
-    assert.strictEqual(res.value?.name, 'a');
+    assert.strictEqual(res?.name, 'a');
   });
 
-  it('should findOneAndReplace with vector sort in option', async (key) => {
-    await collection.insertMany([
-      { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
-      { name: 'c', $vector: [-.1, -.2, -.3, -.4, -.5], key },
-      { name: 'b', $vector: [-.1, -.2, -.3, -.4, -.5], key },
-    ]);
-
-    const res = await collection.findOneAndReplace(
-      { key },
-      { name: 'aaa', key },
-      { vector: [1, 1, 1, 1, 1], includeResultMetadata: true },
-    );
-    assert.strictEqual(res.value?.name, 'a');
-  });
-
-  it('should error when both sort and vector are provided', async () => {
-    await assert.rejects(async () => {
-      await collection.findOneAndReplace({}, {}, { returnDocument: 'after', sort: { name: 1 }, vector: [1, 1, 1, 1, 1] });
-    }, /Can't use both `sort` and `vector` options at once; if you need both, include a \$vector key in the sort object/);
-  });
-
-  it('should error when both sort and vectorize are provided', async () => {
-    await assert.rejects(async () => {
-      await collection.findOneAndReplace({}, {}, { returnDocument: 'after', sort: { name: 1 }, vectorize: 'American Idiot is a good song' });
-    }, /Can't use both `sort` and `vectorize` options at once; if you need both, include a \$vectorize key in the sort object/);
-  });
-
-  it('should error when both vector and vectorize are provided', async () => {
-    await assert.rejects(async () => {
-      await collection.findOneAndReplace({}, {}, { returnDocument: 'after', vector: [1, 1, 1, 1, 1], vectorize: 'American Idiot is a good song' });
-    }, /Cannot set both vectors and vectorize options/);
+  it('should return null if no document is found', async (key) => {
+    const res = await collection.findOneAndReplace({ key }, { set: { car: 'bus' } });
+    assert.strictEqual(res, null);
   });
 });

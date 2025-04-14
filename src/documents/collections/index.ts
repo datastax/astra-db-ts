@@ -13,6 +13,21 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export * from './collection';
-export type { TypeErr } from '../utils';
-export * from './types';
+export * from './cursors/find-cursor.js';
+export { CollectionFindAndRerankCursor } from './cursors/rerank-cursor.js';
+export { Collection } from './collection.js';
+
+export type * from './types/index.js';
+
+export * from './ser-des/codecs.js';
+export { CollectionCodecs } from './ser-des/codecs.js'; // 2nd export necessary for some reason; otherwise CollectionCodecs isn't available in CJS
+export { $SerializeForCollection, $DeserializeForCollection } from './ser-des/constants.js';
+
+export type {
+  CollectionSerDesConfig,
+  CollectionSerCtx,
+  CollectionDesCtx,
+} from './ser-des/ser-des.js';
+
+export type { CollNumCoercion, CollNumCoercionFn, CollNumCoercionCfg } from './ser-des/big-nums.js';
+export { NumCoercionError } from './ser-des/big-nums.js';

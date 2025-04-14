@@ -13,13 +13,21 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEMO_APPLICATION_URI, it, parallel, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
-import { DEFAULT_KEYSPACE, FetchNative } from '@/src/lib/api';
+import {
+  DEMO_APPLICATION_URI,
+  ENVIRONMENT,
+  it,
+  parallel,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib/index.js';
+import { DEFAULT_KEYSPACE, FetchNative } from '@/src/lib/api/index.js';
 import assert from 'assert';
+import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
 
 parallel('integration.lib.api.fetch.fetch-native', () => {
   const genericOptions = <const>{
-    url: `${TEST_APPLICATION_URI}/api/json/v1/${DEFAULT_KEYSPACE}`,
+    url: `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}`,
     method: 'POST',
     body: JSON.stringify({ findCollections: {} }),
     headers: { Token: TEST_APPLICATION_TOKEN, 'Content-Type': 'application/json' },
@@ -37,13 +45,13 @@ parallel('integration.lib.api.fetch.fetch-native', () => {
     assert.strictEqual(resp.statusText, 'OK');
     assert.strictEqual(resp.httpVersion, 1);
     assert.strictEqual(typeof resp.headers, 'object');
-    assert.strictEqual(resp.additionalAttributes, undefined);
+    assert.strictEqual(resp.extraLogInfo, undefined);
   });
 
   it('should throw custom timeout error on timeout', async () => {
     try {
       const fetcher = new FetchNative();
-      await fetcher.fetch({ ...genericOptions, timeout: 0 });
+      await fetcher.fetch({ ...genericOptions, timeout: 1 });
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof Error);
@@ -59,7 +67,6 @@ parallel('integration.lib.api.fetch.fetch-native', () => {
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof TypeError);
-      assert.ok(e.message.includes('Cannot create property'));
     }
   });
 

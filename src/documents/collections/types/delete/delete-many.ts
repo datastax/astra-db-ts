@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/** @internal */
-export interface DeleteManyCommand {
-  deleteMany: {
-    filter: Record<string, unknown>;
-  }
-}
+import type { GenericDeleteManyOptions, GenericDeleteManyResult } from '@/src/documents/index.js';
+
+export type CollectionDeleteManyOptions = GenericDeleteManyOptions;
 
 /**
  * Represents the result of a delete command.
@@ -28,9 +25,4 @@ export interface DeleteManyCommand {
  *
  * @public
  */
-export interface DeleteManyResult {
-  /**
-   * The number of deleted documents.
-   */
-  deletedCount: number;
-}
+export type CollectionDeleteManyResult = GenericDeleteManyResult;

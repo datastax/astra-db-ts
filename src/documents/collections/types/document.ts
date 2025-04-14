@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { DataAPIVector } from '@/src/documents/index.js';
+
 /**
  * Represents *some document*. It's not a base type, but rather more of a
  * bottom type which can represent any legal document, to give more dynamic
@@ -24,19 +26,19 @@
 export type SomeDoc = Record<string, any>;
 
 /**
- * Base type for a document that wishes to leverage raw vector capabilities.
- * 
+ * Utility type for a document that wishes to leverage raw vector capabilities.
+ *
  * @example
  * ```typescript
  * export interface Idea extends VectorDoc {
- *   category: string,
- *   idea: string,
+ *   category: string,
+ *   idea: string,
  * }
- * 
- * db.collection<Idea>('ideas').insertOne({
- *   category: 'doors',
- *   idea: 'Upside down doors',
- *   $vector: [.23, .05, .95, .83, .42],
+ *
+ * db.collections<Idea>('ideas').insertOne({
+ *   category: 'doors',
+ *   idea: 'Upside down doors',
+ *   $vector: [.23, .05, .95, .83, .42],
  * });
  * ```
  *
@@ -46,29 +48,33 @@ export interface VectorDoc {
   /**
    * A raw vector
    */
-  $vector?: number[],
+  $vector?: DataAPIVector,
 }
 
 /**
- * Base type for a document that wishes to leverage automatic vectorization (assuming the collection is vectorize-enabled).
+ * Utility type for a document that wishes to leverage automatic vectorization (assuming the collections is vectorize-enabled).
  *
  * @example
  * ```typescript
  * export interface Idea extends VectorizeDoc {
- *   category: string,
+ *   category: string,
  * }
  *
- * db.collection<Idea>('ideas').insertOne({
- *   category: 'doors',
- *   $vectorize: 'Upside down doors',
+ * db.collections<Idea>('ideas').insertOne({
+ *   category: 'doors',
+ *   $vectorize: 'Upside down doors',
  * });
  * ```
  *
  * @public
  */
-export interface VectorizeDoc {
+export interface VectorizeDoc extends VectorDoc {
   /**
    * A string field to be automatically vectorized
    */
-  $vectorize: string,
+  $vectorize?: string,
+}
+
+export interface LexicalDoc {
+  $lexical?: string,
 }

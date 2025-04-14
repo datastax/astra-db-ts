@@ -13,13 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { UsernamePasswordTokenProvider, StaticTokenProvider } from '@/src/lib';
-import { describe, it } from '@/tests/testlib';
+import { StaticTokenProvider, UsernamePasswordTokenProvider } from '@/src/lib/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 describe('unit.common.token-providers', () => {
-  const anyGlobalThis = globalThis as any;
-
   describe('StaticTokenProvider', () => {
     it('should provide the token it was given', () => {
       const tp = new StaticTokenProvider('token');
@@ -28,29 +26,18 @@ describe('unit.common.token-providers', () => {
   });
 
   describe('UsernamePasswordTokenProvider', () => {
-    it('should provide the properly encoded cassandra token in node', () => {
+    it('should provide the properly encoded cassandra token on the server', () => {
       const tp = new UsernamePasswordTokenProvider('username', 'password');
       assert.strictEqual(tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
     });
 
-    it('should provide the properly encoded cassandra token in the browser', () => {
-      const [window, buffer] = [anyGlobalThis.window, anyGlobalThis.Buffer];
-
-      anyGlobalThis.window = { btoa: anyGlobalThis.btoa };
-      anyGlobalThis.Buffer = null!;
+    it('should provide the properly encoded cassandra token in the browser', { pretendEnv: 'browser' }, () => {
       const tp = new UsernamePasswordTokenProvider('username', 'password');
       assert.strictEqual(tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
-
-      [anyGlobalThis.window, anyGlobalThis.Buffer] = [window, buffer];
     });
 
-    it('should throw an error if invalid environment', () => {
-      const buffer = globalThis.Buffer;
-
-      anyGlobalThis.Buffer = null!;
-      assert.throws(() => new UsernamePasswordTokenProvider('username', 'password'));
-
-      anyGlobalThis.Buffer = buffer;
+    it('should error in unknown environment', { pretendEnv: 'unknown' }, () => {
+      assert.throws(() => new UsernamePasswordTokenProvider('username', 'password'), { message: 'Unable to encode username/password to base64... please provide the "Cassandra:[username_b64]:[password_b64]" token manually' });
     });
   });
 });

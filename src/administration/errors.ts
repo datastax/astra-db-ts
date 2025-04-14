@@ -12,8 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FullDatabaseInfo } from '@/src/administration/types';
-import { FetcherResponseInfo } from '@/src/lib/api';
+import type { FetcherResponseInfo} from '@/src/lib/api/index.js';
+import { type TimeoutDescriptor } from '@/src/lib/api/index.js';
+import type { SomeDoc } from '@/src/documents/index.js';
+import type { HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import type { TimedOutCategories} from '@/src/lib/api/timeouts/timeouts.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
@@ -64,18 +68,31 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
   /**
    The timeout that was set for the operation, in milliseconds.
    */
-  public readonly timeout: number;
+  public readonly timeout: Partial<TimeoutDescriptor>;
+
+  /**
+   * Represents which timeouts timed out (e.g. `'requestTimeoutMs'`, `'tableAdminTimeoutMs'`, the provided timeout, etc.)
+   */
+  public readonly timedOutCategories: TimedOutCategories;
 
   /**
    * Shouldn't be instantiated directly.
    *
    * @internal
    */
-  constructor(url: string, timeout: number) {
-    super(`Command timed out after ${timeout}ms`);
-    this.url = url;
-    this.timeout = timeout;
+  constructor(info: HTTPRequestInfo, types: TimedOutCategories) {
+    super(Timeouts.fmtTimeoutMsg(info.timeoutManager, types));
+    this.url = info.url;
+    this.timeout = info.timeoutManager.initial();
+    this.timedOutCategories = types;
     this.name = 'DevOpsAPITimeoutError';
+  }
+
+  /**
+   * @internal
+   */
+  public static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError {
+    return new DevOpsAPITimeoutError(info, types);
   }
 }
 
@@ -109,7 +126,7 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
    *
    * @internal
    */
-  constructor(resp: FetcherResponseInfo, data: Record<string, any> | undefined) {
+  constructor(resp: FetcherResponseInfo, data: SomeDoc | undefined) {
     const errors = data?.errors ?? [];
     const maybeMsg = errors.find((e: any) => e.message)?.message;
 
@@ -122,39 +139,6 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
     this.status = resp.status;
     this.raw = resp;
     this.name = 'DevOpsAPIResponseError';
-  }
-}
-
-/**
- * Error thrown when the DevOps API returns is in an unexpected state (i.e. `'PARKED'` when `'ACTIVE'` or `'PENDING'`
- * was expected).
- *
- * @field dbInfo - The complete database info, which includes the status of the database.
- * @field status - The HTTP status code of the response, if available.
- *
- * @public
- */
-export class DevOpsUnexpectedStateError extends DevOpsAPIError {
-  /**
-   * The expected states that were not met.
-   */
-  public readonly expected: string[];
-
-  /**
-   * The complete database info, which includes the status of the database.
-   */
-  public readonly dbInfo?: FullDatabaseInfo;
-
-  /**
-   * Shouldn't be instantiated directly.
-   *
-   * @internal
-   */
-  constructor(message: string, expected: string[], data: Record<string, any> | undefined) {
-    super(message);
-    this.expected = expected;
-    this.dbInfo = data as FullDatabaseInfo;
-    this.name = 'DevOpsUnexpectedStateError';
   }
 }
 

@@ -14,11 +14,11 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { Filter } from '@/src/documents/collections/types';
-import type { ConvolutedSchema2, Schema } from '@/tests/typing/prelude';
-import { SomeDoc } from '@/src/documents/collections';
+import type { CollectionFilter } from '@/src/documents/collections/types/index.js';
+import type { ConvolutedSchema2, Schema } from '@/tests/typing/prelude.js';
+import type { SomeDoc } from '@/src/documents/collections/index.js';
 
-const test2: Filter<Schema> = {
+const test2: CollectionFilter<Schema> = {
   num1: 1,
   num2: { $in: [1, 2, 3] },
   'obj.obj.num': 3,
@@ -35,7 +35,7 @@ const test2: Filter<Schema> = {
   ],
 };
 
-const test3: Filter<Schema> = {
+const test3: CollectionFilter<Schema> = {
   // @ts-expect-error - Invalid type
   num1: '1',
   num2: {
@@ -46,7 +46,7 @@ const test3: Filter<Schema> = {
       '3',
     ],
   },
-  // Doesn't check nested types
+  // @ts-expect-error - Invalid type
   'obj.obj.num': '3',
   $and: [
     {
@@ -77,7 +77,6 @@ const test3: Filter<Schema> = {
           },
         }, {
           num1: {
-            // @ts-expect-error - Invalid op
             $size: 3,
           },
         },
@@ -86,7 +85,7 @@ const test3: Filter<Schema> = {
   ],
 };
 
-const test4: Filter<SomeDoc> = {
+const test4: CollectionFilter<SomeDoc> = {
   num1: '1',
   num2: { $in: [1, 2, '3'] },
   'obj.obj.num': '3',
@@ -102,12 +101,12 @@ const test4: Filter<SomeDoc> = {
   ],
 };
 
-const test5: Filter<Schema> = {
+const test5: CollectionFilter<Schema> = {
   // Doesn't check nested paths
   'obj.obj.xyz': null!,
 };
 
-const test6: Filter<ConvolutedSchema2> = {
+const test6: CollectionFilter<ConvolutedSchema2> = {
   $or: [
     { numOrArray: { $in: [['1'], 2] } },
     { numOrArray: { $gte: 3 } },
@@ -115,7 +114,7 @@ const test6: Filter<ConvolutedSchema2> = {
   ],
 };
 
-const test7: Filter<any> = {
+const test7: CollectionFilter<any> = {
   $and: [
     { $or: [] },
     { $not: { $and: [ { 'some_random_key': Symbol.for('123') } ] } },
@@ -123,7 +122,7 @@ const test7: Filter<any> = {
   '123123123': 123123,
 };
 
-const test8: Filter<any> = {
+const test8: CollectionFilter<any> = {
   // @ts-expect-error - Invalid type
   $and: 3,
 };

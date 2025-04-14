@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './client';
-export * from './db';
-export * from './documents';
-export * from './administration';
-export * from './lib';
+export * from './client/index.js';
+export * from './db/index.js';
+export * from './documents/index.js';
+export * from './administration/index.js';
+export * from './lib/index.js';
+export * from './version.js';
+export { BigNumber } from 'bignumber.js';

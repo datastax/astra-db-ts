@@ -12,56 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPITimeoutError } from '@/src/documents';
-import { DEFAULT_COLLECTION_NAME, initTestObjects, it, parallel } from '@/tests/testlib';
+import { DataAPIResponseError } from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { CollectionNotFoundError } from '@/src/db/errors';
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 
 parallel('integration.documents.collections.misc', ({ db }) => {
-  it('times out on http2', async () => {
-    const { db: newDb } = initTestObjects({ httpClient: 'default:http2' });
-
-    try {
-      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
-    } catch (e) {
-      assert.ok(e instanceof DataAPITimeoutError);
-      assert.strictEqual(e.message, 'Command timed out after 10ms');
-    }
-  });
-
-  it('times out on http1', async () => {
-    const { db: newDb } = initTestObjects({ httpClient: 'default:http1' });
-
-    try {
-      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
-    } catch (e) {
-      assert.ok(e instanceof DataAPITimeoutError);
-      assert.strictEqual(e.message, 'Command timed out after 10ms');
-    }
-  });
-
-  it('CollectionNotFoundError is thrown when doing data api operation on non-existent collection', async () => {
+  it('DataAPIResponseError is thrown when doing data api operation on non-existent collections', async () => {
     const collection = db.collection('non_existent_collection');
-
-    try {
-      await collection.insertOne({ username: 'test' });
-    } catch (e) {
-      assert.ok(e instanceof CollectionNotFoundError);
-      assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(e.collectionName, 'non_existent_collection');
-    }
-  });
-
-  it('CollectionNotFoundError is thrown when doing .options() on non-existent collection', async () => {
-    const collection = db.collection('non_existent_collection');
-
-    try {
-      await collection.options();
-    } catch (e) {
-      assert.ok(e instanceof CollectionNotFoundError);
-      assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(e.collectionName, 'non_existent_collection');
-    }
+    await assert.rejects(() => collection.insertOne({ username: 'test' }), DataAPIResponseError);
   });
 });

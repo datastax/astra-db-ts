@@ -1,27 +1,22 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "commonjs",
-    "moduleResolution": "node",
-    "declaration": true,
+    "module": "nodenext",
     "noEmitOnError": true,
     "baseUrl": ".",
-    "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "useDefineForClassFields": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
+    "importHelpers": true,
     "skipLibCheck": true,
+    "isolatedModules": true,
     "paths": {
       "@/src/*": ["./src/*"],
-      "@/tests/*": ["./tests/*"]
+      "@/tests/*": ["./tests/*"],
     },
-    "lib": [
-      "es2020",
-      "esnext.disposable",
-      "dom"
-    ]
+    "lib": ["es2020", "dom"],
   },
-  "include": ["tests/**/*", "src/**/*"]
+  "include": ["src", "tests"],
 }

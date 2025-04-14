@@ -19,12 +19,23 @@ import {
   createSampleDocWithMultiLevel,
   it,
   parallel,
-} from '@/tests/testlib';
+} from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 // I was going to go through split this up but yeah... no
 // Don't want to spend too much time sifting through a thousand lines of intertwined tests
-parallel('integration.documents.collections.finds', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.finds', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
+  it('should find & findOne document with an empty filter', async (key) => {
+    const { insertedId } = await collection_.insertOne({ key });
+
+    for (const filter of [null, undefined, {}]) {
+      const resDoc = await collection_.findOne(filter!);
+      assert.deepStrictEqual(resDoc, { _id: insertedId, key });
+      const resArr = await collection_.find(filter!).toArray();
+      assert.deepStrictEqual(resArr, [{ _id: insertedId, key }]);
+    }
+  });
+
   it('should find & findOne document', async (key) => {
     const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel(key));
     const idToCheck = insertDocResp.insertedId;
@@ -91,13 +102,13 @@ parallel('integration.documents.collections.finds', { truncateColls: 'default:be
     let docs = await collection.find({ key }, { sort: { username: 1, age: 1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [1, 2, 3]);
 
-    docs = await collection.find({ key }, { sort: { username: "asc", age: "desc" }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: 1, age: -1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [3, 2, 1]);
 
-    docs = await collection.find({ key }, { sort: { username: -1, age: "ascending" }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: -1, age: 1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [1, 2, 3]);
 
-    docs = await collection.find({ key }, { sort: { username: -1, age: "descending" }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: -1, age: -1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [3, 2, 1]);
   });
 
@@ -756,7 +767,7 @@ parallel('integration.documents.collections.finds', { truncateColls: 'default:be
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
     let idsArr = [`${key}1`, `${key}2`, `${key}3`];
-    let ids: Set<string> = new Set(idsArr);
+    let ids = new Set<string>(idsArr);
     let filter = { '_id': { '$in': idsArr }, key };
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 3);
@@ -959,7 +970,7 @@ parallel('integration.documents.collections.finds', { truncateColls: 'default:be
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 1);
     //check if the doc ids of the returned docs are in the input list
-    const idsToCheck: Set<string> = new Set([`${key}6`]);
+    const idsToCheck = new Set<string>([`${key}6`]);
     findRespDocs.forEach((doc) => {
       assert.ok(doc._id);
       assert.ok(doc.city);

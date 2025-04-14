@@ -12,22 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { LIB_NAME, LIB_VERSION } from '@/src/version';
-
-/**
- * @internal
- */
-export const RAGSTACK_REQUESTED_WITH = (() => {
-  try {
-    // Do not use require() here, it will break the build in some environments such as NextJS application
-    // if @datastax/ragstack-ai is not installed (which is perfectly fine).
-    const ragstack = eval(`require('@datastax/ragstack-ai')`);
-    const version = ragstack['RAGSTACK_VERSION'] || '?';
-    return `ragstack-ai-ts/${version}`;
-  } catch (_) {
-    return '';
-  }
-})();
+import { LIB_NAME, LIB_VERSION } from '@/src/version.js';
+import type { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler.js';
+import type { DataAPIEnvironment } from '@/src/lib/index.js';
 
 /**
  * @internal
@@ -49,11 +36,6 @@ export const HttpMethods = {
  * @public
  */
 export const DEFAULT_KEYSPACE = 'default_keyspace';
-
-/**
- * @internal
- */
-export const DEFAULT_TIMEOUT = 30000;
 
 /**
  * @internal
@@ -83,4 +65,4 @@ export const DEFAULT_DATA_API_PATHS = {
   hcd: 'v1',
   cassandra: 'v1',
   other: 'v1',
-};
+} as Record<ParsedEnvironment | DataAPIEnvironment, string>;

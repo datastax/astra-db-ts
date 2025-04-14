@@ -19,7 +19,7 @@ and then list out the keyspaces that exist on the DSE instance.
 
 2. Run `npm install` to install the required dependencies.
 
-3. Run `docker-compose -f scripts/docker-compose-stargate.yml up` to start the services (wait for the Data API to fully start up)
+3. Run `docker-compose -f etc/docker-compose-stargate.yml up` to start the services (wait for the Data API to fully start up)
 
 4. Run `npm run start` to run the local `astra-db-ts` script
 

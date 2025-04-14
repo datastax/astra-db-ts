@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEMO_APPLICATION_URI, describe, it } from '@/tests/testlib';
+import { DEMO_APPLICATION_URI, describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { extractAstraEnvironment } from '@/src/administration/utils';
+import { extractAstraEnvironment } from '@/src/administration/utils.js';
 
 describe('unit.administration.utils', () => {
   describe('extractAstraEnvironment', () => {
@@ -23,7 +23,8 @@ describe('unit.administration.utils', () => {
       assert.strictEqual(extractAstraEnvironment(DEMO_APPLICATION_URI), 'prod');
       assert.strictEqual(extractAstraEnvironment('|apps.astra-dev.datastax.com|'), 'dev');
       assert.strictEqual(extractAstraEnvironment('|apps.astra-test.datastax.com|'), 'test');
-      assert.throws(() => extractAstraEnvironment('castamere'));
+      assert.throws(() => extractAstraEnvironment('|apps.astra-car.datastax.com|'));
+      assert.throws(() => extractAstraEnvironment('astra-dev'));
     });
   });
 });

@@ -13,194 +13,253 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/documents/events';
+import type { InternalLogger } from '@/src/lib/logging/internal-logger.js';
+import type { NonEmpty, RawDataAPIResponse } from '@/src/lib/index.js';
 import {
-  DataAPIHttpError,
-  DataAPIResponseError,
-  DataAPITimeoutError,
-  mkRespErrorFromResponse,
-} from '@/src/documents/errors';
-import TypedEmitter from 'typed-emitter';
-import { DataAPIClientEvents } from '@/src/client';
-import {
-  AdminCommandFailedEvent,
-  AdminCommandStartedEvent,
-  AdminCommandSucceededEvent,
-  AdminSpawnOptions,
-} from '@/src/administration';
-import { CollectionNotFoundError } from '@/src/db/errors';
-import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
-import { WithNullableKeyspace } from '@/src/db/types/collections-common';
-import { RawDataAPIResponse } from '@/src/lib/api';
-import { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
-import { nullish, TokenProvider } from '@/src/lib';
-import { hrTimeMs, HttpClient } from '@/src/lib/api/clients/http-client';
-import { CollectionSpawnOptions } from '@/src/db';
-import { isNullish, resolveKeyspace } from '@/src/lib/utils';
-import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
+  EmbeddingAPIKeyHeaderProvider,
+  HeadersProvider,
+  RerankingAPIKeyHeaderProvider,
+  TokenProvider,
+} from '@/src/lib/index.js';
+import type { DataAPIWarningDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
+import { Collection, DataAPIHttpError, DataAPIResponseError, DataAPITimeoutError } from '@/src/documents/index.js';
+import type { HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types.js';
+import { HttpClient } from '@/src/lib/api/clients/http-client.js';
+import { HttpMethods } from '@/src/lib/api/constants.js';
+import type { CollectionOptions, TableOptions } from '@/src/db/index.js';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import type { EmptyObj } from '@/src/lib/types.js';
+import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
+import type { DbAdmin } from '@/src/administration/index.js';
+import { NonErrorError } from '@/src/lib/errors.js';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
+import { isNonEmpty } from '@/src/lib/utils.js';
+
+/**
+ * @internal
+ */
+type ClientKind = 'admin' | 'normal';
+
+/**
+ * @internal
+ */
+type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName: DevOpsAPIRequestInfo['methodName'] } : EmptyObj) & {
+  keyspace?: string | null,
+  timeoutManager: TimeoutManager,
+  bigNumsPresent?: boolean,
+  collection?: string,
+  table?: string,
+  extraLogInfo?: Record<string, unknown>,
+}
 
 /**
  * @internal
  */
 export interface DataAPIRequestInfo {
   url: string,
-  collection?: string,
-  keyspace?: string | null,
+  tOrC: string | undefined,
+  tOrCType: 'table' | 'collection' | undefined,
+  keyspace: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
+  bigNumsPresent: boolean | undefined,
 }
 
 /**
  * @internal
  */
-interface ExecuteCommandOptions extends WithNullableKeyspace {
-  collection?: string,
+type EmissionStrategy<Kind extends ClientKind> = (logger: InternalLogger<any>) => {
+  emitCommandStarted?(requestId: string, info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
+  emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse | undefined, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandSucceeded?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: NonEmpty<DataAPIWarningDescriptor>, opts: ExecCmdOpts<Kind>): void,
 }
 
 /**
  * @internal
  */
-type EmissionStrategy = (emitter: TypedEmitter<DataAPIClientEvents>) => {
-  emitCommandStarted(info: DataAPIRequestInfo): void,
-  emitCommandFailed(info: DataAPIRequestInfo, error: Error, started: number): void,
-  emitCommandSucceeded(info: DataAPIRequestInfo, resp: RawDataAPIResponse, warnings: string[], started: number): void,
+interface EmissionStrategies {
+  Normal: EmissionStrategy<'normal'>,
+  Admin: EmissionStrategy<'admin'>,
 }
 
 /**
  * @internal
  */
-export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
-  Normal: (emitter) => ({
-    emitCommandStarted(info) {
-      emitter.emit('commandStarted', new CommandStartedEvent(info));
+export const EmissionStrategy: EmissionStrategies = {
+  Normal: (logger) => ({
+    emitCommandStarted(reqId, info, opts) {
+      logger.commandStarted?.(reqId, info, opts.extraLogInfo);
     },
-    emitCommandFailed(info, error, started) {
-      emitter.emit('commandFailed', new CommandFailedEvent(info, error, started));
+    emitCommandFailed(reqId, info, resp, error, started, opts) {
+      logger.commandFailed?.(reqId, info, opts.extraLogInfo, resp, error, started);
     },
-    emitCommandSucceeded(info, resp, warnings, started) {
-      emitter.emit('commandSucceeded', new CommandSucceededEvent(info, resp, warnings, started));
+    emitCommandSucceeded(reqId, info, resp, started, opts) {
+      logger.commandSucceeded?.(reqId, info, opts.extraLogInfo, resp, started);
+    },
+    emitCommandWarnings(reqId, info, warnings, opts) {
+      logger.commandWarnings?.(reqId, info, opts.extraLogInfo, warnings);
     },
   }),
-  Admin: (emitter) => ({
-    emitCommandStarted(info) {
-      emitter.emit('adminCommandStarted', new AdminCommandStartedEvent(adaptInfo4Devops(info), true, info.timeoutManager.msRemaining()));
+  Admin: (logger) => ({
+    emitCommandStarted(reqId, info, opts) {
+      logger.adminCommandStarted?.(reqId, '', adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
     },
-    emitCommandFailed(info, error, started) {
-      emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(adaptInfo4Devops(info), true, error, started));
+    emitCommandFailed(reqId, info, _, error, started, opts) {
+      logger.adminCommandFailed?.(reqId, '', adaptInfo4Devops(info, opts.methodName), true, error, started);
     },
-    emitCommandSucceeded(info, resp, warnings, started) {
-      emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(adaptInfo4Devops(info), true, resp, warnings, started));
+    emitCommandSucceeded(reqId, info, resp, started, opts) {
+      logger.adminCommandSucceeded?.(reqId, '', adaptInfo4Devops(info, opts.methodName), true, resp, started);
+    },
+    emitCommandWarnings(reqId, info, warnings, opts) {
+      logger.adminCommandWarnings?.(reqId, '', adaptInfo4Devops(info, opts.methodName), true, warnings);
     },
   }),
 };
 
-const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
+const adaptInfo4Devops = (info: DataAPIRequestInfo, methodName: DevOpsAPIRequestInfo['methodName']) => (<const>{
   method: 'POST',
   data: info.command,
   path: info.url,
-  params: {},
+  methodName,
 });
 
 /**
  * @internal
  */
-interface DataAPIHttpClientOpts extends HTTPClientOptions {
+interface DataAPIHttpClientOpts<Kind extends ClientKind> extends Omit<HTTPClientOptions, 'mkTimeoutError'> {
   keyspace: KeyspaceRef,
-  emissionStrategy: EmissionStrategy,
-  embeddingHeaders: EmbeddingHeadersProvider,
-  tokenProvider: TokenProvider,
+  emissionStrategy: EmissionStrategy<Kind>,
+  tokenProvider: ParsedTokenProvider,
 }
 
 /**
  * @internal
  */
-export class DataAPIHttpClient extends HttpClient {
-  public collection?: string;
+export interface BigNumberHack {
+  parseWithBigNumbers(json: string): boolean,
+  parser: {
+    parse: (json: string) => SomeDoc,
+    stringify: (obj: SomeDoc) => string,
+  },
+}
+
+/**
+ * @internal
+ */
+export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpClient {
+  public collectionName?: string;
+  public tableName?: string;
   public keyspace: KeyspaceRef;
-  public maxTimeMS: number;
-  public emissionStrategy: ReturnType<EmissionStrategy>;
-  readonly #props: DataAPIHttpClientOpts;
+  public emissionStrategy: ReturnType<EmissionStrategy<Kind>>;
+  public bigNumHack?: BigNumberHack;
 
-  constructor(props: DataAPIHttpClientOpts) {
-    super(props, [mkAuthHeaderProvider(props.tokenProvider), props.embeddingHeaders.getHeaders.bind(props.embeddingHeaders)]);
-    this.keyspace = props.keyspace;
-    this.#props = props;
-    this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
-    this.emissionStrategy = props.emissionStrategy(props.emitter);
-  }
+  readonly #props: DataAPIHttpClientOpts<Kind>;
 
-  public forCollection(keyspace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
-    const clone = new DataAPIHttpClient({
-      ...this.#props,
-      embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
-      keyspace: { ref: keyspace },
+  constructor(opts: DataAPIHttpClientOpts<Kind>) {
+    super('data-api', {
+      ...opts,
+      additionalHeaders: HeadersProvider.opts.fromObj.concat([
+        opts.additionalHeaders,
+        opts.tokenProvider.toHeadersProvider(),
+      ]),
+      mkTimeoutError: DataAPITimeoutError.mk,
     });
 
-    clone.collection = collection;
-    clone.maxTimeMS = opts?.defaultMaxTimeMS ?? this.maxTimeMS;
+    this.keyspace = opts.keyspace;
+    this.#props = opts;
+    this.emissionStrategy = opts.emissionStrategy(opts.logger.internal);
+  }
+
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(tSlashC: Collection | Table<SomeRow>, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
+    const clone = new DataAPIHttpClient({
+      ...this.#props,
+      emissionStrategy: EmissionStrategy.Normal,
+      keyspace: { ref: tSlashC.keyspace },
+      logger: tSlashC,
+      additionalHeaders: HeadersProvider.opts.monoid.concat([
+        this.#props.additionalHeaders,
+        HeadersProvider.opts.fromStr(EmbeddingAPIKeyHeaderProvider).parse(opts?.embeddingApiKey),
+        HeadersProvider.opts.fromStr(RerankingAPIKeyHeaderProvider).parse(opts?.rerankingApiKey),
+      ]),
+    });
+
+    if (tSlashC instanceof Collection) {
+      clone.collectionName = tSlashC.name;
+    } else {
+      clone.tableName = tSlashC.name;
+    }
+
+    clone.bigNumHack = bigNumHack;
+    clone.tm = new Timeouts(DataAPITimeoutError.mk, Timeouts.cfg.parse({ ...this.tm.baseTimeouts, ...opts?.timeoutDefaults }));
 
     return clone;
   }
 
-  public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient {
+  public forDbAdmin(dbAdmin: DbAdmin, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken) : this.#props.tokenProvider,
-      monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
-      baseUrl: opts?.endpointUrl || this.#props.baseUrl,
+      tokenProvider: TokenProvider.opts.concat([opts.adminToken, this.#props.tokenProvider]),
+      baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
+      emissionStrategy: EmissionStrategy.Admin,
+      logger: dbAdmin,
     });
 
-    clone.emissionStrategy = EmissionStrategy.Admin(this.emitter);
-    clone.collection = undefined;
+    clone.collectionName = undefined;
+    clone.tableName = undefined;
+    clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
 
     return clone;
   }
 
-  public timeoutManager(timeout: number | undefined) {
-    timeout ??= this.maxTimeMS;
-    return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
-  }
+  public async executeCommand(command: Record<string, any>, options: ExecCmdOpts<Kind>): Promise<RawDataAPIResponse> {
+    if (options?.collection && options.table) {
+      throw new Error('Can\'t provide both `table` and `collection` as options to DataAPIHttpClient.executeCommand()');
+    }
 
-  public async executeCommand(command: Record<string, any>, options: TimeoutOptions & ExecuteCommandOptions | undefined) {
-    const timeoutManager = options?.timeoutManager ?? this.timeoutManager(options?.maxTimeMS);
+    const tOrC = options.collection || options.table || this.collectionName || this.tableName;
+    const keyspace = options.keyspace === undefined ? this.keyspace?.ref : options.keyspace;
 
-    return await this._requestDataAPI({
+    if (keyspace === undefined) {
+      throw new Error('Db is missing a required keyspace; be sure to set one with client.db(..., { keyspace }), or db.useKeyspace()');
+    }
+
+    if (keyspace === null && tOrC) {
+      throw new Error('Keyspace may not be `null` when a table or collection is provided to DataAPIHttpClient.executeCommand()');
+    }
+
+    const info: DataAPIRequestInfo = {
       url: this.baseUrl,
-      timeoutManager: timeoutManager,
-      collection: options?.collection,
-      keyspace: resolveKeyspace(options, true),
+      tOrC: tOrC,
+      tOrCType: !tOrC ? undefined : tOrC === (options.table || this.tableName) ? 'table' : 'collection',
+      keyspace: keyspace,
       command: command,
-    });
-  }
+      timeoutManager: options.timeoutManager,
+      bigNumsPresent: options.bigNumsPresent,
+    };
 
-  private async _requestDataAPI(info: DataAPIRequestInfo): Promise<RawDataAPIResponse> {
-    let started = 0;
+    const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
+    const collectionPath = info.tOrC ? `/${info.tOrC}` : '';
+    info.url += keyspacePath + collectionPath;
+
+    const requestId = this.logger.internal.generateCommandRequestId();
+
+    this.emissionStrategy.emitCommandStarted?.(requestId, info, options);
+    const started = performance.now();
+
+    let clonedData: RawDataAPIResponse | undefined;
 
     try {
-      info.collection ||= this.collection;
-
-      if (info.keyspace !== null) {
-        info.keyspace ||= this.keyspace?.ref;
-
-        if (isNullish(info.keyspace)) {
-          throw new Error('Db is missing a required keyspace; be sure to set one w/ client.db(..., { keyspace }), or db.useKeyspace()');
-        }
-      }
-
-      const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
-      const collectionPath = info.collection ? `/${info.collection}` : '';
-      info.url += keyspacePath + collectionPath;
-
-      if (this.monitorCommands) {
-        started = hrTimeMs();
-        this.emissionStrategy.emitCommandStarted(info);
-      }
+      const serialized = (info.bigNumsPresent)
+        ? this.bigNumHack?.parser.stringify(info.command)
+        : JSON.stringify(info.command);
 
       const resp = await this._request({
         url: info.url,
-        data: JSON.stringify(info.command, replacer),
+        data: serialized,
         timeoutManager: info.timeoutManager,
         method: HttpMethods.Post,
       });
@@ -209,18 +268,25 @@ export class DataAPIHttpClient extends HttpClient {
         throw new DataAPIHttpError(resp);
       }
 
-      const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
+      const data = (resp.body)
+        ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
+          ? this.bigNumHack?.parser.parse(resp.body)
+          : JSON.parse(resp.body)
+        /* c8 ignore next: exceptional case */
+        : {};
+
+      clonedData = requestId
+        ? structuredClone(data)
+        : undefined;
 
       const warnings = data?.status?.warnings ?? [];
-      delete data?.status?.warnings;
 
-      if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
-        const name = data.errors[0]?.message.split(': ')[1];
-        throw new CollectionNotFoundError(info.keyspace ?? '<unknown>', name);
+      if (warnings.length) {
+        this.emissionStrategy.emitCommandWarnings?.(requestId, info, warnings, options);
       }
 
-      if (data.errors && data.errors.length > 0) {
-        throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data, warnings);
+      if (data.errors && isNonEmpty(data.errors)) {
+        throw new DataAPIResponseError(info.command, data);
       }
 
       const respData = {
@@ -229,68 +295,12 @@ export class DataAPIHttpClient extends HttpClient {
         errors: data.errors,
       };
 
-      if (this.monitorCommands) {
-        this.emissionStrategy.emitCommandSucceeded(info, respData, warnings, started);
-      }
-
+      this.emissionStrategy.emitCommandSucceeded?.(requestId, info, clonedData!, started, options);
       return respData;
-    } catch (e: any) {
-      if (this.monitorCommands) {
-        this.emissionStrategy.emitCommandFailed(info, e, started);
-      }
-      throw e;
+    } catch (thrown) {
+      const err = NonErrorError.asError(thrown);
+      this.emissionStrategy.emitCommandFailed?.(requestId, info, clonedData, err, started, options);
+      throw err;
     }
   }
 }
-
-/**
- * @internal
- */
-export function replacer(this: any, key: string, value: any): any {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-
-  if (typeof this[key] === 'object') {
-    if (key === '$date') {
-      return new Date(value).valueOf();
-    }
-
-    if (this[key] instanceof Date) {
-      return { $date: this[key].valueOf() };
-    }
-  }
-
-  return value;
-}
-
-/**
- * @internal
- */
-export function reviver(_: string, value: any): any {
-  if (!value) {
-    return value;
-  }
-  if (value.$date) {
-    return new Date(value.$date);
-  }
-  if (value.$objectId) {
-    return new ObjectId(value.$objectId);
-  }
-  if (value.$uuid) {
-    return new UUID(value.$uuid);
-  }
-  return value;
-}
-
-const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
-  const token = tp.getToken();
-
-  return (token instanceof Promise)
-    ? token.then(mkAuthHeader)
-    : mkAuthHeader(token);
-};
-
-const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
-  ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }
-  : {};

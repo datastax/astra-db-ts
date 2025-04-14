@@ -21,23 +21,25 @@ import {
   OTHER_KEYSPACE,
   parallel,
   TEST_APPLICATION_URI,
-} from '@/tests/testlib';
+} from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { DataAPIHttpError, DataAPIResponseError } from '@/src/documents';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
+import { DataAPIHttpError, DataAPIResponseError } from '@/src/documents/index.js';
 
-describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
+describe('integration.lib.api.clients.data-api-http-client', ({ db }) => {
   let httpClient: DataAPIHttpClient;
 
   before(async () => {
-    httpClient = db['_httpClient'];
+    httpClient = db._httpClient;
   });
 
   parallel('executeCommand tests', () => {
     it('should execute a db-level command', async () => {
       const resp = await httpClient.executeCommand({
         findCollections: {},
-      }, {});
+      }, {
+        timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
+      });
       assert.strictEqual(typeof resp.status?.collections.length, 'number');
     });
 
@@ -45,15 +47,17 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
       const resp = await httpClient.executeCommand({
         findCollections: {},
       }, {
+        timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
         keyspace: OTHER_KEYSPACE,
       });
       assert.strictEqual(resp.status?.collections.length, 1);
     });
 
-    it('should execute a collection-level command', async () => {
+    it('should execute a collections-level command', async () => {
       const resp = await httpClient.executeCommand({
         insertOne: { document: { name: 'John' } },
       }, {
+        timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
         collection: DEFAULT_COLLECTION_NAME,
       });
       assert.ok(resp.status?.insertedIds[0]);
@@ -61,25 +65,28 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
 
     it('should error on DataAPIResponseError token', async () => {
       const { client } = initTestObjects();
-      const httpClient = client.db(TEST_APPLICATION_URI, { token: 'invalid-token' })['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI, { token: 'invalid-token' })._httpClient;
 
       try {
-        await httpClient.executeCommand({ findCollections: {} }, {});
+        await httpClient.executeCommand({ findCollections: {} }, {
+          timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
+        });
         assert.fail('Expected error');
       } catch (e) {
         assert.ok(e instanceof DataAPIResponseError);
         assert.strictEqual(e.errorDescriptors.length, 1);
-        assert.strictEqual(e.detailedErrorDescriptors.length, 1);
         assert.strictEqual(e.errorDescriptors[0].errorCode, 'UNAUTHENTICATED_REQUEST');
       }
     });
 
     it('should throw DataAPIHttpError on invalid url', async () => {
       const { client } = initTestObjects();
-      const httpClient = client.db(TEST_APPLICATION_URI + '/invalid_path')['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI + '/invalid_path')._httpClient;
 
       try {
-        await httpClient.executeCommand({ findCollections: {} }, {});
+        await httpClient.executeCommand({ findCollections: {} }, {
+          timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
+        });
         assert.fail('Expected error');
       } catch (e) {
         assert.ok(e instanceof DataAPIHttpError);

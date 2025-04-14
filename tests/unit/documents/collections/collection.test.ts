@@ -12,26 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from '@/src/documents/collections';
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { DEFAULT_COLLECTION_NAME, describe, it } from '@/tests/testlib';
-import assert from 'assert';
+import { describe } from '@/tests/testlib/index.js';
+import { Collection, CollectionFindAndRerankCursor, CollectionFindCursor } from '@/src/documents/index.js';
+import { unitTestTableSlashColls } from '@/tests/unit/documents/__common/table-slash-coll.js';
+import type { CollectionOptions } from '@/src/db/index.js';
 
-describe('unit.documents.collections', ({ db, collection }) => {
-  describe('initialization', () => {
-    it('should initialize a Collection', () => {
-      const collection = new Collection(db, db['_httpClient'], 'new_collection', undefined);
-      assert.ok(collection);
-    });
-  });
-
-  describe('accessors', () => {
-    it('returns the keyspace', () => {
-      assert.strictEqual(collection.keyspace, DEFAULT_KEYSPACE);
-    });
-
-    it('returns the name', () => {
-      assert.strictEqual(collection.collectionName, DEFAULT_COLLECTION_NAME);
-    });
+describe('unit.documents.collections.collection', () => {
+  unitTestTableSlashColls({
+    className: 'Collection',
+    mkTSlashC: (db, httpClient, name, rootOpts, tableOpts) => new Collection(db, httpClient, name, rootOpts, tableOpts as CollectionOptions),
+    findCursorClass: CollectionFindCursor,
+    rerankCursorClass: CollectionFindAndRerankCursor,
   });
 });

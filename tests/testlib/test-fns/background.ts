@@ -13,13 +13,14 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import { initTestObjects } from '@/tests/testlib/fixtures';
-import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils';
-import { SuiteBlock, TEST_FILTER } from '@/tests/testlib';
-import { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuiteSpec } from '@/tests/testlib/test-fns/types';
-import { UUID } from '@/src/documents';
+import { initTestObjects } from '@/tests/testlib/fixtures.js';
+import { checkTestsEnabled, tryCatchErrAsync } from '@/tests/testlib/utils.js';
+import type { SuiteBlock } from '@/tests/testlib/index.js';
+import { CURRENT_DESCRIBE_NAMES } from '@/tests/testlib/index.js';
+import type { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types.js';
+import { UUID } from '@/src/documents/index.js';
 
-export const backgroundTestState: GlobalAsyncSuiteSpec = {
+export const backgroundTestState: GlobalAsyncSuitesSpec = {
   inBlock: false,
   suites: [],
   describe() {
@@ -53,11 +54,11 @@ background = function (name: string, suiteFn: SuiteBlock) {
 
     backgroundTestState.suites.push(suite);
 
+    CURRENT_DESCRIBE_NAMES.push(name);
     backgroundTestState.inBlock = true;
     suiteFn(initTestObjects());
     backgroundTestState.inBlock = false;
-
-    suite.tests = suite.tests.filter(test => TEST_FILTER.test(suite.name!, test.name));
+    CURRENT_DESCRIBE_NAMES.pop();
 
     if (!suite.tests.length) {
       backgroundTestState.suites.pop();
@@ -74,9 +75,10 @@ background = function (name: string, suiteFn: SuiteBlock) {
         }
 
         const startTime = performance.now();
+        const uuids = Array.from({ length: test.testFn.length }, () => UUID.v4().toString());
 
         arr.push({
-          error: await tryCatchErr(() => test.testFn(UUID.v4().toString())),
+          error: await tryCatchErrAsync(() => test.testFn(...uuids)),
           ms: performance.now() - startTime,
         });
 

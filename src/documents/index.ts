@@ -12,24 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './cursor';
-export * from './events';
-export * from './ids';
-export * from './collections';
-export * from './embedding-providers';
-
-export {
-  DataAPIResponseError,
-  DataAPIHttpError,
-  BulkWriteError,
-  DataAPITimeoutError,
-  CumulativeDataAPIError,
-  CursorIsStartedError,
-  DataAPIDetailedErrorDescriptor,
-  DataAPIError,
-  DataAPIErrorDescriptor,
-  DeleteManyError,
-  InsertManyError,
-  TooManyDocumentsToCountError,
-  UpdateManyError,
-} from './errors';
+export * from './events.js';
+export * from './cursors/index.js';
+export * from './collections/index.js';
+export * from './tables/index.js';
+export * from './datatypes/index.js';
+export type * from './commands/index.js';
+export type * from './types/index.js';
+export * from './errors.js';

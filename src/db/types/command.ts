@@ -12,36 +12,48 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithTimeout } from '@/src/lib';
+import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
  * Options for executing some arbitrary command.
- *
- * @field collection - The collection to run the command on. If not provided, the command is run on the database.
- * @field keyspace - Overrides the keyspace to run the command in. If not provided, the default keyspace is used.
  *
  * @see Db.command
  *
  * @public
  */
-export interface RunCommandOptions extends WithTimeout {
+export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
-   * The collection to run the command on. If not provided, the command is run on the database.
+   * The collection to run the command on.
+   *
+   * If not provided, the command will run on the keyspace, or directly on the database if `keyspace` is `null`.
+   *
+   * Only one of this or {@link RunCommandOptions.table} should be provided.
    */
   collection?: string,
   /**
-   * The keyspace to use for the db operation.
+   * The collection to run the command on.
+   *
+   * If not provided, the command will run on the keyspace, or directly on the database if `keyspace` is `null`.
+   *
+   * Only one of this or {@link RunCommandOptions.table} should be provided.
+   */
+  table?: string,
+  /**
+   * Overrides the keyspace to run the command on.
+   *
+   * If undefined/not provided, the command will run on the db's default working keyspace.
+   *
+   * **This may be set to `null` to run the command directly on the database.**
    */
   keyspace?: string | null,
   /**
-   * The keyspace to use for the db operation.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link RunCommandOptions.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link RunCommandOptions.keyspace} instead.
+   * A small string to add to the log message for this command (only if you're printing to `stdout`/`stderr` using {@link LoggingConfig}).
    */
-  namespace?: string | null,
+  extraLogInfo?: Record<string, unknown>,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client.
+   */
+  namespace?: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client',
 }

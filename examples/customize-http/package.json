@@ -1,0 +1,25 @@
+{
+  "name": "logging",
+  "version": "1.0.0",
+  "type": "module",
+  "module": "index.js",
+  "scripts": {
+    "start": "tsx src/index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@datastax/astra-db-ts": "file:../astra-db-ts.tgz",
+    "axios": "^1.8.1",
+    "node-fetch": "^3.3.2",
+    "undici": "^7.3.0",
+    "winston": "^3.17.0"
+  }
+}

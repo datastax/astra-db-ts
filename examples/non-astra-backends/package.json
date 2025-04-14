@@ -4,15 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc --project tsconfig.json && node dist/index.js"
+    "start": "tsx src/index.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^5.5.2"
+    "tsx": "^4.19.2"
   },
   "dependencies": {
-    "@datastax/astra-db-ts": "^1.4.1"
+    "@datastax/astra-db-ts": "file:../astra-db-ts.tgz"
   }
 }

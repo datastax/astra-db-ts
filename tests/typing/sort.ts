@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { Sort } from '@/src/documents/collections/types';
+import type { Sort } from '@/src/documents/index.js';
 
 const test1: Sort = {
   'num1': 1,
@@ -36,12 +36,13 @@ const test4: Sort = {
   'num1': 1n,
 };
 
-const test5: Sort = {
-  // @ts-expect-error - Must be a number[]
-  $vector: '[0.23, 0.38, 0.27, 0.91, 0.21]',
-};
-
-const test6: Sort = {
-  // @ts-expect-error - Must be a string
-  $vectorize: [0.23, 0.38, 0.27, 0.91, 0.21],
-};
+// TODO
+// const test5: Sort = {
+//   // @ts-expect-error - Must be a number[]
+//   $vector: '[0.23, 0.38, 0.27, 0.91, 0.21]',
+// };
+//
+// const test6: Sort = {
+//   // @ts-expect-error - Must be a string
+//   $vectorize: [0.23, 0.38, 0.27, 0.91, 0.21],
+// };

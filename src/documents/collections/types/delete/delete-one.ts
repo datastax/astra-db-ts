@@ -12,57 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Sort } from '@/src/documents/collections/types';
-import { WithTimeout } from '@/src/lib/types';
-
-/** @internal */
-export interface DeleteOneCommand {
-  deleteOne: {
-    filter: Record<string, unknown>;
-    sort?: Sort;
-  };
-}
+import type { GenericDeleteOneOptions } from '@/src/documents/index.js';
 
 /**
  * Represents the options for the deleteOne command.
  *
  * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see Collection.deleteOne
  *
  * @public
  */
-export interface DeleteOneOptions extends WithTimeout {
-  /**
-   * The order in which to apply the update if the filter selects multiple documents.
-   *
-   * If multiple documents match the filter, only one will be updated.
-   *
-   * Defaults to `null`, where the order is not guaranteed.
-   * @defaultValue null
-   */
-  sort?: Sort,
-  /**
-   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
-   * to find the closest matching document.
-   *
-   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
-   * sort field itself. The two are interchangeable, but mutually exclusive.
-   *
-   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
-   * field in the sort object directly.
-   *
-   * @deprecated - Prefer to use `sort: { $vector: [...] }` instead
-   */
-  vector?: number[],
-  /**
-   * Akin to {@link DeleteOneOptions.vector}, but for `$vectorize`.
-   *
-   * @deprecated - Prefer to use `sort: { $vectorize: '...' }` instead
-   */
-  vectorize?: string,
-}
+export type CollectionDeleteOneOptions = GenericDeleteOneOptions;
 
 /**
  * Represents the result of a delete command.
@@ -73,7 +35,7 @@ export interface DeleteOneOptions extends WithTimeout {
  *
  * @public
  */
-export interface DeleteOneResult {
+export interface CollectionDeleteOneResult {
   /**
    * The number of deleted documents.
    */

@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TokenProvider } from '@/src/lib/token-providers/token-provider';
-import { nullish } from '@/src/lib';
+import { TokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import type { GetHeadersCtx } from '@/src/lib/index.js';
+import { HeadersProvider, PureHeadersProvider } from '@/src/lib/headers-providers/index.js';
+import type { ParsedHeadersProviders } from '@/src/lib/headers-providers/root/opts-handlers.js';
 
 /**
  * The most basic token provider, which simply returns the token it was instantiated with.
@@ -36,14 +38,14 @@ import { nullish } from '@/src/lib';
  * @public
  */
 export class StaticTokenProvider extends TokenProvider {
-  readonly #token: string | nullish;
+  readonly #token: string;
 
   /**
    * Constructs an instead of the {@link StaticTokenProvider}.
    *
    * @param token - The token to regurgitate in `getTokenAsString`
    */
-  constructor(token: string | nullish) {
+  constructor(token: string) {
     super();
     this.#token = token;
   }
@@ -53,7 +55,23 @@ export class StaticTokenProvider extends TokenProvider {
    *
    * @returns the string the token provider was instantiated with.
    */
-  override getToken(): string | nullish {
+  override getToken(): string {
     return this.#token;
+  }
+
+  /**
+   * @internal
+   */
+  public toHeadersProvider(): ParsedHeadersProviders {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- necessary in this case
+    const tp = this;
+
+    const hp = new (class extends PureHeadersProvider {
+      getHeaders(ctx: GetHeadersCtx) {
+        return tp._mkAuthHeader(ctx)(tp.getToken());
+      }
+    })();
+
+    return HeadersProvider.opts.fromObj.parse(hp);
   }
 }

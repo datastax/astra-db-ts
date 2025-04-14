@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './userpass-token-providers';
-export * from './static-token-provider';
-export * from './token-provider';
+export * from './userpass-token-providers.js';
+export * from './static-token-provider.js';
+export { TokenProvider } from './token-provider.js';

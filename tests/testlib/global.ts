@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { initTestObjects } from '@/tests/testlib/fixtures';
+import { initTestObjects } from '@/tests/testlib/fixtures.js';
 
-export const GLOBAL_FIXTURES = initTestObjects();
+export const GLOBAL_FIXTURES = initTestObjects({ isGlobal: true });
 
 export const CURRENT_DESCRIBE_NAMES: string[] = [];
+
+export const RUNNING_INT_TESTS = { ref: false };

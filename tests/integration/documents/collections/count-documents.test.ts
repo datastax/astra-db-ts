@@ -13,11 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { TooManyDocumentsToCountError } from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+import { TooManyDocumentsToCountError } from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
-parallel('integration.documents.collections.count-documents', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+parallel('integration.documents.collections.count-documents', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
   const docs = Array.from({ length: 20 }, (_, i) => ({
     _id: `${i}`,
     name: 'Bloodywood',
@@ -26,7 +26,7 @@ parallel('integration.documents.collections.count-documents', { truncateColls: '
 
   before(async () => {
     await collection.insertMany(docs);
-    await collection_.insertMany(Array.from({ length: 1001 }, () => ({})));
+    await collection_.insertMany(Array.from({ length: 1001 }, () => ({})), { ordered: true, chunkSize: 100 });
   });
 
   it('should return a single doc for an _id filter', async () => {

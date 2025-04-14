@@ -12,17 +12,36 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './fetch/fetch-h2';
-export * from './fetch/fetch-native';
-export { DEFAULT_KEYSPACE } from './constants';
+export * from './fetch/fetch-h2.js';
+export * from './fetch/fetch-native.js';
+export type { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from './fetch/fetcher.js';
+export { DEFAULT_KEYSPACE } from './constants.js';
+
+export type * from './types.js';
 
 export type {
-  Fetcher,
-  FetcherRequestInfo,
-  FetcherResponseInfo,
-} from './fetch/types';
+  BaseSerDesConfig,
+  SerDesFn,
+  SerDesFnRet,
+} from './ser-des/ser-des.js';
 
 export type {
-  RawDataAPIResponse,
-  CuratedAPIResponse,
-} from './types';
+  RawCodec,
+  Serializers,
+  Deserializers,
+  SerDesGuard,
+  CustomCodecOpts,
+  CustomCodecSerOpts,
+  DataAPICodec,
+  NominalCodecOpts,
+  TypeCodecOpts,
+} from './ser-des/codecs.js';
+
+export type { BaseSerDesCtx, BaseSerCtx, BaseDesCtx } from './ser-des/ctx.js';
+export { SerDesTarget } from './ser-des/ctx.js';
+
+export type {
+  TimeoutDescriptor,
+  WithTimeout,
+  TimedOutCategories,
+} from './timeouts/timeouts.js';

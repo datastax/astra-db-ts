@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { dummyDB, TestSchema } from '@/tests/typing/collections/prelude';
+import type { TestSchema } from '@/tests/typing/collections/prelude.js';
+import { dummyDB } from '@/tests/typing/collections/prelude.js';
 
 void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
   indexing: {
@@ -27,16 +28,6 @@ void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
     allow: ['*'],
     // @ts-expect-error - Can't deny and allow at the same time
     deny: ['customer.credit_score'],
-  },
-});
-
-void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
-  indexing: {
-    allow: [
-      'customer.credit_score',
-      // @ts-expect-error - Can't wildcard and specify fields at the same time
-      '*',
-    ],
   },
 });
 

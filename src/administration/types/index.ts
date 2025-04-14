@@ -12,57 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type {
-  AdminBlockingOptions,
-  DatabaseAction,
-  DatabaseCloudProvider,
-  DatabaseStatus,
-  DatabaseTier,
-  PollBlockingOptions,
-  NoBlockingOptions,
-} from './admin/admin-common';
-
-export type {
-  CreateDatabaseOptions,
-  DatabaseConfig,
-} from './admin/create-database';
-
-export type {
-  DatabaseInfo,
-  CostInfo,
-  DatabaseStorageInfo,
-  DatacenterInfo,
-  DbMetricsInfo,
-  FullDatabaseInfo,
-} from './admin/database-info';
-
-export type {
-  DatabaseCloudProviderFilter,
-  DatabaseStatusFilter,
-  ListDatabasesOptions,
-} from './admin/list-databases';
-
-export type {
-  AdminSpawnOptions,
-} from './admin/spawn-admin';
-
-export type {
-  CreateKeyspaceOptions,
-  CreateNamespaceOptions,
-} from './db-admin/create-keyspace';
-
-export type {
-  KeyspaceReplicationOptions,
-  LocalCreateKeyspaceOptions,
-  LocalCreateNamespaceOptions,
-} from './db-admin/local-create-keyspace';
-
-export type {
-  EmbeddingProviderAuthInfo,
-  EmbeddingProviderInfo,
-  EmbeddingProviderModelInfo,
-  EmbeddingProviderModelParameterInfo,
-  EmbeddingProviderTokenInfo,
-  EmbeddingProviderProviderParameterInfo,
-  FindEmbeddingProvidersResult,
-} from './db-admin/find-embedding-providers';
+export type * from './admin/admin-common.js';
+export type * from './admin/create-database.js';
+export type * from './admin/drop-database.js';
+export type * from './admin/database-info.js';
+export type * from './admin/list-databases.js';
+export type * from './db-admin/astra-create-keyspace.js';
+export type * from './db-admin/astra-drop-keyspace.js';
+export type * from './db-admin/local-create-keyspace.js';
+export type * from './db-admin/find-embedding-providers.js';
+export type * from './db-admin/find-reranking-providers.js';

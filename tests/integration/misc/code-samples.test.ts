@@ -14,10 +14,10 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { ObjectId, UUID } from '@/src/documents';
-import { describe, it, parallel } from '@/tests/testlib';
+import { ObjectId, UUID } from '@/src/documents/index.js';
+import { describe, it, parallel } from '@/tests/testlib/index.js';
 
-describe('integration.misc.code-samples', { truncateColls: 'default:before' }, ({ collection }) => {
+describe('integration.misc.code-samples', { truncate: 'colls:before' }, ({ collection }) => {
   parallel('documents', () => {
     it('works for dates', async (key) => {
       await collection.insertOne({ dateOfBirth: new Date(1394104654000), key });
@@ -106,7 +106,7 @@ describe('integration.misc.code-samples', { truncateColls: 'default:before' }, (
       assert.strictEqual(jane?.name, 'Jane');
 
       // Find by vector similarity (John)
-      const john = await collection.findOne({ key }, { vector: [1, 1, 1, 1, 1], includeSimilarity: true });
+      const john = await collection.findOne({ key }, { sort: { $vector: [1, 1, 1, 1, 1] }, includeSimilarity: true });
       // console.log(john?.name, john?.$similarity);
       assert.strictEqual(john?.name, 'John');
       assert.strictEqual(john.$similarity, 1);
@@ -143,7 +143,7 @@ describe('integration.misc.code-samples', { truncateColls: 'default:before' }, (
       assert.deepStrictEqual(await sortedAgeCursor.map(d => d.age).toArray(), [25, 30, 40]);
 
       // Find first by vector similarity (John)
-      const john = await collection.find({ key }, { vector: [1, 1, 1, 1, 1], includeSimilarity: true }).next();
+      const john = await collection.find({ key }, { sort: { $vector: [1, 1, 1, 1, 1] }, includeSimilarity: true }).next();
       // console.log(john?.name, john?.$similarity);
       assert.strictEqual(john?.name, 'John');
       assert.strictEqual(john.$similarity, 1);
@@ -152,9 +152,9 @@ describe('integration.misc.code-samples', { truncateColls: 'default:before' }, (
     it('works for example sort operations', async (key) => {
       // Insert some documents
       await collection.insertMany([
-        { name: 'Jane', age: 25, $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
-        { name: 'Dave', age: 40, $vector: [0.4, 0.5, 0.6, 0.7, 0.8], key },
-        { name: 'Jack', age: 40, $vector: [0.1, 0.9, 0.0, 0.5, 0.7], key },
+        { name: 'Jane', age: 25, $vector: [1.0, +1.0, 1.0, 1.0, 1.0], key },
+        { name: 'Dave', age: 40, $vector: [0.4, -0.4, 0.6, 0.7, 0.8], key },
+        { name: 'Jack', age: 40, $vector: [0.1, -0.6, 0.0, 0.5, 0.7], key },
       ]);
 
       // Sort by age ascending, then by name descending (Jane, Jack, Dave)
@@ -163,7 +163,7 @@ describe('integration.misc.code-samples', { truncateColls: 'default:before' }, (
       assert.deepStrictEqual(sorted1.map(d => d.name), ['Jane', 'Jack', 'Dave']);
 
       // Sort by vector distance (Jane, Dave, Jack)
-      const sorted2 = await collection.find({ key }, { vector: [1, 1, 1, 1, 1] }).toArray();
+      const sorted2 = await collection.find({ key }, { sort: { $vector: [1, 1, 1, 1, 1] } }).toArray();
       // console.log(sorted2.map(d => d.name));
       assert.deepStrictEqual(sorted2.map(d => d.name), ['Jane', 'Dave', 'Jack']);
     });

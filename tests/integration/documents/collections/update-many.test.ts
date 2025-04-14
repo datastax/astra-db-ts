@@ -13,11 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, UpdateManyError } from '@/src/documents';
-import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
+import { CollectionUpdateManyError, DataAPIResponseError } from '@/src/documents/index.js';
+import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
-parallel('integration.documents.collections.update-many', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.update-many', { truncate: 'colls:before' }, ({ collection }) => {
   it('should updateMany documents with ids', async (key) => {
     const docs = [{ _id: `${key}1`, age: 1, key }, { _id: `${key}2`, age: 2, key }, { _id: `${key}3`, age: 3, key }];
     const res = await collection.insertMany(docs);
@@ -93,7 +93,7 @@ parallel('integration.documents.collections.update-many', { truncateColls: 'defa
     assert.strictEqual(res.insertedCount, docList.length);
 
     const updateManyResp = await collection.updateMany(
-      { key: 'feuerschwanz' },
+      { key: 'fire' },
       { $set: { age: 10 } },
       { upsert: true },
     );
@@ -768,29 +768,28 @@ parallel('integration.documents.collections.update-many', { truncateColls: 'defa
   });
 
   it('fails gracefully on 2XX exceptions', async (key) => {
-    try {
-      // @ts-expect-error - testing invalid input
-      await collection.updateMany({ key }, { $invalidOperator: 1 });
-      assert.fail('Expected error');
-    } catch (e) {
-      assert.ok(e instanceof UpdateManyError);
-      assert.strictEqual(e.errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
-      assert.strictEqual(e.detailedErrorDescriptors[0].errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
-      assert.strictEqual(e.errorDescriptors.length, 1);
-      assert.strictEqual(e.detailedErrorDescriptors.length, 1);
+    // @ts-expect-error - testing invalid input
+    const promise = collection.updateMany({ key }, { $invalid: 1 });
+
+    await assert.rejects(promise, (e) => {
+      assert.ok(e instanceof CollectionUpdateManyError);
+      assert.ok(e.cause instanceof DataAPIResponseError);
+      assert.strictEqual(e.cause.errorDescriptors.length, 1);
+      assert.strictEqual(e.cause.errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
       assert.deepStrictEqual(e.partialResult, { modifiedCount: 0, matchedCount: 0, upsertedCount: 0 });
-    }
+      return true;
+    });
   });
 
-  it('fails fast on hard errors', async (key) => {
+  it('fails gracefully on non-2XX exceptions', async (key) => {
     const collection = initCollectionWithFailingClient();
-    try {
-      await collection.updateMany({ key }, {});
-      assert.fail('Expected an error');
-    } catch (e) {
-      assert.ok(e instanceof Error);
-      assert.ok(!(e instanceof DataAPIError));
-      assert.strictEqual(e.message, 'test');
-    }
+    const promise = collection.updateMany({ key }, {});
+
+    await assert.rejects(promise, (e) => {
+      assert.ok(e instanceof CollectionUpdateManyError);
+      assert.ok(!(e.cause instanceof DataAPIResponseError));
+      assert.strictEqual(e.cause.message, 'failing_client');
+      return true;
+    });
   });
 });

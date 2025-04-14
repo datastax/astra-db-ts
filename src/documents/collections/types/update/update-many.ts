@@ -12,57 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { InternalUpdateResult } from '@/src/documents/collections/types';
-import { WithTimeout } from '@/src/lib/types';
-import { SomeDoc } from '@/src/documents/collections';
-
-/** @internal */
-export interface UpdateManyCommand {
-  updateMany: {
-    filter: Record<string, unknown>;
-    update: Record<string, any>;
-    options: UpdateManyOptions & {
-      pageState?: string;
-    };
-  }
-}
+import type { GenericUpdateManyOptions, GenericUpdateResult, IdOf } from '@/src/documents/index.js';
 
 /**
- * Represents the options for the updateMany command.
+ Options for an `updateMany` command on a collection.
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
+ *
+ * @see Collection.updateMany
  *
  * @public
  */
-export interface UpdateManyOptions extends WithTimeout {
-  /**
-   * If true, perform an insert if no documents match the filter.
-   *
-   * If false, do not insert if no documents match the filter.
-   *
-   * Defaults to false.
-   *
-   * @defaultValue false
-   */
-  upsert?: boolean;
-}
+export type CollectionUpdateManyOptions = GenericUpdateManyOptions;
 
 /**
- * Represents the result of an updateMany operation.
+ * Represents the result of an `updateMany` command on a collection.
  *
  * @example
  * ```typescript
- * const result = await collection.updateOne({
- *   _id: 'abc'
+ * const result = await collections.updateMany({
+ *   name: 'Jane',
  * }, {
- *   $set: { name: 'John' }
+ *   $set: { name: 'John' }
  * }, {
- *   upsert: true
+ *   upsert: true
  * });
  *
  * if (result.upsertedCount) {
- *   console.log(`Document with ID ${result.upsertedId} was upserted`);
+ *   console.log(`Document with ID ${JSON.stringify(result.upsertedId)} was upserted`);
  * }
  * ```
  *
@@ -71,6 +49,8 @@ export interface UpdateManyOptions extends WithTimeout {
  * @field upsertedCount - The number of documents that were upserted.
  * @field upsertedId - The identifier of the upserted document if `upsertedCount > 0`.
  *
+ * @see Collection.updateMany
+ *
  * @public
  */
-export type UpdateManyResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, number>;
+export type CollectionUpdateManyResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, number>;

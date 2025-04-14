@@ -21,3 +21,8 @@
  * @public
  */
 export const DataAPIEnvironments = <const>['astra', 'dse', 'hcd', 'cassandra', 'other'];
+
+/**
+ * @internal
+ */
+export const $CustomInspect = Symbol.for('nodejs.util.inspect.custom');

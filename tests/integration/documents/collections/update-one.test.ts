@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { it, parallel } from '@/tests/testlib';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
-parallel('integration.documents.collections.update-one', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.update-one', { truncate: 'colls:before' }, ({ collection }) => {
   it('should updateOne document by id', async (key) => {
     const insertDocResp = await collection.insertOne({ age: 3, key });
     const idToCheck = insertDocResp.insertedId;

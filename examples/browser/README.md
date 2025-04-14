@@ -1,21 +1,23 @@
-# astra-db-ts with HTTP/2 in a Minified Project
+# astra-db-ts in the browser
 
 ## Overview
 
-The Data API itself does not natively support browsers, so `astra-db-ts` isn't technically supported in browsers either.
+> [!WARNING]  
+> This example pertains to `astra-db-ts` version 2.0.0 and later.
+> 
+> Previous versions of `astra-db-ts` need the `events` polyfill to work in the browser.
+> 
+> See the [v1.x browser example](https://github.com/datastax/astra-db-ts/blob/v1.x/examples/browser/README.md) for more information.
 
-However, if, for some reason, you really want to use this in a browser, you can probably do so by installing the
-`events` polyfill and setting up a [CORS proxy](https://github.com/Rob--W/cors-anywhere) to forward requests to the Data API. If no `httpOptions` are
-provided, it will, by default, use the native `fetch` API (as the default `fetch-h2` isn't supported in browsers).
+`astra-db-ts` is designed foremost as a server-side library, but it may also work in the browser if so desired.
+
+**However, keep in mind, that doing so is insecure, and is better implemented with an actual server-side application.**
+
+However, you may need to set up a CORS proxy (like [cors-anywhere](https://github.com/Rob--W/cors-anywhere)) to forward
+requests to the Data API.
 
 This is a simple example of how we can interact with an Astra database in a browser environment. It will list out
 all the collections in a given database.
-
-Do keep in mind that this is not officially supported, and may be very insecure if you're encoding sensitive
-data into the browser client.
-
-Check out the [Non-standard environment support](../../README.md#non-standard-environment-support) section
-in the main `README.md` for more information common to non-standard environments.
 
 ## Getting Started
 
@@ -44,14 +46,12 @@ in the main `README.md` for more information common to non-standard environments
 
 2. Install `@datastax/astra-db-ts` by running `npm i @datastax/astra-db-ts`.
 
-3. Install the `events` polyfill (if your build tool doesn't provide polyfills) by running `npm i events`. 
-
-4. Set up a CORS proxy to forward requests to the Data API. You can use something like [cors-anywhere](https://github.com/Rob--W/cors-anywhere),
+3. Set up a CORS proxy to forward requests to the Data API. You can use something like [cors-anywhere](https://github.com/Rob--W/cors-anywhere),
    [corsproxy.io](https://corsproxy.io/), or any other CORS proxy of your choice.
 
-5. When doing `client.db()`, prefix the endpoint URL with the CORS proxy URL as appropriate.
+4. When doing `client.db()`, prefix the endpoint URL with the CORS proxy URL as appropriate.
 
-6. You should be able to use `@datastax/astra-db-ts` in your project as normal now.
+5. You should be able to use `@datastax/astra-db-ts` in your project as normal now.
 
 **Please be very careful about not hard-coding credentials or sensitive data in your client-side code.**
 

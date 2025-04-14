@@ -12,8 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { nullish, StaticTokenProvider } from '@/src/lib';
-import { isNullish } from '@/src/lib/utils';
+import type { GetHeadersCtx} from '@/src/lib/index.js';
+import { HeadersProvider, StaticTokenProvider } from '@/src/lib/index.js';
+import { anyInstanceOf, findLast, isNullish } from '@/src/lib/utils.js';
+import type { Monoid, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handlers.js';
+import { MonoidalOptionsHandler } from '@/src/lib/opts-handlers.js';
+import type { DecoderType} from 'decoders';
+import { either, nullish, string } from 'decoders';
+import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/src/lib/api/constants.js';
+import type { ParsedHeadersProviders } from '@/src/lib/headers-providers/root/opts-handlers.js';
 
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
@@ -41,28 +48,111 @@ import { isNullish } from '@/src/lib/utils';
  */
 export abstract class TokenProvider {
   /**
+   * @internal
+   */
+  public static opts: typeof TokenProviderOptsHandler;
+
+  /**
    * The function which provides the token. It may do any I/O as it wishes to obtain/refresh the token, as it's called
    * every time the token is required for use, whether it be for the Data API, or the DevOps API.
    */
-  abstract getToken(): string | nullish | Promise<string | nullish>;
+  public abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
 
   /**
-   * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if
-   * it's not a string, nullish, or a `TokenProvider` already.
-   *
-   * Not intended for external use.
-   *
    * @internal
    */
-  static parseToken(token: unknown): TokenProvider {
-    if (typeof token === 'string' || isNullish(token)) {
-      return new StaticTokenProvider(token);
-    }
+  public toHeadersProvider(): ParsedHeadersProviders {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias -- necessary in this case
+    const tp = this;
 
-    if (token instanceof TokenProvider) {
-      return token;
-    }
+    const hp = new (class extends HeadersProvider {
+      getHeaders(ctx: GetHeadersCtx) {
+        const maybePromise = tp.getToken();
 
-    throw new TypeError('Expected token to be type string | TokenProvider | nullish');
+        return (maybePromise instanceof Promise)
+          ? maybePromise.then(tp._mkAuthHeader(ctx))
+          : tp._mkAuthHeader(ctx)(maybePromise);
+      }
+    })();
+
+    return HeadersProvider.opts.fromObj.parse(hp);
+  }
+
+  /**
+   * @internal
+   */
+  protected _mkAuthHeader(ctx: GetHeadersCtx) {
+    return (token: string | null | undefined) =>
+      (token)
+        ? (ctx.for === 'data-api')
+          ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }
+          : { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }
+        : {};
   }
 }
+
+/**
+ * @internal
+ */
+class UnsetTokenProvider extends TokenProvider {
+  public static INSTANCE = new UnsetTokenProvider();
+
+  private constructor() {
+    super();
+  }
+
+  getToken() {
+    return undefined;
+  }
+}
+
+/**
+ * @internal
+ */
+interface Types extends OptionsHandlerTypes {
+  Parsed: ParsedTokenProvider,
+  Parseable: TokenProvider | string | undefined | null,
+  Decoded: DecoderType<typeof decoder>,
+}
+
+/**
+ * @internal
+ */
+export type ParsedTokenProvider = TokenProvider & Parsed<'TokenProvider'>;
+
+/**
+ * @internal
+ */
+const monoid: Monoid<TokenProvider> = {
+  empty: UnsetTokenProvider.INSTANCE,
+  concat: findLast<TokenProvider>((a) => a !== UnsetTokenProvider.INSTANCE, UnsetTokenProvider.INSTANCE),
+};
+
+/**
+ * @internal
+ */
+const decoder = nullish(either(
+  anyInstanceOf(TokenProvider),
+  string,
+));
+
+/**
+ * @internal
+ */
+const transformed = decoder.transform((input) => {
+  if (typeof input === 'string') {
+    return new StaticTokenProvider(input);
+  }
+
+  if (isNullish(input)) {
+    return UnsetTokenProvider.INSTANCE;
+  }
+
+  return input;
+});
+
+/**
+ * @internal
+ */
+const TokenProviderOptsHandler = new MonoidalOptionsHandler<Types>(transformed, monoid);
+TokenProvider.opts = TokenProviderOptsHandler;

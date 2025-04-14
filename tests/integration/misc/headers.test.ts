@@ -13,30 +13,26 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIClient } from '@/src/client';
-import {
-  DEFAULT_KEYSPACE,
-  FetchNative,
-} from '@/src/lib/api';
+import { DataAPIClient } from '@/src/client/index.js';
+import { DEFAULT_KEYSPACE, FetchNative } from '@/src/lib/api/index.js';
 import assert from 'assert';
 import {
   DEFAULT_COLLECTION_NAME,
+  describe,
   ENVIRONMENT,
   it,
   parallel,
-  describe,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-} from '@/tests/testlib';
-import { nullish, Ref } from '@/src/lib/types';
-import { StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib';
-import { EmbeddingHeadersProvider } from '@/src/documents';
-import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/src/lib/api/constants';
+} from '@/tests/testlib/index.js';
+import type { Ref } from '@/src/lib/types.js';
+import { HeadersProvider, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib/index.js';
+import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/src/lib/api/constants.js';
 
 parallel('integration.misc.headers', () => {
   const fetchNative = new FetchNative();
 
-  const mkClient = (latestHeaders: Ref<Record<string, string>>, tp?: string | TokenProvider | nullish) => new DataAPIClient(tp, {
+  const mkClient = (latestHeaders: Ref<Record<string, string | undefined>>, tp?: string | TokenProvider) => new DataAPIClient(tp, {
     environment: ENVIRONMENT,
     httpOptions: {
       client: 'custom',
@@ -60,7 +56,7 @@ parallel('integration.misc.headers', () => {
     }
   }
 
-  class AsyncEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
+  class AsyncEmbeddingHeadersProvider extends HeadersProvider<'embedding'> {
     async getHeaders() {
       return { 'x-my-custom-header': 'drain of incarnation' } as const;
     }
@@ -75,7 +71,7 @@ parallel('integration.misc.headers', () => {
     }
   }
 
-  class CyclingEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
+  class CyclingEmbeddingHeadersProvider extends HeadersProvider<'embedding'> {
     i = 0;
     tokens = ['tree', 'of', 'ages'];
 
@@ -114,7 +110,7 @@ parallel('integration.misc.headers', () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);
       const db = client.db(TEST_APPLICATION_URI, { token: new CyclingTokenProvider() });
-      const dbAdmin = db.admin({ environment: ENVIRONMENT as 'astra' });
+      const dbAdmin = db.admin();
 
       await assert.rejects(() => dbAdmin.listKeyspaces());
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer tree');
@@ -122,11 +118,12 @@ parallel('integration.misc.headers', () => {
       await assert.rejects(() => dbAdmin.listKeyspaces());
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer of');
 
+
       await assert.rejects(() => dbAdmin.listKeyspaces());
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer ages');
     });
 
-    it('should properly set/override tokens throughout the hierarchy', async () => {
+    it('(ASTRA) should properly set/override tokens throughout the hierarchy', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders, TEST_APPLICATION_TOKEN);
 
@@ -145,25 +142,14 @@ parallel('integration.misc.headers', () => {
         getToken() { return 'are we we are'; }
       };
 
-      if (ENVIRONMENT === 'astra') {
-        const dbAdmin1 = db1.admin({ environment: ENVIRONMENT });
-        const keyspaces = await dbAdmin1.listKeyspaces();
-        assert.ok(Array.isArray(keyspaces));
-        assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${TEST_APPLICATION_TOKEN}`);
+      const dbAdmin1 = db1.admin();
+      const keyspaces = await dbAdmin1.listKeyspaces();
+      assert.ok(Array.isArray(keyspaces));
+      assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${TEST_APPLICATION_TOKEN}`);
 
-        const dbAdmin2 = db1.admin({ environment: ENVIRONMENT, adminToken: badTokenProvider });
-        await assert.rejects(() => dbAdmin2.listKeyspaces());
-        assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${badTokenProvider.getToken()}`);
-      } else {
-        const dbAdmin1 = db1.admin({ environment: ENVIRONMENT });
-        const keyspaces = await dbAdmin1.listKeyspaces();
-        assert.ok(Array.isArray(keyspaces));
-        assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
-
-        const dbAdmin2 = db1.admin({ environment: ENVIRONMENT, adminToken: badTokenProvider });
-        await assert.rejects(() => dbAdmin2.listKeyspaces());
-        assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], badTokenProvider.getToken());
-      }
+      const dbAdmin2 = db1.admin({ adminToken: badTokenProvider });
+      await assert.rejects(() => dbAdmin2.listKeyspaces());
+      assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${badTokenProvider.getToken()}`);
     });
   });
 

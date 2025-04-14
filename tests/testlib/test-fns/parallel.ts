@@ -13,22 +13,17 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import { initTestObjects } from '@/tests/testlib/fixtures';
+import type { initTestObjects } from '@/tests/testlib/fixtures.js';
 import { afterEach } from 'mocha';
-import { tryCatchErr } from '@/tests/testlib/utils';
-import {
-  CURRENT_DESCRIBE_NAMES,
-  describe,
-  SuiteBlock,
-  SuiteOptions,
-  TEST_FILTER,
-} from '@/tests/testlib';
-import { UUID } from '@/src/documents';
-import { AsyncSuiteResult, GlobalAsyncSuiteSpec } from '@/tests/testlib/test-fns/types';
+import { tryCatchErrAsync } from '@/tests/testlib/utils.js';
+import type { SuiteBlock, SuiteOptions } from '@/tests/testlib/index.js';
+import { describe } from '@/tests/testlib/index.js';
+import { UUID } from '@/src/documents/index.js';
+import type { AsyncSuiteResult, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types.js';
 
 const mkDefaultSuite = () => ({ name: undefined, skipped: false, tests: [] });
 
-export const parallelTestState: GlobalAsyncSuiteSpec  = {
+export const parallelTestState: GlobalAsyncSuitesSpec  = {
   suites: [mkDefaultSuite()],
   inBlock: false,
   describe(name, fn, opts, skipped, fixtures) {
@@ -85,10 +80,7 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
 
     [global.beforeEach, global.afterEach] = [oldBeforeEach, oldAfterEach];
 
-    const suites =  parallelTestState.suites
-      .tap((s) => {
-        s.tests = s.tests.filter(test => TEST_FILTER.test(test.name, ...CURRENT_DESCRIBE_NAMES));
-      })
+    const suites = parallelTestState.suites
       .filter(s => s.tests.length);
 
     let results: AsyncSuiteResult[];
@@ -101,9 +93,10 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
           }
 
           const startTime = performance.now();
+          const uuids = Array.from({ length: test.testFn.length }, () => UUID.v4().toString());
 
           return {
-            error: await tryCatchErr(() => test.testFn(UUID.v4().toString())),
+            error: await tryCatchErrAsync(() => test.testFn(...uuids)),
             ms: performance.now() - startTime,
           };
         });
@@ -133,7 +126,7 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
 
             const result = results[suiteIdx][testIdx]!;
 
-            this.test!.title += ` (${~~result.ms!}ms)`;
+            this.test!.title += ` (${~~result.ms}ms)`;
 
             if (result.error) {
               throw result.error;

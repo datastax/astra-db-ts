@@ -10,5 +10,9 @@ const app = document.querySelector<HTMLDivElement>('#app')!;
 app.innerHTML = '<p>Loading...</p>';
 
 db.listCollections().then((collections) => {
+  console.log(collections);
   app.innerHTML = `<code>${JSON.stringify(collections, null, 2)}</code>`;
+}).catch((error) => {
+  console.error(error);
+  app.innerHTML = `<p>${error.message}</p>`;
 });

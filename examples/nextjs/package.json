@@ -1,23 +1,23 @@
 {
-  "name": "nextjs-edge",
+  "name": "nextjs",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@datastax/astra-db-ts": "^1.4.1",
-    "next": "14.2.3",
-    "react": "^18",
-    "react-dom": "^18"
+    "@datastax/astra-db-ts": "file:../astra-db-ts.tgz",
+    "next": "15.1.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "typescript": "^5"
   }
 }

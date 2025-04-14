@@ -12,23 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AdminSpawnOptions } from '@/src/administration/types';
-import { validateOption } from '@/src/documents/utils';
+import type { AstraFullDatabaseInfo, AstraDatabaseRegionInfo } from '@/src/administration/types/admin/database-info.js';
+import { buildAstraEndpoint } from '@/src/lib/utils.js';
+import type { SomeDoc } from '@/src/documents/index.js';
 
 /**
  * @internal
  */
-export function validateAdminOpts(opts: AdminSpawnOptions | undefined) {
-  validateOption('adminOptions', opts, 'object', false, (opts) => {
-    validateOption('adminOptions.monitorCommands', opts.monitorCommands, 'boolean');
-    validateOption('adminOptions.endpointUrl', opts.endpointUrl, 'string');
-  });
-}
-
-/**
- * @internal
- */
-export function extractAstraEnvironment(endpoint: string) {
+export const extractAstraEnvironment = (endpoint: string) => {
   switch (true) {
     case endpoint.includes('apps.astra-dev.datastax.com'):
       return 'dev';
@@ -39,4 +30,30 @@ export function extractAstraEnvironment(endpoint: string) {
     default:
       throw new Error(`Cannot extract astra environment for endpoint '${endpoint}'`);
   }
-}
+};
+
+/**
+ * @internal
+ */
+export const buildAstraDatabaseAdminInfo = (raw: SomeDoc, environment: 'dev' | 'prod' | 'test'): AstraFullDatabaseInfo => {
+  const regions = raw.info.datacenters.map((dc: any): AstraDatabaseRegionInfo => ({
+    name: dc.region,
+    apiEndpoint: buildAstraEndpoint(raw.id, dc.region, environment),
+    createdAt: new Date(dc.dateCreated),
+  }));
+
+  return {
+    id: raw.id,
+    name: raw.info.name,
+    orgId: raw.orgId,
+    ownerId: raw.ownerId,
+    keyspaces: /* c8 ignore next: can't reproduce, but just in case */ raw.info.keyspaces ?? [],
+    environment: environment,
+    cloudProvider: raw.info.cloudProvider!,
+    createdAt: new Date(raw.creationTime),
+    lastUsed: new Date(raw.lastUsageTime),
+    status: raw.status,
+    regions: regions,
+    raw: raw,
+  };
+};

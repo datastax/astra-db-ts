@@ -12,314 +12,173 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DatabaseAction, DatabaseCloudProvider, DatabaseStatus, DatabaseTier } from '@/src/administration/types';
+import type { AstraDatabaseCloudProvider, AstraDatabaseStatus } from '@/src/administration/types/index.js';
 
 /**
- * Represents the complete information about a database.
+ * ##### Overview
+ *
+ * Represents data about a region in which an Astra database is hosted.
+ *
+ * This includes the region name, the API endpoint to use when interacting with that region, and the created-at timestamp.
+ *
+ * Used within the `regions` field of {@link AstraFullDatabaseInfo}, which may include multiple region entries for multi-region databases.
  *
  * @public
  */
-export interface FullDatabaseInfo {
+export interface AstraDatabaseRegionInfo {
   /**
-   * The id of the database
+   * The name of the region where the database is hosted, e.g. `us-east1`.
    */
-  id: string,
+  name: string,
   /**
-   * The id of the organization that owns the database
+   * The API endpoint for the region, e.g. `https://<db-id>-<region>.apps.astra.datastax.com`.
+   */
+  apiEndpoint: string,
+  /**
+   * A timestamp representing when this region was created.
+   */
+  createdAt: Date,
+}
+
+/**
+ * ##### Overview
+ *
+ * Represents the complete metadata returned for an Astra database.
+ *
+ * This is returned from {@link AstraDbAdmin.info} and {@link AstraAdmin.dbInfo}, whereas {@link AstraPartialDatabaseInfo} is used for {@link Db.info}.
+ *
+ * @example
+ * ```ts
+ * const fullInfo = await db.admin().info(),
+ *
+ * // 'ACTIVE'
+ * console.log(fullInfo.status),
+ *
+ * // 'https://<db-id>-<region>.apps.astra.datastax.com'
+ * console.log(fullInfo.regions[0].apiEndpoint),
+ * ```
+ *
+ * @see AstraBaseDatabaseInfo
+ *
+ * @public
+ */
+export interface AstraFullDatabaseInfo extends AstraBaseDatabaseInfo {
+  /**
+   * A timestamp representing when the database was initially created.
+   */
+  createdAt: Date,
+  /**
+   * A timestamp representing the most recent time the database was accessed (read/write).
+   */
+  lastUsed: Date,
+  /**
+   * Information about the regions in which the database is deployed.
+   *
+   * It should contain at least one value, but may have more for multi-region deployments.
+   *
+   * Contains the region name, API endpoint for that region, and the timestamp when that region was created.
+   */
+  regions: AstraDatabaseRegionInfo[],
+  /**
+   * The unique organization UUID that owns this database.
    */
   orgId: string,
   /**
-   * The id of the owner of the database
+   The unique user UUID that owns this database.
    */
   ownerId: string,
-  /**
-   * The user-provided information describing a database
-   */
-  info: DatabaseInfo,
-  /**
-   * Creation time, in ISO RFC3339 format
-   */
-  creationTime?: string,
-  /**
-   * The last time the database was used, in ISO RFC3339 format
-   */
-  lastUsageTime?: string,
-  /**
-   * The termination time, in ISO RFC3339 format, if the database was terminated
-   */
-  terminationTime?: string,
-  /**
-   * The current status of the database.
-   */
-  status: DatabaseStatus,
-  /**
-   * The observed status of the database.
-   */
-  observedStatus: DatabaseStatus,
-  /**
-   * Contains the information about how much storage space a cluster has available
-   */
-  storage?: DatabaseStorageInfo,
-  /**
-   * The available actions that can be performed on the database
-   */
-  availableActions?: DatabaseAction[],
-  /**
-   * The cost information for the database
-   */
-  cost?: CostInfo,
-  /**
-   * Message to the user about the cluster
-   */
-  message?: string,
-  /**
-   * Grafana URL for the database
-   */
-  grafanaUrl?: string,
-  /**
-   * CQLSH URL for the database
-   */
-  cqlshUrl?: string,
-  /**
-   * GraphQL URL for the database
-   */
-  graphqlUrl?: string,
-  /**
-   * REST URL for the database
-   */
-  dataEndpointUrl?: string,
-  /**
-   * Basic metrics information about the database
-   */
-  metrics?: DbMetricsInfo,
 }
 
 /**
- * The user-provided information describing a database
+ * ##### Overview
+ *
+ * Represents the partial metadata of a database, as returned from {@link Db.info}.
+ *
+ * For the {@link AstraFullDatabaseInfo}, use either {@link AstraDbAdmin.info} or {@link AstraAdmin.dbInfo}.
+ *
+ * This type includes a limited view of database properties, based on the {@link Db}'s region, sufficient for most runtime use cases, but perhaps not for all administrative operations.
+ *
+ * @example
+ * ```ts
+ * const partialInfo = await db.info();
+ * console.log(partialInfo.region); // e.g. "us-west2"
+ * ```
+ *
+ * @see AstraBaseDatabaseInfo
+ * @see AstraFullDatabaseInfo
  *
  * @public
  */
-export interface DatabaseInfo {
+export interface AstraPartialDatabaseInfo extends AstraBaseDatabaseInfo {
   /**
-   * Name of the database--user friendly identifier
-   */
-  name: string,
-  /**
-   * Keyspace name in database. If not passed, keyspace is created with name "default_keyspace"
-   */
-  keyspace?: string,
-  /**
-   * Cloud provider where the database lives
-   */
-  cloudProvider?: DatabaseCloudProvider,
-  /**
-   * Tier defines the compute power (vertical scaling) for the database, developer gcp is the free tier.
-   */
-  tier: DatabaseTier,
-  /**
-   * The amount of space available (horizontal scaling) for the database. For free tier the max CU's is 1, and 100
-   * for CXX/DXX the max is 12 on startup.
-   */
-  capacityUnits: number,
-  /**
-   * The cloud region where the database is located.
+   * The region being used by the {@link Db} instance, extracted directly from the {@link Db.endpoint}.
+   *
+   * There may or may not be more regions available, but they are not listed here; see {@link AstraFullDatabaseInfo} for that.
    */
   region: string,
   /**
-   * The user to connect to the database.
+   * The region being used by the {@link Db} instance, the same as the {@link Db.endpoint}.
+   *
+   * There may or may not be more api endpoints available, 1:1 with the number of regions available, but they are not listed here; see {@link AstraFullDatabaseInfo} for that.
    */
-  user?: string,
-  /**
-   * The password to connect to the database.
-   */
-  password?: string,
-  /**
-   * Additional keyspace names in database.
-   */
-  additionalKeyspaces?: string[],
-  /**
-   * All keyspace names in database.
-   */
-  keyspaces?: string[],
-  /**
-   * Type of the serverless database, currently only supported value is “vector”. "vector" creates a cassandra
-   * database with vector support. Field not being inputted creates default serverless database.
-   */
-  dbType?: 'vector',
-  /**
-   * The datacenters for the database
-   */
-  datacenters?: DatacenterInfo[],
+  apiEndpoint: string,
 }
 
 /**
- * Contains the information about how much storage space a cluster has available.
+ * ##### Overview
+ *
+ * Represents the common properties shared by both {@link AstraPartialDatabaseInfo} and {@link AstraFullDatabaseInfo}.
+ *
+ * This includes identifiers, basic configuration, status, and environment details.
  *
  * @public
  */
-export interface DatabaseStorageInfo {
+export interface AstraBaseDatabaseInfo {
   /**
-   * Node count for the cluster.
-   */
-  nodeCount: number,
-  /**
-   * Number of nodes storing a piece of data
-   */
-  replicationFactor: number,
-  /**
-   * Total storage of the cluster in GB
-   */
-  totalStorage: number,
-  /**
-   * Used storage of the cluster in GB
-   */
-  usedStorage?: number,
-}
-
-/**
- * Information about a datacenter.
- *
- * @public
- */
-export interface DatacenterInfo {
-  /**
-   * The number of capacity units for the datacenter.
-   */
-  capacityUnits: number,
-  /**
-   * The cloud provider where the datacenter is located.
-   */
-  cloudProvider: DatabaseCloudProvider,
-  /**
-   * The date the datacenter was created in ISO RFC3339 format.
-   */
-  dateCreated: string,
-  /**
-   * The id of the datacenter.
+   * The unique UUID of the database.
    */
   id: string,
   /**
-   * Whether the datacenter is the primary datacenter.
-   */
-  isPrimary: boolean,
-  /**
-   * The name of the datacenter.
+   * The user-provided name of the database.
    */
   name: string,
   /**
-   * The region where the datacenter is located.
+   * The list of keyspaces currently present in the database.
+   *
+   * The list may technically be empty in rare corner cases, if they have all been deleted, but it is quite unlikely.
    */
-  region: string,
+  keyspaces: string[],
   /**
-   * The region classification of the datacenter.
+   * The current status of the database.
+   *
+   * Common values include:
+   * - `'PENDING'`
+   * - `'ACTIVE'`
+   * - `'DELETING'`
+   * - `'HIBERNATED'`
+   * - `'TERMINATED'`
+   *
+   * Status values indicate the provisioning/operational state of the database.
+   *
+   * {@link AstraDatabaseStatus} contains a large amount of possible statuses (though many are unlikely), but the enumeration is open to other statuses not mentioned.
    */
-  regionClassification: string,
+  status: AstraDatabaseStatus,
   /**
-   * The region zone of the datacenter.
+   * The cloud provider where the database is hosted.
+   *
+   * Valid values include `'AWS'`, `'GCP'`, and `'AZURE'`.
    */
-  regionZone: string,
+  cloudProvider: AstraDatabaseCloudProvider,
   /**
-   * The internal URL for the secure bundle.
+   * The Astra environment in which the database is running.
+   *
+   * Not relevant for most users' usage.
    */
-  secureBundleUrl: string,
+  environment: 'dev' | 'test' | 'prod',
   /**
-   * The status of the datacenter (might be an empty string)
+   * The full raw response received from the DevOps API when querying for database metadata.
+   *
+   * This field is provided for inspection or debugging, and contains fields not explicitly typed/present in this interface.
    */
-  status: string,
-  /**
-   * The tier of the datacenter.
-   */
-  tier: DatabaseTier,
-}
-
-/**
- * Information about the running cost of the database.
- *
- * @public
- */
-export interface CostInfo {
-  /**
-   * Regular cost per day in cents
-   */
-  costPerDayCents: number,
-  /**
-   * Cost per day for multi-region in cents
-   */
-  costPerDayMRCents: number,
-  /**
-   * Cost per day in cents while the database is parked
-   */
-  costPerDayParkedCents: number,
-  /**
-   * Cost per hour in cents
-   */
-  costPerHourCents: number,
-  /**
-   * Cost per hour for multi-region in cents
-   */
-  costPerHourMRCents: number,
-  /**
-   * Cost per hour in cents while the database is parked
-   */
-  costPerHourParkedCents: number,
-  /**
-   * Cost per minute in cents
-   */
-  costPerMinCents: number,
-  /**
-   * Cost per minute for multi-region in cents
-   */
-  costPerMinMRCents: number,
-  /**
-   * Cost per minute in cents while the database is parked
-   */
-  costPerMinParkedCents: number,
-  /**
-   * Cost per month in cents
-   */
-  costPerMonthCents: number,
-  /**
-   * Cost per month for multi-region in cents
-   */
-  costPerMonthMRCents: number,
-  /**
-   * Cost per month in cents while the database is parked
-   */
-  costPerMonthParkedCents: number,
-  /**
-   * Cost per GB of network transfer in cents
-   */
-  costPerNetworkGbCents: number,
-  /**
-   * Cost per GB read in cents
-   */
-  costPerReadGbCents: number,
-  /**
-   * Cost per GB written in cents
-   */
-  costPerWrittenGbCents: number,
-}
-
-/**
- * Basic metrics information about a database.
- *
- * @public
- */
-export interface DbMetricsInfo {
-  /**
-   * The number of errors that have occurred in the database.
-   */
-  errorsTotalCount: number,
-  /**
-   * The number of live data bytes in the database.
-   */
-  liveDataSizeBytes: number,
-  /**
-   * The number of read requests that have occurred in the database.
-   */
-  readRequestsTotalCount: number,
-  /**
-   * The number of write requests that have occurred in the database.
-   */
-  writeRequestsTotalCount: number
+  raw: Record<string, any>,
 }
