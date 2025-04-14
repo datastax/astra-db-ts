@@ -20,21 +20,21 @@ import { FindAndRerankCursor } from '@/src/documents/index.js';
  *
  * A lazy iterator over the results of a `findAndRerank` operation on a {@link Collection}.
  *
- * **Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}**.
+ * > **⚠️Warning**: Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}.
  *
  * ---
  *
  * ##### Typing
  *
- * **For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.**
+ * > **🚨Important:** For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.
+ * >
+ * > If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.
  *
- * **If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.**
- *
- * In full, the cursor is typed as `FindCursor<T, TRaw>`, where
+ * In full, the cursor is typed as `CollectionFindAndRerankCursor<T, TRaw>`, where
  * - `T` is the type of the mapped records, and
  * - `TRaw` is the type of the raw records before any mapping.
  *
- * If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping is done using the {@link FindAndRerankCursor.map} method.
+ * If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping is done using the {@link CollectionFindAndRerankCursor.map} method.
  *
  * ---
  *
@@ -59,7 +59,7 @@ import { FindAndRerankCursor } from '@/src/documents/index.js';
  * }
  * ```
  *
- * @see AbstractCursor
+ * @see Collection.findAndRerank
  * @see FindAndRerankCursor
  *
  * @public

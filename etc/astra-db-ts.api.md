@@ -1342,7 +1342,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CreateCollectionOptions<WSchema>): Promise<Collection<WSchema, RSchema>>;
     createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
-    createTable<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>;
+    createTable<WSchema extends SomeRow, PKeys extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void>;
@@ -1364,7 +1364,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
         nameOnly?: false;
     }): Promise<TableDescriptor[]>;
     get region(): string;
-    table<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema>;
+    table<WSchema extends SomeRow, PKeys extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema>;
     useKeyspace(keyspace: string): void;
     // @deprecated
     useNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';

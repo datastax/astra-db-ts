@@ -24,7 +24,7 @@ import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin.js';
 import type { CreateCollectionOptions } from '@/src/db/types/collections/create.js';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { KeyspaceRef } from '@/src/lib/api/clients/types.js';
-import type { CommandEventMap, FoundRow, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
+import type { CommandEventMap, FoundRow, SomePKey, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
 import { Table } from '@/src/documents/index.js';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
 import type { CollectionOptions } from '@/src/db/types/collections/spawn.js';
@@ -641,7 +641,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * @see InferTableSchema
    * @see InferTablePrimaryKey
    */
-  public table<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
+  public table<WSchema extends SomeRow, PKeys extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
     return new Table(this, this.#httpClient, name, this.#defaultOpts, {
       ...options,
       serdes: TableSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.tableSerdes], options?.serdes),
@@ -913,7 +913,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * @see InferTablePrimaryKey
    * @see CreateTableDefinition
    */
-  public async createTable<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>
+  public async createTable<WSchema extends SomeRow, PKeys extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>
 
   public async createTable(name: string, options: CreateTableOptions): Promise<Table<SomeRow>> {
     const command = {

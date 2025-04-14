@@ -32,7 +32,7 @@ import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { LitUnion } from '@/src/lib/types.js';
 import { NonErrorError } from '@/src/lib/errors.js';
 import type { SomeRow, TableInsertManyResult } from '@/src/documents/tables/index.js';
-import { SomePKey } from '@/src/documents/types/index.js';
+import type { SomePKey } from '@/src/documents/types/index.js';
 
 /**
  * ##### Overview
@@ -43,8 +43,9 @@ import { SomePKey } from '@/src/documents/types/index.js';
  *
  * ##### Disclaimer
  *
- * This is *not* used for "hard" (4XX, 5XX, timeout) errors, which are rarer and would be thrown directly by the underlying
- * code.
+ * > **🚨Important:** This is *not* used for non-2XX errors, such as:
+ * > - 4XX or 5XX errors. Those are represented by the {@link DataAPIHttpError} class.
+ * > - Connection errors and the like, which would be thrown by the underlying HTTP client directly.
  *
  * @example
  * ```typescript
@@ -68,12 +69,7 @@ import { SomePKey } from '@/src/documents/types/index.js';
  * }
  * ```
  *
- * @field id - A unique identifier for this instance of the error.
- * @field family - Informs if the error was due to their request or server side processing.
- * @field scope - Informs what area of the request failed.
- * @field errorCode - Informs the exact error that occurred.
- * @field title - A short, human-readable summary of the error.
- * @field message - A longer human-readable description of the error.
+ * @see DataAPIResponseError
  *
  * @public
  */
@@ -83,7 +79,7 @@ export interface DataAPIErrorDescriptor {
    */
   readonly id: string,
   /**
-   * Top level of the hierarchy of errors.
+   * The top level of the hierarchy of errors.
    *
    * Informs if the error was due to their request or server side processing.
    *
@@ -125,25 +121,36 @@ export interface DataAPIErrorDescriptor {
   /**
    * A longer human-readable description of the error that contains information specific to the error.
    *
-   * **This may contain newlines and other formatting characters.**
+   * > **⚠️Note:** This may contain newlines and other formatting characters.
    */
   readonly message: string,
 }
 
 /**
+ * ##### Overview
+ *
+ * A specialized subset of {@link DataAPIErrorDescriptor} that represents a warning returned by the Data API.
+ *
+ * This represents a warning that occurred during the operation which should likely be addressed by the user, but had no actual impact on the success or failure of the operation itself.
+ *
+ * > **⚠️Note**: This is identical to the {@link DataAPIErrorDescriptor} in every way, except {@link DataAPIErrorDescriptor.scope} is always `'WARNING'`.
+ *
+ * @see CommandWarningEvent
+ * @see AdminCommandWarningEvent
+ *
  * @public
  */
 export type DataAPIWarningDescriptor = DataAPIErrorDescriptor & { scope: 'WARNING'; };
 
 /**
- * An abstract class representing *some* exception that occurred related to the Data API. This is the base class for all
+ * ##### Overview
+ *
+ * An abstract class representing some exception that occurred related to the Data API. This is the base class for all
  * Data API errors, and will never be thrown directly.
  *
- * Useful for `instanceof` checks.
+ * This is mainly useful for `instanceof` checks in `catch` blocks.
  *
- * This is *only* for Data API related errors, such as a non-existent collections, or a duplicate key error. It
- * is *not*, however, for errors such as an HTTP network error, or a malformed request. The exception being timeouts,
- * which are represented by the {@link DataAPITimeoutError} class.
+ * > **⚠️Note:** While HTTP errors and timeouts may be represented by subclasses of this type, certain errors, such as connection errors, {@link TypeError}s, etc. may be thrown by the underlying code directly.
  *
  * @public
  */
@@ -157,7 +164,15 @@ export abstract class DataAPIError extends Error {
 }
 
 /**
+ * ##### Overview
+ *
  * An error thrown on non-2XX status codes from the Data API, such as 4XX or 5XX errors.
+ *
+ * This is relatively rare compared to the {@link DataAPIResponseError}.
+ *
+ * > **⚠️Note:** This is not used for connection errors and the like, which would be thrown by the underlying HTTP client directly.
+ * >
+ * > This only represents HTTP errors, such as 4XX or 5XX errors.
  *
  * @public
  */
@@ -192,10 +207,14 @@ export class DataAPIHttpError extends DataAPIError {
 }
 
 /**
+ * ##### Overview
+ *
  * An error thrown when a Data API operation timed out.
  *
  * Depending on the method, this may be a request timeout occurring during a specific HTTP request, or can happen over
  * the course of a method involving several requests in a row, such as a paginated `insertMany`.
+ *
+ * @see TimeoutDescriptor
  *
  * @public
  */
@@ -231,7 +250,9 @@ export class DataAPITimeoutError extends DataAPIError {
 }
 
 /**
- * Caused by a `countDocuments` operation that failed because the resulting number of documents exceeded *either*
+ * ##### Overview
+ *
+ * Caused by a {@link Collection.countDocuments} operation that failed because the resulting number of documents exceeded *either*
  * the upper bound set by the caller, or the hard limit imposed by the Data API.
  *
  * @example
@@ -248,8 +269,7 @@ export class DataAPITimeoutError extends DataAPIError {
  * }
  * ```
  *
- * @field limit - The limit that was set by the caller
- * @field hitServerLimit - Whether the server-imposed limit was hit
+ * @see Collection.countDocuments
  *
  * @public
  */
@@ -282,17 +302,9 @@ export class TooManyDocumentsToCountError extends DataAPIError {
 }
 
 /**
- * An error representing the *complete* errors for an operation. This is a cohesive error that represents all the
- * errors that occurred during a single operation, and should not be thought of as *always* 1:1 with the number of
- * API requests—rather it's 1:1 with the number of *logical* operations performed by the user (i.e. the methods
- * on the {@link Collection} class).
+ * ##### Overview
  *
- * This is *not* used for "hard" (4XX, 5XX) errors, which are rarer and would be thrown directly by the underlying
- * code.
- *
- * @field message - A human-readable message describing the *first* error
- * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
- * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
+ * An error representing a 2XX error returned from the Data API (such as duplicate ID errors, certain validation errors, etc.)
  *
  * @public
  */
@@ -446,15 +458,7 @@ export class CollectionInsertManyError extends DataAPIError {
    * @internal
    */
   public constructor(causes: NonEmpty<DataAPIResponseError>, partRes: CollectionInsertManyResult<SomeDoc>) {
-    const errorDescriptor = causes[0].errorDescriptors[0];
-    const numErrors = causes.reduce((acc, e) => acc + e.errorDescriptors.length, 0);
-
-    const message = (errorDescriptor?.message)
-      ? `${errorDescriptor.message}${numErrors > 1 ? ` (+ ${numErrors - 1} more errors)` : ''}`
-      /* c8 ignore next: not sure if this is possible but just in case */
-      : `Something went wrong (${numErrors} errors)`;
-
-    super(message);
+    super(mkInsertManyErrorMsg(causes));
     this.#partialResult = partRes;
     this.#causes = causes;
   }
@@ -523,15 +527,7 @@ export class TableInsertManyError extends DataAPIError {
    * @internal
    */
   public constructor(causes: NonEmpty<DataAPIResponseError>, partRes: TableInsertManyResult<SomeRow>) {
-    const errorDescriptor = causes[0].errorDescriptors[0];
-    const numErrors = causes.reduce((acc, e) => acc + e.errorDescriptors.length, 0);
-
-    const message = (errorDescriptor?.message)
-      ? `${errorDescriptor.message}${numErrors > 1 ? ` (+ ${numErrors - 1} more errors)` : ''}`
-      /* c8 ignore next: not sure if this is possible but just in case */
-      : `Something went wrong (${numErrors} errors)`;
-
-    super(message);
+    super(mkInsertManyErrorMsg(causes));
     this.#partialResult = partRes;
     this.#causes = causes;
   }
@@ -546,15 +542,26 @@ export class TableInsertManyError extends DataAPIError {
 }
 
 /**
+ * ##### Overview
+ *
  * Represents an error that occurred during an `updateMany` operation (which is, generally, paginated).
  *
  * Contains the number of documents that were successfully matched and/or modified, as well as the cumulative errors
  * that occurred during the operation.
  *
- * @field message - A human-readable message describing the *first* error
- * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
- * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
- * @field partialResult - The partial result of the `UpdateMany` operation that was performed
+ * @example
+ * ```ts
+ * try {
+ *   await collection.updateMany({ age: 30 }, { $inc: { age: 1 } });
+ * } catch (e) {
+ *   if (e instanceof CollectionUpdateManyError) {
+ *     console.log(e.cause);
+ *     console.log(e.partialResult);
+ *   }
+ * }
+ * ```
+ *
+ * @see Collection.updateMany
  *
  * @public
  */
@@ -576,6 +583,8 @@ export class CollectionUpdateManyError extends DataAPIError {
   public readonly cause: Error;
 
   /**
+   * Should not be instantiated by the user.
+   *
    * @internal
    */
   public constructor(cause: unknown, partialRes: CollectionUpdateManyResult<SomeDoc>) {
@@ -587,15 +596,26 @@ export class CollectionUpdateManyError extends DataAPIError {
 }
 
 /**
+ * ##### Overview
+ *
  * Represents an error that occurred during a `deleteMany` operation (which is, generally, paginated).
  *
  * Contains the number of documents that were successfully deleted, as well as the cumulative errors that occurred
  * during the operation.
  *
- * @field message - A human-readable message describing the *first* error
- * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
- * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
- * @field partialResult - The partial result of the `DeleteMany` operation that was performed
+ * @example
+ * ```ts
+ * try {
+ *   await collection.deleteMany({ age: 30 });
+ * } catch (e) {
+ *   if (e instanceof CollectionDeleteManyError) {
+ *     console.log(e.cause);
+ *     console.log(e.partialResult);
+ *   }
+ * }
+ * ```
+ *
+ * @see Collection.deleteMany
  *
  * @public
  */
@@ -617,6 +637,8 @@ export class CollectionDeleteManyError extends DataAPIError {
   public readonly cause: Error;
 
   /**
+   * Should not be instantiated by the user.
+   *
    * @internal
    */
   public constructor(cause: unknown, partialRes: CollectionDeleteManyResult) {
@@ -625,4 +647,14 @@ export class CollectionDeleteManyError extends DataAPIError {
     this.partialResult = partialRes;
     this.cause = errorCause;
   }
+}
+
+function mkInsertManyErrorMsg(causes: NonEmpty<DataAPIResponseError>) {
+  const errorDescriptor = causes[0].errorDescriptors[0];
+  const numErrors = causes.reduce((acc, e) => acc + e.errorDescriptors.length, 0);
+
+  return (errorDescriptor?.message)
+    ? `${errorDescriptor.message}${numErrors > 1 ? ` (+ ${numErrors - 1} more errors)` : ''}`
+    /* c8 ignore next: not sure if this is possible but just in case */
+    : `Something went wrong (${numErrors} errors)`;
 }

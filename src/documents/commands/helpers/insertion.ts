@@ -16,7 +16,7 @@ import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import type { CollectionInsertManyError, TableInsertManyError } from '@/src/documents/errors.js';
 import { DataAPIResponseError } from '@/src/documents/errors.js';
-import type { SomeDoc, SomeId, SomeRow } from '@/src/documents/index.js';
+import type { SomeDoc, SomeId, SomePKey, SomeRow } from '@/src/documents/index.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import type { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
@@ -52,7 +52,7 @@ export const insertManyOrdered = async <ID>(
 
     if (resp.error) {
       throw new err([resp.error], {
-        insertedIds: insertedIds as (SomeRow[] & SomeId[]),
+        insertedIds: insertedIds as (SomePKey[] & SomeId[]),
         insertedCount: insertedIds.length,
       });
     }

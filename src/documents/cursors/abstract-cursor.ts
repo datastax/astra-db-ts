@@ -74,21 +74,21 @@ export type CursorState = 'idle' | 'started' | 'closed';
  *
  * Represents some lazy, abstract iterable cursor over any arbitrary data, which may or may not be paginated.
  *
- * **Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}/{@link Collection.find}, or their {@link Table} alternatives.**
+ * > **⚠️Warning**: Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}/{@link Collection.find}, or their {@link Table} alternatives.
  *
  * ---
  *
  * ##### Typing
  *
- * **For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.**
+ * > **🚨Important:** For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.
+ * >
+ * > If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.
  *
- * **If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.**
- *
- * In full, the cursor is typed as `FindCursor<T, TRaw>`, where
+ * In full, the cursor is typed as `AbstractCursor<T, TRaw>`, where
  * - `T` is the type of the mapped records, and
  * - `TRaw` is the type of the raw records before any mapping.
  *
- * If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping is done using the {@link FindCursor.map} method.
+ * If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping is done using the {@link AbstractCursor.map} method.
  *
  * @see CollectionFindCursor
  * @see CollectionFindAndRerankCursor

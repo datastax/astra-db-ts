@@ -47,15 +47,15 @@ import {
  *
  * A lazy iterator over the results of some generic `find` operation on the Data API.
  *
- * **Shouldn't be directly instantiated, but rather spawned via {@link Table.find}/{@link Collection.find}**.
+ * > **⚠️Warning**: Shouldn't be directly instantiated, but rather spawned via {@link Table.find}/{@link Collection.find}.
  *
  * ---
  *
  * ##### Typing
  *
- * **For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.**
- *
- * **If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.**
+ * > **🚨Important:** For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.
+ * >
+ * > If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.
  *
  * In full, the cursor is typed as `FindCursor<T, TRaw>`, where
  * - `T` is the type of the mapped records, and

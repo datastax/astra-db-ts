@@ -1,6 +1,6 @@
 # DEVGUIDE.md (WIP)
 
-**Note: this DEVGUIDE is under way and is not complete yet; see `scripts/docs` for documentation on each of the available scripts.**
+> **Note: this DEVGUIDE is under construction and is not complete yet; see `scripts/docs` for documentation on each of the available scripts.**
 
 ## Contents
 1. [I can't be bothered to read all of this](#i-cant-be-bothered-to-read-all-of-this)
