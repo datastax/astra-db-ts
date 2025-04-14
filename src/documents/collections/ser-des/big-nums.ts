@@ -21,6 +21,93 @@ import type { PathSegment } from '@/src/lib/types.js';
 import { unescapeFieldPath } from '@/src/lib/index.js';
 
 /**
+ * ##### Overview
+ *
+ * > **💡Tip:** read the documentation for {@link CollectionSerDesConfig.enableBigNumbers} before reading this.
+ *
+ * The `CollNumCoercion` type is used to define how numeric values should be coerced when deserializing data in collections.
+ *
+ * Each type of coercion has its own characteristics, and the choice of coercion should be well-thought-out, as misuse may lead to unexpected behavior and even damaged data.
+ *
+ * ---
+ *
+ * ##### Under the hood
+ *
+ * > **✏️Note:** in this context, "large" means that a number is not perfectly representable as a JS `number`.
+ *
+ * Under the hood, the specialized JSON parser converts every number to either a `number` or a `BigNumber`, depending on its size. From there, the coercion function is applied to the value to convert it to the desired type.
+ *
+ * **This means that coercion is applied after parsing, and certain coercions may fail if the value is not compatible with the coercion type.**
+ * - For example, coercing a `BigNumber` to a `number` may fail if the value is too large to fit in a `number`.
+ * - In this case, the coercion function will throw a {@link NumCoercionError} error.
+ *
+ * ---
+ *
+ * ##### Predefined coercions
+ *
+ * **Type:** `number`
+ *   - **Description:** Coerces the value to a `number`, possibly losing precision if the value is too large.
+ *   - **Throws?:** No.
+ *
+ * **Type:** `strict_number`
+ *   - **Description:** Coerces the value to a `number`, only if the value not too large to be a `number`.
+ *   - **Throws?:** Yes, if the value is too large to fit in a `number`.
+ *
+ * **Type:** `bigint`
+ *   - **Description:** Coerces the value to a `bigint`, only if the value is an integer.
+ *   - **Throws?:** Yes, if the value is not an integer.
+ *
+ * **Type:** `bignumber`
+ *   - **Description:** Coerces the value to a `BigNumber`.
+ *   - **Throws?:** No.
+ *
+ * **Type:** `string`
+ *   - **Description:** Coerces the value to a `string`.
+ *   - **Throws?:** No.
+ *
+ * **Type:** `number_or_string`
+ *   - **Description:** Coerces the value to a `number` if it is not too large, otherwise coerces it to a `string`.
+ *   - **Throws?:** No.
+ *
+ * ---
+ *
+ * ##### Custom coercions
+ *
+ * You can also use a custom coercion function as the coercion type, which takes the value and the path as arguments and returns the coerced value.
+ *
+ * @example
+ * ```ts
+ * const coll = db.collection('coll', {
+ *   serdes: {
+ *     enableBigNumbers: {
+ *       '*': number,
+ *       'items.*.price': (val, path) => {
+ *          // nonsensical but demonstrative example
+ *          const itemIndex = path[1];
+ *          return BigNumber(value).times(itemIndex);
+ *       },
+ *     }
+ *   },
+ * });
+ *
+ * const { insertedId } = await coll.insertOne({
+ *   itemCount: 3,
+ *   items: [{ price: 10 }, { price: 20 }, { price: 30 }],
+ * });
+ *
+ * const item = await coll.findOne({ _id: insertedId });
+ *
+ * console.log(item.itemCount); // 3
+ * console.log(item.items[0].price); // BigNumber(0)
+ * console.log(item.items[1].price); // BigNumber(20)
+ * console.log(item.items[2].price); // BigNumber(60)
+ * ```
+ *
+ * @see CollectionSerDesConfig.enableBigNumbers
+ * @see CollNumCoercionFn
+ * @see CollNumCoercionCfg
+ * @see NumCoercionError
+ *
  * @public
  */
 export type CollNumCoercion =
@@ -33,11 +120,114 @@ export type CollNumCoercion =
   | ((val: number | BigNumber, path: readonly PathSegment[]) => unknown);
 
 /**
+ * ##### Overview
+ *
+ * > **💡Tip:** read the documentation for {@link CollectionSerDesConfig.enableBigNumbers} before reading this.
+ *
+ * This method of configuring the numerical deserialization behavior uses a function that takes the path of the field being deserialized, and returns the coercion type to be used for that path.
+ *
+ * If you'd prefer to use a more declarative approach, you can use the {@link CollNumCoercionCfg} type to define the coercion for each path.
+ *
+ * @example
+ * ```ts
+ * const coll = db.collection('coll', {
+ *   serdes: {
+ *     enableBigNumbers(path, matches) {
+ *       if (path[0] === 'discount') {
+ *         return 'bigint';
+ *       }
+ *
+ *       if (matches(['items', '*', 'price'])) {
+ *         return 'bignumber';
+ *       }
+ *
+ *       return 'number';
+ *     },
+ *   }
+ * });
+ * ```
+ *
+ * ---
+ *
+ * ##### Using the function
+ *
+ * The function is called for each field being deserialized, and it receives two arguments:
+ * - `path`: the path of the field being deserialized, as an array of strings.
+ * - `matches`: a utility function that takes a "path matcher" as an argument and returns `true` if it matches the current path being deserialized.
+ *
+ * The matcher must be an array of strings and numbers, but it may also contain wildcards (`'*'`) to match any single field.
+ * - The wildcard `'*'` matches a single element in the path at that position.
+ *   - However, it will *not* match multiple elements (or no elements) in the path.
+ *   - For example, `['foo', '*']` will match `['foo', 'bar']`, but _not_ `['foo']` or `['foo', 'bar', 'baz']`.
+ * - Strings and numbers are strictly compared.
+ *   - For example, `['foo', 1]` will _not_ match `['foo', '1']`.
+ *   - The exception is the wildcard `'*'`, which will match any string or number.
+ *
+ * This function can then return any {@link CollNumCoercion} in order to coerce the value to the desired type.
+ *
+ * ---
+ *
+ * ##### Using a single {@link CollNumCoercion}
+ *
+ * You may simply use `() => '<type>'` to return a single coercion type for all paths.
+ *
+ * @see CollectionSerDesConfig.enableBigNumbers
+ * @see CollNumCoercionCfg
+ * @see CollNumCoercion
+ *
  * @public
  */
-export type GetCollNumCoercionFn = (path: readonly PathSegment[], matches: (path: readonly PathSegment[]) => boolean) => CollNumCoercion;
+export type CollNumCoercionFn = (path: readonly PathSegment[], matches: (path: readonly PathSegment[]) => boolean) => CollNumCoercion;
 
 /**
+ * ##### Overview
+ *
+ * > **💡Tip:** read the documentation for {@link CollectionSerDesConfig.enableBigNumbers} before reading this.
+ *
+ * This method of configuring the numerical deserialization behavior uses a configuration object that maps paths to coercion types.
+ *
+ * If you'd prefer to use a more flexible approach, you can use the {@link CollNumCoercionFn} type to define the coercion for each path.
+ *
+ * @example
+ * ```ts
+ * const orders = db.collection<Order>('orders', {
+ *   serdes: {
+ *     enableBigNumbers: {
+ *       '*': 'number',
+ *       'discount': 'bigint',
+ *       'items.*.price': 'bignumber',
+ *     },
+ *   },
+ * });
+ * ```
+ *
+ * ---
+ *
+ * ##### The configuration object
+ *
+ * The configuration object is a map of paths to coercion types.
+ *
+ * These paths may also contain wildcards (`'*'`), which matches any single element in the path at that position.
+ * - However, it will *not* match multiple elements (or no elements) in the path.
+ * - For example, `'foo.*'` will match `'foo.bar'`, but _not_ `'foo'` or `'foo.bar.baz'`.
+ *
+ * Paths containing numbers (e.g. `'arr.0'`) will match both `arr: ['me!']` and `arr: { '0': 'me!' }`.
+ *
+ * > **🚨Important:** There must be a `'*'` key in the configuration object, which will be used as the default coercion for all paths that do not have a specific coercion defined.
+ * > - This key is required, and the configuration will throw an error if it is not present.
+ *
+ * ---
+ *
+ * ##### Using a single {@link CollNumCoercion}
+ *
+ * You may simply use `{ '*': '<type>' }` to return a single coercion type for all paths.
+ *
+ * This is specifically optimized to be just as fast as using `() => '<type>'`.
+ *
+ * @see CollectionSerDesConfig.enableBigNumbers
+ * @see CollNumCoercionFn
+ * @see CollNumCoercion
+ *
  * @public
  */
 export interface CollNumCoercionCfg {
@@ -55,13 +245,13 @@ interface NumCoercionTree {
 /**
  * @internal
  */
-export const buildGetNumCoercionForPathFn = (cfg: ParsedSerDesConfig<CollectionSerDesConfig>): GetCollNumCoercionFn | undefined => {
+export const buildGetNumCoercionForPathFn = (cfg: ParsedSerDesConfig<CollectionSerDesConfig>): CollNumCoercionFn | undefined => {
   return (typeof cfg?.enableBigNumbers === 'object')
     ? collNumCoercionFnFromCfg(cfg.enableBigNumbers)
     : cfg?.enableBigNumbers;
 };
 
-const collNumCoercionFnFromCfg = (cfg: CollNumCoercionCfg): GetCollNumCoercionFn => {
+const collNumCoercionFnFromCfg = (cfg: CollNumCoercionCfg): CollNumCoercionFn => {
   const defaultCoercion = cfg['*'];
 
   if (!defaultCoercion) {
@@ -148,7 +338,7 @@ export class NumCoercionError extends Error {
 /**
  * @internal
  */
-export const coerceBigNumber = (value: BigNumber, path: readonly PathSegment[], getNumCoercionForPath: GetCollNumCoercionFn, pathMatches: (path: readonly PathSegment[]) => boolean): unknown => {
+export const coerceBigNumber = (value: BigNumber, path: readonly PathSegment[], getNumCoercionForPath: CollNumCoercionFn, pathMatches: (path: readonly PathSegment[]) => boolean): unknown => {
   const coercer = getNumCoercionForPath(path, pathMatches);
 
   if (typeof coercer === 'function') {
@@ -193,7 +383,7 @@ export const coerceBigNumber = (value: BigNumber, path: readonly PathSegment[], 
 /**
  * @internal
  */
-export const coerceNumber = (value: number, path: readonly PathSegment[], getNumCoercionForPath: GetCollNumCoercionFn, pathMatches: (path: readonly PathSegment[]) => boolean): unknown => {
+export const coerceNumber = (value: number, path: readonly PathSegment[], getNumCoercionForPath: CollNumCoercionFn, pathMatches: (path: readonly PathSegment[]) => boolean): unknown => {
   const coercer = getNumCoercionForPath(path, pathMatches);
 
   if (typeof coercer === 'function') {
@@ -221,14 +411,14 @@ export const coerceNumber = (value: number, path: readonly PathSegment[], getNum
 /**
  * @internal
  */
-export const coerceNums = (val: unknown, getNumCoercionForPath: GetCollNumCoercionFn) => {
+export const coerceNums = (val: unknown, getNumCoercionForPath: CollNumCoercionFn) => {
   return coerceNumsImpl(val, [], getNumCoercionForPath, (p) => pathMatches([], p));
 };
 
 /**
  * @internal
  */
-const coerceNumsImpl = (val: unknown, path: PathSegment[], getNumCoercionForPath: GetCollNumCoercionFn, pathMatchesFn: (path: readonly PathSegment[]) => boolean): unknown => {
+const coerceNumsImpl = (val: unknown, path: PathSegment[], getNumCoercionForPath: CollNumCoercionFn, pathMatchesFn: (path: readonly PathSegment[]) => boolean): unknown => {
   if (typeof val === 'number') {
     return coerceNumber(val, path, getNumCoercionForPath, pathMatchesFn);
   }

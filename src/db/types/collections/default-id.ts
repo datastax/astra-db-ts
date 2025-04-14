@@ -46,7 +46,7 @@ export interface CollectionDefaultIdOptions {
    * @example
    * ```typescript
    * const collections = await db.createCollection('my-collections', {
-   *   defaultId: { type: 'uuidv6' },
+   *   defaultId: { type: 'uuidv6' },
    * });
    *
    * // { name: 'Allman', _id: UUID('6f752f1a-6b6d-6f3e-8e1e-2e167e3b5f3d') }
@@ -56,7 +56,7 @@ export interface CollectionDefaultIdOptions {
    * @example
    * ```typescript
    * const collections = await db.createCollection('my-collections', {
-   *   defaultId: { type: 'objectId' },
+   *   defaultId: { type: 'objectId' },
    * });
    *
    * // { name: 'Brothers', _id: ObjectId('507f1f77bcf86cd799439011') }

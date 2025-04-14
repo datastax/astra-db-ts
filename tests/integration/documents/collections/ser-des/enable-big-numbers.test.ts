@@ -19,15 +19,12 @@ import { BigNumber } from 'bignumber.js';
 import type {
   CollectionCodec,
   CollectionDesCtx,
-  CollNumCoercionCfg,
   CollectionSerCtx,
-  GetCollNumCoercionFn} from '@/src/documents/index.js';
-import {
-  $DeserializeForCollection,
-  $SerializeForCollection,
-  CollectionCodecs,
-  uuid,
+  CollNumCoercionCfg,
+  CollNumCoercionFn,
+  UUID,
 } from '@/src/documents/index.js';
+import { $DeserializeForCollection, $SerializeForCollection, CollectionCodecs, uuid } from '@/src/documents/index.js';
 
 parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }) => {
   const TestObjAct1 = (key: string) => ({
@@ -165,7 +162,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
     },
   });
 
-  const mkAsserter = (opts: GetCollNumCoercionFn | CollNumCoercionCfg) => ({
+  const mkAsserter = (opts: CollNumCoercionFn | CollNumCoercionCfg) => ({
     coll: db.collection(DEFAULT_COLLECTION_NAME, {
       serdes: {
         codecs: [CollectionCodecs.forName('camelCaseName2', Newtype)],
@@ -234,8 +231,48 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
   it('should allow a universal default with a CollNumRepCfg', async () => {
     const asserter = mkAsserter({ '*': 'bignumber' });
     await asserter.ok(TestObjExp1d, TestObjAct1);
-    // await asserter.ok(TestObjExp2d, TestObjAct2);
-    // await asserter.ok(TestObjExp3d, TestObjAct3);
-    // await asserter.ok(TestObjExp4d, TestObjAct4);
+    await asserter.ok(TestObjExp2d, TestObjAct2);
+    await asserter.ok(TestObjExp3d, TestObjAct3);
+    await asserter.ok(TestObjExp4d, TestObjAct4);
+  });
+
+  it('should work with the order example', async () => {
+    interface Order {
+      discount: bigint,
+      statusCode: number,
+      items: {
+        productID: UUID,
+        quantity: number,
+        price: BigNumber,
+      }[],
+    }
+
+    const orders = db.collection<Order>(DEFAULT_COLLECTION_NAME, {
+      serdes: {
+        enableBigNumbers: {
+          '*': 'number',
+          'discount': 'bigint',
+          'items.*.price': 'bignumber',
+        },
+      },
+    });
+
+    const order: Order = {
+      discount: 123n,
+      statusCode: 1,
+      items: [
+        {
+          productID: uuid.v4(),
+          quantity: 2,
+          price: BigNumber(100),
+        },
+      ],
+    };
+
+    const { insertedId } = await orders.insertOne(order);
+    const foundOrder = await orders.findOne({ _id: insertedId });
+
+    delete (foundOrder as any)._id;
+    assert.deepStrictEqual(foundOrder, order);
   });
 });

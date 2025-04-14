@@ -37,9 +37,9 @@ export const oid = (id?: string | number | null | ObjectId): ObjectId => (id ins
  * @example
  * ```typescript
  * const collections = await db.createCollection('myCollection'. {
- *   defaultId: {
- *     type: 'objectId',
- *   },
+ *   defaultId: {
+ *     type: 'objectId',
+ *   },
  * });
  *
  * await collections.insertOne({ album: 'Inhuman Rampage' });

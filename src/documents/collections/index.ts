@@ -29,5 +29,5 @@ export type {
   CollectionDesCtx,
 } from './ser-des/ser-des.js';
 
-export type { CollNumCoercion, GetCollNumCoercionFn, CollNumCoercionCfg } from './ser-des/big-nums.js';
+export type { CollNumCoercion, CollNumCoercionFn, CollNumCoercionCfg } from './ser-des/big-nums.js';
 export { NumCoercionError } from './ser-des/big-nums.js';

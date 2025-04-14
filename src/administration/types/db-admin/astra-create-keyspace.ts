@@ -32,7 +32,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * // Will internally call `db.useKeyspace('new_keyspace')`
  * await db.admin().createKeyspace('new_keyspace', {
- *   updateDbKeyspace: true,
+ *   updateDbKeyspace: true,
  * });
  *
  * // Creates collections in keyspace `new_keyspace` by default now

@@ -58,20 +58,20 @@ import type { OneOrMany } from '@/src/lib/types.js';
  *
  * | Name                                       | Description                                                                                       | Default behavior if enabled   |
  * |--------------------------------------------|---------------------------------------------------------------------------------------------------|-------------------------------|
- * | `commandStarted`                           | Emitted when a command is started, before the initial HTTP request is made.                       | Emit as event; does not log   |
- * | `commandSucceeded`                         | Emitted when a command has succeeded (i.e. the status code is 200, and no `errors` are returned). | Emit as event; does not log   |
- * | `commandFailed`                            | Emitted when a command has errored (i.e. the status code is not 200, or `errors` are returned).   | Emit as event; logs to stderr |
- * | `commandWarnings`                          | Emitted when a command has warnings (i.e. when the `status.warnings` field is present).           | Emit as event; logs to stderr |
+ * | `commandStarted`                           | Emitted when a command is started, before the initial HTTP request is made.                       | Emit as event; does not log   |
+ * | `commandSucceeded`                         | Emitted when a command has succeeded (i.e. the status code is 200, and no `errors` are returned). | Emit as event; does not log   |
+ * | `commandFailed`                            | Emitted when a command has errored (i.e. the status code is not 200, or `errors` are returned).   | Emit as event; logs to stderr |
+ * | `commandWarnings`                          | Emitted when a command has warnings (i.e. when the `status.warnings` field is present).           | Emit as event; logs to stderr |
  *
  * ###### Admin commands
  *
  * | Name                                                              | Description                                                                                                   | Default behavior if enabled     |
  * |-------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|---------------------------------|
- * | `adminCommandStarted`                                             | Emitted when an admin command is started, before the initial HTTP request is made.                            | Emits the event; logs to stderr |
- * | `adminCommandPolling`                                             | Emitted when a command is polling in a long-running operation (i.e. {@link AstraAdmin.createDatabase}).       | Emits the event; logs to stderr |
- * | `adminCommandSucceeded`                                           | Emitted when an admin command has succeeded, after any necessary polling (i.e. when an HTTP 200 is returned). | Emits the event; logs to stderr |
- * | `adminCommandFailed`                                              | Emitted when an admin command has failed (i.e. when an HTTP 4xx/5xx is returned, even if while polling).      | Emits the event; logs to stderr |
- * | `adminCommandWarnings`                                            | Emitted when an admin command has warnings (i.e. when the `status.warnings` field is present).                | Emits the event; logs to stderr |
+ * | `adminCommandStarted`                                             | Emitted when an admin command is started, before the initial HTTP request is made.                            | Emits the event; logs to stderr |
+ * | `adminCommandPolling`                                             | Emitted when a command is polling in a long-running operation (i.e. {@link AstraAdmin.createDatabase}).       | Emits the event; logs to stderr |
+ * | `adminCommandSucceeded`                                           | Emitted when an admin command has succeeded, after any necessary polling (i.e. when an HTTP 200 is returned). | Emits the event; logs to stderr |
+ * | `adminCommandFailed`                                              | Emitted when an admin command has failed (i.e. when an HTTP 4xx/5xx is returned, even if while polling).      | Emits the event; logs to stderr |
+ * | `adminCommandWarnings`                                            | Emitted when an admin command has warnings (i.e. when the `status.warnings` field is present).                | Emits the event; logs to stderr |
  *
  * @see LoggingConfig
  * @see CommandEventMap

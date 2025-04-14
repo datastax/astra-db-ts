@@ -42,7 +42,7 @@ import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
  * ```typescript
  * // Client with default token
  * const client = new DataAPIClient('<token>');
- * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
+ * const db = client.db('http://localhost:port');
  *
  * // Client with no default token; must provide token in .db() or .admin()
  * const client = new DataAPIClient();
@@ -72,7 +72,7 @@ import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
  * const client = new DataAPIClient({
  *   logging: [{ events: 'all', emits: 'event' }],
  * });
- * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com', { token });
+ * const db = client.db('<endpoint>', { token });
  *
  * // Everything will still be emitted as an event,
  * // But now, `commandFailed` events from this collection will also log to stderr
@@ -89,9 +89,9 @@ import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
  *
  * See {@link DataAPIEnvironment} for all possible backends; it defaults to "astra" if not specified.
  *
- * Currently, if you're not using Astra, you need to specify the environment when:
- * - Creating the {@link DataAPIClient}
- * - Using {@link Db.admin}
+ * > **🚨Important:** If you're not using Astra, you need to specify the environment when:
+ * > - Creating the {@link DataAPIClient}
+ * > - Using {@link Db.admin}
  *
  * @example
  * ```ts
@@ -114,7 +114,7 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * Constructs a new instance of the {@link DataAPIClient} without a default token. The token will instead need to
    * be specified when calling `.db()` or `.admin()`.
    *
-   * Prefer this method when using a db-scoped token instead of a more universal token.
+   * > **💡Tip:** Prefer this overload when using a db-scoped token instead of a more universal token.
    *
    * @example
    * ```typescript
@@ -137,7 +137,7 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * Constructs a new instance of the {@link DataAPIClient} with a default token. This token will be used everywhere
    * if no overriding token is provided in `.db()` or `.admin()`.
    *
-   * Prefer this method when using a universal/admin-scoped token.
+   * > **💡Tip:** Prefer this overload when using a universal/admin-scoped token.
    *
    * @example
    * ```typescript
@@ -182,15 +182,25 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    *
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
    *
+   * @example
+   * ```ts
+   * const db = client.db('http://localhost:8181');
+   *
+   * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
+   *   keyspace: 'my_keyspace',
+   *   token: 'AstraCS:...',
+   * });
+   * ```
+   *
    * ---
    *
    * ##### Disclaimer
    *
-   * This method does *not* validate the existence of the database—it simply creates a reference.**
+   * > **🚨Important**: This does _not_ verify the existence of the database—it only creates a reference.
+   * >
+   * > Use {@link AstraAdmin.createDatabase} to create a new database if you need to.
    *
-   * Note that this does not perform any I/O or validation on if the endpoint is valid or not. It's up to the user to
-   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
-   * instead.
+   * It is on the user to ensure that the database endpoint is correct.
    *
    * ---
    *
@@ -200,12 +210,9 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    *
    * If you're using Astra, this will typically be of the form `https://<db_id>-<region>.apps.astra.datastax.com` (the exception being private endpoints); any other database may have a completely unique domain.
    *
-   * Spawning a db via just an ID and region is no longer supported in `astra-db-ts 2.0+`. Use the {@link buildAstraEndpoint} to create the endpoint if you need to.
-   *
-   * @example
-   * ```ts
-   * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
-   * ```
+   * > **⚠️Warning:** Spawning a db using an ID and region is no longer supported in `astra-db-ts v2.0+`.
+   * >
+   * > Use the {@link buildAstraEndpoint} to create the endpoint if you need to.
    *
    * ---
    *
@@ -227,11 +234,6 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * });
    * ```
    *
-   * @remarks
-   * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
-   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
-   * instead.
-   *
    * @param endpoint - The direct endpoint to use.
    * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
@@ -250,7 +252,7 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * Spawns a new {@link AstraAdmin} instance using the given options to work with the DevOps API (for admin
    * work such as creating/managing databases).
    *
-   * **Note: this method is only available for Astra databases.**
+   * > **⚠️Warning:** This method is only available for Astra databases. If you try to use it with a non-Astra database, it will throw an error.
    *
    * @example
    * ```typescript
@@ -284,9 +286,7 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * Closes the client and disconnects all underlying connections. This should be called when the client is no longer
    * needed to free up resources.
    *
-   * The client will be no longer usable after this method is called.
-   *
-   * This method is idempotent and can be called multiple times without issue.
+   * > **🚨Important:** The client will be no longer usable after this method is called.
    *
    * @example
    * ```ts
@@ -299,14 +299,19 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    * ```
    * ---
    *
+   * ##### Idempotency
+   *
+   * This method is idempotent and can be called multiple times without issue.
+   *
+   * ---
+   *
    * ##### When to call this method
    *
-   * For most users, this method isn't necessary to call, as resources will be freed up when the
-   * server is shut down or the process is killed.
+   * For most users, this method is **not necessary to call**, as resources will be freed up when the server is shut down or the process is killed.
    *
    * However, it's useful in long-running processes or when you want to free up resources immediately.
    *
-   * Think of it as using malloc or using a file descriptor. Freeing them isn't *strictly* necessary when they're used for the duration of the program, but it's there for when you need it.
+   * Think of it as using malloc or using a file descriptor. Freeing them isn't *strictly* necessary when the resources are used for the duration of the program, but it's there for when you need it.
    *
    * @returns A promise that resolves when the client has been closed.
    */

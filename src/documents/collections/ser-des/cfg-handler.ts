@@ -22,7 +22,7 @@ import {
 } from '@/src/lib/api/ser-des/cfg-handler.js';
 import type { OptionsHandlerTypes } from '@/src/lib/opts-handlers.js';
 import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handlers.js';
-import type { CollNumCoercionCfg, CollectionSerDesConfig, GetCollNumCoercionFn } from '@/src/documents/index.js';
+import type { CollNumCoercionCfg, CollectionSerDesConfig, CollNumCoercionFn } from '@/src/documents/index.js';
 import { function_ } from '@/src/lib/utils.js';
 
 const CollNumCoercions = ['number', 'strict_number', 'bigint', 'bignumber', 'string', 'number_or_string'] as const;
@@ -40,7 +40,7 @@ interface Types extends OptionsHandlerTypes {
  */
 const monoid = monoids.object({
   ...serdesMonoidSchema,
-  enableBigNumbers: monoids.optional<CollNumCoercionCfg | GetCollNumCoercionFn>(),
+  enableBigNumbers: monoids.optional<CollNumCoercionCfg | CollNumCoercionFn>(),
 });
 
 /**

@@ -735,7 +735,7 @@ export class DataAPIDurationBuilder {
    *
    * @internal
    */
-  constructor(base?: DataAPIDuration, private readonly validateOrder = false) {
+  constructor(base?: DataAPIDuration, private readonly _validateOrder = false) {
     if (base) {
       this._months = Math.abs(base.months);
       this._days = Math.abs(base.days);
@@ -1155,7 +1155,7 @@ export class DataAPIDurationBuilder {
    * @returns A new `DataAPIDurationBuilder` instance with the same components as this one
    */
   public clone(): DataAPIDurationBuilder {
-    const clone = new DataAPIDurationBuilder(undefined, this.validateOrder);
+    const clone = new DataAPIDurationBuilder(undefined, this._validateOrder);
     clone._months = this._months;
     clone._days = this._days;
     clone._nanoseconds = this._nanoseconds;
@@ -1220,7 +1220,7 @@ export class DataAPIDurationBuilder {
   }
 
   private _validateIndex(index: number) {
-    if (!this.validateOrder) {
+    if (!this._validateOrder) {
       return;
     }
 

@@ -28,9 +28,9 @@ import type { DataAPICodec } from '@/src/lib/index.js';
  * @example
  * ```typescript
  * const collections = await db.createCollection('myCollection'. {
- *   defaultId: {
- *     type: 'uuidv7',
- *   },
+ *   defaultId: {
+ *     type: 'uuidv7',
+ *   },
  * });
  *
  * await collections.insertOne({ type: 'Jomsvikings' });

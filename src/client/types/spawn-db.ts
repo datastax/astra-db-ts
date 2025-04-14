@@ -64,7 +64,7 @@ export interface DbOptions {
    *
    * // Using 'my_keyspace' as the keyspace
    * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
-   *   keyspace: 'my_keyspace',
+   *   keyspace: 'my_keyspace',
    * });
    *
    * // Finds 'my_collection' in 'default_keyspace'
@@ -94,7 +94,7 @@ export interface DbOptions {
    *
    * // Using 'weaker-token' instead of 'strong-token'
    * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
-   *   token: 'weaker-token',
+   *   token: 'weaker-token',
    * });
    * ```
    */
@@ -128,12 +128,12 @@ export interface DbOptions {
    * ```ts
    * // The request timeout for all operations is set to 1000ms.
    * const client = new DataAPIClient('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 1000 },
+   *   timeoutDefaults: { requestTimeoutMs: 1000 },
    * });
    *
    * // The request timeout for all operations borne from this Db is set to 2000ms.
    * const db = client.db('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 2000 },
+   *   timeoutDefaults: { requestTimeoutMs: 2000 },
    * });
    * ```
    *

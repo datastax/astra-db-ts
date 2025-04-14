@@ -33,15 +33,15 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
  * @example
  * ```typescript
  * const result = await collection.replaceOne({
- *   _id: 'abc'
+ *   _id: 'abc'
  * }, {
- *   name: 'John'
+ *   name: 'John'
  * }, {
- *   upsert: true
+ *   upsert: true
  * });
  *
  * if (result.upsertedCount) {
- *   console.log(`Document with ID ${result.upsertedId} was upserted`);
+ *   console.log(`Document with ID ${result.upsertedId} was upserted`);
  * }
  * ```
  *

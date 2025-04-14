@@ -116,8 +116,8 @@ export class AstraDbAdmin extends DbAdmin {
    * @example
    * ```typescript
    * const dbAdmin = client.admin().dbAdmin('<endpoint>', {
-   *   keyspace: 'my_keyspace',
-   *   useHttp2: false,
+   *   keyspace: 'my_keyspace',
+   *   useHttp2: false,
    * });
    *
    * const db = dbAdmin.db();
@@ -185,7 +185,7 @@ export class AstraDbAdmin extends DbAdmin {
    * console.log(await dbAdmin.listKeyspaces());
    *
    * await dbAdmin.createKeyspace('my_other_keyspace2', {
-   *   blocking: false,
+   *   blocking: false,
    * });
    *
    * // Will not include 'my_other_keyspace2' until the operation completes
@@ -236,7 +236,7 @@ export class AstraDbAdmin extends DbAdmin {
    * console.log(await dbAdmin.listKeyspaces());
    *
    * await dbAdmin.dropKeyspace('my_other_keyspace2', {
-   *   blocking: false,
+   *   blocking: false,
    * });
    *
    * // Will still include 'my_other_keyspace2' until the operation completes

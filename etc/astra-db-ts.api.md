@@ -86,7 +86,7 @@ export type AdditionalHeaders = OneOrMany<HeadersProvider | Record<string, strin
 // @public (undocumented)
 export interface AddRerankingOperation {
     // (undocumented)
-    service: RerankingServiceOptions;
+    service: RerankServiceOptions;
 }
 
 // @public
@@ -214,16 +214,24 @@ export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'
 
 // @public (undocumented)
 export interface AsCollectionCodecClassFns<Class extends SomeConstructor> {
+    // Warning: (ae-incompatible-release-tags) The symbol "deserializeForCollection" is marked as @public, but its signature references "CollectionDesCtx" which is marked as @beta
+    //
     // (undocumented)
     deserializeForCollection: SerDesFn<CollectionDesCtx>;
+    // Warning: (ae-incompatible-release-tags) The symbol "serializeForCollection" is marked as @public, but its signature references "CollectionSerCtx" which is marked as @beta
+    //
     // (undocumented)
     serializeForCollection: (this: InstanceType<Class>, ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
 }
 
 // @public (undocumented)
 export interface AsTableCodecClassFns<Class extends SomeConstructor> {
+    // Warning: (ae-incompatible-release-tags) The symbol "deserializeForTable" is marked as @public, but its signature references "TableDesCtx" which is marked as @beta
+    //
     // (undocumented)
     deserializeForTable: SerDesFn<TableDesCtx>;
+    // Warning: (ae-incompatible-release-tags) The symbol "serializeForTable" is marked as @public, but its signature references "TableSerCtx" which is marked as @beta
+    //
     // (undocumented)
     serializeForTable: (this: InstanceType<Class>, ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
 }
@@ -426,7 +434,7 @@ export function buildAstraEndpoint(id: string, region: string, env?: 'dev' | 'te
 // @public
 export type Caller = readonly [name: string, version?: string];
 
-// @public (undocumented)
+// @beta (undocumented)
 export type CollCustomCodecOpts = CustomCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 // @public
@@ -443,20 +451,10 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: CollectionDistinctOptions): Promise<Flatten<(SomeDoc & ToDotNotation<RSchema>)[Key]>[]>;
     drop(options?: Omit<DropCollectionOptions, keyof WithKeyspace>): Promise<void>;
     estimatedDocumentCount(options?: CollectionEstimatedDocumentCountOptions): Promise<number>;
-    find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions & {
-        projection?: never;
-    }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
-    find<TRaw extends SomeDoc = Partial<WithSim<RSchema>>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>;
+    find<T extends SomeDoc = WithSim<RSchema>, TRaw extends T = T>(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<T, TRaw>;
     // @beta
-    findAndRerank(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions & {
-        projection?: never;
-    }): CollectionFindAndRerankCursor<RerankedResult<RSchema>, RerankedResult<RSchema>>;
-    // @beta
-    findAndRerank<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<TRaw>, RerankedResult<TRaw>>;
-    findOne(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions & {
-        projection?: never;
-    }): Promise<WithSim<RSchema> | null>;
-    findOne<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOneOptions): Promise<TRaw | null>;
+    findAndRerank<T extends SomeDoc = RSchema, TRaw extends T = T>(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<T>, TRaw>;
+    findOne<TRaw extends SomeDoc = WithSim<RSchema>>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions): Promise<TRaw | null>;
     findOneAndDelete<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
     findOneAndReplace<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
     findOneAndUpdate(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<RSchema | null>;
@@ -492,7 +490,7 @@ export type CollectionCodecClass = (abstract new (...args: any[]) => {
     [$DeserializeForCollection]: SerDesFn<CollectionDesCtx>;
 };
 
-// @public (undocumented)
+// @beta (undocumented)
 export class CollectionCodecs {
     // (undocumented)
     static asCodecClass<Class extends SomeConstructor>(clazz: Class, fns?: AsCollectionCodecClassFns<Class>): CollectionCodecClass;
@@ -542,7 +540,7 @@ export interface CollectionDefinition<Schema extends SomeDoc> {
     defaultId?: CollectionDefaultIdOptions;
     indexing?: CollectionIndexingOptions<Schema>;
     lexical?: CollectionLexicalOptions;
-    reranking?: CollectionRerankingOptions;
+    rerank?: CollectionRerankOptions;
     vector?: CollectionVectorOptions;
 }
 
@@ -575,10 +573,10 @@ export interface CollectionDescriptor {
     name: string;
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export interface CollectionDesCtx extends BaseDesCtx<CollectionDesCtx> {
     // (undocumented)
-    getNumCoercionForPath?: GetCollNumCoercionFn;
+    getNumCoercionForPath?: CollNumCoercionFn;
 }
 
 // @public (undocumented)
@@ -621,7 +619,7 @@ export class CollectionFindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ex
     // (undocumented)
     map: <R>(map: (doc: T) => R) => CollectionFindAndRerankCursor<R, TRaw>;
     // (undocumented)
-    project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => CollectionFindAndRerankCursor<RRaw, RRaw>;
+    project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => CollectionFindAndRerankCursor<RerankedResult<RRaw>, RRaw>;
 }
 
 // @public
@@ -683,7 +681,7 @@ export interface CollectionInsertManyResult<RSchema> {
     insertedIds: IdOf<RSchema>[];
 }
 
-// @public (undocumented)
+// @public
 export type CollectionInsertOneOptions = GenericInsertOneOptions;
 
 // @public
@@ -736,25 +734,24 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
 export type CollectionReplaceOneResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, 0 | 1>;
 
 // @public (undocumented)
-export interface CollectionRerankingOptions {
+export interface CollectionRerankOptions {
     // (undocumented)
     enabled?: boolean;
     // (undocumented)
-    service: RerankingServiceOptions;
+    service: RerankServiceOptions;
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export interface CollectionSerCtx extends BaseSerCtx<CollectionSerCtx> {
     // (undocumented)
     bigNumsEnabled: boolean;
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCtx, CollectionDesCtx> {
     // (undocumented)
     codecs?: RawCollCodecs[];
-    // (undocumented)
-    enableBigNumbers?: GetCollNumCoercionFn | CollNumCoercionCfg;
+    enableBigNumbers?: CollNumCoercionFn | CollNumCoercionCfg;
 }
 
 // @public
@@ -806,13 +803,13 @@ export interface CollectionVectorOptions {
     sourceModel?: LitUnion<'other'>;
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export type CollNominalCodecOpts = NominalCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
-// @public (undocumented)
+// @public
 export type CollNumCoercion = 'number' | 'strict_number' | 'bigint' | 'bignumber' | 'string' | 'number_or_string' | ((val: number | BigNumber, path: readonly PathSegment[]) => unknown);
 
-// @public (undocumented)
+// @public
 export interface CollNumCoercionCfg {
     // (undocumented)
     '*': CollNumCoercion;
@@ -820,7 +817,10 @@ export interface CollNumCoercionCfg {
     [path: string]: CollNumCoercion;
 }
 
-// @public (undocumented)
+// @public
+export type CollNumCoercionFn = (path: readonly PathSegment[], matches: (path: readonly PathSegment[]) => boolean) => CollNumCoercion;
+
+// @beta (undocumented)
 export type CollTypeCodecOpts = TypeCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 // @public
@@ -927,7 +927,7 @@ export type ContainsDate<Schema> = IsDate<Schema[keyof Schema]>;
 // Warning: (ae-forgotten-export) The symbol "PickCqlType" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type CqlType2TSType<Def extends CreateTableColumnDefinitions[string], Overrides extends TypeOverrides = Record<never, never>> = CqlType2TSTypeInternal<PickCqlType<Def>, Def, Overrides>;
+export type CqlType2TSType<Def extends CreateTableColumnDefinitions[string], Overrides extends TableSchemaTypeOverrides = Record<never, never>> = CqlType2TSTypeInternal<PickCqlType<Def>, Def, Overrides>;
 
 // @public
 export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'> & {
@@ -1016,8 +1016,10 @@ export interface CustomHttpClientOptions {
 
 // @public
 export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForTable]" is marked as @public, but its signature references "TableDesCtx" which is marked as @beta
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIBlob | undefined)?];
     [$SerializeForCollection](): void;
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForTable]" is marked as @public, but its signature references "TableSerCtx" which is marked as @beta
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, ({
         $binary: string;
     } | undefined)?];
@@ -1070,8 +1072,10 @@ export type DataAPICodec<Class extends CollectionCodecClass & TableCodecClass> =
 
 // @public
 export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForTable]" is marked as @public, but its signature references "TableDesCtx" which is marked as @beta
     static [$DeserializeForTable](value: string, ctx: TableDesCtx): readonly [0, (DataAPIDate | undefined)?];
     [$SerializeForCollection](): void;
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForTable]" is marked as @public, but its signature references "TableSerCtx" which is marked as @beta
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(date: Date);
     constructor(date: string);
@@ -1109,8 +1113,10 @@ export class DataAPIDbAdmin extends DbAdmin {
 
 // @public
 export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForTable]" is marked as @public, but its signature references "TableDesCtx" which is marked as @beta
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIDuration | undefined)?];
     [$SerializeForCollection](): void;
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForTable]" is marked as @public, but its signature references "TableSerCtx" which is marked as @beta
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(duration: string);
     // @internal
@@ -1145,7 +1151,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
 // @public
 export class DataAPIDurationBuilder {
     // @internal
-    constructor(base?: DataAPIDuration, validateOrder?: boolean);
+    constructor(base?: DataAPIDuration, _validateOrder?: boolean);
     addDays(days: number): this;
     addHours(hours: number | bigint): this;
     addMicros(microseconds: number | bigint): this;
@@ -1198,8 +1204,10 @@ export class DataAPIHttpError extends DataAPIError {
 
 // @public
 export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForTable]" is marked as @public, but its signature references "TableDesCtx" which is marked as @beta
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIInet | undefined)?];
     [$SerializeForCollection](): void;
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForTable]" is marked as @public, but its signature references "TableSerCtx" which is marked as @beta
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(address: string | DataAPIInet, version?: 4 | 6 | null, validate?: boolean);
     static isIPv4(raw: string): boolean;
@@ -1233,8 +1241,10 @@ export class DataAPIResponseError extends DataAPIError {
 
 // @public
 export class DataAPITime implements TableCodec<typeof DataAPITime> {
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForTable]" is marked as @public, but its signature references "TableDesCtx" which is marked as @beta
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPITime | undefined)?];
     [$SerializeForCollection](): void;
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForTable]" is marked as @public, but its signature references "TableSerCtx" which is marked as @beta
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(time: Date);
     constructor(time: string);
@@ -1270,11 +1280,15 @@ export class DataAPITimeoutError extends DataAPIError {
 
 // @public
 export class DataAPIVector implements DataAPICodec<typeof DataAPIVector> {
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForCollection]" is marked as @public, but its signature references "CollectionDesCtx" which is marked as @beta
     static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (DataAPIVector | undefined)?];
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForTable]" is marked as @public, but its signature references "TableDesCtx" which is marked as @beta
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIVector | undefined)?];
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForCollection]" is marked as @public, but its signature references "CollectionSerCtx" which is marked as @beta
     [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, (number[] | {
         $binary: string;
     } | undefined)?];
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForTable]" is marked as @public, but its signature references "TableSerCtx" which is marked as @beta
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (number[] | {
         $binary: string;
     } | undefined)?];
@@ -1391,8 +1405,10 @@ export interface DbOptions {
 
 // @public
 export interface DbSerDesConfig {
+    // @beta
     collection?: Omit<CollectionSerDesConfig, 'mutateInPlace'>;
     mutateInPlace?: boolean;
+    // @beta
     table?: Omit<TableSerDesConfig, 'mutateInPlace'>;
 }
 
@@ -1534,13 +1550,13 @@ export interface EmbeddingProviderTokenInfo {
 // @public
 export type EmptyObj = {};
 
-// @public (undocumented)
+// @public
 export function escapeFieldNames(segments: TemplateStringsArray, ...args: PathSegment[]): string;
 
-// @public (undocumented)
+// @public
 export function escapeFieldNames(...segments: PathSegment[]): string;
 
-// @public (undocumented)
+// @public
 export function escapeFieldNames(segments: Iterable<PathSegment>): string;
 
 // @public
@@ -1656,7 +1672,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     readonly _options: GenericFindAndRerankOptions;
     // @internal (undocumented)
     readonly _parent: Table<SomeRow> | Collection;
-    project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RRaw, RRaw>;
+    project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RerankedResult<RRaw>, RRaw>;
     rerankOn(rerankOn: string): this;
     rerankQuery(rerankQuery: string): this;
     // Warning: (ae-forgotten-export) The symbol "SerDes" needs to be exported by the entry point index.d.ts
@@ -1713,7 +1729,9 @@ export interface FindRerankingProvidersResult {
 export type Flatten<Type> = Type extends (infer Item)[] ? Item : Type;
 
 // @public
-export type FoundDoc<Doc> = WithId<Omit<Doc, '$vector' | '$vectorize'>>;
+export type FoundDoc<Doc> = {
+    _id: IdOf<Doc>;
+} & NoId<Omit<Doc, '$vector' | '$vectorize'>>;
 
 // @public
 export type FoundRow<Doc> = {
@@ -1855,9 +1873,13 @@ export interface GenericInsertManyUnorderedOptions extends WithTimeout<'generalM
     chunkSize?: number;
     concurrency?: number;
     ordered?: false;
+    // @deprecated
+    vector?: 'ERROR: Set the `$vector` field in the docs directly';
+    // @deprecated
+    vectorize?: 'ERROR: Set the `$vectorize` field in the docs directly';
 }
 
-// @public (undocumented)
+// @public
 export type GenericInsertOneOptions = WithTimeout<'generalMethodTimeoutMs'>;
 
 // @public
@@ -1893,9 +1915,6 @@ export type GenericUpdateResult<ID, N extends number> = (GuaranteedUpdateResult<
 
 // @internal (undocumented)
 export function genObjectId(time: number | nullish, genIndex: number): string;
-
-// @public (undocumented)
-export type GetCollNumCoercionFn = (path: readonly PathSegment[], matches: (path: readonly PathSegment[]) => boolean) => CollNumCoercion;
 
 // @public (undocumented)
 export interface GetHeadersCtx {
@@ -1977,20 +1996,20 @@ export type IdOf<Doc> = Doc extends {
 export const inet: (address: string | DataAPIInet, version?: 4 | 6 | null) => DataAPIInet;
 
 // @public
-export type InferrableTable = CreateTableDefinition | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
+export type InferrableTableSchema = CreateTableDefinition | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
 
 // Warning: (ae-forgotten-export) The symbol "InferTablePKFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTablePrimaryKey<T extends InferrableTable, Overrides extends TypeOverrides = Record<never, never>> = T extends CreateTableDefinition ? InferTablePKFromDefinition<T, Overrides> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
+export type InferTablePrimaryKey<T extends InferrableTableSchema, Overrides extends TableSchemaTypeOverrides = Record<never, never>> = T extends CreateTableDefinition ? InferTablePKFromDefinition<T, Overrides> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
 
 // Warning: (ae-forgotten-export) The symbol "InferTableSchemaFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTableReadSchema<T extends InferrableTable, Overrides extends TypeOverrides = Record<never, never>> = T extends CreateTableDefinition ? FoundRow<InferTableSchemaFromDefinition<T, Overrides>> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
+export type InferTableReadSchema<T extends InferrableTableSchema, Overrides extends TableSchemaTypeOverrides = Record<never, never>> = T extends CreateTableDefinition ? FoundRow<InferTableSchemaFromDefinition<T, Overrides>> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
 
 // @public
-export type InferTableSchema<T extends InferrableTable, Overrides extends TypeOverrides = Record<never, never>> = T extends CreateTableDefinition ? InferTableSchemaFromDefinition<T, Overrides> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
+export type InferTableSchema<T extends InferrableTableSchema, Overrides extends TableSchemaTypeOverrides = Record<never, never>> = T extends CreateTableDefinition ? InferTableSchemaFromDefinition<T, Overrides> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
 
 // @public
 export class InvalidEnvironmentError extends Error {
@@ -2020,11 +2039,17 @@ export type KeyspaceReplicationOptions = {
     [datacenter: string]: number | 'NetworkTopologyStrategy';
 };
 
+// @public (undocumented)
+export interface LexicalDoc {
+    // (undocumented)
+    $lexical?: string;
+}
+
 // @public
 export const LIB_NAME = "astra-db-ts";
 
 // @public
-export const LIB_VERSION = "2.0.0-preview.5";
+export const LIB_VERSION = "2.0.0-rc.1";
 
 // @public
 export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
@@ -2155,7 +2180,9 @@ export class NumCoercionError extends Error {
 
 // @public
 export class ObjectId implements CollectionCodec<typeof ObjectId> {
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForCollection]" is marked as @public, but its signature references "CollectionDesCtx" which is marked as @beta
     static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (ObjectId | undefined)?];
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForCollection]" is marked as @public, but its signature references "CollectionSerCtx" which is marked as @beta
     [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, ({
         $objectId: string;
     } | undefined)?];
@@ -2223,7 +2250,7 @@ export type RawCodec<SerCtx = any, DesCtx = any> = {
     opts: CustomCodecOpts<SerCtx, DesCtx>;
 };
 
-// @public (undocumented)
+// @beta (undocumented)
 export type RawCollCodecs = readonly RawCodec<CollectionSerCtx, CollectionDesCtx>[] & {
     phantom?: 'This codec is only valid for collections';
 };
@@ -2236,7 +2263,7 @@ export interface RawDataAPIResponse {
     readonly warnings?: DataAPIWarningDescriptor[];
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export type RawTableCodecs = readonly RawCodec<TableSerCtx, TableDesCtx>[] & {
     phantom?: 'This codec is only valid for tables';
 };
@@ -2268,7 +2295,7 @@ export class RerankingAPIKeyHeaderProvider extends StaticHeadersProvider<'rerank
 export type RerankingHeadersProvider = HeadersProvider<'reranking'>;
 
 // @public (undocumented)
-export interface RerankingServiceOptions {
+export interface RerankServiceOptions {
     // (undocumented)
     authentication?: Record<string, unknown>;
     // (undocumented)
@@ -2345,7 +2372,16 @@ export type SomeConstructor = abstract new (...args: any[]) => any;
 export type SomeDoc = Record<string, any>;
 
 // @public
-export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId | null;
+export type SomeId = SomeIdTypes[keyof SomeIdTypes];
+
+// @public
+export interface SomeIdTypes {
+    // (undocumented)
+    baseTypes: string | number | bigint | boolean | Date | UUID | ObjectId | null;
+}
+
+// @public
+export type SomePKey = Record<string, any>;
 
 // @public
 export type SomeRow = Record<string, any>;
@@ -2375,7 +2411,7 @@ export class StaticTokenProvider extends TokenProvider {
 export type StrictCreateTableColumnDefinition = TableScalarColumnDefinition | TableMapColumnDefinition | TableListColumnDefinition | TableSetColumnDefinition | TableVectorColumnDefinition;
 
 // @public
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalLogger<CommandEventMap> {
+export class Table<WSchema extends SomeRow, PKey extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalLogger<CommandEventMap> {
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: TableOptions | undefined);
     alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<WSchema>): Promise<Table<NewWSchema, PKey, NewRSchema>>;
@@ -2386,14 +2422,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     deleteMany(filter: TableFilter<WSchema>, options?: TableDeleteManyOptions): Promise<void>;
     deleteOne(filter: TableFilter<WSchema>, options?: TableDeleteOneOptions): Promise<void>;
     drop(options?: Omit<DropTableOptions, keyof WithKeyspace>): Promise<void>;
-    find(filter: TableFilter<WSchema>, options?: TableFindOptions & {
-        projection?: never;
-    }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
-    find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
-    findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions & {
-        projection?: never;
-    }): Promise<WithSim<RSchema> | null>;
-    findOne<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOneOptions): Promise<TRaw | null>;
+    find<T extends SomeRow = WithSim<RSchema>, TRaw extends T = T>(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<T, TRaw>;
+    findOne<TRaw extends SomeRow = WithSim<RSchema>>(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<TRaw | null>;
     get _httpClient(): OpaqueHttpClient;
     insertMany(rows: readonly WSchema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<PKey>>;
     insertOne(row: WSchema, options?: TableInsertOneOptions): Promise<TableInsertOneResult<PKey>>;
@@ -2413,7 +2443,7 @@ export type TableCodecClass = (abstract new (...args: any[]) => {
     [$DeserializeForTable]: SerDesFn<TableDesCtx>;
 };
 
-// @public (undocumented)
+// @beta (undocumented)
 export class TableCodecs {
     // (undocumented)
     static asCodecClass<Class extends SomeConstructor>(clazz: Class, fns?: AsTableCodecClassFns<Class>): TableCodecClass;
@@ -2472,7 +2502,7 @@ export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTi
     options?: TableVectorIndexOptions;
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export type TableCustomCodecOpts = CustomCodecOpts<TableSerCtx, TableDesCtx>;
 
 // @public (undocumented)
@@ -2487,7 +2517,7 @@ export interface TableDescriptor {
     name: string;
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export interface TableDesCtx extends BaseDesCtx<TableDesCtx> {
     // (undocumented)
     tableSchema: ListTableColumnDefinitions;
@@ -2533,7 +2563,7 @@ export interface TableFilterOps<Elem> {
     $nin?: Elem[];
 }
 
-// @public (undocumented)
+// @internal
 export class TableFindAndRerankCursor<T, TRaw extends SomeRow = SomeRow> extends FindAndRerankCursor<T, TRaw> {
     // (undocumented)
     get dataSource(): Table<SomeRow>;
@@ -2542,7 +2572,7 @@ export class TableFindAndRerankCursor<T, TRaw extends SomeRow = SomeRow> extends
     // (undocumented)
     map: <R>(map: (doc: T) => R) => TableFindAndRerankCursor<R, TRaw>;
     // (undocumented)
-    project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindAndRerankCursor<RRaw, RRaw>;
+    project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindAndRerankCursor<RerankedResult<RRaw>, RRaw>;
 }
 
 // @public
@@ -2580,7 +2610,7 @@ export class TableInsertManyError extends DataAPIError {
     // (undocumented)
     errors(): Error[];
     // (undocumented)
-    insertedIds(): SomeRow[];
+    insertedIds(): SomePKey[];
     name: string;
 }
 
@@ -2588,16 +2618,16 @@ export class TableInsertManyError extends DataAPIError {
 export type TableInsertManyOptions = GenericInsertManyOptions;
 
 // @public
-export interface TableInsertManyResult<PKey extends SomeRow> {
+export interface TableInsertManyResult<PKey extends SomePKey> {
     insertedCount: number;
     insertedIds: PKey[];
 }
 
-// @public (undocumented)
+// @public
 export type TableInsertOneOptions = GenericInsertOneOptions;
 
 // @public
-export interface TableInsertOneResult<PKey extends SomeRow> {
+export interface TableInsertOneResult<PKey extends SomePKey> {
     insertedId: PKey;
 }
 
@@ -2619,7 +2649,7 @@ export interface TableMapColumnDefinition {
     valueType: TableScalarType;
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export type TableNominalCodecOpts = NominalCodecOpts<TableSerCtx, TableDesCtx>;
 
 // @public
@@ -2644,13 +2674,19 @@ export interface TableScalarColumnDefinition {
 // @public
 export type TableScalarType = 'ascii' | 'bigint' | 'blob' | 'boolean' | 'date' | 'decimal' | 'double' | 'duration' | 'float' | 'int' | 'inet' | 'smallint' | 'text' | 'time' | 'timestamp' | 'tinyint' | 'uuid' | 'varint';
 
-// @public (undocumented)
+// Warning: (ae-forgotten-export) The symbol "CqlNonGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "CqlGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type TableSchemaTypeOverrides = Partial<Record<LitUnion<keyof CqlNonGenericType2TSTypeDict | keyof CqlGenericType2TSTypeDict<any, any>>, unknown>>;
+
+// @beta (undocumented)
 export interface TableSerCtx extends BaseSerCtx<TableSerCtx> {
     // (undocumented)
     bigNumsPresent: boolean;
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDesCtx> {
     // (undocumented)
     codecs?: RawTableCodecs[];
@@ -2672,7 +2708,7 @@ export interface TableTextIndexOptions {
     analyzer?: string | Record<string, unknown>;
 }
 
-// @public (undocumented)
+// @beta (undocumented)
 export type TableTypeCodecOpts = TypeCodecOpts<TableSerCtx, TableDesCtx>;
 
 // @public
@@ -2762,13 +2798,7 @@ export type TypeCodecOpts<SerCtx, DesCtx> = CustomCodecSerOpts<SerCtx> & {
     deserialize?: SerDesFn<DesCtx>;
 };
 
-// Warning: (ae-forgotten-export) The symbol "CqlNonGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "CqlGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
-//
-// @public (undocumented)
-export type TypeOverrides = Partial<Record<keyof CqlNonGenericType2TSTypeDict | keyof CqlGenericType2TSTypeDict<any, any>, unknown>>;
-
-// @public (undocumented)
+// @public
 export function unescapeFieldPath(path: string): string[];
 
 // @public
@@ -2796,11 +2826,15 @@ export class UsernamePasswordTokenProvider extends StaticTokenProvider {
 
 // @public
 export class UUID implements DataAPICodec<typeof UUID> {
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForCollection]" is marked as @public, but its signature references "CollectionDesCtx" which is marked as @beta
     static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (UUID | undefined)?];
+    // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForTable]" is marked as @public, but its signature references "TableDesCtx" which is marked as @beta
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (UUID | undefined)?];
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForCollection]" is marked as @public, but its signature references "CollectionSerCtx" which is marked as @beta
     [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, ({
         $uuid: string;
     } | undefined)?];
+    // Warning: (ae-incompatible-release-tags) The symbol "[$SerializeForTable]" is marked as @public, but its signature references "TableSerCtx" which is marked as @beta
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(uuid: string | UUID, validate?: boolean, version?: number);
     equals(other: unknown): boolean;
@@ -2868,6 +2902,10 @@ export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
 
 // Warnings were encountered during analysis:
 //
+// dist/esm/documents/collections/ser-des/codecs.d.ts:9:5 - (ae-incompatible-release-tags) The symbol "[$SerializeForCollection]" is marked as @public, but its signature references "CollectionSerCtx" which is marked as @beta
+// dist/esm/documents/collections/ser-des/codecs.d.ts:11:5 - (ae-incompatible-release-tags) The symbol "[$DeserializeForCollection]" is marked as @public, but its signature references "CollectionDesCtx" which is marked as @beta
+// dist/esm/documents/tables/ser-des/codecs.d.ts:9:5 - (ae-incompatible-release-tags) The symbol "[$SerializeForTable]" is marked as @public, but its signature references "TableSerCtx" which is marked as @beta
+// dist/esm/documents/tables/ser-des/codecs.d.ts:11:5 - (ae-incompatible-release-tags) The symbol "[$DeserializeForTable]" is marked as @public, but its signature references "TableDesCtx" which is marked as @beta
 // dist/esm/lib/headers-providers/root/headers-provider.d.ts:10:9 - (ae-forgotten-export) The symbol "StringBasedHeadersProviderOptsHandler" needs to be exported by the entry point index.d.ts
 // dist/esm/lib/headers-providers/root/headers-provider.d.ts:11:9 - (ae-forgotten-export) The symbol "ObjectBasedHeadersProviderOptsHandler" needs to be exported by the entry point index.d.ts
 // dist/esm/lib/headers-providers/root/headers-provider.d.ts:12:9 - (ae-forgotten-export) The symbol "Monoid" needs to be exported by the entry point index.d.ts

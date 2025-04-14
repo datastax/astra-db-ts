@@ -32,15 +32,15 @@ export type CollectionUpdateManyOptions = GenericUpdateManyOptions;
  * @example
  * ```typescript
  * const result = await collections.updateMany({
- *   name: 'Jane',
+ *   name: 'Jane',
  * }, {
- *   $set: { name: 'John' }
+ *   $set: { name: 'John' }
  * }, {
- *   upsert: true
+ *   upsert: true
  * });
  *
  * if (result.upsertedCount) {
- *   console.log(`Document with ID ${JSON.stringify(result.upsertedId)} was upserted`);
+ *   console.log(`Document with ID ${JSON.stringify(result.upsertedId)} was upserted`);
  * }
  * ```
  *

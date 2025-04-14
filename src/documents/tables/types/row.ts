@@ -38,7 +38,7 @@
  * const table = db.table<SomeRow>('my_table');
  *
  * await table.insertOne({
- *   'lets.you$insert': function () { return 'whatever you want' },
+ *   'lets.you$insert': function () { return 'whatever you want' },
  * });
  * ```
  *

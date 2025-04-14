@@ -31,14 +31,14 @@ export type SomeDoc = Record<string, any>;
  * @example
  * ```typescript
  * export interface Idea extends VectorDoc {
- *   category: string,
- *   idea: string,
+ *   category: string,
+ *   idea: string,
  * }
  *
  * db.collections<Idea>('ideas').insertOne({
- *   category: 'doors',
- *   idea: 'Upside down doors',
- *   $vector: [.23, .05, .95, .83, .42],
+ *   category: 'doors',
+ *   idea: 'Upside down doors',
+ *   $vector: [.23, .05, .95, .83, .42],
  * });
  * ```
  *
@@ -57,12 +57,12 @@ export interface VectorDoc {
  * @example
  * ```typescript
  * export interface Idea extends VectorizeDoc {
- *   category: string,
+ *   category: string,
  * }
  *
  * db.collections<Idea>('ideas').insertOne({
- *   category: 'doors',
- *   $vectorize: 'Upside down doors',
+ *   category: 'doors',
+ *   $vectorize: 'Upside down doors',
  * });
  * ```
  *

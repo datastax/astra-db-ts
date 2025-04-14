@@ -20,7 +20,7 @@ import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.j
 import { CollectionCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { isBigNumber } from '@/src/lib/utils.js';
-import type { CollNumCoercionCfg, GetCollNumCoercionFn } from '@/src/documents/index.js';
+import type { CollNumCoercionCfg, CollNumCoercionFn } from '@/src/documents/index.js';
 import { buildGetNumCoercionForPathFn, coerceNums } from '@/src/documents/collections/ser-des/big-nums.js';
 import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler.js';
 import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
@@ -37,14 +37,107 @@ export interface CollectionSerCtx extends BaseSerCtx<CollectionSerCtx> {
  * @beta
  */
 export interface CollectionDesCtx extends BaseDesCtx<CollectionDesCtx> {
-  getNumCoercionForPath?: GetCollNumCoercionFn,
+  getNumCoercionForPath?: CollNumCoercionFn,
 }
 
 /**
  * @beta
  */
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCtx, CollectionDesCtx> {
-  enableBigNumbers?: GetCollNumCoercionFn | CollNumCoercionCfg,
+  /**
+   * ##### Overview
+   *
+   * By default, large numbers (such as `bigint` and {@link BigNumber}) are disabled during serialization and deserialization.
+   * _This means that attempts to serialize such numbers will result in errors, and they may lose precision during deserialization._
+   *
+   * To enable big numbers, you may set configure this option to select which numerical type each field is deserialized to.
+   *
+   * ---
+   *
+   * ##### Why is this not enabled by default?
+   *
+   * This errorful behavior exists for two primary reasons:
+   * 1. **Performance:** Enabling big numbers necessitates usage of a specialized JSON library which is capable of serializing/deserializing these numbers without loss of precision, which is much slower than the native JSON library.
+   *     - Realistically, however, the difference is likely negligible for most cases
+   * 2. **Ambiguity in Deserialization**: There is an inherent ambiguity in deciding how to deserialize big numbers, as certain numbers may be representable in various different numerical formats, and not in an easily predictable way.
+   *     - For example, `9007199254740992` is equally representable as either a `number`, `bigint`, a `BigNumber`, or even a `string`.
+   *
+   * Luckily, there is no such ambiguity in serialization, as any number is just a series of digits in JSON.
+   *
+   * ---
+   *
+   * ##### Configuring this option
+   *
+   * Deserialization behavior must be configured to enable big numbers on a collection-by-collection basis.
+   *
+   * Serialization behavior requires no such configuration, as there is no serialization ambiguity as aforementioned.
+   *
+   * This option can be configured in two ways:
+   * - **As a function**, which takes in the path of the field being deserialized and returns a coercion type.
+   *   - See {@link CollNumCoercionFn} for more details.
+   * - **As a configuration object**, which allows you to specify the coercion type for any path.
+   *   - See {@link CollNumCoercionCfg} for more details.
+   *
+   * The coercion type itself (a {@link CollNumCoercion}) is either:
+   * - A string representing a pre-defined numerical coercion, or
+   * - A function which takes in the value and the path of the field being deserialized, and returns the coerced value.
+   *
+   * See {@link CollNumCoercion} for the different coercion types, and any additional caveats on a per-type basis.
+   *
+   * ---
+   *
+   * ##### Examples
+   *
+   * The following example uses `bigint` for monetary fields, and `number`s for all other fields.
+   *
+   * **It's heavily recommended that you read the documentation for {@link CollNumCoercion} to understand the implications of each coercion type.**
+   *
+   * @example
+   * ```ts
+   * interface Order {
+   *   discount: bigint,
+   *   statusCode: number,
+   *   items: {
+   *     productID: UUID,
+   *     quantity: number,
+   *     price: BigNumber,
+   *   }[],
+   * }
+   *
+   * const orders = db.collection<Order>('orders', {
+   *   serdes: {
+   *     enableBigNumbers: {
+   *       '*': 'number',
+   *       'discount': 'bigint',
+   *       'items.*.price': 'bignumber',
+   *     },
+   *   },
+   * });
+   *
+   * const { insertedId } = await orders.insertOne({
+   *   discount: 123n,
+   *   statusCode: 1,
+   *   items: [
+   *     {
+   *       productID: uuid.v4(),
+   *       quantity: 2,
+   *       price: BigNumber(100),
+   *     },
+   *   ],
+   * });
+   *
+   * const order = await orders.findOne({ _id: insertedId });
+   *
+   * console.log(order.discount); // 123n
+   * console.log(order.statusCode); // 1
+   * console.log(order.items[0].price); // BigNumber(100)
+   * ```
+   *
+   * @see CollNumCoercionFn
+   * @see CollNumCoercionCfg
+   * @see CollNumCoercion
+   */
+  enableBigNumbers?: CollNumCoercionFn | CollNumCoercionCfg,
   codecs?: RawCollCodecs[],
 }
 
@@ -52,8 +145,8 @@ export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCt
  * @internal
  */
 export class CollSerDes extends SerDes<CollectionSerCtx, CollectionDesCtx> {
-  declare protected readonly _cfg: ParsedSerDesConfig<CollectionSerDesConfig> & { enableBigNumbers?: GetCollNumCoercionFn };
-  private readonly _getNumCoercionForPath: GetCollNumCoercionFn | undefined;
+  declare protected readonly _cfg: ParsedSerDesConfig<CollectionSerDesConfig> & { enableBigNumbers?: CollNumCoercionFn };
+  private readonly _getNumCoercionForPath: CollNumCoercionFn | undefined;
 
   public static cfg: typeof CollSerDesCfgHandler = CollSerDesCfgHandler;
 

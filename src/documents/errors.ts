@@ -32,6 +32,7 @@ import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { LitUnion } from '@/src/lib/types.js';
 import { NonErrorError } from '@/src/lib/errors.js';
 import type { SomeRow, TableInsertManyResult } from '@/src/documents/tables/index.js';
+import { SomePKey } from '@/src/documents/types/index.js';
 
 /**
  * ##### Overview
@@ -535,7 +536,7 @@ export class TableInsertManyError extends DataAPIError {
     this.#causes = causes;
   }
 
-  public insertedIds(): SomeRow[] {
+  public insertedIds(): SomePKey[] {
     return this.#partialResult.insertedIds;
   }
 

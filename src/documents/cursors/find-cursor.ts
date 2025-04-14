@@ -74,9 +74,9 @@ import {
  * @example
  * ```typescript
  * interface Person {
- *   firstName: string,
- *   lastName: string,
- *   age: number,
+ *   firstName: string,
+ *   lastName: string,
+ *   age: number,
  * }
  *
  * const collection = db.collection<Person>('people');
@@ -84,7 +84,7 @@ import {
  *
  * // Lazily iterate all documents matching the filter
  * for await (const doc of cursor1) {
- *   console.log(doc);
+ *   console.log(doc);
  * }
  *
  * // Rewind the cursor to be able to iterate again
@@ -95,8 +95,8 @@ import {
  *
  * // Immutably set options & map as needed (changing options returns a new, uninitialized cursor)
  * const cursor2: Cursor<string> = cursor
- *   .project<Omit<Person, 'age'>>({ age: 0 })
- *   .map(doc => doc.firstName + ' ' + doc.lastName);
+ *   .project<Omit<Person, 'age'>>({ age: 0 })
+ *   .map(doc => doc.firstName + ' ' + doc.lastName);
  *
  * // Get next document from cursor
  * const doc = await cursor2.next();
@@ -355,8 +355,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * // You can also chain instead of using intermediate variables
    * const fluentlyProjected = table
-   *   .find({ name: 'John' })
-   *   .project<{ name: string }>({ id: 0, name: 1 });
+   *   .find({ name: 'John' })
+   *   .project<{ name: string }>({ id: 0, name: 1 });
    * ```
    *
    * @param projection - Specifies which fields should be included/excluded in the returned records.

@@ -27,7 +27,7 @@
  *
  * // Using 'my_keyspace' as the keyspace
  * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
- *   keyspace: 'my_keyspace',
+ *   keyspace: 'my_keyspace',
  * });
  *
  * // Finds 'my_collection' in 'default_keyspace'
@@ -35,7 +35,7 @@
  *
  * // Finds 'my_collection' in 'my_keyspace'
  * const coll2 = db1.collection('my_collection', {
- *   keyspace: 'my_keyspace',
+ *   keyspace: 'my_keyspace',
  * });
  * ```
  *

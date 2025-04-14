@@ -97,7 +97,7 @@ export abstract class CommandEvent extends BaseClientEvent {
    * @example
    * ```typescript
    * {
-   *   insertOne: { document: { name: 'John' } }
+   *   insertOne: { document: { name: 'John' } }
    * }
    * ```
    */

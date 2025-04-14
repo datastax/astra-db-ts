@@ -14,7 +14,7 @@
 
 import type {
   CommandEventMap,
-  FoundRow,
+  FoundRow, SomePKey,
   SomeRow,
   TableCreateIndexColumn,
   TableCreateIndexOptions,
@@ -61,7 +61,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * Represents the interface to a table in a Data-API-enabled database.
  *
- * **This shouldn't be directly instantiated, but rather created via {@link Db.createTable} or {@link Db.table}**.
+ * > **⚠️Warning**: This isn't directly instantiated, but spawned via {@link Db.createTable} or {@link Db.table}.
  *
  * @example
  * ```ts
@@ -70,9 +70,9 @@ const jbi = JBI({ storeAsString: true });
  *
  * ---
  *
- * ##### Typing {@link Table}
+ * ##### Typing the table
  *
- * **NOTE: For most intents & purposes (unless you're using custom ser/des), you can ignore the (generally negligible) difference between `WSchema` and `RSchema`, and treat `Table` as if it were typed as `Table<Schema, PKey>`**.
+ * > **🚨Important:** For most intents & purposes, you can ignore the (generally negligible) difference between _WSchema_ and _RSchema_, and treat {@link Table} as if it were typed as `Table<Schema, PKey>`.
  *
  * A `Table` is typed as `Table<WSchema, PKey, RSchema>`, where:
  *  - `WSchema` is the type of the row as it's written to the table (the "write" schema)
@@ -85,11 +85,13 @@ const jbi = JBI({ storeAsString: true });
  *
  * ---
  *
- * ##### Typing the key
+ * ##### Typing the primary key
  *
  * The primary key of the table should be provided as a second type parameter to `Table`.
  *
- * This is a special type that is used to reconstruct the TS type of the primary key in insert operations. It should be an object with the same keys as the primary key columns, and the same types as the schema. Note that there is no distinction between partition and clustering keys in this type.
+ * This is a special type that is used to reconstruct the TS type of the primary key in insert operations. It should be an object with the same keys as the primary key columns, and the same types as the schema.
+ *
+ * Note that there is no distinction between partition and clustering keys in this type.
  *
  * @example
  * ```ts
@@ -113,9 +115,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * ##### `db.createTable` type inference
  *
- * When creating a table through {@link Db.createTable}, and not using any custom datatypes (see next session), you can actually use the {@link InferTableSchema} & {@link InferTablePrimaryKey} utility types to infer the schema of the table from the table creation.
- *
- * **You may also see {@link Table.schema} for an alternative method of having an inferred table schema.**
+ * > **💡Tip:** When creating a table through {@link Db.createTable}, you can automagically infer the TS-equivalent type of the table from the {@link CreateTableDefinition} via the {@link InferTableSchema} & {@link InferTablePrimaryKey} utility types.
  *
  * @example
  * ```ts
@@ -144,7 +144,7 @@ const jbi = JBI({ storeAsString: true });
  * type UserPK = InferTablePrimaryKey<typeof mkTable>;
  *
  * async function main() {
- *   const table: Table<User, UserPK> = await db.createTable('users', {
+ *   const table = await db.createTable<User, UserPK>('users', {
  *     definition: UserSchema,
  *   });
  * }
@@ -154,7 +154,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * ##### Datatypes
  *
- * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+ * Certain datatypes may be represented as TypeScript classes (some native, some provided by the client).
  *
  * For example:
  *  - `'map<k, v>'` is represented by a native JS {@link Map}
@@ -178,7 +178,7 @@ const jbi = JBI({ storeAsString: true });
  * });
  * ```
  *
- * The full list of relevant datatypes (for tables) include: {@link DataAPIBlob}, {@link DataAPIDate}, {@link DataAPITime}, {@link DataAPIVector}, {@link DataAPIInet}, {@link DataAPIDuration}, {@link UUID}, {@link Map}, {@link Set}, and {@link BigNumber}.
+ * The full list of relevant datatypes (for tables) includes: {@link DataAPIBlob}, {@link DataAPIDate}, {@link DataAPITime}, {@link DataAPIVector}, {@link DataAPIInet}, {@link DataAPIDuration}, {@link UUID}, {@link Map}, {@link Set}, and {@link BigNumber}.
  *
  * ---
  *
@@ -196,7 +196,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * ---
  *
- * ##### Disclaimer
+ * ##### 🚨Disclaimers
  *
  * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviors and easily-preventable errors.*
  *
@@ -212,7 +212,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * @public
  */
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalLogger<CommandEventMap> {
+export class Table<WSchema extends SomeRow, PKey extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalLogger<CommandEventMap> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<PKey>;
   readonly #db: Db;
@@ -306,7 +306,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
 
     const hack: BigNumberHack = {
       parseWithBigNumbers(json: string) {
-        return json.includes('{"type":"varint"}') || json.includes('{"type":"decimal"}');
+        return json.includes('{"type":"varint"}') || json.includes('{"type":"decimal"}') || json.includes('{"type":"bigint"}') || json.includes('{"type":"counter"}');
       },
       parser: withJbiNullProtoFix(jbi),
     };
@@ -324,6 +324,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * ##### Overview
    *
    * Atomically upserts a single row into the table.
+   *
+   * See {@link TableInsertOneOptions} and {@link TableInsertOneResult} as well for more information.
    *
    * @example
    * ```ts
@@ -394,6 +396,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @param options - The options for this operation.
    *
    * @returns The primary key of the inserted row.
+   *
+   * @see TableInsertOneOptions
+   * @see TableInsertOneResult
    */
   public async insertOne(row: WSchema, options?: TableInsertOneOptions): Promise<TableInsertOneResult<PKey>> {
     return this.#commands.insertOne(row, options);
@@ -404,44 +409,43 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * Upserts many rows into the table.
    *
+   * See {@link TableInsertManyOptions} and {@link TableInsertManyResult} as well for more information.
+   *
    * @example
    * ```ts
-   * import { uuid, vector, ... } from '@datastax/astra-db-ts';
+   * import { uuid } from '@datastax/astra-db-ts';
    *
-   * await table1.insertMany([
+   * await table.insertMany([
    *   { id: uuid.v4(), name: 'John Doe' }, // or UUID.v4()
    *   { id: uuid.v7(), name: 'Jane Doe' },
    * ]);
-   *
-   * // Insert a row with a vector
-   * // DataAPIVector class enables faster ser/des
-   * await table2.insertMany([
-   *   { name: 'bob', vector: vector([.12, .52, .32]) }, // or new DataAPIVector([...])
-   *   { name: 'alice', vector: vector([.12, .52, .32]), tags: new Set(['cool']) },
-   * ], { ordered: true });
    * ```
+   *
+   * ---
    *
    * ##### Chunking
    *
-   * **NOTE: This function paginates the insertion of rows in chunks to avoid running into insertion limits.** This means multiple requests may be made to the server.
+   * > **🚨Important:** This function inserts rows in chunks to avoid exceeding insertion limits, which means it may make multiple requests to the server. As a result, this operation is **not necessarily atomic.**
+   * >
+   * > If the dataset is large or the operation is ordered, it may take a relatively significant amount of time. During this time, rows inserted by other concurrent processes may be written to the database, potentially causing duplicate id conflicts. In such cases, it's not guaranteed which write will succeed.
    *
-   * This operation is **not necessarily atomic**. Depending on the amount of inserted rows, and if it's ordered or not, it can keep running (in a blocking manner) for a macroscopic amount of time. In that case, new rows that are inserted from another concurrent process/application may be inserted during the execution of this method call, and if there are duplicate keys, it's not easy to predict which application will win the race.
-   *
-   * By default, it inserts rows in chunks of 50 at a time. You can fine-tune the parameter through the `chunkSize` option. Note that increasing chunk size won't necessarily increase performance depending on row size. Instead, increasing concurrency may help.
+   * By default, it inserts rows in chunks of 50 at a time. You can fine-tune the parameter through the `chunkSize` option. Note that increasing chunk size won't always increase performance. Instead, increasing concurrency may help.
    *
    * You can set the `concurrency` option to control how many network requests are made in parallel on unordered insertions. Defaults to `8`.
    *
    * @example
    * ```ts
    * const rows = Array.from({ length: 100 }, (_, i) => ({ id: i }));
-   * await table.insertMany(rows, { batchSize: 100 });
+   * await table.insertMany(rows, { concurrency: 16 });
    * ```
+   *
+   * ---
    *
    * ##### Upsert behavior
    *
-   * When inserting a row with a primary key that already exists, the new row will be merged with the existing row, with the new values taking precedence.
-   *
-   * If you want to delete old values, you must explicitly set them to `null` (not `undefined`).
+   * > **🚨Important:** When inserting a row with a primary key that already exists, the new row will be _merged_ with the existing row, with the new values taking precedence.
+   * >
+   * > If you want to delete old values, you must explicitly set them to `null` (not `undefined`).
    *
    * @example
    * ```ts
@@ -449,13 +453,13 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * // primary key will be the one that remains in the table.
    * await table.insertMany([
    *   { id: '123', col1: 'I exist' },
-   *   { id: '123', col1: 'I am new' },
+   *   { id: '123', col1: `I'm new` },
    *   { id: '123', col2: 'me2' },
    * ], { ordered: true });
    *
-   * await table.findOne({ id: '123' }); // { id: '123', col1: 'I am new', col2: 'me2' }
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'I'm new', col2: 'me2' }
    *
-   * // Since insertion is unordered, it can not be 100% guaranteed
+   * // Since insertion is unordered, it is not entirely guaranteed
    * // which value will remain in the table for each primary key,
    * // as concurrent insertions may occur.
    * await table.insertMany([
@@ -467,13 +471,17 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * await table.findOne({ id: '123' }); // { id: '123', col1: ? }
    * ```
    *
+   * ---
+   *
    * ##### Ordered insertions
    *
-   * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise all rows may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
+   * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise rows may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
    *
    * Setting the `ordered` operation disables any parallelization so insertions truly are stopped after the very first error.
    *
-   * Setting `ordered` also guarantees the order of upsert behavior, as described above.
+   * Setting `ordered` also guarantees the order of the aforementioned upsert behavior.
+   *
+   * ---
    *
    * ##### The primary key
    *
@@ -501,7 +509,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * console.log(res.insertedIds[0].id); // '123'
    * ```
    *
-   * ##### `InsertManyError`
+   * ---
+   *
+   * ##### `TableInsertManyError`
    *
    * If some rows can't be inserted, (e.g. they have the wrong data type for a column or lack the primary key), the Data API validation check will fail for those entire specific requests containing the faulty rows.
    *
@@ -519,6 +529,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @returns The primary keys of the inserted rows (and the count)
    *
    * @throws TableInsertManyError - If the operation fails.
+   *
+   * @see TableInsertManyOptions
+   * @see TableInsertManyResult
    */
   public async insertMany(rows: readonly WSchema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<PKey>> {
     return this.#commands.insertMany(rows, options, TableInsertManyError);
@@ -529,11 +542,23 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * Updates a single row in the table. Under certain conditions, it may insert or delete a row as well.
    *
+   * See {@link TableFilter}, {@link TableUpdateFilter}, and {@link TableUpdateOneOptions} as well for more information.
+   *
    * @example
    * ```ts
    * await table.insertOne({ key: '123', name: 'Jerry' });
    * await table.updateOne({ key: '123' }, { $set: { name: 'Geraldine' } });
    * ```
+   *
+   * ---
+   *
+   * ##### Filtering
+   *
+   * > **🚨Important:** The filter must contain an **exact primary key** to update a row.
+   * >
+   * > Attempting to pass an empty filter, filtering by only part of the primary key, or filtering by a non-primary key column will result in an error.
+   *
+   * ---
    *
    * ##### Upserting
    *
@@ -549,13 +574,21 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * await table.updateOne({ key: '123' }, { $set: { name: 'Eleanor', age: null } });
    * ```
    *
+   * ---
+   *
+   * ##### Updating
+   *
+   * Updates may perform either `$set` or `$unset` operations on the row.
+   *
+   * > **✏️Note:** `$set`-ing a row to `null` is equivalent to `$unset`-ing it.
+   *
+   * ---
+   *
    * ##### Deleting
    *
-   * If the row was only upserted in the first place, and now all (non-primary) rows are set to null (or unset), the row will be deleted.
+   * If a row was **only ever upserted**, and all of its **non-primary fields** are later set to `null` (or unset), **the row will be deleted**.
    *
-   * _If the row was inserted on, even if it was upserted first, it will not be deleted._
-   *
-   * Note that `$set`-ing a row to `null` is equivalent to `$unset`-ing it. The following example would be the exact same using `$unset`s.
+   * However, if the row was **explicitly inserted at any point**—even if it was originally upserted—it will **not** be deleted in this way.
    *
    * @example
    * ```ts
@@ -563,33 +596,23 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * await table.updateOne({ key: '123' }, { $set: { name: 'Michael', age: 3 } });
    *
    * // Sets row to { key: '123', name: 'Michael', age: null }
+   * // (Would be the same with $unset)
    * await table.updateOne({ key: '123' }, { $set: { age: null } });
    *
    * // Deletes row from the table as all non-primary keys are set to null
+   * // (Would be the same with $unset)
    * await table.updateOne({ key: '123' }, { $set: { name: null } });
    * ```
-   *
-   * ##### Filtering
-   *
-   * The filter must contain an exact primary key to update just one row.
-   *
-   * Attempting to pass an empty filter, filtering by only part of the primary key, or filtering by a non-primary key column will result in an error.
-   *
-   * ##### Update operators
-   *
-   * Updates may perform either `$set` or`$unset` operations on the row. (`$set`-ing a row to `null` is equivalent to `$unset`-ing it.)
-   *
-   * ##### On returning `void`
-   *
-   * The `updateOne` operation, as returned from the Data API, is always `{ matchedCount: 1, modifiedCount: 1 }`, regardless of how many things are actually matched/modified, and if a row is upserted or not.
-   *
-   * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
    *
    * @param filter - A filter to select the row to update.
    * @param update - The update to apply to the selected row.
    * @param options - The options for this operation.
    *
    * @returns A promise which resolves once the operation is completed.
+   *
+   * @see TableFilter
+   * @see TableUpdateFilter
+   * @see TableUpdateOneOptions
    */
   public async updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, options?: TableUpdateOneOptions): Promise<void> {
     await this.#commands.updateOne(filter, update, options);
@@ -600,28 +623,29 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * Deletes a single row from the table.
    *
+   * See {@link TableFilter} and {@link TableDeleteOneOptions} as well for more information.
+   *
    * @example
    * ```ts
    * await table.insertOne({ pk: 'abc', ck: 3 });
    * await table.deleteOne({ pk: 'abc', ck: 3 });
    * ```
    *
+   * ---
+   *
    * ##### Filtering
    *
-   * The filter must contain an exact primary key to delete just one row.
-   *
-   * Attempting to pass an empty filter, filtering by only part of the primary key, or filtering by a non-primary key column will result in an error.
-   *
-   * ##### On returning `void`
-   *
-   * The `deleteOne` operation, as returned from the Data API, is always `{ deletedCount: -1 }`, regardless of how many things are actually matched/modified.
-   *
-   * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
+   * > **🚨Important:** The filter must contain an **exact primary key** to delete a row.
+   * >
+   * > Attempting to pass an empty filter, filtering by only part of the primary key, or filtering by a non-primary key column will result in an error.
    *
    * @param filter - A filter to select the row to delete.
    * @param options - The options for this operation.
    *
    * @returns A promise which resolves once the operation is completed.
+   *
+   * @see TableFilter
+   * @see TableDeleteOneOptions
    */
   public async deleteOne(filter: TableFilter<WSchema>, options?: TableDeleteOneOptions): Promise<void> {
     await this.#commands.deleteOne(filter, options);
@@ -630,14 +654,21 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
   /**
    * ##### Overview
    *
-   * Deletes many rows from the table.
+   * Atomically deletes many rows from the table.
+   *
+   * See {@link TableFilter} and {@link TableDeleteManyOptions} as well for more information.
    *
    * @example
    * ```ts
-   * await table.insertOne({ pk: 'abc', ck: 3 });
-   * await table.insertOne({ pk: 'abc', ck: 4 });
-   * await table.deleteMany({ pk: 'abc' });
+   * await table.insertMany([
+   *   { pk: 'abc', ck: 1, name: 'John' },
+   *   { pk: 'abc', ck: 2, name: 'Jane' },
+   * ]);
+   *
+   * await table.deleteMany({ pk: 'abc' });/
    * ```
+   *
+   * ---
    *
    * ##### Filtering
    *
@@ -647,16 +678,15 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *   - The least significant of them can also use an inequality/range predicate
    * - Using an empty filter to truncate the entire table
    *
-   * ##### On returning `void`
-   *
-   * The `deleteMany` operation, as returned from the Data API, is always `{ deletedCount: -1 }`, regardless of how many things are actually matched/modified.
-   *
-   * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
+   * > **🚨Important:** If an empty filter is passed, **all rows in the tables will table be deleted in a single API call**. Proceed with caution.
    *
    * @param filter - A filter to select the row(s) to delete.
    * @param options - The options for this operation.
    *
    * @returns A promise which resolves once the operation is completed.
+   *
+   * @see TableFilter
+   * @see TableDeleteManyOptions
    */
   public async deleteMany(filter: TableFilter<WSchema>, options?: TableDeleteManyOptions): Promise<void> {
     await this.#commands.deleteMany(filter, options, (e) => NonErrorError.asError(e));
@@ -667,60 +697,64 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * Find rows in the table, optionally matching the provided filter.
    *
+   * See {@link TableFilter}, {@link TableFindOptions}, and {@link FindCursor} as well for more information.
+   *
    * @example
    * ```ts
    * const cursor = await table.find({ name: 'John Doe' });
    * const docs = await cursor.toArray();
    * ```
    *
+   * ---
+   *
    * ##### Projection
    *
-   * This overload of {@link Table.find} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
+   * > **🚨Important:** When projecting, it is _heavily_ recommended to provide an explicit type override representing the projected schema, to prevent any type-mismatches when the schema is strictly provided.
+   * >
+   * > Otherwise, the rows will be typed as the full `Schema`, which may lead to runtime errors when trying to access properties that are not present in the projected rows.
    *
-   * In this case, the user must provide an explicit projection type, or the type of the rows will be `Partial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
+   * > **💡Tip:** Use the {@link Pick} or {@link Omit} utility types to create a type representing the projected schema.
    *
    * @example
    * ```ts
    * interface User {
+   *   id: string,
    *   name: string,
    *   car: { make: string, model: string },
    * }
    *
    * const table = db.table<User>('users');
    *
-   * // Defaulting to `Partial<User>` when projection is not provided
+   * // --- Not providing a type override ---
+   *
    * const cursor = await table.find({}, {
    *   projection: { car: 1 },
    * });
    *
-   * // next :: { car?: { make?: string, model?: string } }
    * const next = await cursor.next();
-   * console.log(next.car?.make);
+   * console.log(next.car.make); // OK
+   * console.log(next.name); // Uh oh! Runtime error, since tsc doesn't complain
    *
-   * // Explicitly providing the projection type
+   * // --- Explicitly providing the projection type ---
+   *
    * const cursor = await table.find<Pick<User, 'car'>>({}, {
    *   projection: { car: 1 },
    * });
    *
-   * // next :: { car: { make: string, model: string } }
    * const next = await cursor.next();
-   * console.log(next.car.make);
-   *
-   * // Projection existence can not be inferred
-   * function mkFind(projection?: Projection) {
-   *   return table.find({}, { projection });
-   * }
-   *
-   * // next :: Partial<User>
-   * const next = await mkFind({ car: 1 }).next();
-   * console.log(next.car?.make);
+   * console.log(next.car.make); // OK
+   * console.log(next.name); // Type error; won't compile
    * ```
+   *
+   * ---
    *
    * ##### Filtering
    *
    * The filter can contain a variety of operators & combinators to select the rows. See {@link TableFilter} for much more information.
    *
-   * If the filter is empty, all rows in the table will be returned (up to any provided/implied limit).
+   * > **⚠️Warning:** If the filter is empty, all rows in the table will be returned (up to any provided or server limit).
+   *
+   * ---
    *
    * ##### Find by vector search
    *
@@ -744,15 +778,15 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * console.log(await cursor.next());
    * ```
    *
+   * ---
+   *
    * ##### Sorting
    *
    * The sort option can be used to sort the rows returned by the cursor. See {@link Sort} for more information.
    *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
-   *
    * If the sort option is not provided, there is no guarantee as to the order of the rows returned.
    *
-   * When providing a non-vector sort, the Data API will return a smaller number of rows, set to 20 at the time of writing, and stop there. The returned rows are the top results across the whole table according to the requested criterion.
+   * > **🚨Important:** When providing a non-vector sort, the Data API will return a smaller number of rows (20, at the time of writing), and stop there. The returned rows are the top results across the whole table according to the requested criterion.
    *
    * @example
    * ```ts
@@ -768,6 +802,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * // Returns 'John Doe' (age 2, height 42), 'John Doe' (age 1, height 168)
    * console.log(await cursor.toArray());
    * ```
+   *
+   * ---
    *
    * ##### Other options
    *
@@ -800,7 +836,11 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @param filter - A filter to select the rows to find. If not provided, all rows will be returned.
    * @param options - The options for this operation.
    *
-   * @returns a {@link FindCursor} which can be iterated over.
+   * @returns a FindCursor which can be iterated over.
+   *
+   * @see TableFilter
+   * @see TableFindOptions
+   * @see FindCursor
    */
   public find<T extends SomeRow = WithSim<RSchema>, TRaw extends T = T>(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<T, TRaw> {
     return this.#commands.find(filter, options, TableFindCursor) as TableFindCursor<T, TRaw>;
@@ -811,57 +851,62 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * Find a single row in the table, optionally matching the provided filter.
    *
+   * See {@link TableFilter} and {@link TableFindOneOptions} as well for more information.
+   *
    * @example
    * ```ts
    * const doc = await table.findOne({ name: 'John Doe' });
    * ```
    *
+   * ---
+   *
    * ##### Projection
    *
-   * This overload of {@link Table.findOne} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
+   * > **🚨Important:** When projecting, it is _heavily_ recommended to provide an explicit type override representing the projected schema, to prevent any type-mismatches when the schema is strictly provided.
+   * >
+   * > Otherwise, the rows will be typed as the full `Schema`, which may lead to runtime errors when trying to access properties that are not present in the projected rows.
    *
-   * In this case, the user must provide an explicit projection type, or the type of the returned row will be as `Partial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
+   * > **💡Tip:** Use the {@link Pick} or {@link Omit} utility types to create a type representing the projected schema.
    *
    * @example
    * ```ts
    * interface User {
+   *   id: string,
    *   name: string,
    *   car: { make: string, model: string },
    * }
    *
    * const table = db.table<User>('users');
    *
-   * // Defaulting to `Partial<User>` when projection is not provided
-   * const doc = await table.findOne({}, {
+   *
+   * // --- Not providing a type override ---
+   *
+   * const row = await table.findOne({}, {
    *   projection: { car: 1 },
    * });
    *
-   * // doc :: { car?: { make?: string, model?: string } }
-   * console.log(doc.car?.make);
+   * console.log(row.car.make); // OK
+   * console.log(row.name); // Uh oh! Runtime error, since tsc doesn't complain
    *
-   * // Explicitly providing the projection type
-   * const doc = await table.findOne<Pick<User, 'car'>>({}, {
+   * // --- Explicitly providing the projection type ---
+   *
+   * const row = await table.findOne<Pick<User, 'car'>>({}, {
    *   projection: { car: 1 },
    * });
    *
-   * // doc :: { car: { make: string, model: string } }
-   * console.log(doc.car.make);
-   *
-   * // Projection existence can not be inferred
-   * function findOne(projection?: Projection) {
-   *   return table.findOne({}, { projection });
-   * }
-   *
-   * // doc :: Partial<User>
-   * const doc = await findOne({ car: 1 }).next();
-   * console.log(doc.car?.make);
+   * console.log(row.car.make); // OK
+   * console.log(row.name); // Type error; won't compile
    * ```
+   *
+   * ---
    *
    * ##### Filtering
    *
    * The filter can contain a variety of operators & combinators to select the row. See {@link TableFilter} for much more information.
    *
-   * If the filter is empty, and no {@link Sort} is present, it's undefined as to which row is selected.
+   * > **⚠️Warning:** If the filter is empty, and no {@link Sort} is present, it's undefined as to which row is selected.
+   *
+   * ---
    *
    * ##### Find by vector search
    *
@@ -883,11 +928,11 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * console.log(doc.name);
    * ```
    *
+   * ---
+   *
    * ##### Sorting
    *
    * The sort option can be used to pick the most relevant row. See {@link Sort} for more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
    *
    * If the sort option is not provided, there is no guarantee as to which of the rows which matches the filter is returned.
    *
@@ -905,6 +950,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * // 'John Doe' (age 2, height 42)
    * console.log(doc.name);
    * ```
+   *
+   * ---
    *
    * ##### Other options
    *
@@ -924,6 +971,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @param options - The options for this operation.
    *
    * @returns A row matching the criterion, or `null` if no such row exists.
+   *
+   * @see TableFilter
+   * @see TableFindOneOptions
    */
   public async findOne<TRaw extends SomeRow = WithSim<RSchema>>(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<TRaw | null> {
     return this.#commands.findOne(filter, options);
@@ -932,11 +982,15 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
   /**
    * ##### Overview
    *
-   * Performs one of the four available table-alteration operations:
+   * Performs one of the six available table-alteration operations:
    * - `add` (adds columns to the table)
    * - `drop` (removes columns from the table)
    * - `addVectorize` (enabled auto-embedding-generation on existing vector columns)
    * - `dropVectorize` (disables vectorize on existing enabled columns)
+   * - `addReranking` (enables reranking on the table)
+   * - `dropReranking` (disables reranking on the table)
+   *
+   * See {@link AlterTableOptions} as well for more information.
    *
    * @example
    * ```ts
@@ -967,6 +1021,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * });
    * ```
    *
+   * ---
+   *
    * ##### On returning `Table`
    *
    * The `alter` operation returns the table itself, with the new schema type.
@@ -978,6 +1034,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @param options - The options for this operation.
    *
    * @returns The table with the new schema type.
+   *
+   * @see TableAlterTableOptions
    */
   public async alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<WSchema>): Promise<Table<NewWSchema, PKey, NewRSchema>> {
     await this.#httpClient.executeCommand({
@@ -998,6 +1056,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * The operation blocks until the index is created and ready to use.
    *
    * See {@link Table.createVectorIndex} for creating vector indexes, and {@link Table.createTextIndex} for creating lexical indexes.
+   *
+   * ---
    *
    * ##### Text indexes
    *
@@ -1115,7 +1175,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * Get the table definition, i.e. it's columns and primary key definition.
    *
    * The method issues a request to the Data API each time it is invoked, without caching mechanisms;
-   * this ensures up-to-date information for usages such as real-time collection validation by the application.
+   * this ensures up-to-date information for usages such as real-time table validation by the application.
    *
    * @example
    * ```ts
@@ -1153,11 +1213,11 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * await table.drop();
    * ```
    *
-   * ##### Disclaimer
+   * ---
    *
-   * Once the table is dropped, this object is still technically "usable", but any further operations on it
-   * will fail at the Data API level; thus, it's the user's responsibility to make sure that the table object
-   * is no longer used.
+   * ##### Disclaimer 🚨
+   *
+   * > **🚨Important**: Once the table is dropped, this object is still technically "usable", but any further operations on it will fail at the Data API level; thus, it's the user's responsibility to make sure that the {@link Table} object is no longer used.
    *
    * @param options - The options for this operation.
    *

@@ -41,11 +41,11 @@ import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-
  * const dbAdmin2 = db.admin({ environment: 'dse', adminToken: 'stronger-token' });
  *
  * await admin1.createKeyspace({
- *   replication: {
- *     class: 'NetworkTopologyStrategy',
- *     datacenter1: 3,
- *     datacenter2: 2,
- *   },
+ *   replication: {
+ *     class: 'NetworkTopologyStrategy',
+ *     datacenter1: 3,
+ *     datacenter2: 2,
+ *   },
  * });
  *
  * const keyspaces = await admin1.listKeyspaces();
@@ -85,8 +85,8 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @example
    * ```typescript
    * const dbAdmin = client.admin().dbAdmin('<endpoint>', {
-   *   keyspace: 'my_keyspace',
-   *   useHttp2: false,
+   *   keyspace: 'my_keyspace',
+   *   useHttp2: false,
    * });
    *
    * const db = dbAdmin.db();
@@ -134,18 +134,18 @@ export class DataAPIDbAdmin extends DbAdmin {
    * await dbAdmin.createKeyspace('my_keyspace');
    *
    * await dbAdmin.createKeyspace('my_keyspace', {
-   *   replication: {
-   *     class: 'SimpleStrategy',
-   *     replicationFactor: 3,
-   *   },
+   *   replication: {
+   *     class: 'SimpleStrategy',
+   *     replicationFactor: 3,
+   *   },
    * });
    *
    * await dbAdmin.createKeyspace('my_keyspace', {
-   *   replication: {
-   *     class: 'NetworkTopologyStrategy',
-   *     datacenter1: 3,
-   *     datacenter2: 2,
-   *   },
+   *   replication: {
+   *     class: 'NetworkTopologyStrategy',
+   *     datacenter1: 3,
+   *     datacenter2: 2,
+   *   },
    * });
    * ```
    *

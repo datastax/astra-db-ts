@@ -17,7 +17,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
 /**
  * ##### Overview
  *
- * The options for a generic `updateOne` command performed on the Data API.
+ * The options for a generic `insertOne` command performed on the Data API.
  *
  * @example
  * ```ts

@@ -47,9 +47,9 @@ import { FindCursor } from '@/src/documents/cursors/find-cursor.js';
  * @example
  * ```typescript
  * interface Person {
- *   firstName: string,
- *   lastName: string,
- *   age: number,
+ *   firstName: string,
+ *   lastName: string,
+ *   age: number,
  * }
  *
  * const table = db.table<Person>('people');
@@ -57,7 +57,7 @@ import { FindCursor } from '@/src/documents/cursors/find-cursor.js';
  *
  * // Lazily iterate all rows matching the filter
  * for await (const row of cursor1) {
- *   console.log(row);
+ *   console.log(row);
  * }
  *
  * // Rewind the cursor to be able to iterate again
@@ -68,8 +68,8 @@ import { FindCursor } from '@/src/documents/cursors/find-cursor.js';
  *
  * // Immutably set options & map as needed (changing options returns a new, uninitialized cursor)
  * const cursor2: Cursor<string> = cursor
- *   .project<Omit<Person, 'age'>>({ age: 0 })
- *   .map(row => row.firstName + ' ' + row.lastName);
+ *   .project<Omit<Person, 'age'>>({ age: 0 })
+ *   .map(row => row.firstName + ' ' + row.lastName);
  *
  * // Get next row from cursor
  * const row = await cursor2.next();

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { GenericInsertOneOptions, SomeRow } from '@/src/documents/index.js';
+import type { GenericInsertOneOptions, SomePKey } from '@/src/documents/index.js';
 
 /**
  * ##### Overview
@@ -29,6 +29,12 @@ import type { GenericInsertOneOptions, SomeRow } from '@/src/documents/index.js'
  * });
  * ```
  *
+ * ---
+ *
+ * ##### Datatypes
+ *
+ * See {@link Table}'s documentation for information on the available datatypes for tables.
+ *
  * @see Table.insertOne
  * @see TableInsertOneResult
  *
@@ -39,16 +45,16 @@ export type TableInsertOneOptions = GenericInsertOneOptions;
 /**
  * ##### Overview
  *
- * The options for an `insertOne` command on a {@link Table}.
+ * Represents the result of an `insertOne` command on a {@link Table}.
  *
  * @example
  * ```ts
- * const res = await table.insertOne({
+ * const result = await table.insertOne({
  *   id: '123',
  *   name: 'John'
  * });
  *
- * console.log(res.insertedId); // { id: '123' }
+ * console.log(result.insertedId); // { id: '123' }
  * ```
  *
  * ---
@@ -59,40 +65,18 @@ export type TableInsertOneOptions = GenericInsertOneOptions;
  *
  * If not set, it defaults to `Partial<RSchema>` to keep the result type consistent.
  *
- * See {@link InferTablePrimaryKey} about automatically inferring the primary key type from a {@link CreateTableDefinition}.
- *
- * @example
- * ```ts
- * interface User {
- *   id: string,
- *   name: string,
- *   dob?: DataAPIDate,
- * }
- *
- * type UserPKey = Pick<User, 'id'>;
- *
- * const table = db.table<User, UserPKey>('table');
- * const res = await table.insertOne({ id: '123', name: 'Alice' });
- *
- * // res.insertedId is of type { id: string }
- * console.log(res.insertedId.id); // '123'
- * console.log(res.insertedId.name); // type error
- * ```
- *
- * @field insertedId - The primary key of the inserted row.
+ * > **💡Tip:** See the {@link SomePKey} type for more information, and concrete examples, on this subject.
  *
  * @see Table.insertOne
  * @see TableInsertOneOptions
  *
  * @public
  */
-export interface TableInsertOneResult<PKey extends SomeRow> {
+export interface TableInsertOneResult<PKey extends SomePKey> {
   /**
-   * ##### Overview
-   *
    * The primary key of the inserted (or upserted) row. This will be the same value as the primary key which was present in the row which was just inserted.
    *
-   * See the {@link TableInsertOneOptions} for more information about the primary key.
+   * See {@link TableInsertOneResult} for more information about the primary key.
    */
   insertedId: PKey;
 }

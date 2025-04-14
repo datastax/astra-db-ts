@@ -121,8 +121,8 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * const db1 = admin.db('https://<db_id>-<region>.apps.astra.datastax.com');
    *
    * const db2 = admin.db('https://<db_id>-<region>.apps.astra.datastax.com', {
-   *   keyspace: 'my_keyspace',
-   *   useHttp2: false,
+   *   keyspace: 'my_keyspace',
+   *   useHttp2: false,
    * });
    * ```
    *
@@ -154,8 +154,8 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * const db1 = admin.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1');
    *
    * const db2 = admin.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', {
-   *   keyspace: 'my_keyspace',
-   *   useHttp2: false,
+   *   keyspace: 'my_keyspace',
+   *   useHttp2: false,
    * });
    * ```
    *
@@ -197,8 +197,8 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * const dbAdmin1 = admin.dbAdmin('https://<db_id>-<region>...');
    *
    * const dbAdmin2 = admin.dbAdmin('https://<db_id>-<region>...', {
-   *   keyspace: 'my_keyspace',
-   *   useHttp2: false,
+   *   keyspace: 'my_keyspace',
+   *   useHttp2: false,
    * });
    * ```
    *
@@ -233,8 +233,8 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * const dbAdmin1 = admin.dbAdmin('a6a1d8d6-...-377566f345bf', 'us-east1');
    *
    * const dbAdmin2 = admin.dbAdmin('a6a1d8d6-...-377566f345bf', 'us-east1', {
-   *   keyspace: 'my_keyspace',
-   *   useHttp2: false,
+   *   keyspace: 'my_keyspace',
+   *   useHttp2: false,
    * });
    * ```
    *
@@ -306,7 +306,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * const activeDbs = await admin.listDatabases({ include: 'ACTIVE' });
    *
    * for (const db of activeDbs) {
-   *   console.log(`Database ${db.name} is active`);
+   *   console.log(`Database ${db.name} is active`);
    * }
    * ```
    *
@@ -363,25 +363,25 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * @example
    * ```typescript
    * const newDbAdmin1 = await admin.createDatabase({
-   *   name: 'my_database_1',
-   *   cloudProvider: 'GCP',
-   *   region: 'us-east1',
+   *   name: 'my_database_1',
+   *   cloudProvider: 'GCP',
+   *   region: 'us-east1',
    * });
    *
    * // Prints '[]' as there are no collections in the database yet
    * console.log(newDbAdmin1.db().listCollections());
    *
    * const newDbAdmin2 = await admin.createDatabase({
-   *   name: 'my_database_2',
-   *   cloudProvider: 'GCP',
-   *   region: 'us-east1',
-   *   keyspace: 'my_keyspace',
+   *   name: 'my_database_2',
+   *   cloudProvider: 'GCP',
+   *   region: 'us-east1',
+   *   keyspace: 'my_keyspace',
    * }, {
-   *   blocking: false,
-   *   dbOptions: {
-   *     useHttp2: false,
-   *     token: '<weaker-token>',
-   *   },
+   *   blocking: false,
+   *   dbOptions: {
+   *     useHttp2: false,
+   *     token: '<weaker-token>',
+   *   },
    * });
    *
    * // Can't do much else as the database is still initializing

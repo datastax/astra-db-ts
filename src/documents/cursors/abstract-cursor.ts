@@ -217,7 +217,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @example
    * ```typescript
    * for await (const doc of cursor) {
-   *   console.log(doc);
+   *   console.log(doc);
    * }
    * ```
    */

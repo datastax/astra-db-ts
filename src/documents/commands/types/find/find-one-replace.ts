@@ -73,19 +73,19 @@ export interface GenericFindOneAndReplaceOptions extends WithTimeout<'generalMet
    * @example
    * ```typescript
    * interface User {
-   *   name: string;
-   *   age: number;
+   *   name: string;
+   *   age: number;
    * }
    *
    * const collection = db.collection<User>('users');
    *
    * const doc = await collection.findOne({}, {
-   *   projection: {
-   *     _id: 0,
-   *     name: 1,
-   *   },
-   *   vector: [.12, .52, .32],
-   *   includeSimilarity: true,
+   *   projection: {
+   *     _id: 0,
+   *     name: 1,
+   *   },
+   *   vector: [.12, .52, .32],
+   *   includeSimilarity: true,
    * }) as { name: string, $similarity: number };
    *
    * // Ok

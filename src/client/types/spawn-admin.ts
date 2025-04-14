@@ -87,12 +87,12 @@ export interface AdminOptions {
    * ```ts
    * // The request timeout for all operations is set to 1000ms.
    * const client = new DataAPIClient('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 1000 },
+   *   timeoutDefaults: { requestTimeoutMs: 1000 },
    * });
    *
    * // The request timeout for all operations borne from this Db is set to 2000ms.
    * const db = client.db('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 2000 },
+   *   timeoutDefaults: { requestTimeoutMs: 2000 },
    * });
    * ```
    *

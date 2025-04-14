@@ -37,6 +37,9 @@ import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provid
 import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
 import { isNonEmpty } from '@/src/lib/utils.js';
 
+/**
+ * @internal
+ */
 type ClientKind = 'admin' | 'normal';
 
 /**
