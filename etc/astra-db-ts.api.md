@@ -1311,7 +1311,7 @@ export type DataAPIVectorLike = number[] | {
     $binary: string;
 } | Float32Array | DataAPIVector;
 
-// @public (undocumented)
+// @public
 export type DataAPIWarningDescriptor = DataAPIErrorDescriptor & {
     scope: 'WARNING';
 };
