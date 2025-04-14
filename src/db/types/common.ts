@@ -27,7 +27,7 @@
  *
  * // Using 'my_keyspace' as the keyspace
  * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
- *   keyspace: 'my_keyspace',
+ *   keyspace: 'my_keyspace',
  * });
  *
  * // Finds 'my_collection' in 'default_keyspace'
@@ -35,7 +35,7 @@
  *
  * // Finds 'my_collection' in 'my_keyspace'
  * const coll2 = db1.collection('my_collection', {
- *   keyspace: 'my_keyspace',
+ *   keyspace: 'my_keyspace',
  * });
  * ```
  *
@@ -48,4 +48,10 @@ export interface WithKeyspace {
    * The keyspace to use for the operation.
    */
   keyspace?: string;
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client.
+   */
+  namespace?: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client',
 }

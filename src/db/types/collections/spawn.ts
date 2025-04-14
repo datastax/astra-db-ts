@@ -67,12 +67,12 @@ export interface CollectionOptions extends WithKeyspace {
    * ```ts
    * // The request timeout for all operations is set to 1000ms.
    * const client = new DataAPIClient('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 1000 },
+   *   timeoutDefaults: { requestTimeoutMs: 1000 },
    * });
    *
    * // The request timeout for all operations borne from this Db is set to 2000ms.
    * const db = client.db('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 2000 },
+   *   timeoutDefaults: { requestTimeoutMs: 2000 },
    * });
    * ```
    *
@@ -85,7 +85,7 @@ export interface CollectionOptions extends WithKeyspace {
    * ##### Defaults
    *
    * The default timeout options are as follows:
-   * - `requestTimeoutMs`: 10000
+   * - `requestTimeoutMs`: 15000
    * - `generalMethodTimeoutMs`: 30000
    * - `collectionAdminTimeoutMs`: 60000
    * - `tableAdminTimeoutMs`: 30000
@@ -95,4 +95,10 @@ export interface CollectionOptions extends WithKeyspace {
    * @see TimeoutDescriptor
    */
   timeoutDefaults?: Partial<TimeoutDescriptor>,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `defaultMaxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option.
+   */
+  defaultMaxTimeMS?: 'ERROR: The `defaultMaxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option',
 }

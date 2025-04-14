@@ -12,6 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { WithTimeout } from '@/src/lib/index.js';
+
+/**
+ * ##### Overview
+ *
+ * The options for a generic `insertOne` command performed on the Data API.
+ *
+ * @example
+ * ```ts
+ * const result = await collection.insertOne({
+ *   name: 'John',
+ *   age: 30,
+ * }, {
+ *   timeout: 10000,
+ * });
+ * ```
+ *
+ * @see CollectionInsertOneOptions
+ * @see TableInsertOneOptions
+ *
+ * @public
+ */
+export type GenericInsertOneOptions = WithTimeout<'generalMethodTimeoutMs'>;
+
 /**
  * Shouldn't be used by the user directly.
  *

@@ -107,7 +107,7 @@ export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends
    *
    * // After
    * const collection = db.collection<User>('users', {
-   *   serdes: { mutateInPlace: true },
+   *   serdes: { mutateInPlace: true },
    * });
    *
    * const doc = { name: 'Alice', friends: { john: UUID.v4() } };

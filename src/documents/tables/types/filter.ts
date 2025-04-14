@@ -20,15 +20,15 @@ import type { SomeRow } from '@/src/documents/index.js';
  * @example
  * ```typescript
  * interface BasicSchema {
- *   arr: string[],
- *   num: number,
+ *   arr: string[],
+ *   num: number,
  * }
  *
  * db.Tables<BasicSchema>('coll_name').findOne({
- *   $and: [
- *     { _id: { $in: ['abc', 'def'] } },
- *     { $not: { arr: { $size: 0 } } },
- *   ]
+ *   $and: [
+ *     { _id: { $in: ['abc', 'def'] } },
+ *     { $not: { arr: { $size: 0 } } },
+ *   ]
  * });
  * ```
  *

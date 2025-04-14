@@ -13,6 +13,74 @@
 // limitations under the License.
 
 /**
+ * ##### Overview
+ *
+ * Represents *some primary key* in a table. This is a generic type that represents some (any) table primary key with any number & types
+ * of columns. All it asks for is that the primary key be an object with string keys and any values.
+ *
+ * Keep in mind the logical constraints, however:
+ * - This should be a subset of the table's schema
+ * - Primary key values must be only scalar types
+ *
+ * > **✏️Note:** There is no distinction between partition and clustering keys in this type.
+ *
+ * ---
+ *
+ * ##### Constructing this type
+ *
+ * Often, you may want to construct this type using the {@link Pick} utility type, to select only the fields of the schema which are in the primary key.
+ *
+ * @example
+ * ```ts
+ * interface MyTableSchema {
+ *   partitionKey: string;
+ *   clusteringKey: number;
+ *   otherField: Map<string, string>;
+ * }
+ *
+ * type MyTablePrimaryKey = Pick<MyTableSchema, 'partitionKey' | 'clusteringKey'>;
+ *
+ * const table = db.table<MyTableSchema, MyTablePrimaryKey>('my_table');
+ * ```
+ *
+ * However, if you are constructing a table with {@link Db.createTable}, you may use the {@link InferTablePrimaryKey} utility type to infer the TS-equivalent type of the primary key from the {@link CreateTableDefinition}.
+ *
+ * @example
+ * ```ts
+ * const MyTableSchema = Table.schema({
+ *   columns: {
+ *     partitionKey: 'text',
+ *     clusteringKey: 'int',
+ *     otherField: 'map<text, text>',
+ *   },
+ *   primaryKey: {
+ *     partitionBy: ['partitionKey'],
+ *     partitionSort: { clusteringKey: 1 },
+ *   },
+ * });
+ *
+ * type MyTableSchema = typeof MyTableSchema;
+ * type MyTablePrimaryKey = InferTablePrimaryKey<typeof MyTableSchema>;
+ *
+ * const table = db.createTable<MyTableSchema, MyTablePrimaryKey>('my_table', {
+ *   definition: MyTableSchema,
+ * });
+ * ```
+ *
+ * ##### Using this type
+ *
+ * This type is used as the second type parameter of the {@link Table} class.
+ *
+ * If this is not provided, then the table's primary key type will default to `Partial<Schema>` where `Schema` is the schema of the table.
+ *
+ * @see InferTablePrimaryKey
+ * @see Db.createTable
+ * @see SomeRow
+ * @see Table
+ */
+export type SomePKey = Record<string, any>;
+
+/**
  * Checks if a type can possibly be some number
  *
  * @example

@@ -14,14 +14,14 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type { InternalLogger } from '@/src/lib/logging/internal-logger.js';
-import type { RawDataAPIResponse } from '@/src/lib/index.js';
+import type { NonEmpty, RawDataAPIResponse } from '@/src/lib/index.js';
 import {
   EmbeddingAPIKeyHeaderProvider,
   HeadersProvider,
   RerankingAPIKeyHeaderProvider,
   TokenProvider,
 } from '@/src/lib/index.js';
-import type { CommandEventTarget, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
+import type { DataAPIWarningDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
 import { Collection, DataAPIHttpError, DataAPIResponseError, DataAPITimeoutError } from '@/src/documents/index.js';
 import type { HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types.js';
 import { HttpClient } from '@/src/lib/api/clients/http-client.js';
@@ -37,6 +37,9 @@ import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provid
 import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
 import { isNonEmpty } from '@/src/lib/utils.js';
 
+/**
+ * @internal
+ */
 type ClientKind = 'admin' | 'normal';
 
 /**
@@ -56,12 +59,12 @@ type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName
  */
 export interface DataAPIRequestInfo {
   url: string,
-  collection: string | undefined,
+  tOrC: string | undefined,
+  tOrCType: 'table' | 'collection' | undefined,
   keyspace: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
   bigNumsPresent: boolean | undefined,
-  target: CommandEventTarget,
 }
 
 /**
@@ -71,7 +74,7 @@ type EmissionStrategy<Kind extends ClientKind> = (logger: InternalLogger<any>) =
   emitCommandStarted?(requestId: string, info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
   emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse | undefined, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
   emitCommandSucceeded?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
-  emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
+  emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: NonEmpty<DataAPIWarningDescriptor>, opts: ExecCmdOpts<Kind>): void,
 }
 
 /**
@@ -217,38 +220,29 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
       throw new Error('Can\'t provide both `table` and `collection` as options to DataAPIHttpClient.executeCommand()');
     }
 
-    const collection = options.collection || options.table || this.collectionName || this.tableName;
+    const tOrC = options.collection || options.table || this.collectionName || this.tableName;
     const keyspace = options.keyspace === undefined ? this.keyspace?.ref : options.keyspace;
 
     if (keyspace === undefined) {
       throw new Error('Db is missing a required keyspace; be sure to set one with client.db(..., { keyspace }), or db.useKeyspace()');
     }
 
-    if (keyspace === null && collection) {
+    if (keyspace === null && tOrC) {
       throw new Error('Keyspace may not be `null` when a table or collection is provided to DataAPIHttpClient.executeCommand()');
     }
 
-    const target =
-      (options.collection || this.collectionName)
-        ? 'collection' :
-      (options.table || this.tableName)
-        ? 'table' :
-      (keyspace)
-        ? 'keyspace'
-        : 'database';
-
     const info: DataAPIRequestInfo = {
       url: this.baseUrl,
-      collection: collection,
+      tOrC: tOrC,
+      tOrCType: !tOrC ? undefined : tOrC === (options.table || this.tableName) ? 'table' : 'collection',
       keyspace: keyspace,
       command: command,
       timeoutManager: options.timeoutManager,
       bigNumsPresent: options.bigNumsPresent,
-      target: target,
     };
 
     const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
-    const collectionPath = info.collection ? `/${info.collection}` : '';
+    const collectionPath = info.tOrC ? `/${info.tOrC}` : '';
     info.url += keyspacePath + collectionPath;
 
     const requestId = this.logger.internal.generateCommandRequestId();

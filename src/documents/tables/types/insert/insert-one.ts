@@ -12,57 +12,71 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeRow } from '@/src/documents/index.js';
+import type { GenericInsertOneOptions, SomePKey } from '@/src/documents/index.js';
 
 /**
  * ##### Overview
  *
- * Represents the result of an `insertOne` command on a table.
- *
- * ##### Primary Key Inference
- *
- * The type of the primary key of the table is inferred from the second `PKey` type-param of the table.
- *
- * If not present, it defaults to `Partial<RSchema>` to keep the result type consistent.
+ * The options for an `insertOne` command on a {@link Table}.
  *
  * @example
  * ```ts
- * interface User {
- *   id: string,
- *   name: string,
- *   dob?: DataAPIDate,
- * }
- *
- * type UserPKey = Pick<User, 'id'>;
- *
- * const table = db.table<User, UserPKey>('table');
- *
- * // res.insertedId is of type { id: string }
- * const res = await table.insertOne({ id: '123', name: 'Alice' });
- * console.log(res.insertedId.id); // '123'
+ * const result = await table.insertOne({
+ *   id: 'john1234'
+ *   name: 'John',
+ * }, {
+ *   timeout: 10000,
+ * });
  * ```
  *
- * @example
- * ```ts
- * const table = db.table<User>('table');
+ * ---
  *
- * // res.insertedId is of type Partial<User>
- * const res = await table.insertOne({ id: '123', name: 'Alice' });
- * console.log(res.insertedId.id); // '123'
- * console.log(res.insertedId.key); // undefined
- * ```
+ * ##### Datatypes
  *
- * @field insertedId - The primary key of the inserted document.
+ * See {@link Table}'s documentation for information on the available datatypes for tables.
  *
  * @see Table.insertOne
+ * @see TableInsertOneResult
  *
  * @public
  */
-export interface TableInsertOneResult<PKey extends SomeRow> {
+export type TableInsertOneOptions = GenericInsertOneOptions;
+
+/**
+ * ##### Overview
+ *
+ * Represents the result of an `insertOne` command on a {@link Table}.
+ *
+ * @example
+ * ```ts
+ * const result = await table.insertOne({
+ *   id: '123',
+ *   name: 'John'
+ * });
+ *
+ * console.log(result.insertedId); // { id: '123' }
+ * ```
+ *
+ * ---
+ *
+ * ##### The primary key type
+ *
+ * The type of the primary key of the table is inferred from the second type-param of the {@link Table}.
+ *
+ * If not set, it defaults to `Partial<RSchema>` to keep the result type consistent.
+ *
+ * > **💡Tip:** See the {@link SomePKey} type for more information, and concrete examples, on this subject.
+ *
+ * @see Table.insertOne
+ * @see TableInsertOneOptions
+ *
+ * @public
+ */
+export interface TableInsertOneResult<PKey extends SomePKey> {
   /**
-   * The primary key of the inserted document.
+   * The primary key of the inserted (or upserted) row. This will be the same value as the primary key which was present in the row which was just inserted.
    *
-   * See {@link TableInsertOneResult} for more info about this type and how it's inferred.
+   * See {@link TableInsertOneResult} for more information about the primary key.
    */
   insertedId: PKey;
 }

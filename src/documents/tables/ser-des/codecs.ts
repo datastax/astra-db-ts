@@ -49,27 +49,27 @@ export type TableCodecClass =
 export type TableCodec<Class extends TableCodecClass> = InstanceType<Class>;
 
 /**
- * @public
+ * @beta
  */
 export type RawTableCodecs = readonly RawCodec<TableSerCtx, TableDesCtx>[] & { phantom?: 'This codec is only valid for tables' };
 
 /**
- * @public
+ * @beta
  */
 export type TableNominalCodecOpts = NominalCodecOpts<TableSerCtx, TableDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export type TableTypeCodecOpts = TypeCodecOpts<TableSerCtx, TableDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export type TableCustomCodecOpts = CustomCodecOpts<TableSerCtx, TableDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export class TableCodecs {
   public static Defaults = {
@@ -125,7 +125,11 @@ export class TableCodecs {
     map: TableCodecs.forType('map', {
       serializeClass: Map,
       serialize: (value, ctx) => {
-        return ctx.recurse(Object.fromEntries(value));
+        if (value.size) {
+          return ctx.recurse([...value.entries()]);
+        } else {
+          return ctx.done({});  // BUG https://github.com/stargate/data-api/issues/2005 - can not pass an empty array for a map
+        }
       },
       deserialize(_, ctx) {
         /* c8 ignore next: not in data api yet */

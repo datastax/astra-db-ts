@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { WithTimeout } from '@/src/lib/index.js';
+
+export type GenericDeleteManyOptions = WithTimeout<'generalMethodTimeoutMs'>;
+
 /**
  * Represents the result of some generic `deleteMany` command.
  *

@@ -33,4 +33,16 @@ import type { CollectionDefinition, CollectionOptions } from '@/src/db/index.js'
  */
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends CollectionDefinition<Schema>, CollectionOptions {
   timeout?: number | Pick<Partial<TimeoutDescriptor>, 'collectionAdminTimeoutMs'>;
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option.
+   */
+  maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The client-side `checkExists` option has been removed due to it being unnecessary and prone to check-then-act race conditions. `createCollection` is a no-op if a collection is created with the same options; it will however still throw an error if the options differ.
+   */
+  checkExists?: 'ERROR: `checkExists` has been removed. It is equivalent to being always `false` now.',
 }

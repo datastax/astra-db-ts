@@ -87,12 +87,12 @@ export interface AdminOptions {
    * ```ts
    * // The request timeout for all operations is set to 1000ms.
    * const client = new DataAPIClient('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 1000 },
+   *   timeoutDefaults: { requestTimeoutMs: 1000 },
    * });
    *
    * // The request timeout for all operations borne from this Db is set to 2000ms.
    * const db = client.db('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 2000 },
+   *   timeoutDefaults: { requestTimeoutMs: 2000 },
    * });
    * ```
    *
@@ -105,7 +105,7 @@ export interface AdminOptions {
    * ##### Defaults
    *
    * The default timeout options are as follows:
-   * - `requestTimeoutMs`: 10000
+   * - `requestTimeoutMs`: 15000
    * - `generalMethodTimeoutMs`: 30000
    * - `collectionAdminTimeoutMs`: 60000
    * - `tableAdminTimeoutMs`: 30000
@@ -115,4 +115,10 @@ export interface AdminOptions {
    * @see TimeoutDescriptor
    */
   timeoutDefaults?: Partial<TimeoutDescriptor>,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - `monitorCommands` has been overhauled, and replaced with the `logging` option. Please see its documentation for more information.
+   */
+  monitorCommands?: 'ERROR: `monitorCommands` has been overhauled, and replaced with the `logging` option. Please see its documentation for more information',
 }

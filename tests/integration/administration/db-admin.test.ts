@@ -74,7 +74,7 @@ describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
   //   assert.ok(typeof rerankingProviders === 'object');
   // });
 
-  it('should timeout', async () => {
+  it('(ASTRA) should timeout', async () => {
     await assert.rejects(() => dbAdmin.listKeyspaces({ timeout: 1 }), (e) => {
       assert.ok(e instanceof DevOpsAPITimeoutError);
       assert.strictEqual(e.message, 'Command timed out after 1ms (The timeout provided via `{ timeout: <number> }` timed out)');

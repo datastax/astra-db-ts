@@ -59,4 +59,16 @@ export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'
    * If true, the sort vector will be available through `await cursor.getSortVector()`
    */
   includeSortVector?: boolean,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vector: [...] }` instead.
+   */
+  vector?: 'ERROR: Use `sort: { $vector: [...] }` instead',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vectorize: '...' }` instead.
+   */
+  vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead',
 }

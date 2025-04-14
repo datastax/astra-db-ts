@@ -17,7 +17,7 @@
 import type { TestSchema } from '@/tests/typing/collections/prelude.js';
 import { dummyCollection } from '@/tests/typing/collections/prelude.js';
 import type { Equal, Expect } from '@/tests/typing/prelude.js';
-import type { FoundDoc, IdOf } from '@/src/documents/collections/types/index.js';
+import type { FoundDoc, IdOf, NoId } from '@/src/documents/collections/types/index.js';
 import type { CollectionFindCursor, FindCursor, WithSim } from '@/src/documents/index.js';
 
 type GetTOfCursor<Cursor> = Cursor extends CollectionFindCursor<infer T, any> ? T : Cursor extends FindCursor<infer T, any> ? T : never;
@@ -28,7 +28,7 @@ type GetTRawOfCursor<Cursor> = Cursor extends CollectionFindCursor<any, infer TR
 
   type T_and_TRaw_are_equal = Expect<Equal<GetTOfCursor<typeof cursor>, GetTRawOfCursor<typeof cursor>>>;
 
-  type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, Omit<TestSchema, '$vector'> & { _id: IdOf<TestSchema> } & { $similarity?: number }>>;
+  type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, NoId<Omit<TestSchema, '$vector'>> & { _id: IdOf<TestSchema> } & { $similarity?: number }>>;
 
   type _id_is_expected = Expect<Equal<IdOf<GetTOfCursor<typeof cursor>>, string>>;
 

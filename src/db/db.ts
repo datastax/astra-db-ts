@@ -24,7 +24,7 @@ import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin.js';
 import type { CreateCollectionOptions } from '@/src/db/types/collections/create.js';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { KeyspaceRef } from '@/src/lib/api/clients/types.js';
-import type { CommandEventMap, FoundRow, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
+import type { CommandEventMap, FoundRow, SomePKey, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
 import { Table } from '@/src/documents/index.js';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
 import type { CollectionOptions } from '@/src/db/types/collections/spawn.js';
@@ -39,7 +39,7 @@ import type { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/l
 import type { AdminOptions } from '@/src/client/types/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import { InvalidEnvironmentError } from '@/src/db/errors.js';
-import type { AstraDbInfo } from '@/src/administration/types/admin/database-info.js';
+import type { AstraPartialDatabaseInfo } from '@/src/administration/types/admin/database-info.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.js';
@@ -50,12 +50,12 @@ import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cf
 import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
 
 /**
- * #### Overview
+ * ##### Overview
  *
  * Represents an interface to some Data-API-enabled database instance. This is the entrypoint for database-level DML, such as
  * creating/deleting collections/tables, connecting to collections/tables, and executing arbitrary commands.
  *
- * **Shouldn't be instantiated directly; use {@link DataAPIClient.db} to obtain an instance of this class.**
+ * > **⚠️Warning**: This shouldn't be instantiated directly; use {@link DataAPIClient.db} to spawn this class.
  *
  * Note that creating an instance of a `Db` doesn't trigger actual database creation; the database must have already
  * existed beforehand. If you need to create a new database, use the {@link AstraAdmin} class.
@@ -67,25 +67,27 @@ import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
  *
  * // Overrides default options from the DataAPIClient
  * const db = client.db('*ENDPOINT*', {
- *   keyspace: '*KEYSPACE*',
- *   token: '*TOKEN*',
+ *   keyspace: '*KEYSPACE*',
+ *   token: '*TOKEN*',
  * });
  * ```
  *
- * ###### The "working keyspace"
+ * ---
+ *
+ * ##### The "working keyspace"
  *
  * The `Db` class has a concept of a "working keyspace", which is the default keyspace used for all operations in the database. This can be overridden in each method call, but if not, the default keyspace is used.
  *
  * If no explicit keyspace is provided when creating the `Db` instance, it will default to:
- * - On DataStax Astra dbs: `default_keyspace`
- * - On all other dbs, it will remain undefined
+ * - On DataStax Astra: `'default_keyspace'`
+ * - On all other dbs, it will remain as `undefined`
  *   - In this case, the keyspace must be set using either:
  *     - The `db.useKeyspace()` mutator method
  *     - The `updateDbKeyspace` parameter in `dbAdmin.createKeyspace()`
  *
- * Changing the working namespaces does NOT retroactively update any collections/tables spawned from this `Db` instance.
+ * Changing the working namespaces does _NOT_ retroactively update any collections/tables spawned from this `Db` instance.
  *
- * See {@link Db.useKeyspace} and {@link DbAdmin.createKeyspace} for more information.
+ * See {@link Db.keyspace}, {@link Db.useKeyspace} and {@link DbAdmin.createKeyspace} for more information.
  *
  * @example
  * ```ts
@@ -95,15 +97,19 @@ import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
  * // Method 2:
  * // (If using non-astra, this may be a common idiom)
  * await db.admin().createKeyspace('my_keyspace', {
- *   updateDbKeyspace: true,
+ *   updateDbKeyspace: true,
  * });
  * ```
  *
- * ###### Astra vs. non-Astra
+ * ---
  *
- * The `Db` class is designed to work with both Astra and non-Astra databases. However, there are some differences in behaviour between the two:
+ * ##### Astra vs. non-Astra
+ *
+ * The `Db` class is designed to work with both Astra and non-Astra databases. However, there are some differences in behavior between the two:
  * - Astra DBs have an ID & region, which can be accessed using `db.id` and `db.region` respectively
+ *   - Note that this is not available with Astra private endpoints
  * - Astra DBs have a `db.info()` method, which provides detailed information about the database
+ *   - Note that this is not available with Astra private endpoints
  * - The `db.admin()` method will return differently depending on the environment
  *   - For Astra DBs, it will return an {@link AstraDbAdmin} instance
  *   - For non-Astra DBs, it will return a {@link DataAPIDbAdmin} instance
@@ -128,7 +134,17 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   readonly #region?: string;
 
   /**
+   * ##### Overview
+   *
    * The endpoint of the database.
+   *
+   * This will be verbatim with the endpoint that was passed to `client.db()`, except any trailing slashes will be stripped.
+   *
+   * @example
+   * ```ts
+   * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
+   * db.endpoint; // 'https://<db_id>-<region>.apps.astra.datastax.com'
+   * ```
    */
   public readonly endpoint!: string;
 
@@ -185,33 +201,72 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   }
 
   /**
-   * The default keyspace to use for all operations in this database, unless overridden in a method call.
+   * ##### Overview
+   *
+   * The "working keyspace" used for all operations in this {@link Db} instance (unless overridden in a method call).
+   *
+   * See the {@link Db} class documentation for more information about the working keyspace.
+   *
+   * ##### Common examples
+   *
+   * See the following sections for examples specific to Astra & non-Astra (DSE, HCE, etc.) databases.
    *
    * @example
-   * ```typescript
+   * ```ts
+   * // Uses 'my_keyspace' as the default keyspace for all future db spawns
+   * const client = new DataAPIClient('*TOKEN*', {
+   *   dbOptions: { keyspace: 'my_keyspace' },
+   * });
+   * client.db(...).keyspace // 'my_keyspace'
+   * ```
+   *
+   * @example
+   * ```ts
+   * // Uses 'my_keyspace' for this specific db spawn
+   * const client = new DataAPIClient('*TOKEN*');
+   * client.db(..., { keyspace: 'my_keyspace' }).keyspace // 'default_keyspace'
+   * ```
+   *
+   * ##### On Astra
+   *
+   * Note that on Astra databases, this will default to `default_keyspace` if not set explicitly.
+   *
+   * @example
+   * ```ts
    * // Uses 'default_keyspace' as the default keyspace for all future db spawns
-   * const client1 = new DataAPIClient('*TOKEN*');
+   * const client = new DataAPIClient('*TOKEN*');
+   * client.db(...).keyspace // 'default_keyspace'
+   * ```
    *
-   * // Overrides the default keyspace for all future db spawns
-   * const client2 = new DataAPIClient('*TOKEN*', {
-   *   dbOptions: { keyspace: 'my_keyspace' },
+   * ---
+   *
+   * ##### On non-Astra (DSE, HCD, etc.)
+   *
+   * On non-Astra databases, this will be `undefined` if not set explicitly, as HCD, DSE, etc. are not guaranteed to have a default `default_keyspace`.
+   *
+   * You will need to either set the `keyspace` parameter somewhere, or update the {@link Db} instance's keyspace via either
+   * - {@link Db.useKeyspace}
+   * - The `updateDbKeyspace` parameter in {@link DbAdmin.createKeyspace}
+   *
+   * @example
+   * ```ts
+   * // No default keyspace on db spawns
+   * const client = new DataAPIClient('*TOKEN*');
+   * client.db(...).keyspace // undefined
+   * ```
+   *
+   * @example
+   * ```ts
+   * // A potentially common idiom for non-Astra
+   * const client = new DataAPIClient('*TOKEN*');
+   *
+   * const db = client.db(...);
+   * db.keyspace // undefined
+   *
+   * await db.admin().createKeyspace('my_keyspace', {
+   *   updateDbKeyspace: true,
    * });
-   *
-   * // Created with 'default_keyspace' as the default keyspace
-   * const db1 = client1.db('*ENDPOINT*');
-   *
-   * // Created with 'my_keyspace' as the default keyspace
-   * const db2 = client1.db('*ENDPOINT*', {
-   *   keyspace: 'my_keyspace'
-   * });
-   *
-   * // Uses 'default_keyspace'
-   * const coll1 = db1.collection('users');
-   *
-   * // Uses 'my_keyspace'
-   * const coll2 = db1.collection('users', {
-   *   keyspace: 'my_keyspace'
-   * });
+   * db.keyspace // 'my_keyspace'
    * ```
    */
   public get keyspace(): string {
@@ -222,9 +277,17 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   }
 
   /**
-   * The ID of the database (UUID), if it's an Astra database.
+   * ##### Overview
    *
-   * If it's not an Astra database, this will throw an error, as they have no applicable/appropriate ID.
+   * The ID of the database (a UUID), if it's an Astra database.
+   *
+   * > **⚠️Warning**: This only works for Astra databases, which are not connected to via a private endpoint.
+   *
+   * @example
+   * ```ts
+   * const db = client.db('https://<db_id>-<region>.apps.astra-dev.datastax.com');
+   * db.id; // '<db_id>'
+   * ```
    *
    * @throws InvalidEnvironmentError - if the database is not an Astra database.
    */
@@ -241,7 +304,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   /**
    * The region of the database (e.g. `'us-east-1'`), if it's an Astra database.
    *
-   * If it's not an Astra database, this will throw an error, as they have no applicable/appropriate region.
+   * > **⚠️Warning**: This only works for Astra databases, which are not connected to via a private endpoint.
+   *
+   * @example
+   * ```ts
+   * const db = client.db('https://<db_id>-<region>.apps.astra-dev.datastax.com');
+   * db.region; // '<region>'
+   * ```
    *
    * @throws InvalidEnvironmentError - if the database is not an Astra database.
    */
@@ -283,6 +352,8 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * const coll3 = db.collection('my_coll', { keyspace: 'my_keyspace' });
    * ```
    *
+   * ---
+   *
    * ##### `updateDbKeyspace` in `DbAdmin.createKeyspace`
    *
    * If you want to create a `Db` in a not-yet-existing keyspace, you can use the `updateDbKeyspace` option in {@link DbAdmin.createKeyspace} to set the default keyspace of the `Db` instance to the new keyspace.
@@ -296,7 +367,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * // Will internally call `db.useKeyspace('new_keyspace')`
    * await db.admin().createKeyspace('new_keyspace', {
-   *   updateDbKeyspace: true,
+   *   updateDbKeyspace: true,
    * });
    *
    * // Creates collection in keyspace `new_keyspace` by default now
@@ -310,7 +381,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   }
 
   /**
-   * ##### Overview
+   * ##### Overview (Astra overload)
    *
    * Spawns a new {@link AstraDbAdmin} instance for this database, used for performing administrative operations
    * on the database, such as managing keyspaces, or getting database information.
@@ -327,12 +398,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * console.log(keyspaces);
    * ```
    *
+   * ---
+   *
    * ##### Astra vs. non-Astra
    *
-   * **If using a non-Astra backend, the `environment` option MUST be set as it is on the `DataAPIClient`**
+   * > **⚠️Warning**: If using a non-Astra backend, the `environment` option **must** be set as it is on the `DataAPIClient`.
    *
-   * If on Astra, this method will return a new {@link AstraDbAdmin} instance, which provides a few extra methods
-   * for Astra databases, such as {@link AstraDbAdmin.info} or {@link AstraDbAdmin.drop}.
+   * If on Astra, this method will return a new {@link AstraDbAdmin} instance, which provides a few extra methods for Astra databases, such as {@link AstraDbAdmin.info} or {@link AstraDbAdmin.drop}.
    *
    * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
@@ -343,15 +415,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   public admin(options?: AdminOptions & { environment?: 'astra' }): AstraDbAdmin
 
   /**
-   * ##### Overview
+   * ##### Overview (Non-Astra overload)
    *
    * Spawns a new {@link DataAPIDbAdmin} instance for this database, used for performing administrative operations
    * on the database, such as managing keyspaces, or getting database information.
    *
    * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
-   *
-   * **If using a non-Astra backend, the `environment` option MUST be set as it is on the `DataAPIClient`**
    *
    * @example
    * ```typescript
@@ -368,19 +438,19 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * console.log(keyspaces);
    * ```
    *
+   * ---
+   *
    * ##### Astra vs. non-Astra
    *
-   * **If using a non-Astra backend, the `environment` option MUST be set as it is on the `DataAPIClient`**
+   * > **⚠️Warning**: If using a non-Astra backend, the `environment` option **must** be set as it is on the `DataAPIClient`.
    *
-   * If on non-Astra, this method will return a new {@link DataAPIDbAdmin} instance, which conforms strictly to the
-   * {@link DbAdmin} interface, with the {@link DataAPIDbAdmin.createKeyspace} method being the only method that
-   * differs slightly from the interface version.
+   * If on non-Astra, this method will return a new {@link DataAPIDbAdmin} instance, which conforms strictly to the {@link DbAdmin} interface, with the {@link DataAPIDbAdmin.createKeyspace} method being the only method that differs slightly from the interface version.
    *
    * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link AstraDbAdmin} instance for this database instance.
    *
-   * @throws InvalidEnvironmentError - if the database is not an Astra database.
+   * @throws InvalidEnvironmentError - if the database is an Astra database.
    */
   public admin(options: AdminOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
 
@@ -396,6 +466,10 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
       return new AstraDbAdmin(this, this.#defaultOpts, parsedOpts, this.#defaultOpts.dbOptions.token, this.endpoint);
     }
 
+    if (extractDbComponentsFromAstraUrl(this.endpoint).length !== 0) {
+      throw new InvalidEnvironmentError('db.admin()', environment, [this.#defaultOpts.environment], 'environment option must be "astra" or unset for this database');
+    }
+
     return new DataAPIDbAdmin(this, this.#defaultOpts.client, this.#httpClient, this.#defaultOpts, parsedOpts);
   }
 
@@ -404,9 +478,9 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * Fetches information about the database, such as the database name, region, and other metadata.
    *
-   * **NOTE: Only available for Astra databases.**
+   * > **⚠️Warning**: This only works for Astra databases, which are not connected to via a private endpoint.
    *
-   * For the full, complete, information, see {@link AstraDbAdmin.info}.
+   * > **✏️Note**: For the full, complete, information, use {@link AstraDbAdmin.info} or {@link AstraAdmin.dbInfo} instead.
    *
    * The method issues a request to the DevOps API each time it is invoked, without caching mechanisms;
    * this ensures up-to-date information for usages such as real-time collection validation by the application.
@@ -417,16 +491,17 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * console.log(info.name);
    * ```
    *
+   * ---
+   *
    * ##### On non-Astra
    *
-   * This operation requires a call to the DevOps API, which is only available on Astra databases. As such, this method
-   * will throw an error if the database is not an Astra database.
+   * This operation requires a call to the DevOps API, which is only available on Astra databases. As such, this method will throw an error if the database is not an Astra database.
    *
    * @returns A promise that resolves to the database information.
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbInfo> {
+  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraPartialDatabaseInfo> {
     if (this.#defaultOpts.environment !== 'astra') {
       throw new InvalidEnvironmentError('db.info()', this.#defaultOpts.environment, ['astra'], 'info() is only available for Astra databases');
     }
@@ -458,13 +533,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * Establishes a reference to a collection in the database. This method does not perform any I/O.
    *
-   * **NOTE: This method does not validate the existence of the collection—it simply creates a reference.**
+   * > **⚠️Warning**: This method does _not_ verify the existence of the collection; it simply creates a reference.
    *
    * @example
    * ```ts
    * interface User {
-   *   name: string,
-   *   age?: number,
+   *   name: string,
+   *   age?: number,
    * }
    *
    * // Basic usage
@@ -473,60 +548,28 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * // Untyped collection from different keyspace
    * const users2 = db.collection('users', {
-   *   keyspace: 'my_keyspace',
+   *   keyspace: 'my_keyspace',
    * });
    * users2.insertOne({ 'anything[you]$want': 'John' }); // Dangerous
    * ```
    *
+   * ---
+   *
    * ##### No I/O
    *
-   * **Unlike the MongoDB Node.js driver, this method does not create a collection if it doesn't exist.**
+   * > **🚨Important**: Unlike the MongoDB Node.js driver, this method does not create a collection if it doesn't exist.
+   * >
+   * > Use {@link Db.createCollection} to create a new collection instead.
    *
-   * Use {@link Db.createCollection} to create a new collection instead.
+   * It is on the user to ensure that the collection being connected to actually exists.
    *
-   * ##### Typing & Types
+   * ---
    *
-   * Collections are inherently untyped, but you can provide your own client-side compile-time schema for type inference and early-bug-catching purposes.
+   * ##### Typing the collection, and much more information
    *
-   * A `Collection` is typed as `Collection<Schema extends SomeDoc = SomeDoc>`, where:
-   * - `Schema` is the user-intended type of the documents in the collection.
-   * - `SomeDoc` is set to `Record<string, any>`, representing any valid JSON object.
+   * See the {@link Collection} class's documentation for information on how and why the {@link Collection} class is typed, any disclaimers related to it, and for so much more information in general.
    *
-   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
-   *
-   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
-   *
-   * Please see {@link Collection} for *much* more info on typing them, and more.
-   *
-   * @example
-   * ```ts
-   * import { UUID, DataAPIVector, ... } from 'astra-db-ts';
-   *
-   * interface User {
-   *   _id: string,
-   *   dob: Date,
-   *   friends?: Record<string, UUID>, // UUID is also `astra-db-ts` provided
-   *   vector: DataAPIVector,
-   * }
-   *
-   * const collection = db.collection<User>('users');
-   *
-   * // res.insertedId is of type string
-   * const res = await collection.insertOne({
-   *   _id: '123',
-   *   dob: new Date(),
-   *   friends: { 'Alice': UUID.random() },
-   *   vector: new DataAPIVector([1, 2, 3]), // This can also be passed as a number[]
-   * });
-   * ```
-   *
-   * ###### Disclaimer
-   *
-   * **Collections are inherently untyped**
-   *
-   * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
-   *
-   * **There is no runtime type validation or enforcement of the schema.**
+   * > **⚠️Warning:** Collections are _inherently untyped_; any typing is client-side to help with bug-catching.
    *
    * @param name - The name of the collection.
    * @param options - Options for spawning the collection.
@@ -550,13 +593,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * Establishes a reference to a table in the database. This method does not perform any I/O.
    *
-   * **NOTE: This method does not validate the existence of the table—it simply creates a reference.**
+   * > **⚠️Warning**: This method does _not_ verify the existence of the table; it simply creates a reference.
    *
    * @example
    * ```ts
    * interface User {
-   *   name: string,
-   *   age?: number,
+   *   name: string,
+   *   age?: number,
    * }
    *
    * // Basic usage
@@ -565,50 +608,28 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * // Untyped table from different keyspace
    * const users2 = db.table('users', {
-   *   keyspace: 'my_keyspace',
+   *   keyspace: 'my_keyspace',
    * });
    * users2.insertOne({ 'anything[you]$want': 'John' }); // Dangerous
    * ```
    *
+   * ---
+   *
    * ##### No I/O
    *
-   * **This method does not create a table if it doesn't exist.**
+   * > **🚨Important**: This method does not create a table if it doesn't exist.
+   * >
+   * > Use {@link Db.createTable} to create a new table.
    *
-   * Use {@link Db.createTable} to create a new table instead.
+   * It is on the user to ensure that the table being connected to actually exists.
    *
-   * ##### Typing & Types
+   * ---
    *
-   * ***Please see {@link Table} for *much* more info on typing them, and more.***
+   * ##### Typing the table, and much more information
    *
-   * @example
-   * ```ts
-   * import { DataAPIDate, UUID, DataAPIVector, ... } from 'astra-db-ts';
+   * > **💡Tip:** You can use {@link InferTableSchema} to infer the TS-equivalent-type of the table from the provided `CreateTableDefinition`.
    *
-   * interface User {
-   *   id: string,       // Partition key
-   *   dob: DataAPIDate, // Clustering (partition sort) key
-   *   friends: Map<string, UUID>,
-   *   vector: DataAPIVector,
-   * }
-   *
-   * type UserPK = Pick<User, 'id' | 'dob'>;
-   *
-   * const table = db.table<User, UserPK>('users');
-   *
-   * // res.insertedId is of type { id: string }
-   * const res = await table.insertOne({
-   *   id: '123',
-   *   dob: new DataAPIDate(new Date()),
-   *   friends: new Map([['Alice', UUID.random()]]),
-   *   vector: new DataAPIVector([1, 2, 3]), // Class enables encoding optimization
-   * });
-   * ```
-   *
-   * ###### Disclaimer
-   *
-   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
-   *
-   * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
+   * See the {@link Table} class's documentation for information on how and why the {@link Table} class is typed, any disclaimers related to it, and for so much more information in general.
    *
    * @param name - The name of the table.
    * @param options - Options for spawning the table.
@@ -620,7 +641,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * @see InferTableSchema
    * @see InferTablePrimaryKey
    */
-  public table<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
+  public table<WSchema extends SomeRow, PKeys extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
     return new Table(this, this.#httpClient, name, this.#defaultOpts, {
       ...options,
       serdes: TableSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.tableSerdes], options?.serdes),
@@ -632,7 +653,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * Creates a new collection in the database, and establishes a reference to it.
    *
-   * This is a *blocking* command which performs actual I/O (unlike {@link Db.collection}, which simply creates an
+   * This is a **blocking** command which performs actual I/O (unlike {@link Db.collection}, which simply creates an
    * unvalidated reference to a collection).
    *
    * @example
@@ -642,18 +663,22 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * // With custom options in a different keyspace
    * const users2 = await db.createCollection('users', {
-   *   keyspace: 'my_keyspace',
-   *   defaultId: {
-   *     type: 'objectId',
-   *   },
+   *   keyspace: 'my_keyspace',
+   *   defaultId: {
+   *     type: 'objectId',
+   *   },
    * });
    * ```
    *
+   * ---
+   *
    * ##### Idempotency
    *
-   * Creating a collection is idempotent as long as the options remain the same; if the collection already exists with the same options, a {@link DataAPIResponseError} will be thrown.
+   * Creating a collection is **idempotent** as long as the options remain the same; if the collection already exists with the same options, a {@link DataAPIResponseError} will be thrown.
    *
-   * ("options" mean the `createCollection` options actually sent to the server, not things like `timeout` which are just client-side).
+   * ("options" meaning the `createCollection` options actually sent to the server, not things like `timeout` which are just client-side).
+   *
+   * ---
    *
    * ##### Enabling vector search
    *
@@ -664,12 +689,12 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * @example
    * ```ts
    * const users = await db.createCollection('users', {
-   *   vector: {
-   *     service: {
-   *       provider: 'nvidia',
-   *       modelName: 'NV-Embed-QA',
-   *     },
-   *   },
+   *   vector: {
+   *     service: {
+   *       provider: 'nvidia',
+   *       modelName: 'NV-Embed-QA',
+   *     },
+   *   },
    * });
    *
    * // Now, `users` supports vector search
@@ -677,49 +702,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * await users.findOne({}, { sort: { $vectorize: 'I like cars!!!' } });
    * ```
    *
-   * ##### Typing & Types
+   * ----
    *
-   * Collections are inherently untyped, but you can provide your own client-side compile-time schema for type inference and early-bug-catching purposes.
+   * ##### Typing the collection, and much more information
    *
-   * A `Collection` is typed as `Collection<Schema extends SomeDoc = SomeDoc>`, where:
-   * - `Schema` is the user-intended type of the documents in the collection.
-   * - `SomeDoc` is set to `Record<string, any>`, representing any valid JSON object.
+   * See the {@link Collection} class's documentation for information on how and why the {@link Collection} class is typed, any disclaimers related to it, and for so much more information in general.
    *
-   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
-   *
-   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
-   *
-   * Please see {@link Collection} for *much* more info on typing them, and more.
-   *
-   * @example
-   * ```ts
-   * import { UUID, DataAPIVector, ... } from 'astra-db-ts';
-   *
-   * interface User {
-   *   _id: string,
-   *   dob: Date,
-   *   friends?: Record<string, UUID>, // UUID is also `astra-db-ts` provided
-   *   vector: DataAPIVector,
-   * }
-   *
-   * const collection = await db.createCollection<User>('users');
-   *
-   * // res.insertedId is of type string
-   * const res = await collection.insertOne({
-   *   _id: '123',
-   *   dob: new Date(),
-   *   friends: { 'Alice': UUID.random() },
-   *   vector: new DataAPIVector([1, 2, 3]), // This can also be passed as a number[]
-   * });
-   * ```
-   *
-   * ##### Disclaimer
-   *
-   * **Collections are inherently untyped**
-   *
-   * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
-   *
-   * **There is no runtime type validation or enforcement of the schema.**
+   * > **⚠️Warning:** Collections are _inherently untyped_; any typing is client-side to help with bug-catching.
    *
    * @param name - The name of the collection to create.
    * @param options - Options for the collection.
@@ -758,22 +747,28 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   }
 
   /**
-   * ##### Overview (auto-infer-schema version)
+   * ##### Overview (auto-infer-schema overload)
    *
    * Creates a new table in the database, and establishes a reference to it.
    *
    * This is a *blocking* command which performs actual I/O (unlike {@link Db.table}, which simply creates an
    * unvalidated reference to a table).
    *
+   * ---
+   *
    * ##### Overloads
    *
-   * *This overload of `createTable` infers the TS-equivalent schema of the table from the provided `CreateTableDefinition`.*
+   * This overload of `createTable` infers the TS-equivalent schema of the table from the provided `CreateTableDefinition`.
    *
-   * *Provide an explicit `Schema` type to disable this (e.g. `db.createTable<SomeRow>(...)`).*
+   * Provide an explicit `Schema` type to disable this (i.e. `db.createTable<Tyoe>(...)`).
    *
-   * ##### Inference
+   * > **💡Tip**: You may use `db.createTable<SomeRow>(...)` to spawn an untyped table.
    *
-   * The recommended way to use this method is to provide a `CreateTableDefinition` object, and let TypeScript infer the schema from it.
+   * ---
+   *
+   * ##### Type Inference
+   *
+   * The recommended way to type a table is to allow TypeScript to infer the type from the provided `CreateTableDefinition`.
    *
    * @example
    * ```ts
@@ -800,26 +795,28 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * // And now `User` can be used wherever.
    * const main = async () => {
-   *   const table = await db.createTable('users', { definition: UserSchema });
-   *   const found: User | null = await table.findOne({});
+   *   const table = await db.createTable('users', { definition: UserSchema });
+   *   const found = await table.findOne({}); // found :: User | null
    * };
    * ```
+   *
+   * ---
    *
    * ##### Idempotency
    *
    * Creating a table is idempotent if the `ifNotExists` option is set to `true`. Otherwise, an error will be thrown if a table with the same name is thrown.
    *
-   * If a table is "recreated" with the same name & `ifNotExists` is set to `true`, but the columns definition differ, the operation will silently succeed, **but the original table schema will be retained**.
+   * > 🚨**Important:** When using `ifNotExists: true`, **only the existence of a table with the same name is checked.**
+   * >
+   * > If a table with that name already exists, but the columns (or any other options) you define differ from the existing table, **it won’t give you an error**; instead, it'll silently succeed, and the original table schema will be retained.
    *
-   * ##### Typing & Types
+   * ---
    *
-   * ***Please see {@link Table} for *much* more info on typing them, and more.***
+   * ##### Typing the table, and much more information
    *
-   * ##### Disclaimer
+   * > **💡Tip:** You can use {@link InferTableSchema} to infer the TS-equivalent-type of the table from the provided `CreateTableDefinition`.
    *
-   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
-   *
-   * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
+   * See the {@link Table} class's documentation for information on how and why the {@link Table} class is typed, any disclaimers related to it, and for so much more information in general.
    *
    * @param name - The name of the table to create.
    * @param options - Options for the table.
@@ -835,25 +832,31 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
 
   /**
-   * ##### Overview (explicit-schema version)
+   * ##### Overview (explicit-schema overload)
    *
    * Creates a new table in the database, and establishes a reference to it.
    *
    * This is a *blocking* command which performs actual I/O (unlike {@link Db.table}, which simply creates an
    * unvalidated reference to a table).
    *
+   * ---
+   *
    * ##### Overloads
    *
-   * *This overload of `createTable` uses the provided `Schema` type to type the Table.*
+   * This overload of `createTable` uses the provided `Schema` type to type the Table.
    *
-   * *Don't provide a `Schema` type if you want to infer it from the `CreateTableDefinition` via {@link InferTableSchema}.*
+   * > **💡Tip**: It's recommended to allow TypeScript infer the type of the table from the provided `CreateTableDefinition` for you, via {@link InferTableSchema}. See its documentation for more information.
+   *
+   * Don't provide a `Schema` type if you want to automagically infer it from the `CreateTableDefinition`.
+   *
+   * Regardless, here is what a manually-typed table would look like:
    *
    * @example
    * ```ts
    * interface User {
-   *   name: string,
-   *   dob: DataAPIDate,
-   *   friends?: Set<string>,
+   *   name: string,
+   *   dob: DataAPIDate,
+   *   friends?: Set<string>,
    * }
    *
    * type UserPK = Pick<User, 'name' | 'dob'>;
@@ -877,24 +880,27 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *   },
    * });
    *
-   * const found: User | null = await table.findOne({});
+   * // found :: User | null
+   * const found = await table.findOne({});
    * ```
+   *
+   * ---
    *
    * ##### Idempotency
    *
    * Creating a table is idempotent if the `ifNotExists` option is set to `true`. Otherwise, an error will be thrown if a table with the same name is thrown.
    *
-   * If a table is "recreated" with the same name & `ifNotExists` is set to `true`, but the columns definition differ, the operation will silently succeed, **but the original table schema will be retained**.
+   * > 🚨**Important:** When using `ifNotExists: true`, **only the existence of a table with the same name is checked.**
+   * >
+   * > If a table with that name already exists, but the columns (or any other options) you define differ from the existing table, **it won’t give you an error**; instead, it'll silently succeed, and the original table schema will be retained.
    *
-   * ##### Typing & Types
+   * ---
    *
-   * ***Please see {@link Table} for *much* more info on typing them, and more.***
+   * ##### Typing the table, and much more information
    *
-   * ##### Disclaimer
+   * > **💡Tip:** You can use {@link InferTableSchema} to infer the TS-equivalent-type of the table from the provided `CreateTableDefinition`.
    *
-   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
-   *
-   * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
+   * See the {@link Table} class's documentation for information on how and why the {@link Table} class is typed, any disclaimers related to it, and for so much more information in general.
    *
    * @param name - The name of the table to create.
    * @param options - Options for the table.
@@ -907,7 +913,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * @see InferTablePrimaryKey
    * @see CreateTableDefinition
    */
-  public async createTable<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>
+  public async createTable<WSchema extends SomeRow, PKeys extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>
 
   public async createTable(name: string, options: CreateTableOptions): Promise<Table<SomeRow>> {
     const command = {
@@ -945,10 +951,16 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * // Overrides db's working keyspace
    * const success2 = await db.dropCollection('users', {
-   *   keyspace: 'my_keyspace'
+   *   keyspace: 'my_keyspace'
    * });
    * console.log(success2); // true
    * ```
+   *
+   * ---
+   *
+   * ##### Idempotency
+   *
+   * Dropping a collection is entirely idempotent; if the collection doesn't exist, it will simply do nothing.
    *
    * @param name - The name of the collection to drop.
    * @param options - Options for this operation.
@@ -981,10 +993,18 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * // Overrides db's working keyspace
    * const success2 = await db.dropTable('users', {
-   *   keyspace: 'my_keyspace'
+   *   keyspace: 'my_keyspace'
    * });
    * console.log(success2); // true
    * ```
+   *
+   * ---
+   *
+   * ##### Idempotency
+   *
+   * Dropping a table is entirely idempotent, _if_ the `ifExists` option is set to `true`, in which case, if the table doesn't exist, it will simply do nothing.
+   *
+   * If `ifExists` is `false` or unset, an error will be thrown if the table does not exist.
    *
    * @param name - The name of the table to drop.
    * @param options - Options for this operation.
@@ -1004,15 +1024,25 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   /**
    * ##### Overview
    *
-   * Drops an index from the database.
+   * Drops an index from the keyspace.
    *
-   * This operation is idempotent if `ifExists` is set to `true`.
+   * See {@link Table.createIndex} & {@link Table.createVectorIndex} about creating indexes in the first place.
    *
-   * See {@link Table.createIndex} & {@link Table.createVectorIndex}
+   * ---
    *
    * ##### Name uniqueness
    *
-   * The name of the index is must actually be unique per keyspace, which is why this is a database-level command: to make it clear that the index is being dropped from the keyspace, not a specific table.
+   * > **🚨Important**: The name of the index is unique per keyspace.
+   *
+   * _This is why this is a database-level command: to make it clear that the index is being dropped from the keyspace, and not a specific table._
+   *
+   * ---
+   *
+   * ##### Idempotency
+   *
+   * Dropping an index is entirely idempotent, if the `ifExists` option is set to `true`, in which case, if the index doesn't exist, it will simply do nothing.
+   *
+   * If `ifExists` is `false` or unset, an error will be thrown if the index does not exist.
    *
    * @param name - The name of the index to drop.
    * @param options - The options for this operation.
@@ -1032,12 +1062,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   }
 
   /**
+   * ##### Overview (name-only overload)
+   *
    * Lists the collection names in the database.
    *
-   * If you want to include the collection options in the response, set `nameOnly` to `false` (or omit it completely),
-   * using the other overload.
+   * > **💡Tip:** If you want to include the collections' options in the response, set `nameOnly` to `false` (or omit it completely) to use the other `listCollections` overload.
    *
-   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * You can specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
    * instance.
    *
    * @example
@@ -1053,11 +1084,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   public async listCollections(options: ListCollectionsOptions & { nameOnly: true }): Promise<string[]>
 
   /**
+   * ##### Overview (full-info overload)
+   *
    * Lists the collections in the database.
    *
-   * If you want to use only the collection names, set `nameOnly` to `true`, using the other overload.
+   * > **💡Tip:** If you want to use only the collection names, set `nameOnly` to `true` to use the other `listCollections` overload.
    *
-   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * You can specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
    * instance.
    *
    * @example
@@ -1100,12 +1133,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   }
 
   /**
+   * ##### Overview (name-only overload)
+   *
    * Lists the table names in the database.
    *
-   * If you want to include the table options in the response, set `nameOnly` to `false` (or omit it completely),
-   * using the other overload.
+   * > **💡Tip:** If you want to include the tables' options in the response, set `nameOnly` to `false` (or omit it completely) to use the other `listTables` overload.
    *
-   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * You can specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
    * instance.
    *
    * @example
@@ -1121,11 +1155,13 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   public async listTables(options: ListTablesOptions & { nameOnly: true }): Promise<string[]>
 
   /**
+   * ##### Overview (full-info overload)
+   *
    * Lists the tables in the database.
    *
-   * If you want to use only the table names, set `nameOnly` to `true`, using the other overload.
+   * > **💡Tip:** If you want to use only the table names, set `nameOnly` to `true` to use the other `listTables` overload.
    *
-   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * You can specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
    * instance.
    *
    * @example
@@ -1158,14 +1194,16 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   }
 
   /**
-   * Send a POST request to the Data API for this database with an arbitrary, caller-provided payload.
+   * ##### Overview
+   *
+   * Sends a POST request to the Data API for this database with an arbitrary, caller-provided payload.
    *
    * You can specify a table/collection to target in the options parameter, thereby allowing you to perform
    * arbitrary table/collection-level operations as well.
    *
    * If the keyspace is set to `null`, the command will be run at the database level.
    *
-   * If no collection is specified, the command will be executed at the keyspace level.
+   * If no table/collection is specified, the command will be executed at the keyspace level.
    *
    * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
    * instance.
@@ -1173,7 +1211,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    * @example
    * ```typescript
    * const colls = await db.command({ findCollections: {} });
-   * console.log(colls); // { status: { collections: [] } }
+   * console.log(colls); // { status: { collections: ['users'] } }
    *
    * const user = await db.command({ findOne: {} }, { collection: 'users' });
    * console.log(user); // { data: { document: null } }
@@ -1203,4 +1241,18 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client.
+   */
+  public declare useNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
+
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - `.collections` has been removed. Use `.listCollections` with `.map` instead (`await db.listCollections({ nameOnly: true }).then(cs => cs.map(c => db.collection(c))`)
+   */
+  public declare collections: 'ERROR: `.collections` has been removed. Use `.listCollections` with `.map` instead';
 }

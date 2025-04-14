@@ -18,7 +18,7 @@ import { DataAPIClient, FetchNative, FetcherRequestInfo } from '@datastax/astra-
 
 // -----===<{ STEP 1: Create the Dispatcher }>===-----
 
-// Here, we'll use a simple Agent to demonstrate how you can customize the HTTP client behavior.
+// Here, we'll use a simple undici Agent to demonstrate how you can customize the HTTP client behavior.
 // We're enabling HTTP/1.1 pipelining to improve performance, and setting some example timeouts for demonstration purposes.
 const agent = new Agent({
   pipelining: 10,

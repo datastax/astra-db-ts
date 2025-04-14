@@ -30,10 +30,10 @@ export interface FindRerankingProvidersResult {
    * @example
    * ```typescript
    * {
-   *   nvidia: {
-   *     displayName: 'Nvidia',
-   *     ...,
-   *   }
+   *   nvidia: {
+   *     displayName: 'Nvidia',
+   *     ...,
+   *   }
    * }
    * ```
    *

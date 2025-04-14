@@ -45,27 +45,27 @@ export type CollectionCodecClass =
 export type CollectionCodec<Class extends CollectionCodecClass> = InstanceType<Class>;
 
 /**
- * @public
+ * @beta
  */
 export type RawCollCodecs = readonly RawCodec<CollectionSerCtx, CollectionDesCtx>[] & { phantom?: 'This codec is only valid for collections' };
 
 /**
- * @public
+ * @beta
  */
 export type CollNominalCodecOpts = NominalCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export type CollTypeCodecOpts = TypeCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export type CollCustomCodecOpts = CustomCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 /**
- * @public
+ * @beta
  */
 export class CollectionCodecs {
   public static Defaults = {
@@ -82,15 +82,7 @@ export class CollectionCodecs {
       },
     }),
     $vector: CollectionCodecs.forName('$vector', {
-      serialize: (val, ctx) => {
-        if (!DataAPIVector.isVectorLike(val)) {
-          return ctx.nevermind();
-        }
-
-        return (ctx.target !== SerDesTarget.Sort)
-          ? vector(val)[$SerializeForCollection](ctx)
-          : ctx.done(vector(val).asArray());
-      },
+      serialize: (val, ctx) => (DataAPIVector.isVectorLike(val)) ? vector(val)[$SerializeForCollection](ctx) : ctx.nevermind(),
       deserialize: DataAPIVector[$DeserializeForCollection],
     }),
     $uuid: CollectionCodecs.forType('$uuid', UUID),

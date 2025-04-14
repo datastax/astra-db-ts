@@ -126,7 +126,7 @@ export function initTestObjects(opts?: TestObjectsOptions) {
     httpOptions: clientType ? { preferHttp2, client: <any>clientType, fetchH2 } : undefined,
     timeoutDefaults: { requestTimeoutMs: 60000 },
     dbOptions: { keyspace: DEFAULT_KEYSPACE },
-    adminOptions: { endpointUrl: DEFAULT_DEVOPS_API_ENDPOINTS[extractAstraEnvironment(TEST_APPLICATION_URI)] },
+    adminOptions: { endpointUrl: DEFAULT_DEVOPS_API_ENDPOINTS[(() => { try { return extractAstraEnvironment(TEST_APPLICATION_URI); } catch (_) { return undefined!; } })()] },
     environment: env,
     logging,
   });

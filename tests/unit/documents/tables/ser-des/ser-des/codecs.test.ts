@@ -40,7 +40,7 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
           TableCodecs.forPath([], serdesFns()),
           TableCodecs.forPath(['name'], serdesFns()),
           TableCodecs.forPath(['cars'], serdesFns()),
-          TableCodecs.forPath(['cars', 'ford capri'], serdesFns()),
+          TableCodecs.forPath(['cars', 0, 1], serdesFns()),
           TableCodecs.forPath(['nums', 2], serdesFns()),
 
           TableCodecs.forPath(['name'], serdesFns('name:1')),
@@ -49,14 +49,15 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
 
           TableCodecs.forPath(['Name'], serdesFns()),
           TableCodecs.forPath(['name', ''], serdesFns()),
-          TableCodecs.forPath(['cars', 0], serdesFns()),
+          TableCodecs.forPath(['cars', 'ford capri'], serdesFns()),
+          TableCodecs.forPath(['cars', 2], serdesFns()),
           TableCodecs.forPath(['nums', '0'], serdesFns()),
           TableCodecs.forPath(['ford capri'], serdesFns()),
           TableCodecs.forPath([''], serdesFns()),
           TableCodecs.forPath([0], serdesFns()),
 
           TableCodecs.forPath(['*', '2'], serdesFns()),
-          TableCodecs.forPath(['*', '*', '*'], serdesFns()),
+          TableCodecs.forPath(['*', '*', '*', '*'], serdesFns()),
         ],
       });
 
@@ -68,11 +69,12 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
 
       const serialized = {
         name: 'billy bob joe',
-        cars: { 'ford capri': uuid1.toString(), 'chevy impala': uuid4.toString() },
+        cars: [['ford capri', uuid1.toString()], ['chevy impala', uuid4.toString()]],
         nums: [1n, 2n, 3n],
       };
 
       assert.deepStrictEqual(serdes.serialize(obj), [serialized, true]);
+
       assert.deepStrictEqual(serPaths, [
         obj,
         'root:0',
@@ -82,8 +84,8 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
         '[*]',
         obj.cars,
         '[*]',
-        obj.cars.get('ford capri'),
         '[*][*]',
+        obj.cars.get('ford capri'),
         '[*][*]',
         '[*]',
         '[*][*]',
@@ -109,10 +111,10 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
         'name:1',
         'name:2',
         '[*]',
-        Object.fromEntries(obj.cars),
+        [...obj.cars],
         '[*]',
-        obj.cars.get('ford capri')!.toString(),
         '[*][*]',
+        obj.cars.get('ford capri')!.toString(),
         '[*][*]',
         '[*]',
         '[*][*]',

@@ -26,22 +26,22 @@ import type { ObjectId, SomeDoc, UUID } from '@/src/documents/index.js';
  * @example
  * ```typescript
  * interface BasicSchema {
- *   num: number,
- *   arr: string[],
- *   obj: {
- *     nested: string,
- *     someDoc: SomeDoc,
- *   }
+ *   num: number,
+ *   arr: string[],
+ *   obj: {
+ *     nested: string,
+ *     someDoc: SomeDoc,
+ *   }
  * }
  * 
  * interface BasicSchemaInDotNotation {
- *   'num': number,
- *   'arr': string[],
- *   [`arr.${number}`]: string,
- *   'obj': { nested: string, someDoc: SomeDoc }
- *   'obj.nested': string,
- *   'obj.someDoc': SomeDoc,
- *   [`obj.someDoc.${string}`]: any,
+ *   'num': number,
+ *   'arr': string[],
+ *   [`arr.${number}`]: string,
+ *   'obj': { nested: string, someDoc: SomeDoc }
+ *   'obj.nested': string,
+ *   'obj.someDoc': SomeDoc,
+ *   [`obj.someDoc.${string}`]: any,
  * }
  * ```
  *

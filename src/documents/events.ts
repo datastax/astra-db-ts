@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { NonEmpty, ReadonlyNonEmpty } from '@/src/lib/index.js';
 import { type RawDataAPIResponse } from '@/src/lib/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
-import type { DataAPIErrorDescriptor } from '@/src/documents/errors.js';
+import type { DataAPIWarningDescriptor } from '@/src/documents/errors.js';
 import { DataAPIError } from '@/src/documents/errors.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
-
-/**
- * @public
- */
-export type CommandEventTarget = 'database' | 'keyspace' | 'table' | 'collection';
+import type { SomeDoc } from '@/src/documents/collections/index.js';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -53,6 +50,36 @@ export type CommandEventMap = {
   commandWarnings: CommandWarningsEvent,
 }
 
+// export type CommandEventTarget = { url: string } & (
+//   | { keyspace: string } & ({ table: string, collection?: never } | { collection: string, table?: never })
+//   | { keyspace?: never, table?: never, collection?: never }
+// )
+
+/**
+ * The target of the command.
+ *
+ * @public
+ */
+export type CommandEventTarget =
+  | { url: string, keyspace?: never, table?: never, collection?: never }
+  | { url: string, keyspace: string, table?: never, collection?: never }
+  | { url: string, keyspace: string, table?: never, collection: string }
+  | { url: string, keyspace: string, table: string, collection?: never }
+
+const mkCommandEventTarget = (info: DataAPIRequestInfo): Readonly<CommandEventTarget> => {
+  const target = { url: info.url } as CommandEventTarget;
+
+  if (info.keyspace) {
+    target.keyspace = info.keyspace;
+  }
+
+  if (info.tOrCType) {
+    target[info.tOrCType] = info.tOrC;
+  }
+
+  return target;
+};
+
 /**
  * Common base class for all command events.
  *
@@ -70,44 +97,16 @@ export abstract class CommandEvent extends BaseClientEvent {
    * @example
    * ```typescript
    * {
-   *   insertOne: { document: { name: 'John' } }
+   *   insertOne: { document: { name: 'John' } }
    * }
    * ```
    */
   public readonly command: Record<string, any>;
 
   /**
-   * The keyspace the command is being run in.
-   */
-  public readonly keyspace: string | null;
-
-  /**
-   * The table/collection the command is being run on, if applicable.
-   */
-  public readonly source?: string;
-
-  /**
    * The target of the command.
    */
-  public readonly target: CommandEventTarget;
-
-  /**
-   * The command name.
-   *
-   * This is the key of the command object. For example, if the command object is
-   * `{ insertOne: { document: { name: 'John' } } }`, the command name is `insertOne`.
-   */
-  public readonly commandName: string;
-
-  /**
-   * The URL the command is being sent to.
-   */
-  public readonly url: string;
-
-  /**
-   * @internal
-   */
-  protected static override formatVerboseTransientKeys: (keyof CommandEvent)[] = ['keyspace', 'source', 'commandName', 'target'];
+  public readonly target: Readonly<CommandEventTarget>;
 
   /**
    * Should not be instantiated directly.
@@ -117,22 +116,39 @@ export abstract class CommandEvent extends BaseClientEvent {
   protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined) {
     super(name, requestId, extra);
     this.command = info.command;
-    this.keyspace = info.keyspace;
-    this.source = info.collection;
-    this.target = info.target;
-    this.commandName = Object.keys(info.command)[0];
-    this.url = info.url;
+    this.target = mkCommandEventTarget(info);
+  }
+
+  /**
+   * The command name.
+   *
+   * This is the key of the command object. For example, if the command object is
+   * `{ insertOne: { document: { name: 'John' } } }`, the command name is `insertOne`.
+   */
+  public get commandName(): string {
+    return Object.keys(this.command)[0];
   }
 
   public override getMessagePrefix() {
-    if (!this.source) {
-      return `${this.keyspace ?? '<no_keyspace>'}::${this.commandName}`;
-    }
-    return `${this.source}::${this.commandName}`;
+    const source = this.target.collection || this.target.table;
+
+    return (source === undefined)
+      ? `${this.target.keyspace ?? '<no_keyspace>'}::${this.commandName}`
+      : `${source}::${this.commandName}`;
   }
 
+  /**
+   * @internal
+   */
   protected _extraLogInfoAsString() {
     return this.extraLogInfo ? `{${Object.entries(this.extraLogInfo).map(([k, v]) => `${k}=${v}`).join(',')}} ` : '';
+  }
+
+  /**
+   * @internal
+   */
+  protected override _modifyEventForFormatVerbose(event: SomeDoc) {
+    event.target = event.target.url;
   }
 }
 
@@ -148,11 +164,11 @@ export abstract class CommandEvent extends BaseClientEvent {
  */
 export class CommandStartedEvent extends CommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent._permits} for more info.
    *
    * @internal
    */
-  protected declare permits: this;
+  protected declare _permits: this;
 
   /**
    * The timeout for the command, in milliseconds.
@@ -186,11 +202,11 @@ export class CommandStartedEvent extends CommandEvent {
  */
 export class CommandSucceededEvent extends CommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent._permits} for more info.
    *
    * @internal
    */
-  protected declare permits: this;
+  protected declare _permits: this;
 
   /**
    * The duration of the command, in milliseconds. Starts counting from the moment of the initial HTTP request.
@@ -200,7 +216,7 @@ export class CommandSucceededEvent extends CommandEvent {
   /**
    * The response object from the Data API.
    */
-  public readonly resp: RawDataAPIResponse;
+  public readonly response: RawDataAPIResponse;
 
   /**
    * Should not be instantiated by the user.
@@ -210,7 +226,7 @@ export class CommandSucceededEvent extends CommandEvent {
   constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse, started: number) {
     super('CommandSucceeded', requestId, info, extra);
     this.duration = performance.now() - started;
-    this.resp = reply;
+    this.response = reply;
   }
 
   public override getMessage(): string {
@@ -230,11 +246,11 @@ export class CommandSucceededEvent extends CommandEvent {
  */
 export class CommandFailedEvent extends CommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent._permits} for more info.
    *
    * @internal
    */
-  protected declare permits: this;
+  protected declare _permits: this;
 
   /**
    * The duration of the command, in milliseconds.
@@ -251,7 +267,7 @@ export class CommandFailedEvent extends CommandEvent {
   /**
    * The response object from the Data API, if available.
    */
-  public readonly resp?: RawDataAPIResponse;
+  public readonly response?: RawDataAPIResponse;
 
   /**
    * Should not be instantiated by the user.
@@ -261,7 +277,7 @@ export class CommandFailedEvent extends CommandEvent {
   constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number) {
     super('CommandFailed', requestId, info, extra);
     this.duration = performance.now() - started;
-    this.resp = reply;
+    this.response = reply;
     this.error = error;
   }
 
@@ -286,23 +302,23 @@ export class CommandFailedEvent extends CommandEvent {
  */
 export class CommandWarningsEvent extends CommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent._permits} for more info.
    *
    * @internal
    */
-  protected declare permits: this;
+  protected declare _permits: this;
 
   /**
    * The warnings that occurred.
    */
-  public readonly warnings: DataAPIErrorDescriptor[];
+  public readonly warnings: ReadonlyNonEmpty<DataAPIWarningDescriptor>;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, warnings: DataAPIErrorDescriptor[]) {
+  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, warnings: NonEmpty<DataAPIWarningDescriptor>) {
     super('CommandWarnings', requestId, info, extra);
     this.warnings = warnings;
   }

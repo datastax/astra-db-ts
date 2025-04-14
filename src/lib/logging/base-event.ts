@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type { DataAPIClientEvent } from '@/src/lib/index.js';
+import type { SomeDoc } from '@/src/documents/index.js';
 
 /**
  * @internal
@@ -95,8 +96,6 @@ export type EventFormatter = (event: DataAPIClientEvent, fullMessage: string) =>
  * @public
  */
 export abstract class BaseClientEvent {
-  private static _defaultFormatter = defaultFormatFn;
-
   /**
    * Poor man's sealed class. Ensures you can't extend this class without first updating `DataAPIClientEventMap`.
    *
@@ -108,15 +107,20 @@ export abstract class BaseClientEvent {
    *
    * ```ts
    * export class CommandWarningsEvent extends BaseClientEvent {
-   *   declare permit: this;
+   *   declare _permits: this;
    * }
    * ```
    *
-   * If you forget to add `declare permit: this`, or `this` is not assignable to `DataAPIClientEvent`, TypeScript will throw an error.
+   * If you forget to add `declare _permits: this`, or `this` is not assignable to `DataAPIClientEvent`, TypeScript will statically error.
    *
    * @internal
    */
-  protected declare abstract permits: DataAPIClientEvent;
+  protected declare abstract _permits: DataAPIClientEvent;
+
+  /**
+   * @internal
+   */
+  private static _defaultFormatter = defaultFormatFn;
 
   /**
    * ##### Overview
@@ -193,9 +197,11 @@ export abstract class BaseClientEvent {
   public readonly requestId: string;
 
   /**
-   * Any extra information that may be useful for debugging.
+   * Any extra information that may be useful for logging/debugging purposes.
+   *
+   * Some commands may set this; others may not. **Guaranteed to always have at least one key if not undefined.**
    */
-  public readonly extraLogInfo: Record<string, any> | undefined;
+  public readonly extraLogInfo?: Record<string, any>;
 
   /**
    * @internal
@@ -210,7 +216,7 @@ export abstract class BaseClientEvent {
   protected constructor(name: string, requestId: string, extra: Record<string, unknown> | undefined) {
     this.name = name;
     this.requestId = requestId;
-    this.extraLogInfo = extra;
+    this.extraLogInfo = (extra && Object.keys(extra).length > 0) ? extra : undefined;
     this.timestamp = new Date();
 
     Object.defineProperty(this, '_propagationState', {
@@ -237,8 +243,6 @@ export abstract class BaseClientEvent {
     return formatter(this as any, this.getMessagePrefix() + ' ' + this.getMessage());
   }
 
-  protected static formatVerboseTransientKeys: string[];
-
   /**
    * ##### Overview
    *
@@ -249,16 +253,15 @@ export abstract class BaseClientEvent {
    * @returns A JSON string with full event details.
    */
   public formatVerbose(): string {
-    const entries = Object.entries(this.trimDuplicateFields())
-      .filter(([k]) => {
-        return !(this.constructor as any).formatVerboseTransientKeys.includes(k);
-      });
-
-    const obj = Object.fromEntries(entries);
-    obj.timestamp = mkSimpleTimestamp(this.timestamp);
-
-    return JSON.stringify(obj, null, 2);
+    const clone = { ...this, timestamp: formatTimestampSimple(this.timestamp) };
+    this._modifyEventForFormatVerbose?.(clone);
+    return JSON.stringify(clone, null, 2);
   }
+
+  /**
+   * @internal
+   */
+  protected abstract _modifyEventForFormatVerbose(event: SomeDoc): void;
 
   /**
    * ##### Overview
@@ -329,10 +332,13 @@ export abstract class BaseClientEvent {
 }
 
 function defaultFormatFn(event: DataAPIClientEvent, fullMessage: string) {
-  return `${mkSimpleTimestamp(event.timestamp)} [${event.requestId.slice(0, 8)}] [${event.name}]: ${fullMessage}`;
+  return `${formatTimestampSimple(event.timestamp)} [${event.requestId.slice(0, 8)}] [${event.name}]: ${fullMessage}`;
 }
 
-function mkSimpleTimestamp(date: Date) {
+/**
+ * Formats the timestamp as `YYYY-MM-DD HH:MM:SS TZ` (e.g. `2025-02-12 13:13:57 CDT`).
+ */
+function formatTimestampSimple(date: Date) {
   return date.toLocaleString('en-CA', {
     year: 'numeric',
     month: '2-digit',

@@ -15,14 +15,32 @@
 import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
- * Options for a generic `insertMany` command using the Data API.
+ * ##### Overview
  *
- * The parameters depend on the `ordered` option. If `ordered` is `true`, the `parallel` option is not allowed.
+ * The options for a generic `insertMany` command performed on the Data API.
  *
- * @field ordered - If `true`, the records are inserted sequentially; else, they're arbitrary inserted in parallel.
- * @field concurrency - The maximum number of concurrent requests to make at once.
- * @field chunkSize - The number of records to upload per request. Defaults to 20.
- * @field timeout - The timeout override for this method
+ * > **🚨Important:** The options depend on the `ordered` parameter. If `ordered` is `true`, then the `concurrency` option is not allowed.
+ *
+ * @example
+ * ```ts
+ * const result = await collection.insertMany([
+ *   { name: 'John', age: 30 },
+ *   { name: 'Jane', age: 25 },
+ * ], {
+ *   ordered: true,
+ *   timeout: 60000,
+ * });
+ * ```
+ *
+ * @example
+ * ```ts
+ * const result = await table.insertMany([
+ *   { id: uuid.v4(), name: 'John' },
+ *   { id: uuid.v7(), name: 'Jane' },
+ * ], {
+ *   concurrency: 16, // ordered implicitly `false` if unset
+ * });
+ * ```
  *
  * @public
  */
@@ -31,11 +49,22 @@ export type GenericInsertManyOptions =
   | GenericInsertManyOrderedOptions;
 
 /**
- * Options for a generic `insertMany` command using the Data API when `ordered` is `true`.
+ * ##### Overview
  *
- * @field ordered - If `true`, the records are inserted sequentially in the order provided.
- * @field chunkSize - The number of records to upload per request. Defaults to 50.
- * @field timeout - The timeout override for this method
+ * The options for a generic `insertMany` command performed on the Data API when `ordered` is `true`.
+ *
+ * > **🚨Important:** The options depend on the `ordered` parameter. If `ordered` is `true`, then the `concurrency` option is not allowed.
+ *
+ * @example
+ * ```ts
+ * const result = await collection.insertMany([
+ *   { name: 'John', age: 30 },
+ *   { name: 'Jane', age: 25 },
+ * ], {
+ *   ordered: true,
+ *   timeout: 60000,
+ * });
+ * ```
  *
  * @see GenericInsertManyOptions
  *
@@ -56,17 +85,38 @@ export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMet
    * @defaultValue 50
    */
   chunkSize?: number,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Set the `$vector` field in the docs directly.
+   */
+  vector?: 'ERROR: Set the `$vector` field in the docs directly',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Set the `$vectorize` field in the docs directly.
+   */
+  vectorize?: 'ERROR: Set the `$vectorize` field in the docs directly',
 }
 
 /**
- * Options for a generic `insertMany` command using the Data API when `ordered` is `false` or unset.
+ * ##### Overview
  *
- * @field ordered - If `false` or unset, the records are inserted in an arbitrary, parallelized order.
- * @field concurrency - The maximum number of concurrent requests to make at once.
- * @field chunkSize - The number of records to upload per request. Defaults to 50.
- * @field timeout - The timeout override for this method
+ * The options for a generic `insertMany` command performed on the Data API when `ordered` is `true`.
  *
- * @see Collection.insertMany
+ * > **🚨Important:** The options depend on the `ordered` parameter. If `ordered` is `true`, then the `concurrency` option is not allowed.
+ *
+ * @example
+ * ```ts
+ * const result = await table.insertMany([
+ *   { id: uuid.v4(), name: 'John' },
+ *   { id: uuid.v7(), name: 'Jane' },
+ * ], {
+ *   concurrency: 16, // ordered implicitly `false` if unset
+ * });
+ * ```
+ *
+ * @see GenericInsertManyOptions
  *
  * @public
  */
@@ -89,6 +139,18 @@ export interface GenericInsertManyUnorderedOptions extends WithTimeout<'generalM
    * @defaultValue 50
    */
   chunkSize?: number,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Set the `$vector` field in the docs directly.
+   */
+  vector?: 'ERROR: Set the `$vector` field in the docs directly',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Set the `$vectorize` field in the docs directly.
+   */
+  vectorize?: 'ERROR: Set the `$vectorize` field in the docs directly',
 }
 
 /**

@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import type { DataAPICreateKeyspaceOptions } from '@/src/administration/types/index.js';
+import type { CreateDataAPIKeyspaceOptions } from '@/src/administration/types/index.js';
 import { DbAdmin } from '@/src/administration/db-admin.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
@@ -41,11 +41,11 @@ import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-
  * const dbAdmin2 = db.admin({ environment: 'dse', adminToken: 'stronger-token' });
  *
  * await admin1.createKeyspace({
- *   replication: {
- *     class: 'NetworkTopologyStrategy',
- *     datacenter1: 3,
- *     datacenter2: 2,
- *   },
+ *   replication: {
+ *     class: 'NetworkTopologyStrategy',
+ *     datacenter1: 3,
+ *     datacenter2: 2,
+ *   },
  * });
  *
  * const keyspaces = await admin1.listKeyspaces();
@@ -85,8 +85,8 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @example
    * ```typescript
    * const dbAdmin = client.admin().dbAdmin('<endpoint>', {
-   *   keyspace: 'my-keyspace',
-   *   useHttp2: false,
+   *   keyspace: 'my_keyspace',
+   *   useHttp2: false,
    * });
    *
    * const db = dbAdmin.db();
@@ -134,18 +134,18 @@ export class DataAPIDbAdmin extends DbAdmin {
    * await dbAdmin.createKeyspace('my_keyspace');
    *
    * await dbAdmin.createKeyspace('my_keyspace', {
-   *   replication: {
-   *     class: 'SimpleStrategy',
-   *     replicationFactor: 3,
-   *   },
+   *   replication: {
+   *     class: 'SimpleStrategy',
+   *     replicationFactor: 3,
+   *   },
    * });
    *
    * await dbAdmin.createKeyspace('my_keyspace', {
-   *   replication: {
-   *     class: 'NetworkTopologyStrategy',
-   *     datacenter1: 3,
-   *     datacenter2: 2,
-   *   },
+   *   replication: {
+   *     class: 'NetworkTopologyStrategy',
+   *     datacenter1: 3,
+   *     datacenter2: 2,
+   *   },
    * });
    * ```
    *
@@ -154,7 +154,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createKeyspace(keyspace: string, options?: DataAPICreateKeyspaceOptions): Promise<void> {
+  public override async createKeyspace(keyspace: string, options?: CreateDataAPIKeyspaceOptions): Promise<void> {
     if (options?.updateDbKeyspace) {
       this.#db.useKeyspace(keyspace);
     }

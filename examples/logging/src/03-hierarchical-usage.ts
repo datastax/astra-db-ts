@@ -12,7 +12,7 @@ const db = client.db(process.env.ASTRA_DB_ENDPOINT!, { token: process.env.ASTRA_
 
 // We'll create command failure listeners at the client, db, and table levels
 // When an event is emitted from the table, it'll first invoke all the listeners on the table, then the db, and finally the client.
-// Similar to the DOM.
+// It's similar to how DOM events are handled!
 client.on('commandFailed', (e) => {
   console.log('[client] Command failed (#3):', e.error.message);
 });
@@ -49,9 +49,9 @@ try {
   ], { ordered: true });
 
   // Now this command will fail, and print the following three lines to the console:
-  // - [table] Command failed (#1): Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed
-  // - [db] Command failed (#2): Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed
-  // - [client] Command failed (#3): Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed
+  // - "[table] Command failed (#1): Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed"
+  // - "[db] Command failed (#2): Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed"
+  // - "[client] Command failed (#3): Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed"
   await table.findOne({
     $invalid: 'Alice',
   }).catch(() => {});
@@ -68,7 +68,7 @@ try {
   });
 
   // This command will fail again, but now only the table listener will be invoked, and only one line will be printed to the console:
-  // - [table] Command failed (#only): Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed
+  // - "[table] Command failed (#only): Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed"
   await table.findOne({
     $invalid: 'Alice',
   }).catch(() => {});

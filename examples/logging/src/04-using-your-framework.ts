@@ -8,8 +8,8 @@ import winston from 'winston';
 
 // -----===<{ STEP 1: Setup the logger }>===-----
 
-// Create the logger. Winston used here for popular example
-// We use both file & console transports for demonstration purposes
+// Create the logger. Winston is used here for popular example.
+// We use both file & console transports for demonstration purposes.
 const logger = winston.createLogger({
   level: process.env.NODE_ENV === 'production' ? 'info' : 'http',
   format: winston.format.combine(
@@ -43,7 +43,7 @@ const db = client.db(process.env.ASTRA_DB_ENDPOINT!, { token: process.env.ASTRA_
 
 // -----===<{ STEP 3: Plug in the framework }>===-----
 
-// message is equivalent to `event.getMessagePrefix() + event.getMessage()`
+// message is equivalent to `event.getMessagePrefix() + ' ' + event.getMessage()`
 const eventFormatter: EventFormatter = (event, message) => {
   return `[${event.requestId.slice(0, 8)}] [${event.name}]: ${message}`;
 }
@@ -58,16 +58,16 @@ for (const event of LoggingEvents.filter((e) => /.*(Started|Succeeded|Polling)/.
     // The admin events, and events that are not acted upon collections/tables (e.g. create, drop, list, etc.) are logged as 'info' events.
     // This is just a simple example of applying custom logic to enhance the logging output.
     if (e instanceof CommandEvent && (e.target === 'collection' || e.target === 'table')) {
-      logger.http(`[astra-db-ts] ${e.format(eventFormatter)}`, e.hideDupeFields())
+      logger.http(`[astra-db-ts] ${e.format(eventFormatter)}`, e.trimDuplicateFields())
     } else {
-      logger.info(`[astra-db-ts] ${e.format(eventFormatter)}`, e.hideDupeFields())
+      logger.info(`[astra-db-ts] ${e.format(eventFormatter)}`, e.trimDuplicateFields())
     }
   });
 }
 
 // And all failed and warning events are logged as 'error' events
 for (const event of LoggingEvents.filter((e) => /.*(Failed|Warning)/.test(e))) {
-  client.on(event, (e) => logger.error(`[astra-db-ts] ${e.format(eventFormatter)}`, e.hideDupeFields()));
+  client.on(event, (e) => logger.error(`[astra-db-ts] ${e.format(eventFormatter)}`, e.trimDuplicateFields()));
 }
 
 // -----===<{ STEP 4: Use the client }>===-----

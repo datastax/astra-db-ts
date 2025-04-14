@@ -28,10 +28,10 @@ export interface FindEmbeddingProvidersResult {
    * @example
    * ```typescript
    * {
-   *   openai: {
-   *     displayName: 'OpenAI',
-   *     ...,
-   *   }
+   *   openai: {
+   *     displayName: 'OpenAI',
+   *     ...,
+   *   }
    * }
    * ```
    */
@@ -87,36 +87,36 @@ export interface EmbeddingProviderInfo {
    * See {@link EmbeddingHeadersProvider} for more info.
    * ```typescript
    * const collections = await db.createCollection('my_coll', {
-   *   vector: {
-   *     service: {
-   *       provider: 'openai',
-   *       modelName: 'text-embedding-3-small',
-   *       authentication: {
-   *         // Name of the key in Astra portal's OpenAI integration (KMS).
-   *         providerKey: '*KEY_NAME*',
-   *       },
-   *     },
-   *   },
+   *   vector: {
+   *     service: {
+   *       provider: 'openai',
+   *       modelName: 'text-embedding-3-small',
+   *       authentication: {
+   *         // Name of the key in Astra portal's OpenAI integration (KMS).
+   *         providerKey: '*KEY_NAME*',
+   *       },
+   *     },
+   *   },
    * });
    * ```
    *
    * - `SHARED_SECRET`: Authentication tied to a collections at collections creation time using the Astra KMS.
    * ```typescript
    * const collections = await db.collections('my_coll', {
-   *   // Not tied to the collections; can be different every time.
-   *   embeddingApiKey: 'sk-...',
+   *   // Not tied to the collections; can be different every time.
+   *   embeddingApiKey: 'sk-...',
    * });
    * ```
    *
    * - `NONE`: For when a client doesn't need authentication to use (e.g. nvidia).
    * ```typescript
    * const collections = await db.createCollection('my_coll', {
-   *   vector: {
-   *     service: {
-   *       provider: 'nvidia',
-   *       modelName: 'NV-Embed-QA',
-   *     },
-   *   },
+   *   vector: {
+   *     service: {
+   *       provider: 'nvidia',
+   *       modelName: 'NV-Embed-QA',
+   *     },
+   *   },
    * });
    * ```
    *
@@ -124,11 +124,11 @@ export interface EmbeddingProviderInfo {
    * ```typescript
    * // openai.supportedAuthentication.HEADER:
    * {
-   *   enabled: true,
-   *   tokens: [{
-   *     accepted: 'x-embedding-api-key',
-   *     forwarded: 'Authorization',
-   *   }],
+   *   enabled: true,
+   *   tokens: [{
+   *     accepted: 'x-embedding-api-key',
+   *     forwarded: 'Authorization',
+   *   }],
    * }
    * ```
    */
@@ -142,12 +142,12 @@ export interface EmbeddingProviderInfo {
    * ```typescript
    * // openai.parameters[1]
    * {
-   *   name: 'projectId',
-   *   type: 'STRING',
-   *   required: false,
-   *   defaultValue: '',
-   *   validation: {},
-   *   help: 'Optional, OpenAI Project ID. If provided passed as `OpenAI-Project` header.',
+   *   name: 'projectId',
+   *   type: 'STRING',
+   *   required: false,
+   *   defaultValue: '',
+   *   validation: {},
+   *   help: 'Optional, OpenAI Project ID. If provided passed as `OpenAI-Project` header.',
    * }
    * ```
    */
@@ -162,25 +162,25 @@ export interface EmbeddingProviderInfo {
    * ```typescript
    * // nvidia.models[0]
    * {
-   *   name: 'NV-Embed-QA',
-   *   vectorDimension: 1024,
-   *   parameters: [],
+   *   name: 'NV-Embed-QA',
+   *   vectorDimension: 1024,
+   *   parameters: [],
    * }
    *
    * // huggingfaceDedicated.models[0]
    * {
-   *   name: 'endpoint-defined-model',
-   *   vectorDimension: null,
-   *   parameters: [{
-   *     name: 'vectorDimension',
-   *     type: 'number',
-   *     required: true,
-   *     defaultValue: '',
-   *     validation: {
-   *       numericRange: [2, 3072],
-   *     },
-   *     help: 'Vector dimension to use in the database, should be the same as ...',
-   *   }],
+   *   name: 'endpoint-defined-model',
+   *   vectorDimension: null,
+   *   parameters: [{
+   *     name: 'vectorDimension',
+   *     type: 'number',
+   *     required: true,
+   *     defaultValue: '',
+   *     validation: {
+   *       numericRange: [2, 3072],
+   *     },
+   *     help: 'Vector dimension to use in the database, should be the same as ...',
+   *   }],
    * }
    * ```
    */
@@ -197,11 +197,11 @@ export interface EmbeddingProviderInfo {
  * ```typescript
  * // openai.supportedAuthentication.HEADER:
  * {
- *   enabled: true,
- *   tokens: [{
- *     accepted: 'x-embedding-api-key',
- *     forwarded: 'Authorization',
- *   }],
+ *   enabled: true,
+ *   tokens: [{
+ *     accepted: 'x-embedding-api-key',
+ *     forwarded: 'Authorization',
+ *   }],
  * }
  * ```
  *
@@ -234,8 +234,8 @@ export interface EmbeddingProviderAuthInfo {
  * ```typescript
  * // openai.supportedAuthentication.HEADER.tokens[0]:
  * {
- *   accepted: 'x-embedding-api-key',
- *   forwarded: 'Authorization',
+ *   accepted: 'x-embedding-api-key',
+ *   forwarded: 'Authorization',
  * }
  * ```
  *
@@ -271,12 +271,12 @@ export interface EmbeddingProviderTokenInfo {
  * ```typescript
  * // openai.parameters[1]
  * {
- *   name: 'vectorDimension',
- *   type: 'number',
- *   required: true,
- *   defaultValue: '1536',
- *   validation: { numericRange: [2, 1536] },
- *   help: 'Vector dimension to use in the database and when calling OpenAI.',
+ *   name: 'vectorDimension',
+ *   type: 'number',
+ *   required: true,
+ *   defaultValue: '1536',
+ *   validation: { numericRange: [2, 1536] },
+ *   help: 'Vector dimension to use in the database and when calling OpenAI.',
  * }
  * ```
  *
@@ -374,14 +374,14 @@ export interface EmbeddingProviderModelParameterInfo {
  * ```typescript
  * // openai.parameters[1]
  * {
- *   name: 'projectId',
- *   type: 'STRING',
- *   required: false,
- *   defaultValue: '',
- *   validation: {},
- *   help: 'Optional, OpenAI Project ID. If provided passed as `OpenAI-Project` header.',
- *   displayName: 'Organization ID',
- *   hint: 'Add an (optional) organization ID',
+ *   name: 'projectId',
+ *   type: 'STRING',
+ *   required: false,
+ *   defaultValue: '',
+ *   validation: {},
+ *   help: 'Optional, OpenAI Project ID. If provided passed as `OpenAI-Project` header.',
+ *   displayName: 'Organization ID',
+ *   hint: 'Add an (optional) organization ID',
  * }
  * ```
  *
@@ -432,9 +432,9 @@ export interface EmbeddingProviderProviderParameterInfo extends EmbeddingProvide
  * ```typescript
  * // nvidia.models[0]
  * {
- *   name: 'NV-Embed-QA',
- *   vectorDimension: 1024,
- *   parameters: [],
+ *   name: 'NV-Embed-QA',
+ *   vectorDimension: 1024,
+ *   parameters: [],
  * }
  * ```
  *
@@ -487,12 +487,12 @@ export interface EmbeddingProviderModelInfo {
    * ```typescript
    * // openai.models[0].parameters[0] (text-embedding-3-small)
    * {
-   *   name: 'vectorDimension',
-   *   type: 'number',
-   *   required: true,
-   *   defaultValue: '1536',
-   *   validation: { numericRange: [2, 1536] },
-   *   help: 'Vector dimension to use in the database and when calling OpenAI.',
+   *   name: 'vectorDimension',
+   *   type: 'number',
+   *   required: true,
+   *   defaultValue: '1536',
+   *   validation: { numericRange: [2, 1536] },
+   *   help: 'Vector dimension to use in the database and when calling OpenAI.',
    * }
    * ```
    */

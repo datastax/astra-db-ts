@@ -286,6 +286,12 @@ export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
    * See {@link TimeoutDescriptor} for much more information.
    */
   timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Timeouts>;
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`, and defaults in `timeoutDefaults`. You may generally Ctrl+R replace `maxTimeMS` with `timeout` to retain the same behavior.
+   */
+  maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`',
 }
 
 /**
@@ -313,7 +319,7 @@ export class Timeouts {
   public static cfg: typeof TimeoutCfgHandler = TimeoutCfgHandler;
 
   public static Default = Timeouts.cfg.parse({
-    requestTimeoutMs: 10000,
+    requestTimeoutMs: 15000,
     generalMethodTimeoutMs: 30000,
     collectionAdminTimeoutMs: 60000,
     tableAdminTimeoutMs: 30000,

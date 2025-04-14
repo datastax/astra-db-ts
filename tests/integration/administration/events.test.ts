@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { initTestObjects, it, parallel, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
+import { ENVIRONMENT, initTestObjects, it, parallel, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
 import type { AdminCommandEventMap, DbAdmin } from '@/src/administration/index.js';
 import {
   AdminCommandFailedEvent,
@@ -25,7 +25,7 @@ import {
   DataAPIDbAdmin,
 } from '@/src/administration/index.js';
 import { memoizeRequests } from '@/tests/testlib/utils.js';
-import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants.js';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants.js';
 import { extractAstraEnvironment } from '@/src/administration/utils.js';
 
 parallel('integration.administration.events', () => {
@@ -79,7 +79,7 @@ parallel('integration.administration.events', () => {
           (dbAdmin instanceof AstraDbAdmin) ? spec.validateEventAstra?.(dbAdmin, e) : spec.validateEventDAPI?.(dbAdmin, e);
 
           assert.strictEqual(e.name, spec.eventName[0].toUpperCase() + spec.eventName.slice(1));
-          assert.strictEqual(e.params, undefined);
+          assert.strictEqual(e.requestParams, undefined);
         }
 
         emissions.length = 0;
@@ -87,7 +87,8 @@ parallel('integration.administration.events', () => {
     });
   };
 
-  const DevopsApiEndpoint = DEFAULT_DEVOPS_API_ENDPOINTS[extractAstraEnvironment(TEST_APPLICATION_URI)];
+  const DevopsApiEndpoint = DEFAULT_DEVOPS_API_ENDPOINTS[(() => { try { return extractAstraEnvironment(TEST_APPLICATION_URI); } catch (_) { return undefined!; } })()];
+  const DataApiPath = DEFAULT_DATA_API_PATHS[ENVIRONMENT];
 
   defineEventsTest('should emit adminCommandStarted events', {
     eventName: 'adminCommandStarted',
@@ -96,11 +97,16 @@ parallel('integration.administration.events', () => {
     },
     validateEvent(_, e) {
       assert.ok(e instanceof AdminCommandStartedEvent);
-      assert.strictEqual(e.getMessage(), '');
-      assert.match(e.getMessagePrefix(), /^\(dbAdmin\.listKeyspaces\) GET http\S+$/);
     },
     validateEventAstra(dbAdmin, e) {
+      assert.strictEqual(e.getMessage(), '');
+      assert.match(e.getMessagePrefix(), /^\(dbAdmin\.listKeyspaces\) GET http\S+$/);
       assert.strictEqual(e.url, DevopsApiEndpoint + '/databases/' + dbAdmin.id);
+    },
+    validateEventDAPI(dbAdmin, e) {
+      assert.strictEqual(e.getMessage(), '(blocking) {"findKeyspaces":{}}');
+      assert.match(e.getMessagePrefix(), /^\(dbAdmin\.listKeyspaces\) POST http\S+$/);
+      assert.strictEqual(e.url, dbAdmin.db().endpoint + '/' + DataApiPath);
     },
   });
 
@@ -111,11 +117,16 @@ parallel('integration.administration.events', () => {
     },
     validateEvent(_, e) {
       assert.ok(e instanceof AdminCommandSucceededEvent);
-      assert.match(e.getMessage(), /^\(\d+ms\)$/);
-      assert.match(e.getMessagePrefix(),  /^\(dbAdmin\.listKeyspaces\) GET http\S+$/);
     },
     validateEventAstra(dbAdmin, e) {
+      assert.match(e.getMessage(), /^\(\d+ms\)$/);
+      assert.match(e.getMessagePrefix(),  /^\(dbAdmin\.listKeyspaces\) GET http\S+$/);
       assert.strictEqual(e.url, DevopsApiEndpoint + '/databases/' + dbAdmin.id);
+    },
+    validateEventDAPI(dbAdmin, e) {
+      assert.match(e.getMessage(), /^{"findKeyspaces":{}} \(\d+ms\)$/);
+      assert.match(e.getMessagePrefix(),  /^\(dbAdmin\.listKeyspaces\) POST http\S+$/);
+      assert.strictEqual(e.url, dbAdmin.db().endpoint + '/' + DataApiPath);
     },
   });
 
@@ -126,11 +137,16 @@ parallel('integration.administration.events', () => {
     },
     validateEvent(_, e) {
       assert.ok(e instanceof AdminCommandFailedEvent);
-      assert.match(e.getMessage(), /^\(\d+ms\) ERROR: [^\n]/);
-      assert.match(e.getMessagePrefix(),  /^\(dbAdmin\.createKeyspace\) POST http\S+$/);
     },
     validateEventAstra(dbAdmin, e) {
+      assert.match(e.getMessage(), /^\(\d+ms\) ERROR: [^\n]/);
+      assert.match(e.getMessagePrefix(),  /^\(dbAdmin\.createKeyspace\) POST http\S+$/);
       assert.strictEqual(e.url, DevopsApiEndpoint + '/databases/' + dbAdmin.id + '/keyspaces/!@*&($!(@');
+    },
+    validateEventDAPI(dbAdmin, e) {
+      assert.match(e.getMessage(), /^{"createKeyspace":{"name":"!@\*&\(\$!\(@","options":{"replication":{"class":"SimpleStrategy","replicationFactor":1}}}} \(\d+ms\) ERROR: [^\n]/);
+      assert.match(e.getMessagePrefix(),  /^\(dbAdmin\.createKeyspace\) POST http\S+$/);
+      assert.strictEqual(e.url, dbAdmin.db().endpoint + '/' + DataApiPath);
     },
   });
 
@@ -142,7 +158,7 @@ parallel('integration.administration.events', () => {
     },
     validateEvent(dbAdmin, e) {
       assert.ok(e instanceof AdminCommandWarningsEvent);
-      assert.strictEqual(e.url, dbAdmin.db().endpoint + '/api/json/v1');
+      assert.strictEqual(e.url, dbAdmin.db().endpoint + '/' + DataApiPath);
       assert.match(e.getMessage(), /^\{"findNamespaces":\{}} WARNINGS: .*/);
       assert.match(e.getMessagePrefix(), /^\(dbAdmin\.xyz\) POST http\S+$/);
     },

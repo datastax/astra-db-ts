@@ -47,7 +47,21 @@ export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: unk
 }
 
 /**
- * @internal
+ * ##### Overview
+ *
+ * Simple utility function to build an Astra endpoint from a database ID and region.
+ *
+ * Useful if you're trying to use {@link DataAPIClient.db} or something along those lines, which require a full endpoint URL, but you only have an ID and region to work with.
+ *
+ * @example
+ * ```ts
+ * import { buildAstraEndpoint } from '@datastax/astra-db-ts';
+ *
+ * // 'https://<id>-<region>.apps.astra.datastax.com'
+ * const endpoint = buildAstraEndpoint('<id>', '<region>');
+ * ```
+ *
+ * @public
  */
 export function buildAstraEndpoint(id: string, region: string, env: 'dev' | 'test' | 'prod' = 'prod') {
   return 'https://' + id + '-' + region + `.apps${env === 'prod' ? '' : `-${env}`}.astra.datastax.com`;

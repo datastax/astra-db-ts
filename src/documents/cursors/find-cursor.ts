@@ -42,6 +42,71 @@ import {
   cloneFLC,
 } from '@/src/documents/cursors/common.js';
 
+/**
+ * ##### Overview
+ *
+ * A lazy iterator over the results of some generic `find` operation on the Data API.
+ *
+ * > **⚠️Warning**: Shouldn't be directly instantiated, but rather spawned via {@link Table.find}/{@link Collection.find}.
+ *
+ * ---
+ *
+ * ##### Typing
+ *
+ * > **🚨Important:** For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.
+ * >
+ * > If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.
+ *
+ * In full, the cursor is typed as `FindCursor<T, TRaw>`, where
+ * - `T` is the type of the mapped records, and
+ * - `TRaw` is the type of the raw records before any mapping.
+ *
+ * If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping is done using the {@link FindCursor.map} method.
+ *
+ * ---
+ *
+ * ##### Options
+ *
+ * Options may be set either through the `find({}, options)` method, or through the various fluent **builder
+ * methods**, which, *unlike Mongo*, **do not mutate the existing cursor**, but rather return a new, uninitialized cursor
+ * with the new option(s) set.
+ *
+ * @example
+ * ```typescript
+ * interface Person {
+ *   firstName: string,
+ *   lastName: string,
+ *   age: number,
+ * }
+ *
+ * const collection = db.collection<Person>('people');
+ * const cursor1: Cursor<Person> = collection.find({ firstName: 'John' });
+ *
+ * // Lazily iterate all documents matching the filter
+ * for await (const doc of cursor1) {
+ *   console.log(doc);
+ * }
+ *
+ * // Rewind the cursor to be able to iterate again
+ * cursor1.rewind();
+ *
+ * // Get all documents matching the filter as an array
+ * const docs = await cursor1.toArray();
+ *
+ * // Immutably set options & map as needed (changing options returns a new, uninitialized cursor)
+ * const cursor2: Cursor<string> = cursor
+ *   .project<Omit<Person, 'age'>>({ age: 0 })
+ *   .map(doc => doc.firstName + ' ' + doc.lastName);
+ *
+ * // Get next document from cursor
+ * const doc = await cursor2.next();
+ * ```
+ *
+ * @see CollectionFindCursor
+ * @see TableFindCursor
+ *
+ * @public
+ */
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
   /**
    * @internal
@@ -96,19 +161,43 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   }
 
   /**
-   * The table/collection which spawned this cursor.
+   * ##### Overview
    *
-   * @returns The table/collection which spawned this cursor.
+   * Returns the {@link Table}/{@link Collection} which spawned this cursor.
+   *
+   * @example
+   * ```ts
+   * const coll = db.collection(...);
+   * const cursor = coll.find({});
+   * cursor.dataSource === coll; // true
+   * ```
+   *
+   * ---
+   *
+   * ##### Typing
+   *
+   * {@link TableFindCursor} & {@link CollectionFindCursor} override this method to return the `dataSource` typed exactly as {@link Table} or {@link Collection} respectively, instead of remaining a union of both.
    */
-  public get dataSource(): Table<SomeRow> | Collection {
-    return this._parent;
-  }
+  public abstract get dataSource(): Table<SomeRow> | Collection
 
   /**
+   * ##### Overview
+   *
    * Sets the filter for the cursor, overwriting any previous filter.
    *
-   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
-   * returns a new, uninitialized cursor with the given new filter set.*
+   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new filter set.*
+   *
+   * @example
+   * ```ts
+   * await table.insertOne({ name: 'John', ... });
+   *
+   * const cursor = table.find({})
+   *   .filter({ name: 'John' });
+   *
+   * // The cursor will only return records with the name 'John'
+   * const john = await cursor.next();
+   * john.name === 'John'; // true
+   * ```
    *
    * @param filter - A filter to select which records to return.
    *
@@ -119,10 +208,26 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   }
 
   /**
+   * ##### Overview
+   *
    * Sets the sort criteria for prioritizing records.
    *
-   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
-   * returns a new, uninitialized cursor with the given new sort set.*
+   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new sort set.*
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John', age: 30 },
+   *   { name: 'Jane', age: 25 },
+   * ]);
+   *
+   * const cursor = collection.find({})
+   *  .sort({ age: -1 });
+   *
+   * // The cursor will return records sorted by age in descending order
+   * const oldest = await cursor.next();
+   * oldest.age === 30; // true
+   * ```
    *
    * @param sort - The sort order to prioritize which records are returned.
    *
@@ -133,12 +238,28 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   }
 
   /**
+   * ##### Overview
+   *
    * Sets the maximum number of records to return.
    *
-   * If `limit == 0`, there will be no limit on the number of records returned.
+   * If `limit == 0`, there will be **no limit** on the number of records returned (beyond any that the Data API may itself enforce).
    *
-   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
-   * returns a new, uninitialized cursor with the given new limit set.*
+   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new limit set.*
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John', age: 30 },
+   *   { name: 'Jane', age: 25 },
+   * ]);
+   *
+   * const cursor = collection.find({})
+   *   .limit(1);
+   *
+   * // The cursor will return only one record
+   * const all = await cursor.toArray();
+   * all.length === 1; // true
+   * ```
    *
    * @param limit - The limit for this cursor.
    *
@@ -149,10 +270,27 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   }
 
   /**
-   * Sets the number of records to skip before returning.
+   * ##### Overview
    *
-   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
-   * returns a new, uninitialized cursor with the given new skip set.*
+   * Sets the number of records to skip before returning. **Must be used with {@link FindCursor.sort}.**
+   *
+   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new skip set.*
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John', age: 30 },
+   *   { name: 'Jane', age: 25 },
+   * ]);
+   *
+   * const cursor = collection.find({})
+   *   .sort({ age: -1 })
+   *   .skip(1);
+   *
+   * // The cursor will skip the first record and return the second
+   * const secondOldest = await cursor.next();
+   * secondOldest.age === 25; // true
+   * ```
    *
    * @param skip - The skip for the cursor query.
    *
@@ -163,11 +301,26 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   }
 
   /**
+   * ##### Overview
+   *
    * Sets whether the sort vector should be fetched on the very first API call. Note that this is a requirement
    * to use {@link FindCursor.getSortVector}—it'll unconditionally return `null` if this is not set to `true`.
+   * - This is only applicable when using vector search, and will be ignored if the cursor is not using vector search.
+   * - See {@link FindCursor.getSortVector} to see exactly what is returned when this is set to `true`.
    *
-   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
-   * returns a new, uninitialized cursor with the given new setting.*
+   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new setting.*
+   *
+   * @example
+   * ```ts
+   * const cursor = table.find({ name: 'John' })
+   *   .sort({ $vectorize: 'name' })
+   *   .includeSortVector();
+   *
+   * // The cursor will return the sort vector used
+   * // Here, it'll be the embedding for the vector created from the name 'John'
+   * const sortVector = await cursor.getSortVector();
+   * sortVector; // DataAPIVector([...])
+   * ```
    *
    * @param includeSortVector - Whether the sort vector should be fetched on the first API call
    *
@@ -178,23 +331,23 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   }
 
   /**
+   * ##### Overview
+   *
    * Sets the projection for the cursor, overwriting any previous projection.
    *
-   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
-   * returns a new, uninitialized cursor with the given new projection set.*
+   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new projection set.*
    *
    * **To properly type this method, you should provide a type argument to specify the shape of the projected
    * records.**
    *
-   * **Note that you may NOT provide a projection after a mapping is already provided, to prevent potential
-   * de-sync errors.** If you really want to do so, you may use {@link FindCursor.clone} to create a new cursor
-   * with the same configuration, but without the mapping, and then set the projection.
+   * **Note that you may *NOT* provide a projection after a mapping is already provided, to prevent potential
+   * de-sync errors.**
    *
    * @example
    * ```typescript
    * const cursor = table.find({ name: 'John' });
    *
-   * // T is `any` because the type is not specified
+   * // T is `Partial<Schema>` because the type is not specified
    * const rawProjected = cursor.project({ id: 0, name: 1 });
    *
    * // T is { name: string }
@@ -202,14 +355,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * // You can also chain instead of using intermediate variables
    * const fluentlyProjected = table
-   *   .find({ name: 'John' })
-   *   .project<{ name: string }>({ id: 0, name: 1 });
-   *
-   * // It's important to keep mapping in mind
-   * const mapProjected = table
-   *   .find({ name: 'John' })
-   *   .map(doc => doc.name);
-   *   .project<string>({ id: 0, name: 1 });
+   *   .find({ name: 'John' })
+   *   .project<{ name: string }>({ id: 0, name: 1 });
    * ```
    *
    * @param projection - Specifies which fields should be included/excluded in the returned records.
@@ -221,10 +368,24 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   }
 
   /**
+   * ##### Overview
+   *
    * Sets whether similarity scores should be included in the cursor's results.
    *
-   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
-   * returns a new, uninitialized cursor with the given new similarity setting.*
+   * - This is only applicable when using vector search, and will be ignored if the cursor is not using vector search.
+   *
+   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new similarity setting.*
+   *
+   * @example
+   * ```ts
+   * const cursor = table.find({ name: 'John' })
+   *   .sort({ $vector: new DataAPIVector([...]) })
+   *   .includeSimilarity();
+   *
+   * // The cursor will return the similarity scores for each record
+   * const closest = await cursor.next();
+   * closest.$similarity; // number
+   * ```
    *
    * @param includeSimilarity - Whether similarity scores should be included.
    *
@@ -234,11 +395,38 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
     return buildFLCPreMapOption(this, 'includeSimilarity', includeSimilarity ?? true);
   }
 
+  /**
+   * ##### Overview
+   *
+   * Map all records using the provided mapping function. Previous mapping functions will be composed with the new
+   * mapping function (new ∘ old).
+   *
+   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new projection set.*
+   *
+   * **You may NOT set a projection after a mapping is already provided, to prevent potential de-sync errors.**
+   *
+   * @example
+   * ```ts
+   * const cursor = table.find({ name: 'John' });
+   *   .map(doc => doc.name);
+   *   .map(name => name.toLowerCase());
+   *
+   * // T is `string` because the mapping function returns a string
+   * const name = await cursor.next();
+   * name === 'john'; // true
+   * ```
+   *
+   * @param map - The mapping function to apply to all records.
+   *
+   * @returns A new cursor with the new mapping set.
+   */
   public map<R>(map: (doc: T) => R): FindCursor<R, TRaw> {
     return buildFLCMap(this, map);
   }
 
   /**
+   * ##### Overview
+   *
    * Retrieves the vector used to perform the vector search, if applicable.
    *
    * - If `includeSortVector` is not `true`, this will unconditionally return `null`. No find request will be made.
@@ -275,6 +463,13 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
     return this._sortVector.unwrap();
   }
 
+  /**
+   * ##### Overview
+   *
+   * Creates, a new, uninitialized copy of this cursor with the exact same options and mapping.
+   *
+   * See {@link FindCursor.rewind} for resetting the same instance of the cursor.
+   */
   public override clone(): this {
     return cloneFLC(this, this._filter, this._options, this._mapping);
   }

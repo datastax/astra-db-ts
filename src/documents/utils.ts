@@ -22,7 +22,7 @@ declare const $ERROR: unique symbol;
  * @example
  * ```typescript
  * function unsupported(): TypeErr<'Unsupported operation'> {
- *   throw new Error('Unsupported operation');
+ *   throw new Error('Unsupported operation');
  * }
  *
  * // Doesn't compile with error:

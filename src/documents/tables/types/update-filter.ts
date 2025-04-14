@@ -20,12 +20,12 @@ import type { SomeRow } from '@/src/documents/index.js';
  * @example
  * ```typescript
  * const updateFilter: TableUpdateFilter<SomeDoc> = {
- *   $set: {
- *     'customer': 'Jim B.'
- *   },
- *   $unset: {
- *     'customer': ''
- *   },
+ *   $set: {
+ *     'customer': 'Jim B.'
+ *   },
+ *   $unset: {
+ *     'customer': ''
+ *   },
  * }
  * ```
  *
@@ -41,9 +41,9 @@ export interface TableUpdateFilter<Schema extends SomeRow> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $set: {
-   *     'customer.name': 'Jim B.'
-   *   }
+   *   $set: {
+   *     'customer.name': 'Jim B.'
+   *   }
    * }
    * ```
    */
@@ -54,9 +54,9 @@ export interface TableUpdateFilter<Schema extends SomeRow> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $unset: {
-   *     'customer.phone': ''
-   *   }
+   *   $unset: {
+   *     'customer.phone': ''
+   *   }
    * }
    * ```
    */

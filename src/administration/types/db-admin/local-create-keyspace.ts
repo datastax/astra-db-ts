@@ -33,7 +33,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * // Will internally call `db.useKeyspace('new_keyspace')`
  * await db.admin().createKeyspace('new_keyspace', {
- *   updateDbKeyspace: true,
+ *   updateDbKeyspace: true,
  * });
  *
  * // Creates collections in keyspace `new_keyspace` by default now
@@ -42,7 +42,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
+export interface CreateDataAPIKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
   replication?: KeyspaceReplicationOptions,
   updateDbKeyspace?: boolean,
 }
@@ -63,18 +63,18 @@ export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdmin
  * await dbAdmin.createKeyspace('my_keyspace');
  *
  * await dbAdmin.createKeyspace('my_keyspace', {
- *   replication: {
- *     class: 'SimpleStrategy',
- *     replicatonFactor: 3,
- *   },
+ *   replication: {
+ *     class: 'SimpleStrategy',
+ *     replicatonFactor: 3,
+ *   },
  * });
  *
  * await dbAdmin.createKeyspace('my_keyspace', {
- *   replication: {
- *     class: 'NetworkTopologyStrategy',
- *     datacenter1: 3,
- *     datacenter1: 2,
- *   },
+ *   replication: {
+ *     class: 'NetworkTopologyStrategy',
+ *     datacenter1: 3,
+ *     datacenter1: 2,
+ *   },
  * });
  * ```
  *

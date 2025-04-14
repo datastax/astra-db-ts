@@ -14,10 +14,88 @@
 
 import type { PathSegment } from '@/src/lib/types.js';
 
+/**
+ * ##### Overview (template-string overload)
+ *
+ * Escapes field names which may contain `.`s and `&`s for use in Data API queries.
+ *
+ * This overload allows you to use a tagged template string to create an escaped field path.
+ *
+ * > **🚨Important:** This should NOT be used for insertion operations. It is only for use in areas where a field path is required; not just a field name (e.g. filters, projections, updates, etc.)
+ *
+ * @example
+ * ```ts
+ * import { escapeFieldNames } from '@datastax/astra-db-ts';
+ *
+ * // 'websites.www&.datastax&.com.visits'
+ * const domain = 'www.datastax.com';
+ * escapeFieldNames`websites.${domain}.visits`
+ *
+ * // 'shows.tom&&jerry.episodes.3.views
+ * const episode = 3;
+ * escapeFieldNames`shows.${'tom&jerry'}.episodes.${episode}.views`
+ * ```
+ *
+ * @see unescapeFieldPath
+ *
+ * @public
+ */
 export function escapeFieldNames(segments: TemplateStringsArray, ...args: PathSegment[]): string
 
+/**
+ * ##### Overview (varargs overload)
+ *
+ * Escapes field names which may contain `.`s and `&`s for use in Data API queries.
+ *
+ * This overload allows you to pass a variable number of arguments to create an escaped field path.
+ *
+ * > **🚨Important:** This should NOT be used for insertion operations. It is only for use in areas where a field path is required; not just a field name (e.g. filters, projections, updates, etc.)
+ *
+ * @example
+ * ```ts
+ * import { escapeFieldNames } from '@datastax/astra-db-ts';
+ *
+ * // 'websites.www&.datastax&.com.visits'
+ * const domain = 'www.datastax.com';
+ * escapeFieldNames('websites', domain, 'visits')
+ *
+ * // 'shows.tom&&jerry.episodes.3.views
+ * const episode = 3;
+ * escapeFieldNames('shows', 'tom&jerry', 'episodes', episode, 'views')
+ * ```
+ *
+ * @see unescapeFieldPath
+ *
+ * @public
+ */
 export function escapeFieldNames(...segments: PathSegment[]): string
 
+/**
+ * ##### Overview (iterable overload)
+ *
+ * Escapes field names which may contain `.`s and `&`s for use in Data API queries.
+ *
+ * This over load allows you to pass an iterable (like an array) of segments to create an escaped field path.
+ *
+ * > **🚨Important:** This should NOT be used for insertion operations. It is only for use in areas where a field path is required; not just a field name (e.g. filters, projections, updates, etc.)
+ *
+ * @example
+ * ```ts
+ * import { escapeFieldNames } from '@datastax/astra-db-ts';
+ *
+ * // 'websites.www&.datastax&.com.visits'
+ * const domain = 'www.datastax.com';
+ * escapeFieldNames(['websites', domain, 'visits'])
+ *
+ * // 'shows.tom&&jerry.episodes.3.views
+ * const episode = 3;
+ * escapeFieldNames(['shows', 'tom&jerry', 'episodes', episode, 'views'])
+ * ```
+ *
+ * @see unescapeFieldPath
+ *
+ * @public
+ */
 export function escapeFieldNames(segments: Iterable<PathSegment>): string
 
 export function escapeFieldNames(segments: TemplateStringsArray | (string | number) | Iterable<string | number>, ...args: (string | number)[]): string {
@@ -50,6 +128,28 @@ function _isTemplateStringsArray(strs: TemplateStringsArray | (string | number) 
   return Array.isArray(strs) && 'raw' in strs;
 }
 
+/**
+ * ##### Overview
+ *
+ * Splits a field path into its individual segments, accounting for potentially escaped characters.
+ *
+ * > **✏️Note:** This is _not_ the exact inverse of {@link escapeFieldNames}, as while the former may encode numbers into strings, this function will always return strings.
+ * >
+ * >
+ *
+ * @example
+ * ```ts
+ * import { unescapeFieldPath } from '@datastax/astra-db-ts';
+ *
+ * // ['websites', 'www.datastax.com', 'visits']
+ * unescapeFieldPath('websites.www&.datastax&.com.visits')
+ *
+ * // ['shows', 'tom&jerry', 'episodes', '3', 'views']
+ * unescapeFieldPath('shows.tom&&jerry.episodes.3.views')
+ * ```
+ *
+ * @public
+ */
 export function unescapeFieldPath(path: string): string[] {
   const ret = <string[]>[];
   let segment = '';

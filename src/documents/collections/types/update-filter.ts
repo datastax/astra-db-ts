@@ -21,15 +21,15 @@ import type { IsDate, IsNum } from '@/src/documents/types/utils.js';
  * @example
  * ```typescript
  * const updateFilter: UpdateFilter<SomeDoc> = {
- *   $set: {
- *     'customer.name': 'Jim B.'
- *   },
- *   $unset: {
- *     'customer.phone': ''
- *   },
- *   $inc: {
- *     'customer.age': 1
- *   },
+ *   $set: {
+ *     'customer.name': 'Jim B.'
+ *   },
+ *   $unset: {
+ *     'customer.phone': ''
+ *   },
+ *   $inc: {
+ *     'customer.age': 1
+ *   },
  * }
  * ```
  *
@@ -55,9 +55,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $set: {
-   *     'customer.name': 'Jim B.'
-   *   }
+   *   $set: {
+   *     'customer.name': 'Jim B.'
+   *   }
    * }
    * ```
    */
@@ -68,9 +68,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $setOnInsert: {
-   *     'customer.name': 'Jim B.'
-   *   }
+   *   $setOnInsert: {
+   *     'customer.name': 'Jim B.'
+   *   }
    * }
    * ```
    */
@@ -81,9 +81,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $unset: {
-   *     'customer.phone': ''
-   *   }
+   *   $unset: {
+   *     'customer.phone': ''
+   *   }
    * }
    * ```
    */
@@ -94,9 +94,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $inc: {
-   *     'customer.age': 1
-   *   }
+   *   $inc: {
+   *     'customer.age': 1
+   *   }
    * }
    * ```
    */
@@ -107,9 +107,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $push: {
-   *     'items': 'Extended warranty - 5 years'
-   *   }
+   *   $push: {
+   *     'items': 'Extended warranty - 5 years'
+   *   }
    * }
    * ```
    */
@@ -120,9 +120,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $pop: {
-   *     'items': -1
-   *   }
+   *   $pop: {
+   *     'items': -1
+   *   }
    * }
    * ```
    */
@@ -133,9 +133,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $rename: {
-   *     'customer.name': 'client.name'
-   *   }
+   *   $rename: {
+   *     'customer.name': 'client.name'
+   *   }
    * }
    * ```
    */
@@ -146,9 +146,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $currentDate: {
-   *     'purchase_date': true
-   *   }
+   *   $currentDate: {
+   *     'purchase_date': true
+   *   }
    * }
    * ```
    */
@@ -159,9 +159,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $min: {
-   *     'customer.age': 18
-   *   }
+   *   $min: {
+   *     'customer.age': 18
+   *   }
    * }
    * ```
    */
@@ -172,9 +172,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $max: {
-   *     'customer.age': 65
-   *   }
+   *   $max: {
+   *     'customer.age': 65
+   *   }
    * }
    * ```
    */
@@ -185,9 +185,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $mul: {
-   *     'customer.age': 1.1
-   *   }
+   *   $mul: {
+   *     'customer.age': 1.1
+   *   }
    * }
    * ```
    */
@@ -198,9 +198,9 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    * @example
    * ```typescript
    * const updateFilter: UpdateFilter<SomeDoc> = {
-   *   $addToSet: {
-   *     'items': 'Extended warranty - 5 years'
-   *   }
+   *   $addToSet: {
+   *     'items': 'Extended warranty - 5 years'
+   *   }
    * }
    * ```
    */

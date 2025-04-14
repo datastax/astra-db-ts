@@ -16,11 +16,21 @@ import type { WithTimeout } from '@/src/lib/index.js';
 import type { Sort } from '@/src/documents/index.js';
 
 /**
- * Options for a generic `updateOne` command using the Data API.
+ * ##### Overview
  *
- * @field upsert - If true, perform an insert if no documents match the filter.
- * @field sort - The sort order to pick which document to update if the filter selects multiple documents.
- * @field timeout - The timeout override for this method
+ * The options for a generic `updateOne` command performed on the Data API.
+ *
+ * @example
+ * ```ts
+ * const result = await collection.updateOne(
+ *   { name: 'John' },
+ *   { $set: { dob: new Date('1990-01-01'), updatedAt: { $currentDate: true } } },
+ *   { upsert: true, sort: { $vector: [...] } },
+ * );
+ * ```
+ *
+ * @see CollectionUpdateOneOptions
+ * @see TableUpdateOneOptions
  *
  * @public
  */
@@ -45,4 +55,16 @@ export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeo
    * @defaultValue null
    */
   sort?: Sort,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vector: [...] }` instead.
+   */
+  vector?: 'ERROR: Use `sort: { $vector: [...] }` instead',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vectorize: '...' }` instead.
+   */
+  vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead',
 }

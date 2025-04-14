@@ -19,3 +19,4 @@ export * from './logging/index.js';
 export * from './field-escaping.js';
 export { DataAPIEnvironments } from './constants.js';
 export type * from './types.js';
+export { buildAstraEndpoint } from './utils.js';

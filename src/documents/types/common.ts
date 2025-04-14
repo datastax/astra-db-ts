@@ -34,13 +34,13 @@ export type SortDirection = 1 | -1;
  * ```typescript
  * // Sort by name in ascending order, then by age in descending order
  * const sort1: Sort = {
- *   name: 1,
- *   age: -1,
+ *   name: 1,
+ *   age: -1,
  * }
  *
  * // Sort by vector distance
  * const sort2: Sort = {
- *   $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
+ *   $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
  * }
  * ```
  *
@@ -61,19 +61,19 @@ export type Sort = Record<string, SortDirection | string | number[] | DataAPIVec
  * ```typescript
  * // Include _id, name, and address.state
  * const projection1: Projection = {
- *   _id: 0,
- *   name: 1,
- *   'address.state': 1,
+ *   _id: 0,
+ *   name: 1,
+ *   'address.state': 1,
  * }
  *
  * // Exclude the $vector
  * const projection2: Projection = {
- *   $vector: 0,
+ *   $vector: 0,
  * }
  *
  * // Return array indices 2, 3, 4, and 5
  * const projection3: Projection = {
- *   test_scores: { $slice: [2, 4] },
+ *   test_scores: { $slice: [2, 4] },
  * }
  * ```
  *
@@ -105,16 +105,16 @@ export type Projection = Record<string, 1 | 0 | boolean | ProjectionSlice>;
  *
  * // Return [1, 2]
  * await collections.findOne({}, {
- *   projection: {
- *     arr: { $slice: 2 },
- *   },
+ *   projection: {
+ *     arr: { $slice: 2 },
+ *   },
  * });
  *
  * // Return [3, 4]
  * await collections.findOne({}, {
- *   projection: {
- *     arr: { $slice: [-3, 2] },
- *   },
+ *   projection: {
+ *     arr: { $slice: [-3, 2] },
+ *   },
  * });
  * ```
  *

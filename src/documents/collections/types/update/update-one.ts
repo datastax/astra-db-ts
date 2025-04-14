@@ -15,42 +15,62 @@
 import type { GenericUpdateOneOptions, GenericUpdateResult, IdOf } from '@/src/documents/index.js';
 
 /**
- * Options for an `updateOne` command on a collection.
+ * ##### Overview
  *
- * @field upsert - If true, perform an insert if no documents match the filter.
- * @field sort - The sort order to pick which document to update if the filter selects multiple documents.
- * @field timeout - The timeout override for this method
+ * The options for an `updateOne` command on a {@link Collection}.
+ *
+ * @example
+ * ```ts
+ * const result = await collection.updateOne(
+ *   { name: 'John' },
+ *   { $set: { dob: new Date('1990-01-01'), updatedAt: { $currentDate: true } } },
+ *   { upsert: true, sort: { $vector: [...] } },
+ * );
+ * ```
+ *
+ * ---
+ *
+ * ##### Datatypes
+ *
+ * See {@link Collection}'s documentation for information on the available datatypes for collections.
+ *
+ * ---
+ *
+ * ##### Update operations
+ *
+ * See {@link CollectionUpdateFilter}'s documentation for information on the available update operations.
  *
  * @see Collection.updateOne
+ * @see CollectionUpdateOneResult
  *
  * @public
  */
 export type CollectionUpdateOneOptions = GenericUpdateOneOptions;
 
 /**
- * Represents the result of an `updateOne` command on a collection.
+ * ##### Overview
+ *
+ * Represents the result of an `updateOne` command on a {@link Collection}.
+ *
+ * > **🚨Important:** The exact result type depends on the `upsertedCount` field of the result:
+ * - If `upsertedCount` is `0`, the result will be of type {@link GuaranteedUpdateResult} & {@link NoUpsertUpdateResult}.
+ * - If `upsertedCount` is `1`, the result will be of type {@link GuaranteedUpdateResult} & {@link UpsertedUpdateResult}.
  *
  * @example
  * ```typescript
- * const result = await collection.updateOne({
- *   _id: 'abc'
- * }, {
- *   $set: { name: 'John' }
- * }, {
- *   upsert: true
- * });
+ * const result = await collection.updateOne(
+ *   { _id: 'abc' },
+ *   { $set: { name: 'John' } },
+ *   { upsert: true },
+ * );
  *
  * if (result.upsertedCount) {
- *   console.log(`Document with ID ${JSON.stringify(result.upsertedId)} was upserted`);
+ *   console.log(`Document with ID ${result.upsertedId} was upserted`);
  * }
  * ```
  *
- * @field matchedCount - The number of documents that matched the filter.
- * @field modifiedCount - The number of documents that were actually modified.
- * @field upsertedCount - The number of documents that were upserted.
- * @field upsertedId - The identifier of the upserted document if `upsertedCount > 0`.
- *
  * @see Collection.updateOne
+ * @see CollectionUpdateOneOptions
  *
  * @public
  */

@@ -68,12 +68,12 @@ export interface TableOptions extends WithKeyspace {
    * ```ts
    * // The request timeout for all operations is set to 1000ms.
    * const client = new DataAPIClient('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 1000 },
+   *   timeoutDefaults: { requestTimeoutMs: 1000 },
    * });
    *
    * // The request timeout for all operations borne from this Db is set to 2000ms.
    * const db = client.db('...', {
-   *   timeoutDefaults: { requestTimeoutMs: 2000 },
+   *   timeoutDefaults: { requestTimeoutMs: 2000 },
    * });
    * ```
    *
@@ -86,7 +86,7 @@ export interface TableOptions extends WithKeyspace {
    * ##### Defaults
    *
    * The default timeout options are as follows:
-   * - `requestTimeoutMs`: 10000
+   * - `requestTimeoutMs`: 15000
    * - `generalMethodTimeoutMs`: 30000
    * - `collectionAdminTimeoutMs`: 60000
    * - `tableAdminTimeoutMs`: 30000

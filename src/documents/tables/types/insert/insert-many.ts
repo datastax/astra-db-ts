@@ -12,41 +12,96 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { GenericInsertManyOptions, SomeRow } from '@/src/documents/index.js';
+import type { GenericInsertManyOptions, SomePKey } from '@/src/documents/index.js';
 
 /**
- * Options for an `insertMany` command on a table.
+ * ##### Overview
  *
- * The parameters depend on the `ordered` option. If `ordered` is `true`, the `parallel` option is not allowed.
+ * The options for an `insertMany` command on a table.
  *
- * @field ordered - If `true`, the rows are inserted sequentially; else, they're arbitrary inserted in parallel.
- * @field concurrency - The maximum number of concurrent requests to make at once.
- * @field chunkSize - The number of rows to upload per request. Defaults to 50.
- * @field timeout - The timeout override for this method
+ * > **🚨Important:** The options depend on the `ordered` parameter. If `ordered` is `true`, then the `concurrency` option is not allowed.
+ *
+ * @example
+ * ```ts
+ * const result = await table.insertMany([
+ *   { id: uuid.v4(), name: 'John' },
+ *   { id: uuid.v7(), name: 'Jane' },
+ * ], {
+ *   ordered: true,
+ *   timeout: 60000,
+ * });
+ * ```
+ *
+ * @example
+ * ```ts
+ * const result = await table.insertMany([
+ *   { id: uuid.v4(), name: 'John' },
+ *   { id: uuid.v7(), name: 'Jane' },
+ * ], {
+ *   concurrency: 16, // ordered implicitly `false` if unset
+ * });
+ * ```
+ *
+ * ---
+ *
+ * ##### Datatypes
+ *
+ * See {@link Table}'s documentation for information on the available datatypes for tables.
  *
  * @see Table.insertMany
+ * @see TableInsertManyResult
  *
  * @public
  */
 export type TableInsertManyOptions = GenericInsertManyOptions;
 
 /**
- * Represents the result of an `insertMany` command on a table.
+ * ##### Overview
  *
- * @field insertedIds - The primary keys of the inserted rows.
- * @field insertedCount - The number of inserted rows.
+ * Represents the result of an `insertMany` command on a {@link Table}.
+ *
+ * @example
+ * ```ts
+ * try {
+ *   const result = await table.insertMany([
+ *     { id: uuid.v4(), name: 'John'},
+ *     { id: uuid.v7(), name: 'Jane'},
+ *   ]);
+ *   console.log(result.insertedIds);
+ * } catch (e) {
+ *   if (e instanceof TableInsertManyError) {
+ *     console.log(e.insertedIds())
+ *     console.log(e.errors())
+ *   }
+ * }
+ * ```
+ *
+ * ---
+ *
+ * ##### The primary key type
+ *
+ * The type of the primary key of the table is inferred from the second type-param of the {@link Table}.
+ *
+ * If not set, it defaults to `Partial<RSchema>` to keep the result type consistent.
+ *
+ * > **💡Tip:** See the {@link SomePKey} type for more information, and concrete examples, on this subject.
  *
  * @see Table.insertMany
+ * @see TableInsertManyOptions
  *
  * @public
  */
-export interface TableInsertManyResult<PKey extends SomeRow> {
+export interface TableInsertManyResult<PKey extends SomePKey> {
   /**
-   * The primary keys of the inserted rows.
+   * The primary key of the inserted (or upserted) row. These will be the same values as the primary keys which were present in the rows which were just inserted.
+   *
+   * See {@link TableInsertManyResult} for more information about the primary key.
    */
   insertedIds: PKey[],
   /**
-   * The number of inserted rows (equals `insertedIds.length`).
+   * The number of documents that were inserted into the table.
+   *
+   * This is **always** equal to the length of the `insertedIds` array.
    */
   insertedCount: number,
 }

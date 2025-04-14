@@ -24,15 +24,15 @@ import type { SomeDoc, ToDotNotation } from '@/src/documents/index.js';
  * @example
  * ```typescript
  * const collection1 = await db.createCollection('my-collections', {
- *   indexing: {
- *     allow: ['name', 'age'],
- *   },
+ *   indexing: {
+ *     allow: ['name', 'age'],
+ *   },
  * });
  *
  * const collection2 = await db.createCollection('my-collections', {
- *   indexing: {
- *     deny: ['*'],
- *   },
+ *   indexing: {
+ *     deny: ['*'],
+ *   },
  * });
  * ```
  *

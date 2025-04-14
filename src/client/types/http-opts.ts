@@ -19,7 +19,7 @@ import type { Fetcher, FetchH2Like } from '@/src/lib/index.js';
  *
  * The options available for the {@link DataAPIClient} related to making HTTP requests.
  *
- * There are three different behaviours for setting the client:
+ * There are three different behaviors for setting the client:
  * - `client: 'fetch'` or not setting the `httpOptions` at all
  *   - This will use the native `fetch` API
  * - `client: 'fetch-h2'`
@@ -56,7 +56,8 @@ import type { Fetcher, FetchH2Like } from '@/src/lib/index.js';
 export type HttpOptions =
   | FetchH2HttpClientOptions
   | FetchHttpClientOptions
-  | CustomHttpClientOptions;
+  | CustomHttpClientOptions
+  | { client: 'default', ERROR: 'ERROR: fetch-h2 is no longer the default client; it must be set using `client: "fetch-h2"`. See `FetchH2HttpClientOptions` for more information.' }
 
 /**
  * ##### Overview
@@ -128,6 +129,12 @@ export interface FetchH2HttpClientOptions {
    * Options specific to HTTP/1.1 requests.
    */
   http1?: FetchH2Http1Options,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option.
+   */
+  maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option',
 }
 
 /**
@@ -162,6 +169,12 @@ export interface FetchHttpClientOptions {
    * See {@link HttpOptions} for the other options available.
    */
   client: 'fetch',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option.
+   */
+  maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option',
 }
 
 /**
@@ -210,6 +223,12 @@ export interface CustomHttpClientOptions {
    * The custom "fetcher" to use.
    */
   fetcher: Fetcher,
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option.
+   */
+  maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available here; the timeouts system has been overhauled, and defaults should now be set using the `timeoutDefaults` option',
 }
 
 /**

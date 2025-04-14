@@ -19,22 +19,18 @@ import type { EmptyObj } from '@/src/lib/types.js';
 /**
  * Represents some filter operation for a given document schema.
  *
- * **If you want stricter type-checking and full auto-complete, see {@link StrictCollectionFilter}.**
- *
- * This is a more relaxed version of {@link StrictCollectionFilter} that doesn't type-check nested fields.
- *
  * @example
  * ```typescript
  * interface BasicSchema {
- *   arr: string[],
- *   num: number,
+ *   arr: string[],
+ *   num: number,
  * }
  *
  * db.collections<BasicSchema>('coll_name').findOne({
- *   $and: [
- *     { _id: { $in: ['abc', 'def'] } },
- *     { $not: { arr: { $size: 0 } } },
- *   ],
+ *   $and: [
+ *     { _id: { $in: ['abc', 'def'] } },
+ *     { $not: { arr: { $size: 0 } } },
+ *   ],
  * });
  * ```
  *

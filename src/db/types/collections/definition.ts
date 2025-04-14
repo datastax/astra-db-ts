@@ -16,7 +16,7 @@ import type { SomeDoc } from '@/src/documents/collections/index.js';
 import type {
   CollectionDefaultIdOptions,
   CollectionIndexingOptions,
-  CollectionLexicalOptions, CollectionRerankingOptions,
+  CollectionLexicalOptions, CollectionRerankOptions,
   CollectionVectorOptions,
 } from '@/src/db/index.js';
 
@@ -49,5 +49,5 @@ export interface CollectionDefinition<Schema extends SomeDoc> {
   /**
    * Options related to reranking.
    */
-  reranking?: CollectionRerankingOptions,
+  rerank?: CollectionRerankOptions,
 }

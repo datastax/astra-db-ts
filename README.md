@@ -2,9 +2,6 @@
 
 `astra-db-ts` is a TypeScript client for interacting with [DataStax Astra DB](https://astra.datastax.com/signup).
 
-> **Warning**
-> This README is still under construction; parts of it may be incomplete or outdated.
-
 *This README targets v2.0.0+, which expands on the previous 1.x API. Click [here](https://github.com/datastax/astra-db-ts/tree/v1.x?tab=readme-ov-file#datastaxastra-db-ts) for the pre-existing client readme.*
 
 ## Table of contents
@@ -221,10 +218,10 @@ const admin = client.admin();
   // list info about all databases
   const databases = await admin.listDatabases();
   const dbInfo = databases[0];
-  console.log(dbInfo.info.name, dbInfo.id, dbInfo.info.region);
+  console.log(dbInfo.name, dbInfo.id, dbInfo.regions);
 
   // list keyspaces for the first database
-  const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.info.region);
+  const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.regions[0].name);
   console.log(await dbAdmin.listKeyspaces());
 })();
 ```
