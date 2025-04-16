@@ -1,6 +1,6 @@
 {
   "name": "@datastax/astra-db-ts",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Data API TypeScript client",
   "contributors": [
     "Kavin Gupta (https://github.com/toptobes)",
