@@ -14,16 +14,17 @@
 
 import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
+import { oid, uuid, vector } from '@/src/documents/index.js';
 
 parallel('integration.documents.collections.find-one-and-delete', { truncate: 'colls:before' }, ({ collection }) => {
   it('should findOneAndDelete', async () => {
-    const res = await collection.insertOne({ name: 'kamelot' });
+    const res = await collection.insertOne({ name: 'car' });
     const docId = res.insertedId;
     const resp = await collection.findOneAndDelete(
       { '_id': docId },
     );
     assert.strictEqual(resp?._id, docId);
-    assert.strictEqual(resp.name, 'kamelot');
+    assert.strictEqual(resp.name, 'car');
   });
 
   it('should findOneAndDelete with a projection', async (key) => {
@@ -98,5 +99,22 @@ parallel('integration.documents.collections.find-one-and-delete', { truncate: 'c
   it('should return null if no document is found', async (key) => {
     const res = await collection.findOneAndDelete({ key });
     assert.strictEqual(res, null);
+  });
+
+  it('should work with datatypes', async (key) => {
+    const docs = <const>[
+      { _id: `a${key}`, name: 'a', key, uuid: uuid.v4() },
+      { _id: `b${key}`, name: 'b', key, oid: oid() },
+      { _id: `c${key}`, name: 'c', key, date: new Date() },
+      { _id: `d${key}`, name: 'd', key, $vector: vector({ $binary: vector([.1, .2, .3, .4, .5]).asBase64() }) },
+    ];
+    await collection.insertMany(docs);
+
+    const expected = [...docs, null];
+
+    for (let i = 0; i <= docs.length; i++) {
+      const deleted = await collection.findOneAndDelete({ key }, { sort: { name: 1 }, projection: { '*': 1 } });
+      assert.deepStrictEqual(deleted, expected[i]);
+    }
   });
 });

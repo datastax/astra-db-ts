@@ -88,7 +88,8 @@ export function checkTestsEnabled(name: string) {
       && ifMatchTag(tags, 'ADMIN',     () => process.env.CLIENT_RUN_ADMIN_TESTS)
       && ifMatchTag(tags, 'DEV',       () => TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com'))
       && ifMatchTag(tags, 'ASTRA',     () => TEST_APPLICATION_URI.includes('datastax.com'))
-      && ifMatchTag(tags, 'RERANKING', () => !TEST_APPLICATION_URI.includes('apps.astra.datastax.com'));
+      // && ifMatchTag(tags, 'RERANKING', () => !TEST_APPLICATION_URI.includes('apps.astra.datastax.com'));
+      && ifMatchTag(tags, 'RERANKING', () => true);
 }
 
 function processTags(tags: string): string[] {

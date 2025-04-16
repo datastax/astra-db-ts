@@ -111,7 +111,7 @@ export class CommandImpls<ID> {
       bigNumsPresent: filter[1] || update[1],
     });
 
-    return coalesceUpsertIntoUpdateResult(mkUpdateResult(resp), resp);
+    return coalesceUpsertIntoUpdateResult(this._serdes, mkUpdateResult(resp), resp);
   }
 
   public async updateMany(_filter: Filter, _update: UpdateFilter, options: GenericUpdateManyOptions | nullish, mkError: (e: unknown, result: GenericUpdateResult<SomeId, number>) => Error): Promise<GenericUpdateResult<ID, number>> {
@@ -143,10 +143,10 @@ export class CommandImpls<ID> {
         commonResult.matchedCount += resp.status?.matchedCount;
       }
     } catch (e) {
-      throw mkError(e, coalesceUpsertIntoUpdateResult(commonResult, {}));
+      throw mkError(e, coalesceUpsertIntoUpdateResult(this._serdes, commonResult, {}));
     }
 
-    return coalesceUpsertIntoUpdateResult(commonResult, resp);
+    return coalesceUpsertIntoUpdateResult(this._serdes, commonResult, resp);
   }
 
   public async replaceOne(_filter: Filter, _replacement: SomeDoc, options?: GenericReplaceOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
@@ -168,7 +168,7 @@ export class CommandImpls<ID> {
       bigNumsPresent: filter[1] || replacement[1],
     });
 
-    return coalesceUpsertIntoUpdateResult(mkUpdateResult(resp), resp);
+    return coalesceUpsertIntoUpdateResult(this._serdes, mkUpdateResult(resp), resp);
   }
 
   public async deleteOne(_filter: Filter, options?: GenericDeleteOneOptions): Promise<GenericDeleteOneResult> {
@@ -263,7 +263,7 @@ export class CommandImpls<ID> {
       bigNumsPresent: filter[1] || replacement[1],
     });
 
-    return resp.data!.document;
+    return this._serdes.deserialize(resp.data!.document, resp, SerDesTarget.Record);
   }
 
   public async findOneAndDelete<Schema extends SomeDoc>(_filter: Filter, options?: GenericFindOneAndDeleteOptions): Promise<Schema | null> {
@@ -278,7 +278,7 @@ export class CommandImpls<ID> {
       bigNumsPresent: filter[1],
     });
 
-    return resp.data!.document;
+    return this._serdes.deserialize(resp.data!.document, resp, SerDesTarget.Record);
   }
 
   public async findOneAndUpdate<Schema extends SomeDoc>(_filter: Filter, _update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<Schema | null> {
@@ -299,7 +299,7 @@ export class CommandImpls<ID> {
       bigNumsPresent: filter[1] || update[1],
     });
 
-    return resp.data!.document;
+    return this._serdes.deserialize(resp.data!.document, resp, SerDesTarget.Record);
   }
 
   public async distinct(key: string, filter: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {

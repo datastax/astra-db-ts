@@ -14,8 +14,9 @@
 
 import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
+import { ObjectId, oid } from '@/src/documents/index.js';
 
-parallel('integration.documents.collections.update-one', { truncate: 'colls:before' }, ({ collection }) => {
+parallel('integration.documents.collections.update-one', { truncate: 'colls:before' }, ({ db, collection }) => {
   it('should updateOne document by id', async (key) => {
     const insertDocResp = await collection.insertOne({ age: 3, key });
     const idToCheck = insertDocResp.insertedId;
@@ -91,9 +92,11 @@ parallel('integration.documents.collections.update-one', { truncate: 'colls:befo
     const insertDocResp = await collection.insertOne({ key });
     const idToCheck = insertDocResp.insertedId;
 
+    const objectId = oid();
+
     const updateOneResp = await collection.updateOne(
       { age: 12, key },
-      { $set: { name: 'copperhead_road' } },
+      { $set: { oid: objectId } },
       { upsert: true },
     );
     assert.strictEqual(updateOneResp.modifiedCount, 0);
@@ -105,7 +108,7 @@ parallel('integration.documents.collections.update-one', { truncate: 'colls:befo
     assert.ok(updatedDoc?._id);
     assert.notStrictEqual(updatedDoc._id, idToCheck);
     assert.strictEqual(updatedDoc.age, 12);
-    assert.strictEqual(updatedDoc.name, 'copperhead_road');
+    assert.deepStrictEqual(updatedDoc.oid, objectId);
   });
 
   it('should not overwrite user-specified _id in $setOnInsert', async (key) => {
@@ -116,5 +119,22 @@ parallel('integration.documents.collections.update-one', { truncate: 'colls:befo
     );
 
     assert.equal(updateOneResp.upsertedId, 'foo');
+  });
+
+  it('(LONG) should deserialize the upsertedId property', async (key) => {
+    const coll = await db.createCollection('update_one_upsert_id_test', {
+      defaultId: { type: 'objectId' },
+    });
+
+    const updateOneResp = await coll.updateOne(
+      { key },
+      { $set: { name: 'hi' } },
+      { upsert: true },
+    );
+
+    assert.strictEqual(updateOneResp.modifiedCount, 0);
+    assert.strictEqual(updateOneResp.matchedCount, 0);
+    assert.ok(updateOneResp.upsertedId instanceof ObjectId);
+    assert.strictEqual(updateOneResp.upsertedCount, 1);
   });
 });

@@ -13,7 +13,9 @@
 // limitations under the License.
 
 import type { GuaranteedUpdateResult, GenericUpdateResult } from '@/src/documents/commands/types/update/update-common.js';
-import type { RawDataAPIResponse } from '@/src/lib/index.js';
+import type { RawDataAPIResponse} from '@/src/lib/index.js';
+import { SerDesTarget } from '@/src/lib/index.js';
+import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 
 /**
  * @internal
@@ -26,11 +28,11 @@ export const mkUpdateResult = <N extends number>(resp?: RawDataAPIResponse) => (
 /**
  * @internal
  */
-export const coalesceUpsertIntoUpdateResult = <ID, N extends number>(commonResult: GuaranteedUpdateResult<N>, resp: RawDataAPIResponse): GenericUpdateResult<ID, N> =>
+export const coalesceUpsertIntoUpdateResult = <ID, N extends number>(serdes: SerDes, commonResult: GuaranteedUpdateResult<N>, resp: RawDataAPIResponse): GenericUpdateResult<ID, N> =>
   (resp.status?.upsertedId)
     ? {
       ...commonResult,
-      upsertedId: resp.status.upsertedId,
+      upsertedId: serdes.deserialize(resp.status.upsertedId, resp, SerDesTarget.InsertedId),
       upsertedCount: 1,
     }
     : {

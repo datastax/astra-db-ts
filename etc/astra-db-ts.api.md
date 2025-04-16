@@ -2049,7 +2049,7 @@ export interface LexicalDoc {
 export const LIB_NAME = "astra-db-ts";
 
 // @public
-export const LIB_VERSION = "2.0.0-rc.1";
+export const LIB_VERSION = "2.0.0";
 
 // @public
 export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
