@@ -1,0 +1,13 @@
+name: Mirror master to v2.x
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  mirror-to-v2-x:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: zofrex/mirror-branch@v1
+        with:
+          target-branch: v2.x
