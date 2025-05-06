@@ -20,14 +20,20 @@ This script will start a REPL for the project, with:
    1. [Imports & variables](#imports--variables)
       1. [`$`](#)
       2. [`bn` & `JBI`](#bn--jbi)
-      3. [`client`, `db`, `coll`, `table`](#client-db-coll-table)
+      3. [`client`, `db`](#client-db)
+      4. [`coll`, `table`, `coll_`, `table_` 🚨](#coll-table-coll_-table_-)
       4. [`dbAdmin`, `admin`, `isAstra`](#dbadmin-admin-isastra)
    2. ["Macros"](#macros)
       1. [`cl`](#cl)
-      2. [`cda`/`tda`](#cdatda)
-      3. [`cfa`/`tfa`](#cfatfa)
+      2. [`cda`/`tda`/`cda_`/`tda_`](#cdatdacda_tda_)
+      3. [`cfa`/`tfa`/`cfa_`/`tfa_`](#cfatfacfa_tfa_)
       4. [`cif(doc)`/`tif(row)`](#cifdoctifrow)
       5. [`+<Promise>`](#promise)
+   3. [Configuration (`cfg`)](#configuration-cfg)
+      1. [`cfg.plusOutput`](#cfgplusoutput)
+      2. [`cfg.logging`](#cfglogging)
+      3. [`cfg.fa`](#cfgfa)
+
 4. [See also](#see-also)
 
 ## Prerequisites
@@ -110,16 +116,32 @@ These will be set to the imports of `bignumber.js` and `json-bigint`, respective
 '{"num":36.03}'
 ```
 
-#### `client`, `db`, `coll`, `table`
+#### `client`, `db`
 
-Yeah, these are exactly what you think they are. Just remember that it is entirely on you to ensure that the db/keyspace/collection/table actually exist.
+Yeah, these are exactly what you think they are. Just remember that it is entirely on you to ensure that the database actually exists.
+
+```ts
+> await db.info()
+{ ... }
+```
+
+#### `coll`, `table`, `coll_`, `table_` 🚨
+
+Yeah, these are exactly what you think they are. Just remember that it is entirely on you to ensure that the database actually exists.
 
 Running the test script beforehand will set these up for you automatically (assuming the coll/table/ks names are left as default).
 
 ```ts
-> await coll.options()
+> await table.definition()
 { ... }
 ```
+
+> [!IMPORTANT]
+> These variables are **special**; they are wrapped in a custom `Proxy` which allows property access to be _case-insensitive_ and _partially-complete_.
+
+This means that you can access properties like `table.findOne({})` or `table.findOn({})` or `table.findo({})` and they will all work the same.
+
+The shortest matching property will be used, so `insert` will match `insertOne` instead of `insertMany`.
 
 #### `dbAdmin`, `admin`, `isAstra`
 
@@ -151,9 +173,9 @@ Just typing `cl` into the REPL will clear the console. It's like magic.
 > 
 ```
 
-#### `cda`/`tda`
+#### `cda`/`tda`/`cda_`/`tda_`
 
-Just typing in `cda` or `tda` into the REPL will run `await coll/table.deleteMany({})` for you.
+Just typing in `cda` or `tda` into the REPL will run `await coll/table.deleteMany({})` for you. Ditto for their `_` counterparts.
 
 No explicit `await` required! Just type it in and watch the magic (synchronously) happen.
 
@@ -162,9 +184,9 @@ No explicit `await` required! Just type it in and watch the magic (synchronously
 { deletedCount: -1 }
 ```
 
-#### `cfa`/`tfa`
+#### `cfa`/`tfa`/`cfa_`/`tfa_`
 
-Just typing in `cfa` or `tfa` into the REPL will run `await coll/table.find({}).toArray()` for you.
+Just typing in `cfa` or `tfa` into the REPL will run `await coll/table.find({}).toArray()` for you. Ditto for their `_` counterparts.
 
 No explicit `await` required! Just type it in and watch the magic (synchronously) happen.
 
@@ -214,6 +236,43 @@ It'll also return `1` if the promise resolves successfully, and `0` if it reject
 ]
 1
 ```
+
+### Configuration (`cfg`)
+
+The `cfg` variable is a utility object that allows you to configure certain aspects the REPL environment.
+
+```ts
+> cfg.plusOutput.minimal
+"Set plus output to 'minimal'"
+> cfg.fa.project({})
+'Set *fa projection to {}'
+```
+
+#### `cfg.plusOutput`
+
+This configuration object allows you to set the output level of the `+<Promise>` macro.
+
+The available options are:
+- `cfg.plusOutput.default`: Prints the default output level
+- `cfg.plusOutput.verbose`: Prints the same as the default, but prints the whole error object if the promise rejects
+- `cfg.plusOutput.minimal`: Prints only the response or error message, and nothing else
+
+#### `cfg.logging`
+
+This configuration object allows you to manage the logging of events emitted by the various client objects.
+
+The available options are:
+- `cfg.logging.on`: Enables logging
+- `cfg.logging.off`: Disables logging
+
+The default value is set by the [`-l` flag](#enabling-verbose-logging--l---logging) if it is set, otherwise it will be `false`.
+
+#### `cfg.fa`
+
+This configuration object allows you to set options regarding the [`*fa` utility macros](#cfatfacfa_tfa_) (such as `cfa` or `tfa_`).
+
+The available options are:
+- `cfg.fa.project(projection)`: Sets the projection to be used in the `find` query. The default is `{ '*': 1 }`, which means all fields will be returned.
 
 ## See also
 
