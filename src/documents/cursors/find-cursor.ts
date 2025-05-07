@@ -451,13 +451,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    */
   public async getSortVector(): Promise<DataAPIVector | null> {
     if (this._sortVector.state === QueryState.Unattempted && this._options.includeSortVector) {
-      const reset2idle = this._state === 'idle';
-
       await this._next(true, '.getSortVector');
-
-      if (reset2idle) {
-        this._state = 'idle';
-      }
     }
 
     return this._sortVector.unwrap();
