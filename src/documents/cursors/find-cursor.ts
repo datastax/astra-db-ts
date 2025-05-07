@@ -403,6 +403,42 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   /**
    * ##### Overview
    *
+   * Sets the initial page state for the cursor, allowing you to resume fetching results from a specific point.
+   *
+   * This is primarily useful when pagination is driven by a separate process (e.g., in client/server
+   * architectures where the client maintains the page state).
+   *
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new initial page state.
+   *
+   * > **⚠️Warning:** When resuming a cursor using a page state, all other cursor options (filter, sort, limit, etc.)
+   * > should remain exactly the same as those used to generate the original page state. Using different options
+   * > with the same page state can lead to unexpected results or errors.
+   *
+   * @example
+   * ```ts
+   * async function getNextPage(pageState: string | null) {
+   *   const cursor = collection.find({ status: 'active' })
+   *     .sort({ createdAt: -1 })
+   *     .initialPageState(pageState);
+   *
+   *   const nextPageState = await cursor.getPageState();
+   *   const results = cursor.consumeBuffer();
+   *
+   *   return { results, pageState: nextPageState };
+   * }
+   * ```
+   *
+   * @param initialPageState - The page state to resume from, or null to start from the beginning
+   *
+   * @returns A new cursor with the initial page state set
+   */
+  public initialPageState(initialPageState: string | null): this {
+    return buildFLCOption(this, 'initialPageState', initialPageState);
+  }
+
+  /**
+   * ##### Overview
+   *
    * Map all records using the provided mapping function. Previous mapping functions will be composed with the new
    * mapping function (new ∘ old).
    *
@@ -478,6 +514,14 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
     }
 
     return this._sortVector.unwrap();
+  }
+
+  public async getPageState(): Promise<string | null> {
+    if (this._nextPageState.state === QueryState.Unattempted) {
+      await this._next(true, '.getSortVector');
+    }
+
+    return this._nextPageState.unwrap();
   }
 
   /**

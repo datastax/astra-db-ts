@@ -60,6 +60,10 @@ export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'
    */
   includeSortVector?: boolean,
   /**
+   * Sets the starting page state for the cursor.
+   */
+  initialPageState?: string | null,
+  /**
    * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
    *
    * @deprecated - Use `sort: { $vector: [...] }` instead.
