@@ -55,7 +55,7 @@ import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
  * Represents an interface to some Data-API-enabled database instance. This is the entrypoint for database-level DML, such as
  * creating/deleting collections/tables, connecting to collections/tables, and executing arbitrary commands.
  *
- * > **⚠️Warning**: This shouldn't be instantiated directly; use {@link DataAPIClient.db} to spawn this class.
+ * > **⚠️Warning:** This shouldn't be instantiated directly; use {@link DataAPIClient.db} to spawn this class.
  *
  * Note that creating an instance of a `Db` doesn't trigger actual database creation; the database must have already
  * existed beforehand. If you need to create a new database, use the {@link AstraAdmin} class.
@@ -281,7 +281,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * The ID of the database (a UUID), if it's an Astra database.
    *
-   * > **⚠️Warning**: This only works for Astra databases, which are not connected to via a private endpoint.
+   * > **⚠️Warning:** This only works for Astra databases, which are not connected to via a private endpoint.
    *
    * @example
    * ```ts
@@ -304,7 +304,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   /**
    * The region of the database (e.g. `'us-east-1'`), if it's an Astra database.
    *
-   * > **⚠️Warning**: This only works for Astra databases, which are not connected to via a private endpoint.
+   * > **⚠️Warning:** This only works for Astra databases, which are not connected to via a private endpoint.
    *
    * @example
    * ```ts
@@ -402,7 +402,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * ##### Astra vs. non-Astra
    *
-   * > **⚠️Warning**: If using a non-Astra backend, the `environment` option **must** be set as it is on the `DataAPIClient`.
+   * > **⚠️Warning:** If using a non-Astra backend, the `environment` option **must** be set as it is on the `DataAPIClient`.
    *
    * If on Astra, this method will return a new {@link AstraDbAdmin} instance, which provides a few extra methods for Astra databases, such as {@link AstraDbAdmin.info} or {@link AstraDbAdmin.drop}.
    *
@@ -442,7 +442,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * ##### Astra vs. non-Astra
    *
-   * > **⚠️Warning**: If using a non-Astra backend, the `environment` option **must** be set as it is on the `DataAPIClient`.
+   * > **⚠️Warning:** If using a non-Astra backend, the `environment` option **must** be set as it is on the `DataAPIClient`.
    *
    * If on non-Astra, this method will return a new {@link DataAPIDbAdmin} instance, which conforms strictly to the {@link DbAdmin} interface, with the {@link DataAPIDbAdmin.createKeyspace} method being the only method that differs slightly from the interface version.
    *
@@ -478,9 +478,9 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * Fetches information about the database, such as the database name, region, and other metadata.
    *
-   * > **⚠️Warning**: This only works for Astra databases, which are not connected to via a private endpoint.
+   * > **⚠️Warning:** This only works for Astra databases, which are not connected to via a private endpoint.
    *
-   * > **✏️Note**: For the full, complete, information, use {@link AstraDbAdmin.info} or {@link AstraAdmin.dbInfo} instead.
+   * > **✏️Note:** For the full, complete, information, use {@link AstraDbAdmin.info} or {@link AstraAdmin.dbInfo} instead.
    *
    * The method issues a request to the DevOps API each time it is invoked, without caching mechanisms;
    * this ensures up-to-date information for usages such as real-time collection validation by the application.
@@ -533,7 +533,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * Establishes a reference to a collection in the database. This method does not perform any I/O.
    *
-   * > **⚠️Warning**: This method does _not_ verify the existence of the collection; it simply creates a reference.
+   * > **⚠️Warning:** This method does _not_ verify the existence of the collection; it simply creates a reference.
    *
    * @example
    * ```ts
@@ -557,7 +557,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * ##### No I/O
    *
-   * > **🚨Important**: Unlike the MongoDB Node.js driver, this method does not create a collection if it doesn't exist.
+   * > **🚨Important:** Unlike the MongoDB Node.js driver, this method does not create a collection if it doesn't exist.
    * >
    * > Use {@link Db.createCollection} to create a new collection instead.
    *
@@ -593,7 +593,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * Establishes a reference to a table in the database. This method does not perform any I/O.
    *
-   * > **⚠️Warning**: This method does _not_ verify the existence of the table; it simply creates a reference.
+   * > **⚠️Warning:** This method does _not_ verify the existence of the table; it simply creates a reference.
    *
    * @example
    * ```ts
@@ -617,7 +617,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * ##### No I/O
    *
-   * > **🚨Important**: This method does not create a table if it doesn't exist.
+   * > **🚨Important:** This method does not create a table if it doesn't exist.
    * >
    * > Use {@link Db.createTable} to create a new table.
    *
@@ -762,7 +762,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * Provide an explicit `Schema` type to disable this (i.e. `db.createTable<Tyoe>(...)`).
    *
-   * > **💡Tip**: You may use `db.createTable<SomeRow>(...)` to spawn an untyped table.
+   * > **💡Tip:** You may use `db.createTable<SomeRow>(...)` to spawn an untyped table.
    *
    * ---
    *
@@ -845,7 +845,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * This overload of `createTable` uses the provided `Schema` type to type the Table.
    *
-   * > **💡Tip**: It's recommended to allow TypeScript infer the type of the table from the provided `CreateTableDefinition` for you, via {@link InferTableSchema}. See its documentation for more information.
+   * > **💡Tip:** It's recommended to allow TypeScript infer the type of the table from the provided `CreateTableDefinition` for you, via {@link InferTableSchema}. See its documentation for more information.
    *
    * Don't provide a `Schema` type if you want to automagically infer it from the `CreateTableDefinition`.
    *
@@ -1032,7 +1032,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * ##### Name uniqueness
    *
-   * > **🚨Important**: The name of the index is unique per keyspace.
+   * > **🚨Important:** The name of the index is unique per keyspace.
    *
    * _This is why this is a database-level command: to make it clear that the index is being dropped from the keyspace, and not a specific table._
    *

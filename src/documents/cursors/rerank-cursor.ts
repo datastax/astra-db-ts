@@ -112,13 +112,13 @@ export class RerankedResult<TRaw> {
  *
  * A lazy iterator over the results of some generic `findAndRerank` operation on the Data API.
  *
- * > **⚠️Warning**: Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}.
+ * > **⚠️Warning:** Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}.
  *
  * ---
  *
  * ##### Typing
  *
- * > **🚨Important:** For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.
+ * > **✏️Note:** You may generally treat the cursor as if it were typed as `FindAndRerankCursor<T>`.
  * >
  * > If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.
  *
@@ -137,10 +137,10 @@ export class RerankedResult<TRaw> {
  * with the new option(s) set.
  *
  * @example
- * ```typescript
+ * ```ts
  * const collection = db.collection('hybrid_coll');
  *
- * const cursor: Cursor<Person> = collection.findAndRerank({}, {
+ * const cursor = collection.findAndRerank({}, {
  *   sort: { $hybrid: 'what is a car?' },
  *   includeScores: true,
  * });
@@ -233,7 +233,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Sets the filter for the cursor, overwriting any previous filter.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new filter set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `filter`.
    *
    * @example
    * ```ts
@@ -244,7 +244,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   .filter({ name: 'John' });
    *
    * // The cursor will only return records with the name 'John'
-   * const john = await cursor.next();
+   * const { document: john } = await cursor.next();
    * john.name === 'John'; // true
    * ```
    *
@@ -261,9 +261,9 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Sets the sort criteria for prioritizing records.
    *
-   * This option **must** be set, and **must** contain a `$hybrid` key.
+   * > **🚨Important:** This option **must** be set, and **must** contain a `$hybrid` key.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new sort set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `sort`.
    *
    * ---
    *
@@ -287,11 +287,11 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   { name: 'Jane', age: 25, $vectorize: 'a young girl', $lexical: 'a young girl' },
    * ]);
    *
-   * const cursor = collection.find({})
+   * const cursor = collection.findAndRerank({})
    *   .sort({ $hybrid: 'old man' });
    *
    * // The cursor will return records sorted by the hybrid query
-   * const oldest = await cursor.next();
+   * const { document: oldest } = await cursor.next();
    * oldest.nane === 'John'; // true
    * ```
    *
@@ -310,7 +310,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * If `limit == 0`, there will be **no limit** on the number of records returned (beyond any that the Data API may itself enforce).
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new limit set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `limit`.
    *
    * @example
    * ```ts
@@ -319,7 +319,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   { name: 'Jane', age: 25, $vectorize: 'a young girl', $lexical: 'a young girl' },
    * ]);
    *
-   * const cursor = collection.find({})
+   * const cursor = collection.findAndRerank({})
    *   .sort({ $hybrid: 'old man' })
    *   .limit(1);
    *
@@ -341,7 +341,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Sets the maximum number of records to consider from the underlying vector and lexical searches.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new limit set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `limit`.
    *
    * ---
    *
@@ -363,7 +363,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   { name: 'Jane', age: 25, $vectorize: 'a young girl', $lexical: 'a young girl' },
    * ]);
    *
-   * const cursor = collection.find({})
+   * const cursor = collection.findAndRerank({})
    *   .sort({ $hybrid: 'old man' })
    *   .hybridLimits(1);
    *
@@ -387,7 +387,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Optional if you query through the `$vectorize` field instead of the `$vector` field; otherwise required.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new setting.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `rerankOn`.
    *
    * ---
    *
@@ -428,7 +428,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Optional if you query through the `$vectorize` field instead of the `$vector` field; otherwise required.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new setting.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `rerankQuery`.
    *
    * ---
    *
@@ -465,7 +465,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * If this is not set, then the `scores` will be an empty object for each document.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new setting.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with new score settings.
    *
    * @example
    * ```ts
@@ -490,12 +490,13 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   /**
    * ##### Overview
    *
-   * Sets whether the sort vector should be fetched on the very first API call. Note that this is a requirement
+   * Sets whether the sort vector should be fetched on the very first API call.
+   *
+   * Note that this is a requirement
    * to use {@link FindAndRerankCursor.getSortVector}—it'll unconditionally return `null` if this is not set to `true`.
-   * - This is only applicable when using vector search, and will be ignored if the cursor is not using vector search.
    * - See {@link FindAndRerankCursor.getSortVector} to see exactly what is returned when this is set to `true`.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new setting.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new sort vector settings.
    *
    * @example
    * ```ts
@@ -518,26 +519,25 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   }
 
   /**
+   * ##### Overview
+   *
    * Sets the projection for the cursor, overwriting any previous projection.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply
-   * returns a new, uninitialized cursor with the given new projection set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new projection.
    *
-   * **To properly type this method, you should provide a type argument to specify the shape of the projected
-   * records.**
+   * > **🚨Important:** To properly type this method, you should provide a type argument to specify the shape of the projected
+   * records.
    *
-   * **Note that you may NOT provide a projection after a mapping is already provided, to prevent potential
-   * de-sync errors.** If you really want to do so, you may use {@link FindAndRerankCursor.clone} to create a new cursor
-   * with the same configuration, but without the mapping, and then set the projection.
+   * > **⚠️Warning:** You may *NOT* provide a projection after a mapping is already provided, to prevent potential type de-sync errors.
    *
    * @example
-   * ```typescript
+   * ```ts
    * const cursor = table.findAndRerank({ name: 'John' }).sort(...);
    *
-   * // T is `any` because the type is not specified
+   * // T is `RerankedResult<Partial<Schema>>` because the type is not specified
    * const rawProjected = cursor.project({ id: 0, name: 1 });
    *
-   * // T is { name: string }
+   * // T is `RerankedResult<{ name: string }>`
    * const projected = cursor.project<{ name: string }>({ id: 0, name: 1 });
    *
    * // You can also chain instead of using intermediate variables
@@ -545,13 +545,8 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   .findAndRerank({ name: 'John' })
    *   .sort(...)
    *   .project<{ name: string }>({ id: 0, name: 1 });
-   *
-   * // It's important to keep mapping in mind
-   * const mapProjected = table
-   *   .findAndRerank({ name: 'John' })
-   *   .sort(...)
-   *   .map(doc => doc.name);
-   *   .project<string>({ id: 0, name: 1 });
+   *   .map(res => res.document)
+   *   .map(row => row.name);
    * ```
    *
    * @param projection - Specifies which fields should be included/excluded in the returned records.
@@ -568,16 +563,16 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * Map all records using the provided mapping function. Previous mapping functions will be composed with the new
    * mapping function (new ∘ old).
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new projection set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new mapping function applied.
    *
-   * **You may NOT set a projection after a mapping is already provided, to prevent potential de-sync errors.**
+   * > **⚠️Warning:** You may *NOT* provide a projection after a mapping is already provided, to prevent potential type de-sync errors.
    *
    * @example
    * ```ts
    * const cursor = table.findAndRerank({});
    *   .sort({ $hybrid: 'old man' })
    *   .map(res => res.document);
-   *   .map(doc => doc.name.toLowerCase());
+   *   .map(row => row.name.toLowerCase());
    *
    * // T is `string` because the mapping function returns a string
    * const name = await cursor.next();
@@ -597,25 +592,42 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Retrieves the vector used to perform the vector search, if applicable.
    *
-   * - If `includeSortVector` is not `true`, this will unconditionally return `null`. No find request will be made.
+   * > **🚨Important:** This will only return a non-null value if {@link FindAndRerankCursor.includeSortVector} is set.
    *
-   * - If `sort: { $hybrid: { $vector } }` was used, `getSortVector()` will simply regurgitate that same `$vector`.
+   * @example
+   * ```ts
+   * // Using $vector
+   * const vector = new DataAPIVector([0.1, 0.2, 0.3]);
+   * const cursor = collection.findAndRerank({})
+   *   .sort({ $hybrid: { $vector: vector, ... } })
+   *   .includeSortVector();
    *
-   * - If `sort: { $hybrid: { $vectorize } }` was used, `getSortVector()` will return the `$vector` that was created from the text.
+   * const sortVector = await cursor.getSortVector();
+   * // Returns the same vector used in the sort
    *
-   * - If vector search is not used, `getSortVector()` will simply return `null`. A find request will still be made.
+   * // Using $vectorize
+   * const cursor = collection.findAndRerank({})
+   *   .sort({ $hybrid: { $vectorize: 'some text', ... } })
+   *   .includeSortVector();
    *
-   * If `includeSortVector` is `true`, and this function is called before any other cursor operation (such as
-   * `.next()` or `.toArray()`), it'll make an API request to fetch the sort vector, filling the cursor's buffer
-   * in the process.
+   * const sortVector = await cursor.getSortVector();
+   * // Returns the vector generated from the text
+   * ```
    *
-   * If the cursor has already been executed before this function has been called, no additional API request
-   * will be made to fetch the sort vector, as it has already been cached.
+   * ---
    *
-   * But to reiterate, if `includeSortVector` is `false`, and this function is called, no API request is made, and
-   * the cursor's buffer is not populated; it simply returns `null`.
+   * ##### Method Behavior
    *
-   * @returns The sort vector, or `null` if none was used (or if `includeSortVector !== true`).
+   * This method will:
+   * - Return `null` if `includeSortVector` was not set to `true`
+   * - Return the original vector if `sort: { $hybrid: { $vector } }` was used
+   * - Return the generated vector if `sort: { $hybrid: { $vectorize } }` was used
+   *
+   * If this method is called before the cursor has been executed, it will make an API request to fetch the sort vector and also populate the cursor's buffer.
+   *
+   * If the cursor has already been executed, the sort vector will have already been cached, so no additional request will be made.
+   *
+   * @returns The sort vector used to perform the vector search, or `null` if not applicable.
    */
   public async getSortVector(): Promise<DataAPIVector | null> {
     if (this._sortVector.state === QueryState.Unattempted && this._options.includeSortVector) {
@@ -624,13 +636,44 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
 
     return this._sortVector.unwrap();
   }
-
+  
   /**
    * ##### Overview
    *
-   * Creates, a new, uninitialized copy of this cursor with the exact same options and mapping.
+   * Creates a new cursor with the exact same configuration as the current cursor.
    *
-   * See {@link FindAndRerankCursor.rewind} for resetting the same instance of the cursor.
+   * The new cursor will be in the `'idle'` state, regardless of the state of the current cursor, and will start its own iteration from the beginning, sending new queries to the server, even if the resultant data was already fetched by the original cursor.
+   *
+   * @example
+   * ```ts
+   * const cursor = collection.findAndRerank({ age: { $gt: 30 } })
+   *   .sort({ $hybrid: 'old man' });
+   *
+   * // Clone the cursor before use
+   * const clone1 = cursor.clone();
+   * const clone2 = cursor.clone();
+   *
+   * // Each cursor operates independently
+   * const firstResult = await clone1.toArray();
+   * const firstTwoRecords = await clone2.next();
+   *
+   * // Original cursor is still usable
+   * for await (const doc of cursor) {
+   *   console.log(doc);
+   * }
+   * ```
+   *
+   * ---
+   *
+   * ##### Cloning vs Rewinding
+   *
+   * Cloning a cursor is different from rewinding it. Cloning creates an independent new cursor with the same configuration as the original, while rewinding resets the current cursor to its initial state.
+   *
+   * See {@link FindAndRerankCursor.rewind} for more information on rewinding.
+   *
+   * @returns A new cursor with the same configuration as the current cursor.
+   *
+   * @see FindAndRerankCursor.rewind
    */
   public override clone(): this {
     return cloneFLC(this, this._filter, this._options, this._mapping);

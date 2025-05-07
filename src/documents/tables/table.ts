@@ -61,7 +61,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * Represents the interface to a table in a Data-API-enabled database.
  *
- * > **⚠️Warning**: This isn't directly instantiated, but spawned via {@link Db.createTable} or {@link Db.table}.
+ * > **⚠️Warning:** This isn't directly instantiated, but spawned via {@link Db.createTable} or {@link Db.table}.
  *
  * @example
  * ```ts
@@ -1217,7 +1217,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomePKey = Partial<Foun
    *
    * ##### Disclaimer 🚨
    *
-   * > **🚨Important**: Once the table is dropped, this object is still technically "usable", but any further operations on it will fail at the Data API level; thus, it's the user's responsibility to make sure that the {@link Table} object is no longer used.
+   * > **🚨Important:** Once the table is dropped, this object is still technically "usable", but any further operations on it will fail at the Data API level; thus, it's the user's responsibility to make sure that the {@link Table} object is no longer used.
    *
    * @param options - The options for this operation.
    *

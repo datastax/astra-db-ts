@@ -80,7 +80,7 @@ const jbi = JBI;
  *
  * Represents the interface to a collection in a Data-API-enabled database.
  *
- * > **⚠️Warning**: This isn't directly instantiated, but spawned via {@link Db.createCollection} or {@link Db.collection}.
+ * > **⚠️Warning:** This isn't directly instantiated, but spawned via {@link Db.createCollection} or {@link Db.collection}.
  *
  * @example
  * ```ts
@@ -1547,7 +1547,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * ##### Disclaimer 🚨
    *
-   * > **🚨Important**: Once the collection is dropped, this object is still technically "usable", but any further operations on it will fail at the Data API level; thus, it's the user's responsibility to make sure that the {@link Collection} object is no longer used.
+   * > **🚨Important:** Once the collection is dropped, this object is still technically "usable", but any further operations on it will fail at the Data API level; thus, it's the user's responsibility to make sure that the {@link Collection} object is no longer used.
    *
    * @param options - The options for this operation.
    *
