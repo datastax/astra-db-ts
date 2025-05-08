@@ -196,6 +196,45 @@ export const unitTestRerankCursor = ({ CursorImpl, parent, ...cfg }: FindCursorT
       });
     });
 
+    describe('initialPageState', () => {
+      it('should create a new cursor with the initial page state set if a string', () => {
+        fc.assert(
+          fc.property(fc.string(), arbs.record(fc.anything()), (pageState, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.initialPageState(pageState))
+              .assertDelta({ _currentPage: { nextPageState: pageState, result: [] } });
+          }),
+        );
+      });
+
+      it('should create a new cursor with the initial page state unset if undefined', () => {
+        fc.assert(
+          fc.property(fc.string(), arbs.record(fc.anything()), (garbagePageState, oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+            cursor['_currentPage'] = { nextPageState: 'some-page-state', result: [] };
+
+            CursorDeltaAsserter
+              .captureImmutDelta(cursor, () => cursor.initialPageState(garbagePageState).initialPageState(undefined))
+              .assertDelta({ _currentPage: undefined });
+          }),
+        );
+      });
+
+      it('should error if initialPageState is null', () => {
+        fc.assert(
+          fc.property(arbs.record(fc.anything()), (oldOptions) => {
+            const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
+
+            assert.throws(() => cursor.initialPageState(null!), (e) => {
+              return e instanceof CursorError && e.message.includes('Cannot set an initial page state to `null`');
+            });
+          }),
+        );
+      });
+    });
+
     describe('map', () => {
       it('should create a new cursor by composing mappings', () => {
         const cursor = new CursorImpl(parent, null!, [{}, false]);

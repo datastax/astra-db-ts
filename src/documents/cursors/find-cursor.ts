@@ -169,9 +169,10 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @internal
    */
-  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T, initialPage?: FindPage<TRaw>) {
     super(options ?? {}, mapping);
     this._internal = new FLCInternal(this, parent, serdes, filter, options);
+    this._currentPage = initialPage;
   }
 
   /**
@@ -582,7 +583,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @see FindCursor.rewind
    */
   public override clone(): this {
-    return this._internal.cloneFLC();
+    return this._internal.freshClone();
   }
 
   /**

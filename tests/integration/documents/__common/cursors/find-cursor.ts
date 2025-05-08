@@ -550,6 +550,44 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
       });
     });
 
+    parallel('explicit page state tests', () => {
+      it('should allow manual driving of pagination', async () => {
+        const reference = await source_.find({}).toArray();
+        const actual = [];
+
+        let pageState = undefined;
+
+        while (pageState !== null) {
+          const page = await source_.find({}).initialPageState(pageState).fetchNextPage();
+          actual.push(...page.result);
+          pageState = page.nextPageState;
+        }
+
+        assert.deepStrictEqual(actual.sort(), reference.sort());
+      });
+
+      it('should allow manual driving of pagination with a mapping', async () => {
+        const reference = await source_.find({}).map(d => d.int).map(i => i + 5).toArray();
+        const actual = [];
+
+        let pageState = undefined;
+
+        while (pageState !== null) {
+          const page = await source_.find({}).initialPageState(pageState).map(d => d.int).map(i => i + 5).fetchNextPage();
+          actual.push(...page.result);
+          pageState = page.nextPageState;
+        }
+
+        assert.deepStrictEqual(actual.sort(), reference.sort());
+      });
+
+      it('should error if the buffer is not empty when trying to fetch the next page', async () => {
+        const cursor = source_.find({});
+        await cursor.next();
+        await assert.rejects(() => cursor.fetchNextPage(), (e) => e instanceof CursorError && e.message === 'Cannot fetch next page when the current page (the buffer) is not empty');
+      });
+    });
+
     parallel('lifecycle tests', () => {
       it('should allow rewound cursor to re-fetch all data', async () => {
         const cursor = source.find({}).map(intToString);

@@ -68,6 +68,7 @@ interface CloneFLCOptions<Opts extends FLCOptions> {
   filter?: SerializedFilter,
   options?: Opts,
   mapping?: (doc: SomeDoc) => unknown,
+  initialPage?: FLCPage<SomeDoc>,
 }
 
 /**
@@ -103,14 +104,14 @@ export class FLCInternal<TRaw extends SomeDoc, Page extends FLCPage<TRaw>, Opts 
     if (this._instance.state !== 'idle') {
       throw new CursorError(`Cannot set a new filter on a running/closed cursor`, this._instance);
     }
-    return this.cloneFLC({ filter: filter && this._serdes.serialize(filter, SerDesTarget.Filter) });
+    return this._cloneFLC({ filter: filter && this._serdes.serialize(filter, SerDesTarget.Filter) });
   }
 
   public withSort<RC extends FindLikeCursor>(sort?: Sort | HybridSort): RC {
     if (this._instance.state !== 'idle') {
       throw new CursorError(`Cannot set a new sort on a running/closed cursor`, this._instance);
     }
-    return this.cloneFLC({ options: { ...this._options, sort: sort && this._serdes.serialize(sort, SerDesTarget.Sort)[0] } });
+    return this._cloneFLC({ options: { ...this._options, sort: sort && this._serdes.serialize(sort, SerDesTarget.Sort)[0] } });
   }
 
   public withMap<RC extends FindLikeCursor>(map: (doc: any) => unknown): RC {
@@ -122,7 +123,7 @@ export class FLCInternal<TRaw extends SomeDoc, Page extends FLCPage<TRaw>, Opts 
       ? (doc: SomeDoc) => map(this._instance._mapping!(doc))
       : map;
 
-    return this.cloneFLC({ mapping });
+    return this._cloneFLC({ mapping });
   }
 
   public withInitialPageState<RC extends FindLikeCursor>(pageState?: string): RC {
@@ -134,20 +135,18 @@ export class FLCInternal<TRaw extends SomeDoc, Page extends FLCPage<TRaw>, Opts 
       throw new CursorError('Cannot set an initial page state to `null`. If you want an unset page state, set it to `undefined` instead.', this._instance);
     }
 
-    const clone = this.cloneFLC<RC>();
-
-    clone._currentPage = (pageState)
+    const initialPage = (pageState !== undefined)
       ? { nextPageState: pageState, result: [] }
       : undefined;
 
-    return clone;
+    return this._cloneFLC<RC>({ initialPage });
   }
 
   public withOption<RC extends FindLikeCursor, K extends keyof Opts & string>(key: K, value: Opts[K]): RC {
     if (this._instance.state !== 'idle') {
       throw new CursorError(`Cannot set a new ${key} on a running/closed cursor`, this._instance);
     }
-    return this.cloneFLC({ options: { ...this._options, [key]: value } });
+    return this._cloneFLC({ options: { ...this._options, [key]: value } });
   }
 
   public withPreMapOption<RC extends FindLikeCursor, K extends keyof Opts & string>(key: K, value: Opts[K]): RC {
@@ -157,8 +156,12 @@ export class FLCInternal<TRaw extends SomeDoc, Page extends FLCPage<TRaw>, Opts 
     return this.withOption(key, value);
   }
 
-  public cloneFLC<RC extends FindLikeCursor>(update?: CloneFLCOptions<Opts>): RC {
-    return new (<FLCConstructor<RC>>this._instance.constructor)(this._parent, this._serdes, update?.filter ?? this._filter, update?.options ?? this._options as any, update?.mapping ?? this._instance._mapping);
+  public freshClone<RC extends FindLikeCursor>(): RC {
+    return this._cloneFLC<RC>({ initialPage: undefined });
+  }
+
+  private _cloneFLC<RC extends FindLikeCursor>(update?: CloneFLCOptions<Opts>): RC {
+    return new (<FLCConstructor<RC>>this._instance.constructor)(this._parent, this._serdes, update?.filter ?? this._filter, update?.options ?? this._options as any, update?.mapping ?? this._instance._mapping, (update && 'initialPage' in update) ? update.initialPage : this._instance._currentPage);
   }
 
   public async getSortVector(): Promise<DataAPIVector | null> {
@@ -170,7 +173,7 @@ export class FLCInternal<TRaw extends SomeDoc, Page extends FLCPage<TRaw>, Opts 
 
   public async fetchNextPageMapped<T, TPage extends FLCPage<T>>(opts: FLCNextPageOptions<Opts>): Promise<TPage> {
     if (this._instance._currentPage && this._instance._currentPage.result.length !== 0) {
-      throw new CursorError('Cannot fetch next page when the current page is not empty', this._instance);
+      throw new CursorError('Cannot fetch next page when the current page (the buffer) is not empty', this._instance);
     }
 
     const nextPage = (await this.fetchNextPageRaw({ method: '.fetchNextPage' }, undefined, opts))[0];

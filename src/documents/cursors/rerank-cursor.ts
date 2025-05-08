@@ -194,9 +194,10 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * @internal
    */
-  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T) {
+  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T, initialPage?: FindAndRerankPage<RerankedResult<TRaw>>) {
     super(options ?? {}, mapping);
     this._internal = new FLCInternal(this, parent, serdes, filter, options);
+    this._currentPage = initialPage;
   }
 
   /**
@@ -695,7 +696,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @see FindAndRerankCursor.rewind
    */
   public override clone(): this {
-    return this._internal.cloneFLC();
+    return this._internal.freshClone();
   }
 
   /**
