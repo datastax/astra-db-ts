@@ -24,23 +24,18 @@ import type {
   Table,
   WithSim,
 } from '@/src/documents/index.js';
-import { vector } from '@/src/documents/datatypes/vector.js';
 import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
-import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
-import { QueryState } from '@/src/lib/utils.js';
-import type { SerializedFilter } from '@/src/documents/cursors/common.js';
-import {
-  buildFLCFilter,
-  buildFLCMap,
-  buildFLCOption,
-  buildFLCPreMapOption,
-  buildFLCSort,
-  cloneFLC,
-} from '@/src/documents/cursors/common.js';
+import type { SerializedFilter } from '@/src/documents/cursors/flc-internal.js';
+import { FLCInternal } from '@/src/documents/cursors/flc-internal.js';
+
+export interface FindPage<T> {
+  nextPageState: string | null,
+  result: T[],
+  sortVector?: DataAPIVector,
+}
 
 /**
  * ##### Overview
@@ -114,32 +109,12 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   /**
    * @internal
    */
-  private readonly _httpClient: DataAPIHttpClient;
+  declare _currentPage?: FindPage<TRaw>;
 
   /**
    * @internal
    */
-  readonly _serdes: SerDes;
-
-  /**
-   * @internal
-   */
-  readonly _parent: Table<SomeRow> | Collection;
-
-  /**
-   * @internal
-   */
-  declare readonly _options: GenericFindOptions;
-
-  /**
-   * @internal
-   */
-  readonly _filter: SerializedFilter;
-
-  /**
-   * @internal
-   */
-  private _sortVector = new QueryState<DataAPIVector>();
+  readonly _internal: FLCInternal<TRaw, FindPage<TRaw>, GenericFindOptions>;
 
   /**
    * Should not be instantiated directly.
@@ -148,10 +123,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    */
   public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     super(options ?? {}, mapping);
-    this._parent = parent;
-    this._httpClient = parent._httpClient;
-    this._serdes = serdes;
-    this._filter = filter;
+    this._internal = new FLCInternal(this, parent, serdes, filter, options);
   }
 
   /**
@@ -160,7 +132,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @internal
    */
   public [$CustomInspect](): string {
-    return `${this.constructor.name}(source="${this._parent.keyspace}.${this._parent.name}",state="${this._state}",consumed=${this.consumed()},buffered=${this.buffered()})`;
+    return `${this.constructor.name}(source="${this.dataSource.keyspace}.${this.dataSource.name}",state="${this._state}",consumed=${this.consumed()},buffered=${this.buffered()})`;
   }
 
   /**
@@ -207,7 +179,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new filter set.
    */
   public filter(filter: Filter): this {
-    return buildFLCFilter(this, filter);
+    return this._internal.withFilter(filter);
   }
 
   /**
@@ -237,7 +209,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new sort set.
    */
   public sort(sort: Sort): this {
-    return buildFLCSort(this, sort);
+    return this._internal.withSort(sort);
   }
 
   /**
@@ -269,7 +241,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): this {
-    return buildFLCOption(this, 'limit', limit || undefined);
+    return this._internal.withOption('limit', limit || undefined);
   }
 
   /**
@@ -300,7 +272,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new skip set.
    */
   public skip(skip: number): this {
-    return buildFLCOption(this, 'skip', skip);
+    return this._internal.withOption('skip', skip);
   }
 
   /**
@@ -332,7 +304,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new sort vector inclusion setting.
    */
   public includeSortVector(includeSortVector?: boolean): this {
-    return buildFLCOption(this, 'includeSortVector', includeSortVector ?? true);
+    return this._internal.withOption('includeSortVector', includeSortVector ?? true);
   }
 
   /**
@@ -369,7 +341,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new projection set.
    */
   public project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw> {
-    return buildFLCPreMapOption(this, 'projection', structuredClone(projection));
+    return this._internal.withPreMapOption('projection', structuredClone(projection));
   }
 
   /**
@@ -397,7 +369,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new similarity setting.
    */
   public includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>> {
-    return buildFLCPreMapOption(this, 'includeSimilarity', includeSimilarity ?? true);
+    return this._internal.withPreMapOption('includeSimilarity', includeSimilarity ?? true);
   }
 
   /**
@@ -433,7 +405,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the initial page state set
    */
   public initialPageState(initialPageState: string | null): this {
-    return buildFLCOption(this, 'initialPageState', initialPageState);
+    return this._internal.withOption('initialPageState', initialPageState);
   }
 
   /**
@@ -462,7 +434,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new mapping set.
    */
   public map<R>(map: (doc: T) => R): FindCursor<R, TRaw> {
-    return buildFLCMap(this, map);
+    return this._internal.withMap(map);
   }
 
   /**
@@ -509,19 +481,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns The sort vector used to perform the vector search, or `null` if not applicable.
    */
   public async getSortVector(): Promise<DataAPIVector | null> {
-    if (this._sortVector.state === QueryState.Unattempted && this._options.includeSortVector) {
-      await this._next(true, '.getSortVector');
-    }
-
-    return this._sortVector.unwrap();
-  }
-
-  public async getPageState(): Promise<string | null> {
-    if (this._nextPageState.state === QueryState.Unattempted) {
-      await this._next(true, '.getSortVector');
-    }
-
-    return this._nextPageState.unwrap();
+    return this._internal.getSortVector();
   }
 
   /**
@@ -562,54 +522,37 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @see FindCursor.rewind
    */
   public override clone(): this {
-    return cloneFLC(this, this._filter, this._options, this._mapping);
+    return this._internal.cloneFLC();
   }
 
   /**
    * @internal
    */
-  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]> {
-    const command = {
-      find: {
-        filter: this._filter[0],
-        projection: this._options.projection,
-        sort: this._options.sort,
-        options: {
-          includeSimilarity: this._options.includeSimilarity,
-          includeSortVector: this._options.includeSortVector,
-          limit: this._options.limit,
-          skip: this._options.skip,
-          pageState: this._nextPageState.unwrap(),
-        },
-      },
-    };
+  private static InternalNextPageOptions = <const>{
+    commandName: 'find',
+    commandOptions: ['limit', 'skip', 'includeSortVector', 'includeSimilarity'],
+    mapPage: <TRaw extends SomeDoc>(page: FindPage<SomeDoc>) => ({
+      sortVector: page.sortVector,
+      nextPageState: page.nextPageState,
+      result: page.result as TRaw[],
+    }),
+  };
 
-    const raw = await this._httpClient.executeCommand(command, {
-      timeoutManager: tm ?? this._httpClient.tm.single('generalMethodTimeoutMs', this._options),
-      bigNumsPresent: this._filter[1],
-      extraLogInfo: extra,
-    });
+  public async fetchNextPage(): Promise<FindPage<T>> {
+    return this._internal.fetchNextPageMapped(FindCursor.InternalNextPageOptions);
+  }
 
-    this._nextPageState.swap(raw.data?.nextPageState);
-
-    /* c8 ignore next: don't think it's possible for documents to be nullish, but just in case */
-    const buffer = raw.data?.documents ?? [];
-
-    for (let i = 0, n = buffer.length; i < n; i++) {
-      buffer[i] = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
-    }
-
-    const sortVector = raw.status?.sortVector;
-    this._sortVector.swap(sortVector ? vector(sortVector) : sortVector);
-    this._options.includeSortVector = false;
-
-    return buffer;
+  /**
+   * @internal
+   */
+  protected async _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[FindPage<TRaw>, boolean]> {
+    return this._internal.fetchNextPageRaw(extra, tm, FindCursor.InternalNextPageOptions);
   }
 
   /**
    * @internal
    */
   protected _tm(): Timeouts {
-    return this._httpClient.tm;
+    return this._internal._httpClient.tm;
   }
 }

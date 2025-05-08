@@ -26,12 +26,11 @@ import type {
   TableFindCursor,
 } from '@/src/documents/index.js';
 import fc from 'fast-check';
-import { QueryState } from '@/src/lib/utils.js';
 import { DeltaAsserter, untouchable } from '@/tests/testlib/utils.js';
 import type { LitUnion } from '@/src/lib/index.js';
 import { arbs } from '@/tests/testlib/arbitraries.js';
 
-export const AbstractCursorDeltaAsserter = new DeltaAsserter(['_buffer', '_consumed', '_nextPageState', '_state', '_mapping', '_options']);
+export const AbstractCursorDeltaAsserter = new DeltaAsserter(['_consumed', '_currentPage', '_isNextPage', '_state', '_mapping', '_timeoutOptions']);
 
 type DeltaAsserterFields = LitUnion<typeof AbstractCursorDeltaAsserter extends DeltaAsserter<infer Fs> ? Fs : never>;
 
@@ -65,11 +64,11 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
         assert.strictEqual(cursor.buffered(), 0);
       });
 
-      it('should return the length of cursor._buffer', () => {
+      it('should return the length of cursor._currentPage.result', () => {
         fc.assert(
           fc.property(fc.nat(), (count) => {
             const cursor = new CursorImpl(parent, null!, [{}, false]);
-            cursor['_buffer'] = Array(count);
+            cursor['_currentPage'] = { nextPageState: null, result: Array(count) };
             assert.strictEqual(cursor.buffered(), count);
           }),
         );
@@ -98,7 +97,7 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
         fc.assert(
           fc.property(fc.array(fc.anything()), (buffer) => {
             const cursor = new CursorImpl(parent, null!, [{}, false]);
-            cursor['_buffer'] = [...buffer] as SomeDoc[];
+            cursor['_currentPage'] = { nextPageState: null, result: [...buffer] as SomeDoc[] };
 
             assert.strictEqual(cursor.consumed(), 0);
             assert.strictEqual(cursor.buffered(), buffer.length);
@@ -110,7 +109,7 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
               })
               .assertDelta({
                 _consumed: buffer.length,
-                _buffer: [],
+                _currentPage: { nextPageState: null, result: [] },
               });
 
             assert.strictEqual(cursor.consumed(), buffer.length);
@@ -123,7 +122,7 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
         fc.assert(
           fc.property(fc.array(fc.anything()), fc.nat(), (buffer, max) => {
             const cursor = new CursorImpl(parent, null!, [{}, false]);
-            cursor['_buffer'] = [...buffer] as SomeDoc[];
+            cursor['_currentPage'] = { nextPageState: null, result: [...buffer] as SomeDoc[] };
 
             assert.strictEqual(cursor.consumed(), 0);
             assert.strictEqual(cursor.buffered(), buffer.length);
@@ -137,7 +136,7 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
               })
               .assertDelta({
                 _consumed: expectedConsumed,
-                _buffer: buffer.slice(expectedConsumed),
+                _currentPage: { nextPageState: null, result: buffer.slice(expectedConsumed) },
               });
 
             assert.strictEqual(cursor.consumed(), expectedConsumed);
@@ -150,7 +149,7 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
         fc.assert(
           fc.property(fc.array(fc.anything()), (buffer) => {
             const cursor = new CursorImpl(parent, null!, [{}, false]).map(() => untouchable());
-            cursor['_buffer'] = [...buffer] as SomeDoc[];
+            cursor['_currentPage'] = { nextPageState: null, result: [...buffer] as SomeDoc[] };
             const consumed = cursor.consumeBuffer();
             assert.deepStrictEqual(consumed, buffer);
           }),
@@ -159,14 +158,14 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
     });
 
     describe('rewind', () => {
-      it('should reset the state, buffer, consumed, and nextPageState', () => {
+      it('should reset the state, consumed count, currentPage, and isNextPage', () => {
         fc.assert(
           fc.property(fc.array(fc.anything()), fc.integer(), fc.option(fc.string()), fc.constantFrom('idle', 'started', 'closed'), (buffer, consumed, qs, state) => {
             const cursor = new CursorImpl(parent, null!, [{}, false]);
-            cursor['_buffer'] = [...buffer] as SomeDoc[];
+            cursor['_currentPage'] = { nextPageState: qs, result: [...buffer] as SomeDoc[] };
             cursor['_consumed'] = consumed;
-            cursor['_nextPageState'] = new QueryState<string>().swap(qs);
             cursor['_state'] = state;
+            cursor['_isNextPage'] = false;
 
             assert.strictEqual(cursor.state, state);
             assert.strictEqual(cursor.buffered(), buffer.length);
@@ -178,9 +177,9 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
               })
               .assertDelta({
                 _state: 'idle',
-                _buffer: [],
                 _consumed: 0,
-                _nextPageState: new QueryState(),
+                _currentPage: undefined,
+                _isNextPage: true,
               });
 
             assert.strictEqual(cursor.state, 'idle');
@@ -215,7 +214,7 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
         fc.assert(
           fc.property(fc.array(fc.anything()), fc.integer(), (buffer, consumed) => {
             const cursor = new CursorImpl(parent, null!, [{}, false]);
-            cursor['_buffer'] = [...buffer] as SomeDoc[];
+            cursor['_currentPage'] = { nextPageState: null, result: [...buffer] as SomeDoc[] };
             cursor['_consumed'] = consumed;
 
             assert.strictEqual(cursor.buffered(), buffer.length);
@@ -226,8 +225,8 @@ export const unitTestAbstractCursor = ({ CursorImpl, parent, DeltaAsserter }: Ab
                 cursor.close();
               })
               .assertDelta({
-                _buffer: [],
                 _state: 'closed',
+                _currentPage: undefined,
               });
 
             assert.strictEqual(cursor.buffered(), 0);

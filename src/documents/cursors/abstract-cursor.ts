@@ -13,48 +13,8 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/index.js';
-import { DataAPIError } from '@/src/documents/errors.js';
 import type { TimeoutManager, Timeouts, WithTimeout } from '@/src/lib/api/timeouts/timeouts.js';
-import { QueryState } from '@/src/lib/utils.js';
-
-/**
- * ##### Overview
- *
- * A generic exception that may be thrown whenever something non-request-related goes wrong with a cursor.
- *
- * Errors like {@link DataAPIResponseError}s and {@link DataAPITimeoutError}s which occur during a request of the cursor will still be thrown directly.
- *
- * This error is intended for errors more-so related to validation & the cursor's lifecycle.
- *
- * @see AbstractCursor
- * @see FindCursor
- * @see FindAndRerankCursor
- *
- * @public
- */
-export class CursorError extends DataAPIError {
-  /**
-   * The underlying cursor which caused this error.
-   */
-  public readonly cursor: AbstractCursor<unknown>;
-
-  /**
-   * The status of the cursor when the error occurred.
-   */
-  public readonly state: CursorState;
-
-  /**
-   * Should not be instantiated directly.
-   *
-   * @internal
-   */
-  constructor(message: string, cursor: AbstractCursor<unknown>) {
-    super(message);
-    this.name = 'CursorError';
-    this.cursor = cursor;
-    this.state = cursor.state;
-  }
-}
+import { CursorError } from '@/src/documents/cursors/cursor-error.js';
 
 /**
  * ##### Overview
@@ -119,17 +79,17 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal
    */
-  private _buffer: TRaw[] = [];
-
-  /**
-   * @internal
-   */
   protected _state: CursorState = 'idle';
 
   /**
    * @internal
    */
-  protected _nextPageState = new QueryState<string>();
+  protected _currentPage?: { result: TRaw[] };
+
+  /**
+   * @internal
+   */
+  private _isNextPage = true;
 
   /**
    * @internal
@@ -139,7 +99,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal
    */
-  readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
+  readonly _timeoutOptions: WithTimeout<'generalMethodTimeoutMs'>;
 
   /**
    * Should not be instantiated directly.
@@ -147,7 +107,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @internal
    */
   protected constructor(options: WithTimeout<'generalMethodTimeoutMs'>, mapping?: (doc: any) => T) {
-    this._options = options;
+    this._timeoutOptions = options;
     this._mapping = mapping;
   }
 
@@ -198,7 +158,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @see AbstractCursor.consumed
    */
   public buffered(): number {
-    return this._buffer.length;
+    return this._currentPage?.result.length ?? 0;
   }
 
   /**
@@ -253,7 +213,8 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The records read from the buffer.
    */
   public consumeBuffer(max?: number): TRaw[] {
-    const ret = this._buffer.splice(0, max ?? this._buffer.length);
+    const buffer = this._currentPage?.result ?? [];
+    const ret = buffer.splice(0, max ?? buffer.length);
     this._consumed += ret.length;
     return ret;
   }
@@ -281,7 +242,8 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public close(): void {
     this._state = 'closed';
-    this._buffer.length = 0;
+    this._currentPage = undefined;
+    this._isNextPage = true;
   }
 
   /**
@@ -356,8 +318,8 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @see AbstractCursor.clone
    */
   public rewind(): void {
-    this._buffer.length = 0;
-    this._nextPageState = new QueryState<string>();
+    this._currentPage = undefined;
+    this._isNextPage = true;
     this._state = 'idle';
     this._consumed = 0;
   }
@@ -460,7 +422,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The next record, or `null` if there are no more records.
    */
-  public next(): Promise<T | null> {
+  public async next(): Promise<T | null> {
     return this._next(false, '.next');
   }
 
@@ -587,7 +549,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public async toArray(): Promise<T[]> {
     const docs: T[] = [];
-    const tm = this._tm().multipart('generalMethodTimeoutMs', this._options);
+    const tm = this._tm().multipart('generalMethodTimeoutMs', this._timeoutOptions);
 
     for await (const doc of this._iterator('.toArray', tm)) {
       docs.push(doc);
@@ -599,7 +561,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal
    */
-  protected abstract _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]>;
+  protected abstract _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[page: typeof this._currentPage, isNextPage: boolean]>;
 
   /**
    * @internal
@@ -626,36 +588,38 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal
    */
-  protected async _next(peek: true, method: string, tm?: TimeoutManager): Promise<boolean>
+  public async _next(peek: true, method: string, tm?: TimeoutManager): Promise<true | null>
 
   /**
    * @internal
    */
-  protected async _next(peek: false, method: string, tm?: TimeoutManager): Promise<T | null>
+  public async _next(peek: false, method: string, tm?: TimeoutManager): Promise<T | null>
 
   /**
    * @internal
    */
-  protected async _next(peek: boolean, method: string, tm?: TimeoutManager): Promise<T | boolean | null> {
+  public async _next(peek: boolean, method: string, tm?: TimeoutManager): Promise<T | boolean | null> {
     if (this._state === 'closed') {
       return null;
     }
 
     try {
-      while (this._buffer.length === 0) {
-        if (this._nextPageState.state === QueryState.NotFound) {
+      this._state = 'started';
+
+      while (!this._currentPage?.result.length) {
+        if (!this._isNextPage) {
           this.close();
           return null;
         }
-        this._buffer = await this._nextPage({ method }, tm);
+
+        [this._currentPage, this._isNextPage] = await this._fetchNextPage({ method }, tm);
       }
 
       if (peek) {
         return true;
       }
 
-      this._state = 'started';
-      const doc = this._buffer.shift();
+      const doc = this._currentPage.result.shift();
 
       if (doc) {
         this._consumed++;

@@ -27,7 +27,6 @@ import assert from 'assert';
 import { describe, it } from '@/tests/testlib/index.js';
 import { UUID } from '@/src/documents/datatypes/uuid.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
-import { QueryState } from '@/src/lib/utils.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import { SerDesTarget } from '@/src/lib/index.js';
 
@@ -36,10 +35,11 @@ interface FindCursorTestConfig extends Omit<AbstractCursorTestConfig, 'DeltaAsse
   serdes: SerDes,
 }
 
-const CursorDeltaAsserter = new DeltaAsserter(['_serdes', '_parent', '_filter', '_sortVector'], AbstractCursorDeltaAsserter);
+const CursorDeltaAsserter = new DeltaAsserter([], AbstractCursorDeltaAsserter);
+const CursorInternalDeltaAsserter = new DeltaAsserter(['_filter', '_serdes', '_parent', '_options', '_httpClient']);
 
 export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTestConfig) => {
-  unitTestAbstractCursor({ CursorImpl, parent, DeltaAsserter: CursorDeltaAsserter });
+  unitTestAbstractCursor({ CursorImpl, parent, DeltaAsserter: CursorInternalDeltaAsserter });
 
   describe('misc', () => {
     it('should throw an error when calling a builder method on a non-idle cursor', () => {
@@ -63,8 +63,8 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
 
         const newFilter = cfg.serdes.serialize({ uuid }, SerDesTarget.Filter);
 
-        CursorDeltaAsserter
-          .captureImmutDelta(cursor, () => cursor.filter({ uuid }))
+        CursorInternalDeltaAsserter
+          .captureImmutDelta(cursor._internal, () => cursor.filter({ uuid })._internal)
           .assertDelta({ _filter: newFilter });
       });
     });
@@ -77,8 +77,8 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
 
             const newSort = cfg.serdes.serialize(sort, SerDesTarget.Sort)[0];
 
-            CursorDeltaAsserter
-              .captureImmutDelta(cursor, () => cursor.sort(sort as Sort))
+            CursorInternalDeltaAsserter
+              .captureImmutDelta(cursor._internal, () => cursor.sort(sort as Sort)._internal)
               .assertDelta({ _options: { ...oldOptions, sort: newSort } });
           }),
         );
@@ -91,8 +91,8 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
           fc.property(fc.nat(), arbs.record(fc.anything()), (limit, oldOptions) => {
             const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
 
-            CursorDeltaAsserter
-              .captureImmutDelta(cursor, () => cursor.limit(limit))
+            CursorInternalDeltaAsserter
+              .captureImmutDelta(cursor._internal, () => cursor.limit(limit)._internal)
               .assertDelta({ _options: { ...oldOptions, limit: limit || undefined } });
           }),
         );
@@ -105,8 +105,8 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
           fc.property(fc.nat(), arbs.record(fc.anything()), (skip, oldOptions) => {
             const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
 
-            CursorDeltaAsserter
-              .captureImmutDelta(cursor, () => cursor.skip(skip))
+            CursorInternalDeltaAsserter
+              .captureImmutDelta(cursor._internal, () => cursor.skip(skip)._internal)
               .assertDelta({ _options: { ...oldOptions, skip } });
           }),
         );
@@ -127,8 +127,8 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
           fc.property(arbs.record(fc.oneof(fc.constantFrom(0, 1), fc.boolean())), arbs.record(fc.anything()), (projection, oldOptions) => {
             const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
 
-            CursorDeltaAsserter
-              .captureImmutDelta(cursor, () => cursor.project(projection))
+            CursorInternalDeltaAsserter
+              .captureImmutDelta(cursor._internal, () => cursor.project(projection)._internal)
               .assertDelta({ _options: { ...oldOptions, projection } });
           }),
         );
@@ -149,8 +149,8 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
           fc.property(fc.constantFrom(undefined, true, false), arbs.record(fc.anything()), (include, oldOptions) => {
             const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
 
-            CursorDeltaAsserter
-              .captureImmutDelta(cursor, () => cursor.includeSimilarity(include))
+            CursorInternalDeltaAsserter
+              .captureImmutDelta(cursor._internal, () => cursor.includeSimilarity(include)._internal)
               .assertDelta({ _options: { ...oldOptions, includeSimilarity: include ?? true } });
           }),
         );
@@ -163,8 +163,8 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
           fc.property(fc.constantFrom(undefined, true, false), arbs.record(fc.anything()), (include, oldOptions) => {
             const cursor = new CursorImpl(parent, null!, [{}, false], oldOptions);
 
-            CursorDeltaAsserter
-              .captureImmutDelta(cursor, () => cursor.includeSortVector(include))
+            CursorInternalDeltaAsserter
+              .captureImmutDelta(cursor._internal, () => cursor.includeSortVector(include)._internal)
               .assertDelta({ _options: { ...oldOptions, includeSortVector: include ?? true } });
           }),
         );
@@ -201,8 +201,7 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
           fc.property(...allArbs, (filter, options, mapping, buffer, state, consumed, qs) => {
             const cursor = new CursorImpl(parent, null!, [filter, false], options, mapping);
 
-            cursor['_nextPageState'] = new QueryState<string>().swap(qs);
-            cursor['_buffer'] = buffer;
+            cursor['_currentPage'] = { nextPageState: qs, result: buffer };
             cursor['_state'] = state;
             cursor['_consumed'] = consumed;
 
@@ -211,8 +210,7 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
                 return cursor.clone();
               })
               .assertDelta({
-                _nextPageState: new QueryState(),
-                _buffer: [],
+                _currentPage: undefined,
                 _state: 'idle',
                 _consumed: 0,
               });
@@ -228,7 +226,7 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
             const cursor = new CursorImpl(parent, null!, [{}, false]);
             cursor['_state'] = state;
             cursor['_consumed'] = consumed;
-            cursor['_buffer'] = new Array(buffered);
+            cursor['_currentPage'] = { nextPageState: null, result: new Array(buffered) };
 
             assert.strictEqual((cursor as any)[$CustomInspect](), `${CursorImpl.name}(source="${parent.keyspace}.${parent.name}",state="${state}",consumed=${consumed},buffered=${buffered})`);
           }),

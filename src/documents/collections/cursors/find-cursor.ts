@@ -94,7 +94,7 @@ export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Fin
    * ```
    */
   public override get dataSource(): Collection {
-    return this._parent as Collection;
+    return this._internal._parent as Collection;
   }
 
   /**

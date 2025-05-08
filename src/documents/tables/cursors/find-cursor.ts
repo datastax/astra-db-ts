@@ -94,7 +94,7 @@ export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCurs
    * ```
    */
   public get dataSource(): Table<SomeRow> {
-    return this._parent as Table<SomeRow>;
+    return this._internal._parent as Table<SomeRow>;
   }
 
   /**

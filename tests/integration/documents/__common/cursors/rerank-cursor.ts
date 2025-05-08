@@ -15,7 +15,7 @@
 
 import type { Collection, FindAndRerankCursor, SomeDoc } from '@/src/documents/index.js';
 import { CursorError, RerankedResult } from '@/src/documents/index.js';
-import { assertPromiseResolvesImmediately, memoizeRequests } from '@/tests/testlib/utils.js';
+import { assertPromiseResolvesInTicks, memoizeRequests } from '@/tests/testlib/utils.js';
 import assert from 'assert';
 import { describe, it, parallel } from '@/tests/testlib/index.js';
 import stableStringify from 'safe-stable-stringify';
@@ -142,13 +142,13 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
         assert.strictEqual(cursor.state, 'closed');
       });
 
-      it('should not start the cursor if it is idle', async () => {
+      it('should start the cursor if it is idle', async () => {
         const cursor = memoizedSourceVectorize.findAndRerank({})
           .sort({ $hybrid: { [vectorizeKey]: strings[0], [lexicalKey]: strings[0] } });
 
         assert.strictEqual(cursor.state, 'idle');
         await cursor.hasNext();
-        assert.strictEqual(cursor.state, 'idle');
+        assert.strictEqual(cursor.state, 'started');
       });
 
       it('should not increase the amount of consumed documents', async () => {
@@ -166,7 +166,7 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
 
         cursor.close();
         assert.strictEqual(cursor.state, 'closed');
-        const hasNext = await assertPromiseResolvesImmediately(() => cursor.hasNext());
+        const hasNext = await assertPromiseResolvesInTicks(1, () => cursor.hasNext());
         assert.strictEqual(hasNext, false);
       });
 
@@ -248,7 +248,7 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
 
         cursor.close();
         assert.strictEqual(cursor.state, 'closed');
-        const next = await assertPromiseResolvesImmediately(() => cursor.next());
+        const next = await assertPromiseResolvesInTicks(2, () => cursor.next());
         assert.strictEqual(next, null);
       });
 
@@ -578,9 +578,11 @@ export const integrationTestRerankCursor = (cfg: FindCursorTestConfig) => {
         const start = performance.now();
         assert.deepStrictEqual((await cursor.getSortVector())?.asArray(), sortVector);
         assert.ok(performance.now() - start > 5);
+        assert.strictEqual(cursor.state, 'started');
 
-        const cachedVector = await assertPromiseResolvesImmediately(() => cursor.getSortVector());
+        const cachedVector = await assertPromiseResolvesInTicks(2, () => cursor.getSortVector());
         assert.deepStrictEqual(cachedVector?.asArray(), sortVector);
+        assert.strictEqual(cursor.state, 'started');
       });
 
       it('getSortVector should populate buffer if called first w/ includeSortVector: true', async () => {

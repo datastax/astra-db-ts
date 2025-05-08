@@ -274,15 +274,21 @@ export const desSchema = (schema: Record<string, unknown> = {}) => {
   return { status: { projectionSchema: schema, primaryKeySchema: schema } };
 };
 
-export const assertPromiseResolvesImmediately = async <T>(mk: () => Promise<T>): Promise<T> => {
+export const assertPromiseResolvesInTicks = async <T>(ticks: number, mk: () => Promise<T>): Promise<T> => {
   const promise = mk();
 
-  let isImmediate = false;
-  await Promise.race([
-    promise.then(() => isImmediate = true),
-    Promise.resolve(),
-  ]);
+  let resolvedTicks = -1;
+  let currentTick = 0;
 
-  assert.strictEqual(isImmediate, true);
+  void promise.then(() => {
+    resolvedTicks = currentTick;
+  });
+
+  while (resolvedTicks === -1) {
+    await Promise.resolve();
+    currentTick++;
+  }
+
+  assert.strictEqual(resolvedTicks, ticks, `Promise resolved in ${resolvedTicks} ticks, expected ${ticks} ticks`);
   return promise;
 };

@@ -78,7 +78,7 @@ export class CollectionFindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ex
    * ```
    */
   public override get dataSource(): Collection  {
-    return this._parent as Collection;
+    return this._internal._parent as Collection;
   }
 
   /**
