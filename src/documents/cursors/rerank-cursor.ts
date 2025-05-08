@@ -31,11 +31,41 @@ import type { SerializedFilter } from '@/src/documents/cursors/flc-internal.js';
 import { FLCInternal } from '@/src/documents/cursors/flc-internal.js';
 import type { RawDataAPIResponse } from '@/src/lib/index.js';
 
+/**
+ * ##### Overview 🚨
+ *
+ * Represents a page of results returned by the Data API when using pagination in `findAndRerank` operations.
+ *
+ * > **🚨Important:** `findAndRerank` operations are not currently paginated, and as such, this construct mainly exists for consistency with {@link FindPage}.
+ * >
+ * > Regardless, the page state mechanism is still full functional on the client side, in case it is available in the future.
+ *
+ * See {@link FindPage} for more information on the page state.
+ *
+ * @see FindAndRerankCursor.initialPageState
+ * @see FindAndRerankCursor.fetchNextPage
+ *
+ * @public
+ */
 export interface FindAndRerankPage<T> {
+  /**
+   * The state for the next page of results, which may be stored on the client side to drive pagination.
+   *
+   * If this is `null`, there are no more results to fetch, and the client should stop paginating.
+   */
   nextPageState: string | null,
+  /**
+   * The records present in the `findAndRerank` page, with any mappings applied.
+   */
   result: T[],
+  /**
+   * The sort vector used to perform the vector search, if applicable.
+   *
+   * This is only applicable when using vector search and {@link FindAndRerankCursor.includeSortVector} is set to `true`, and will not be present otherwise.
+   */
   sortVector?: DataAPIVector,
 }
+
 
 /**
  * ##### Overview
@@ -177,6 +207,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   public [$CustomInspect](): string {
     return `${this.constructor.name}(source="${this._internal._parent.keyspace}.${this._internal._parent.name}",state="${this._state}",consumed=${this.consumed()},buffered=${this.buffered()})`;
   }
+
   /**
    * ##### Overview
    *
@@ -557,6 +588,29 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   }
 
   /**
+   * ##### Overview 🚨
+   *
+   * Sets the initial page state for the cursor, allowing you to resume fetching results from a specific point.
+   *
+   * > **🚨Important:** `findAndRerank` operations are not currently paginated, and as such, this construct mainly exists for consistency with {@link FindCursor.initialPageState}.
+   * >
+   * > Regardless, the page state mechanism is still full functional on the client side, in case it is available in the future.
+   *
+   * See {@link FindCursor.initialPageState} for more information on, and warnings about, the initial page state.
+   *
+   * @param initialPageState - The page state to resume from, or `undefined` to start from the beginning
+   *
+   * @returns A new cursor with the initial page state set
+   *
+   * @remarks `null` initial page states are rejected to prevent the user from accidentally creating an infinite loop of fetching.
+   *
+   * @see FindAndRerankCursor.fetchNextPage
+   */
+  public initialPageState(initialPageState?: string): this {
+    return this._internal.withInitialPageState(initialPageState);
+  }
+
+  /**
    * ##### Overview
    *
    * Retrieves the vector used to perform the vector search, if applicable.
@@ -663,6 +717,22 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     },
   };
 
+  /**
+   * ##### Overview 🚨
+   *
+   * Fetches the next complete page of results from the server and returns it directly.
+   *
+   * > **🚨Important:** `findAndRerank` operations are not currently paginated, and as such, this construct mainly exists for consistency with {@link FindCursor.fetchNextPage}.
+   * >
+   * > Regardless, the page state mechanism is still full functional on the client side, in case it is available in the future.
+   *
+   * See {@link FindCursor.fetchNextPage} for more information on fetching the next page.
+   *
+   * @returns A page object containing the results, the next page state, and optionally the sort vector.
+   *
+   * @see FindAndRerank.initialPageState
+   * @see FindAndRerank.toArray
+   */
   public async fetchNextPage(): Promise<FindAndRerankPage<T>> {
     return this._internal.fetchNextPageMapped(FindAndRerankCursor.InternalNextPageOptions);
   }

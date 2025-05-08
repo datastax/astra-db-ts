@@ -31,9 +31,57 @@ import { $CustomInspect } from '@/src/lib/constants.js';
 import type { SerializedFilter } from '@/src/documents/cursors/flc-internal.js';
 import { FLCInternal } from '@/src/documents/cursors/flc-internal.js';
 
+/**
+ * ##### Overview
+ *
+ * Represents a page of results returned by the Data API when using pagination in `find` operations.
+ *
+ * This interface encapsulates all the information returned from a single page fetch, including the
+ * actual data fetched & mapped, the pagination state, and the sort vector if applicable.
+ *
+ * > **✏️Note:** This interface is primarily used with the {@link FindCursor.initialPageState}
+ * > and {@link FindCursor.fetchNextPage} methods, which provide direct access to the underlying
+ * > pagination mechanisms.
+ *
+ * @example
+ * ```ts
+ * // Server-side code
+ * async function getPageOfResults(pageState?: string) {
+ *   const cursor = collection.find({ status: 'active' })
+ *     .initialPageState(pageState);
+ *
+ *   const page = await cursor.fetchNextPage();
+ *
+ *   return {
+ *     nextPageState: page.nextPageState,
+ *     results: page.result,
+ *   };
+ * }
+ *
+ * // Client can then use the nextPageState to fetch subsequent pages
+ * ```
+ *
+ * @see FindCursor.initialPageState
+ * @see FindCursor.fetchNextPage
+ *
+ * @public
+ */
 export interface FindPage<T> {
+  /**
+   * The state for the next page of results, which may be stored on the client side to drive pagination.
+   *
+   * If this is `null`, there are no more results to fetch, and the client should stop paginating.
+   */
   nextPageState: string | null,
+  /**
+   * The records present in the `find` page, with any mappings applied.
+   */
   result: T[],
+  /**
+   * The sort vector used to perform the vector search, if applicable.
+   *
+   * This is only applicable when using vector search and {@link FindCursor.includeSortVector} is set to `true`, and will not be present otherwise.
+   */
   sortVector?: DataAPIVector,
 }
 
@@ -133,7 +181,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    */
   public [$CustomInspect](): string {
     return `${this.constructor.name}(source="${this.dataSource.keyspace}.${this.dataSource.name}",state="${this._state}",consumed=${this.consumed()},buffered=${this.buffered()})`;
-  }
+}
 
   /**
    * ##### Overview
@@ -178,7 +226,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @returns A new cursor with the new filter set.
    */
-  public filter(filter: Filter): this {
+  public filter(filter?: Filter): this {
     return this._internal.withFilter(filter);
   }
 
@@ -208,7 +256,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @returns A new cursor with the new sort set.
    */
-  public sort(sort: Sort): this {
+  public sort(sort?: Sort): this {
     return this._internal.withSort(sort);
   }
 
@@ -240,7 +288,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @returns A new cursor with the new limit set.
    */
-  public limit(limit: number): this {
+  public limit(limit?: number): this {
     return this._internal.withOption('limit', limit || undefined);
   }
 
@@ -271,7 +319,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @returns A new cursor with the new skip set.
    */
-  public skip(skip: number): this {
+  public skip(skip?: number): this {
     return this._internal.withOption('skip', skip);
   }
 
@@ -377,8 +425,9 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * Sets the initial page state for the cursor, allowing you to resume fetching results from a specific point.
    *
-   * This is primarily useful when pagination is driven by a separate process (e.g., in client/server
-   * architectures where the client maintains the page state).
+   * This method provides direct access to the underlying pagination mechanism, allowing you to handle pagination manually instead of relying solely on the cursor's iteration methods.
+   *
+   * This is primarily useful when pagination is driven by a separate process (e.g. in client/server architectures where the client maintains the page state).
    *
    * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new initial page state.
    *
@@ -386,26 +435,37 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * > should remain exactly the same as those used to generate the original page state. Using different options
    * > with the same page state can lead to unexpected results or errors.
    *
+   * > **⚠️Warning:** Do not "resume" a cursor which has a `null` page state—it would be equivalent to
+   * > closing the cursor before it has even started. If you want a cursor with no page state, use `undefined` instead.
+   *
    * @example
    * ```ts
-   * async function getNextPage(pageState: string | null) {
+   * // Server-side code
+   * async function getPageOfResults(pageState?: string) {
    *   const cursor = collection.find({ status: 'active' })
-   *     .sort({ createdAt: -1 })
    *     .initialPageState(pageState);
    *
-   *   const nextPageState = await cursor.getPageState();
-   *   const results = cursor.consumeBuffer();
+   *   const page = await cursor.fetchNextPage();
    *
-   *   return { results, pageState: nextPageState };
+   *   return {
+   *     nextPageState: page.nextPageState,
+   *     results: page.result,
+   *   };
    * }
+   *
+   * // Client can then use the nextPageState to fetch subsequent pages
    * ```
    *
-   * @param initialPageState - The page state to resume from, or null to start from the beginning
+   * @param initialPageState - The page state to resume from, or `undefined` to start from the beginning
    *
    * @returns A new cursor with the initial page state set
+   *
+   * @remarks `null` initial page states are rejected to prevent the user from accidentally creating an infinite loop of fetching.
+   *
+   * @see FindCursor.fetchNextPage
    */
-  public initialPageState(initialPageState: string | null): this {
-    return this._internal.withOption('initialPageState', initialPageState);
+  public initialPageState(initialPageState?: string): this {
+    return this._internal.withInitialPageState(initialPageState);
   }
 
   /**
@@ -538,6 +598,52 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
     }),
   };
 
+  /**
+   * ##### Overview
+   *
+   * Fetches the next complete page of results from the server and returns it directly.
+   *
+   * This method provides direct access to the underlying pagination mechanism, allowing you to handle pagination manually instead of relying solely on the cursor's iteration methods.
+   *
+   * This is primarily useful when pagination is driven by a separate process (e.g. in client/server architectures where the client maintains the page state).
+   *
+   * > **🚨Important:** This method will throw an error if the cursor's buffer is not empty or if the cursor is
+   * > closed. This prevents misalignment between manual pagination and other cursor methods.
+   *
+   * > **✏️Note:** For most use cases, the standard cursor iteration methods (like `next()`, `hasNext()`,
+   * > or using `for await...of`) are more convenient than manual pagination.
+   *
+   * @example
+   * ```ts
+   * // Server-side code
+   * async function getPageOfResults(pageState?: string) {
+   *   const cursor = collection.find({ status: 'active' })
+   *     .initialPageState(pageState);
+   *
+   *   const page = await cursor.fetchNextPage();
+   *
+   *   return {
+   *     nextPageState: page.nextPageState,
+   *     results: page.result,
+   *   };
+   * }
+   *
+   * // Client can then use the nextPageState to fetch subsequent pages
+   * ```
+   *
+   * ---
+   *
+   * ##### Page structure
+   *
+   * The method returns an object with the following properties:
+   * - `result`: An array of documents matching the query, with all mappings applied.
+   * - `nextPageState`: A string that can be used to fetch the next page, or `null` if there are no more results.
+   * - `sortVector`: The vector used for sorting when vector search is used (only if `includeSortVector` is set to `true`).
+   *
+   * @returns A page object containing the results, the next page state, and optionally the sort vector.
+   *
+   * @see FindCursor.initialPageState
+   */
   public async fetchNextPage(): Promise<FindPage<T>> {
     return this._internal.fetchNextPageMapped(FindCursor.InternalNextPageOptions);
   }
