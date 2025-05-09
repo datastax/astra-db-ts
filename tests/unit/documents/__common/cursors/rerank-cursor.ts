@@ -83,7 +83,7 @@ export const unitTestRerankCursor = ({ CursorImpl, parent, ...cfg }: FindCursorT
             const newSort = cfg.serdes.serialize(sort, SerDesTarget.Sort)[0];
 
             CursorInternalDeltaAsserter
-              .captureImmutDelta(cursor._internal, () => cursor.sort(sort as HybridSort)._internal)
+              .captureImmutDelta(cursor._internal, () => cursor.sort(sort as unknown as HybridSort)._internal)
               .assertDelta({ _options: { ...oldOptions, sort: newSort } });
           }),
         );

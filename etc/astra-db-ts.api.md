@@ -455,7 +455,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     findOne<TRaw extends SomeDoc = WithSim<RSchema>>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions): Promise<TRaw | null>;
     findOneAndDelete<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
     findOneAndReplace<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
-    findOneAndUpdate(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<RSchema | null>;
+    findOneAndUpdate<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<TRaw | null>;
     get _httpClient(): OpaqueHttpClient;
     insertMany(documents: readonly MaybeId<WSchema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<RSchema>>;
     insertOne(document: MaybeId<WSchema>, options?: CollectionInsertOneOptions): Promise<CollectionInsertOneResult<RSchema>>;
@@ -1785,17 +1785,12 @@ export type GenericEstimatedCountOptions = WithTimeout<'generalMethodTimeoutMs'>
 
 // @public
 export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-    // (undocumented)
     hybridLimits?: number | Record<string, number>;
-    // (undocumented)
     includeScores?: boolean;
-    // (undocumented)
     includeSortVector?: boolean;
     limit?: number;
     projection?: Projection;
-    // (undocumented)
     rerankOn?: string;
-    // (undocumented)
     rerankQuery?: string;
     sort?: HybridSort;
 }
@@ -1976,16 +1971,15 @@ export type HttpOptions = FetchH2HttpClientOptions | FetchHttpClientOptions | Cu
 };
 
 // @public (undocumented)
-export type HybridSort = Record<string, SortDirection | string | number[] | DataAPIVector | HybridSortObject> & {
+export interface HybridSort {
+    // (undocumented)
     $hybrid: string | HybridSortObject;
-};
+}
 
 // @public (undocumented)
 export interface HybridSortObject {
     // (undocumented)
     $lexical?: string;
-    // (undocumented)
-    $vector?: number[] | DataAPIVector;
     // (undocumented)
     $vectorize?: string;
     // (undocumented)
