@@ -182,7 +182,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    */
   public [$CustomInspect](): string {
     return `${this.constructor.name}(source="${this.dataSource.keyspace}.${this.dataSource.name}",state="${this._state}",consumed=${this.consumed()},buffered=${this.buffered()})`;
-}
+  }
 
   /**
    * ##### Overview

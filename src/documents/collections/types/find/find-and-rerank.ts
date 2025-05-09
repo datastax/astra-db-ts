@@ -15,9 +15,39 @@
 import type { GenericFindAndRerankOptions } from '@/src/documents/index.js';
 
 /**
- * Options for the collection `findAndRerank` method.
+ * ##### Overview
+ *
+ * The options for a `findAndRerank` command on a {@link Collection}.
+ *
+ * @example
+ * ```ts
+ * const results = await collection.findAndRerank({
+ *   category: 'books',
+ * }, {
+ *   sort: { $hybrid: { $vectorize: 'fantasy novels', $lexical: 'dragons' } },
+ *   limit: 5,
+ *   timeout: 10000,
+ * });
+ * ```
+ *
+ * ---
+ *
+ * ##### Builder Methods
+ *
+ * You can also use fluent builder methods on the cursor:
+ *
+ * @example
+ * ```ts
+ * const cursor = collection.findAndRerank({ category: 'books' })
+ *   .sort({ $hybrid: { $vectorize: 'fantasy novels', $lexical: 'dragons' } })
+ *   .limit(5)
+ *   .includeScores(true);
+ *
+ * const results = await cursor.toArray();
+ * ```
  *
  * @see Collection.findAndRerank
+ * @see CollectionFindAndRerankCursor
  *
  * @public
  */

@@ -16,13 +16,38 @@ import type { Projection, Sort } from '@/src/documents/index.js';
 import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
- * Options for some generic `find` command.
+ * ##### Overview
  *
- * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
- * @field projection - Specifies which fields should be included/excluded in the returned documents.
- * @field limit - Max number of documents to return in the lifetime of the cursor.
- * @field skip - Number of documents to skip if using a sort.
- * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
+ * The options for a generic `find` command performed on the Data API.
+ *
+ * @example
+ * ```ts
+ * const results = await collection.find({
+ *   category: 'electronics',
+ * }, {
+ *   sort: { price: 1 },
+ *   limit: 10,
+ *   timeout: 10000,
+ * });
+ * ```
+ * ---
+ *
+ * ##### Builder methods
+ *
+ * You can also use fluent builder methods on the cursor:
+ *
+ * @example
+ * ```ts
+ * const cursor = collection.find({ category: 'electronics' })
+ *   .sort({ price: 1 })
+ *   .limit(10)
+ *   .skip(5);
+ *
+ * const results = await cursor.toArray();
+ * ```
+ *
+ * @see CollectionFindOptions
+ * @see TableFindOptions
  *
  * @public
  */
@@ -30,37 +55,43 @@ export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'
   /**
    * The order in which to apply the update if the filter selects multiple records.
    *
-   * Defaults to `null`, where the order is not guaranteed.
+   * See {@link FindCursor.sort} for more details and examples.
    */
   sort?: Sort,
   /**
    * The projection to apply to the returned records, to specify only a select set of fields to return.
    *
-   * If using a projection, it is heavily recommended to provide a custom type for the returned records as a generic typeparam to the `find` method.
+   * See {@link FindCursor.project} for more details and examples.
    */
   projection?: Projection,
   /**
    * The maximum number of records to return in the lifetime of the cursor.
    *
-   * Defaults to `null`, which means no limit.
+   * See {@link FindCursor.limit} for more details and examples.
    */
   limit?: number,
   /**
    * The number of records to skip before starting to return records.
    *
-   * Defaults to `null`, which means no skip.
+   * See {@link FindCursor.skip} for more details and examples.
    */
   skip?: number,
   /**
    * If true, include the similarity score in the result via the `$similarity` field.
+   *
+   * See {@link FindCursor.includeSimilarity} for more details and examples.
    */
   includeSimilarity?: boolean;
   /**
-   * If true, the sort vector will be available through `await cursor.getSortVector()`
+   * If true, the sort vector will be available through `await cursor.getSortVector()` and `await cursor.fetchNextPage()`.
+   *
+   * See {@link FindCursor.getSortVector} for more details and examples.
    */
   includeSortVector?: boolean,
   /**
    * Sets the starting page state for the cursor.
+   *
+   * See {@link FindCursor.initialPageState} for more details and examples.
    */
   initialPageState?: string | null,
   /**

@@ -15,9 +15,39 @@
 import type { GenericFindAndRerankOptions } from '@/src/documents/index.js';
 
 /**
- * Options for the table `findAndRerank` method.
+ * ##### Overview
+ *
+ * The options for a `findAndRerank` command on a {@link Table}.
+ *
+ * @example
+ * ```ts
+ * const results = await table.findAndRerank({
+ *   category: 'books',
+ * }, {
+ *   sort: { $hybrid: { vector: 'fantasy novels', text: 'dragons' } },
+ *   limit: 5,
+ *   timeout: 10000,
+ * });
+ * ```
+ *
+ * ---
+ *
+ * ##### Builder Methods
+ *
+ * You can also use fluent builder methods on the cursor:
+ *
+ * @example
+ * ```ts
+ * const cursor = table.findAndRerank({ category: 'books' })
+ *   .sort({ $hybrid: { vector: 'fantasy novels', text: 'dragons' } })
+ *   .limit(5)
+ *   .includeScores(true);
+ *
+ * const results = await cursor.toArray();
+ * ```
  *
  * @see Table.findAndRerank
+ * @see TableFindAndRerankCursor
  *
  * @public
  */
