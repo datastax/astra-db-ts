@@ -265,7 +265,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * // Insert a document with a specific ID
    * await collection.insertOne({ _id: '1', name: 'John Doe' });
-   * await collection.insertOne({ _id: new ObjectID(), name: 'Jane Doe' });
+   * await collection.insertOne({ _id: new ObjectId(), name: 'Jane Doe' });
    * await collection.insertOne({ _id: UUID.v7(), name: 'Dane Joe' });
    *
    * // Insert a document with a vector (if enabled on the collection)
@@ -1499,7 +1499,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns The document before/after the update, depending on the type of `returnDocument`
    */
-  public async findOneAndUpdate(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<RSchema | null> {
+  public async findOneAndUpdate<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<TRaw | null> {
     return this.#commands.findOneAndUpdate(filter, update, options);
   }
 
