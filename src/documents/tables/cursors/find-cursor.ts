@@ -20,13 +20,13 @@ import { FindCursor } from '@/src/documents/cursors/find-cursor.js';
  *
  * A lazy iterator over the results of a `find` operation on a {@link Table}.
  *
- * > **⚠️Warning**: Shouldn't be directly instantiated, but rather spawned via {@link Table.find}.
+ * > **⚠️Warning:** Shouldn't be directly instantiated, but rather spawned via {@link Table.find}.
  *
  * ---
  *
  * ##### Typing
  *
- * > **🚨Important:** For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.
+ * > **✏️Note:** You may generally treat the cursor as if it were typed simply as `TableFindCursor<T>`.
  * >
  * > If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.
  *
@@ -94,7 +94,7 @@ export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCurs
    * ```
    */
   public get dataSource(): Table<SomeRow> {
-    return this._parent as Table<SomeRow>;
+    return this._internal._parent as Table<SomeRow>;
   }
 
   /**
@@ -102,7 +102,7 @@ export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCurs
    *
    * Sets the filter for the cursor, overwriting any previous filter.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new filter set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `filter`.
    *
    * @example
    * ```ts
@@ -124,9 +124,91 @@ export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCurs
     return super.filter(filter);
   }
 
+  /**
+   * ##### Overview
+   *
+   * Sets the projection for the cursor, overwriting any previous projection.
+   *
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new projection.
+   *
+   * > **🚨Important:** To properly type this method, you should provide a type argument to specify the shape of the projected
+   * records.
+   *
+   * > **⚠️Warning:** You may *NOT* provide a projection after a mapping is already provided, to prevent potential type de-sync errors.
+   *
+   * @example
+   * ```ts
+   * const cursor = table.find({ name: 'John' });
+   *
+   * // T is `Partial<Schema>` because the type is not specified
+   * const rawProjected = cursor.project({ id: 0, name: 1 });
+   *
+   * // T is `{ name: string }`
+   * const projected = cursor.project<{ name: string }>({ id: 0, name: 1 });
+   *
+   * // You can also chain instead of using intermediate variables
+   * const fluentlyProjected = table
+   *   .find({ name: 'John' })
+   *   .project<{ name: string }>({ id: 0, name: 1 })
+   *   .map(row => row.name);
+   * ```
+   *
+   * @param projection - Specifies which fields should be included/excluded in the returned records.
+   *
+   * @returns A new cursor with the new projection set.
+   */
   declare public project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindCursor<RRaw, RRaw>;
 
+  /**
+   * ##### Overview
+   *
+   * Sets whether vector similarity scores should be included in the cursor's results.
+   *
+   * > **✏️Note:** This is only applicable when using vector search, and is ignored otherwise.
+   *
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new similarity settings.
+   *
+   * @example
+   * ```ts
+   * const cursor = table.find({ name: 'John' })
+   *   .sort({ $vector: new DataAPIVector([...]) })
+   *   .includeSimilarity();
+   *
+   * // The cursor will return the similarity scores for each record
+   * const closest = await cursor.next();
+   * closest.$similarity; // number
+   * ```
+   *
+   * @param includeSimilarity - Whether similarity scores should be included.
+   *
+   * @returns A new cursor with the new similarity setting.
+   */
   declare public includeSimilarity: (includeSimilarity?: boolean) => TableFindCursor<WithSim<TRaw>, WithSim<TRaw>>;
 
+  /**
+   * ##### Overview
+   *
+   * Map all records using the provided mapping function. Previous mapping functions will be composed with the new
+   * mapping function (new ∘ old).
+   *
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new mapping function applied.
+   *
+   * > **⚠️Warning:** You may *NOT* provide a projection after a mapping is already provided, to prevent potential type de-sync errors.
+   *
+   * @example
+   * ```ts
+   * const cursor = table.find({ name: 'John' })
+   *   .map(row => row.name);
+   *   .map(name => name.toLowerCase());
+   *
+   * // T is `string` because the mapping function returns a string
+   * const name = await cursor.next();
+   * name === 'john'; // true
+   * ```
+   *
+   * @param map - The mapping function to apply to all records.
+   *
+   * @returns A new cursor with the new mapping set.
+   */
   declare public map: <R>(map: (doc: T) => R) => TableFindCursor<R, TRaw>;
 }

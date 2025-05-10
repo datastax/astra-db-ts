@@ -59,7 +59,7 @@ export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCt
    * This errorful behavior exists for two primary reasons:
    * 1. **Performance:** Enabling big numbers necessitates usage of a specialized JSON library which is capable of serializing/deserializing these numbers without loss of precision, which is much slower than the native JSON library.
    *     - Realistically, however, the difference is likely negligible for most cases
-   * 2. **Ambiguity in Deserialization**: There is an inherent ambiguity in deciding how to deserialize big numbers, as certain numbers may be representable in various different numerical formats, and not in an easily predictable way.
+   * 2. **Ambiguity in Deserialization:** There is an inherent ambiguity in deciding how to deserialize big numbers, as certain numbers may be representable in various different numerical formats, and not in an easily predictable way.
    *     - For example, `9007199254740992` is equally representable as either a `number`, `bigint`, a `BigNumber`, or even a `string`.
    *
    * Luckily, there is no such ambiguity in serialization, as any number is just a series of digits in JSON.

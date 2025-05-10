@@ -23,23 +23,49 @@ import type {
   SomeRow,
   Table,
 } from '@/src/documents/index.js';
-import { vector } from '@/src/documents/index.js';
 import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
-import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
-import type { SerializedFilter } from '@/src/documents/cursors/common.js';
-import {
-  buildFLCFilter,
-  buildFLCMap,
-  buildFLCOption,
-  buildFLCPreMapOption,
-  buildFLCSort,
-  cloneFLC,
-} from '@/src/documents/cursors/common.js';
-import { QueryState } from '@/src/lib/utils.js';
+import type { SerializedFilter } from '@/src/documents/cursors/flc-internal.js';
+import { FLCInternal } from '@/src/documents/cursors/flc-internal.js';
+import type { RawDataAPIResponse } from '@/src/lib/index.js';
+
+/**
+ * ##### Overview 🚨
+ *
+ * Represents a page of results returned by the Data API when using pagination in `findAndRerank` operations.
+ *
+ * > **🚨Important:** `findAndRerank` operations are not currently paginated, and as such, this construct mainly exists for consistency with {@link FindPage}.
+ * >
+ * > Regardless, the page state mechanism is still full functional on the client side, in case it is available in the future.
+ *
+ * See {@link FindPage} for more information on the page state.
+ *
+ * @see FindAndRerankCursor.initialPageState
+ * @see FindAndRerankCursor.fetchNextPage
+ *
+ * @public
+ */
+export interface FindAndRerankPage<T> {
+  /**
+   * The state for the next page of results, which may be stored on the client side to drive pagination.
+   *
+   * If this is `null`, there are no more results to fetch, and the client should stop paginating.
+   */
+  nextPageState: string | null,
+  /**
+   * The records present in the `findAndRerank` page, with any mappings applied.
+   */
+  result: T[],
+  /**
+   * The sort vector used to perform the vector search, if applicable.
+   *
+   * This is only applicable when using vector search and {@link FindAndRerankCursor.includeSortVector} is set to `true`, and will not be present otherwise.
+   */
+  sortVector?: DataAPIVector,
+}
+
 
 /**
  * ##### Overview
@@ -112,13 +138,13 @@ export class RerankedResult<TRaw> {
  *
  * A lazy iterator over the results of some generic `findAndRerank` operation on the Data API.
  *
- * > **⚠️Warning**: Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}.
+ * > **⚠️Warning:** Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}.
  *
  * ---
  *
  * ##### Typing
  *
- * > **🚨Important:** For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.
+ * > **✏️Note:** You may generally treat the cursor as if it were typed as `FindAndRerankCursor<T>`.
  * >
  * > If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.
  *
@@ -137,10 +163,10 @@ export class RerankedResult<TRaw> {
  * with the new option(s) set.
  *
  * @example
- * ```typescript
+ * ```ts
  * const collection = db.collection('hybrid_coll');
  *
- * const cursor: Cursor<Person> = collection.findAndRerank({}, {
+ * const cursor = collection.findAndRerank({}, {
  *   sort: { $hybrid: 'what is a car?' },
  *   includeScores: true,
  * });
@@ -159,44 +185,19 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   /**
    * @internal
    */
-  private readonly _httpClient: DataAPIHttpClient;
+  readonly _internal: FLCInternal<RerankedResult<TRaw>, FindAndRerankPage<RerankedResult<TRaw>>, GenericFindAndRerankOptions>;
 
-  /**
-   * @internal
-   */
-  readonly _serdes: SerDes;
-
-  /**
-   * @internal
-   */
-  readonly _parent: Table<SomeRow> | Collection;
-
-  /**
-   * @internal
-   */
-  declare readonly _options: GenericFindAndRerankOptions;
-
-  /**
-   * @internal
-   */
-  readonly _filter: SerializedFilter;
-
-  /**
-   * @internal
-   */
-  private _sortVector = new QueryState<DataAPIVector>();
+  declare _currentPage?: FindAndRerankPage<RerankedResult<TRaw>>;
 
   /**
    * Should not be instantiated directly.
    *
    * @internal
    */
-  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T) {
+  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T, initialPage?: FindAndRerankPage<RerankedResult<TRaw>>) {
     super(options ?? {}, mapping);
-    this._parent = parent;
-    this._httpClient = parent._httpClient;
-    this._serdes = serdes;
-    this._filter = filter;
+    this._internal = new FLCInternal(this, parent, serdes, filter, options);
+    this._currentPage = initialPage;
   }
 
   /**
@@ -205,7 +206,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @internal
    */
   public [$CustomInspect](): string {
-    return `${this.constructor.name}(source="${this._parent.keyspace}.${this._parent.name}",state="${this._state}",consumed=${this.consumed()},buffered=${this.buffered()})`;
+    return `${this.constructor.name}(source="${this._internal._parent.keyspace}.${this._internal._parent.name}",state="${this._state}",consumed=${this.consumed()},buffered=${this.buffered()})`;
   }
 
   /**
@@ -233,7 +234,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Sets the filter for the cursor, overwriting any previous filter.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new filter set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `filter`.
    *
    * @example
    * ```ts
@@ -244,7 +245,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   .filter({ name: 'John' });
    *
    * // The cursor will only return records with the name 'John'
-   * const john = await cursor.next();
+   * const { document: john } = await cursor.next();
    * john.name === 'John'; // true
    * ```
    *
@@ -253,7 +254,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new filter set.
    */
   public filter(filter: Filter): this {
-    return buildFLCFilter(this, filter);
+    return this._internal.withFilter(filter);
   }
 
   /**
@@ -261,9 +262,9 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Sets the sort criteria for prioritizing records.
    *
-   * This option **must** be set, and **must** contain a `$hybrid` key.
+   * > **🚨Important:** This option **must** be set, and **must** contain a `$hybrid` key.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new sort set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `sort`.
    *
    * ---
    *
@@ -271,7 +272,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * The `$hybrid` key is a special key that specifies the query(s) to use for the underlying vector and lexical searches.
    *
-   * If your collection doesn’t have vectorize enabled, you must pass separate query items for `$vector` and `$lexical`:
+   * If your collection doesn't have vectorize enabled, you must pass separate query items for `$vector` and `$lexical`:
    * - `{ $hybrid: { $vector: vector([...]), $lexical: 'A house on a hill' } }`
    *
    * If your collection has vectorize enabled, you can query through the $vectorize field instead of the $vector field. You can also use a single search string for both the $vectorize and $lexical queries.
@@ -287,11 +288,11 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   { name: 'Jane', age: 25, $vectorize: 'a young girl', $lexical: 'a young girl' },
    * ]);
    *
-   * const cursor = collection.find({})
+   * const cursor = collection.findAndRerank({})
    *   .sort({ $hybrid: 'old man' });
    *
    * // The cursor will return records sorted by the hybrid query
-   * const oldest = await cursor.next();
+   * const { document: oldest } = await cursor.next();
    * oldest.nane === 'John'; // true
    * ```
    *
@@ -300,7 +301,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new sort set.
    */
   public sort(sort: HybridSort): this {
-    return buildFLCSort(this, sort);
+    return this._internal.withSort(sort);
   }
 
   /**
@@ -310,7 +311,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * If `limit == 0`, there will be **no limit** on the number of records returned (beyond any that the Data API may itself enforce).
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new limit set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `limit`.
    *
    * @example
    * ```ts
@@ -319,7 +320,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   { name: 'Jane', age: 25, $vectorize: 'a young girl', $lexical: 'a young girl' },
    * ]);
    *
-   * const cursor = collection.find({})
+   * const cursor = collection.findAndRerank({})
    *   .sort({ $hybrid: 'old man' })
    *   .limit(1);
    *
@@ -333,7 +334,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): this {
-    return buildFLCOption(this, 'limit', limit || undefined);
+    return this._internal.withOption('limit', limit || undefined);
   }
 
   /**
@@ -341,7 +342,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Sets the maximum number of records to consider from the underlying vector and lexical searches.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new limit set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `limit`.
    *
    * ---
    *
@@ -363,7 +364,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   { name: 'Jane', age: 25, $vectorize: 'a young girl', $lexical: 'a young girl' },
    * ]);
    *
-   * const cursor = collection.find({})
+   * const cursor = collection.findAndRerank({})
    *   .sort({ $hybrid: 'old man' })
    *   .hybridLimits(1);
    *
@@ -377,7 +378,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new hybrid limits set.
    */
   public hybridLimits(hybridLimits: number | Record<string, number>): this {
-    return buildFLCOption(this, 'hybridLimits', hybridLimits);
+    return this._internal.withOption('hybridLimits', hybridLimits);
   }
 
   /**
@@ -387,13 +388,13 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Optional if you query through the `$vectorize` field instead of the `$vector` field; otherwise required.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new setting.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `rerankOn`.
    *
    * ---
    *
    * ##### Under the hood
    *
-   * Once the underlying vector and lexical searches complete, the reranker compares the `rerankQuery` text with each document’s `rerankOn` field.
+   * Once the underlying vector and lexical searches complete, the reranker compares the `rerankQuery` text with each document's `rerankOn` field.
    *
    * The reserved `$lexical` field is often used for this parameter, but you can specify any field that stores a string.
    *
@@ -418,7 +419,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new rerankOn set.
    */
   public rerankOn(rerankOn: string): this {
-    return buildFLCOption(this, 'rerankOn', rerankOn);
+    return this._internal.withOption('rerankOn', rerankOn);
   }
 
   /**
@@ -428,13 +429,13 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Optional if you query through the `$vectorize` field instead of the `$vector` field; otherwise required.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new setting.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `rerankQuery`.
    *
    * ---
    *
    * ##### Under the hood
    *
-   * Once the underlying vector and lexical searches complete, the reranker compares the `rerankQuery` text with each document’s `rerankOn` field.
+   * Once the underlying vector and lexical searches complete, the reranker compares the `rerankQuery` text with each document's `rerankOn` field.
    *
    * ---
    *
@@ -455,7 +456,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new rerankQuery set.
    */
   public rerankQuery(rerankQuery: string): this {
-    return buildFLCOption(this, 'rerankQuery', rerankQuery);
+    return this._internal.withOption('rerankQuery', rerankQuery);
   }
 
   /**
@@ -465,7 +466,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * If this is not set, then the `scores` will be an empty object for each document.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new setting.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with new score settings.
    *
    * @example
    * ```ts
@@ -484,22 +485,23 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new scores inclusion setting.
    */
   public includeScores(includeScores?: boolean): this {
-    return buildFLCOption(this, 'includeScores', includeScores ?? true);
+    return this._internal.withOption('includeScores', includeScores ?? true);
   }
 
   /**
    * ##### Overview
    *
-   * Sets whether the sort vector should be fetched on the very first API call. Note that this is a requirement
+   * Sets whether the sort vector should be fetched on the very first API call.
+   *
+   * Note that this is a requirement
    * to use {@link FindAndRerankCursor.getSortVector}—it'll unconditionally return `null` if this is not set to `true`.
-   * - This is only applicable when using vector search, and will be ignored if the cursor is not using vector search.
    * - See {@link FindAndRerankCursor.getSortVector} to see exactly what is returned when this is set to `true`.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new setting.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new sort vector settings.
    *
    * @example
    * ```ts
-   * const cursor = table.findAndRerank({)
+   * const cursor = table.findAndRerank({})
    *   .sort({ $hybrid: 'old man' })
    *   .includeSortVector();
    *
@@ -514,30 +516,29 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new sort vector inclusion setting.
    */
   public includeSortVector(includeSortVector?: boolean): this {
-    return buildFLCOption(this, 'includeSortVector', includeSortVector ?? true);
+    return this._internal.withOption('includeSortVector', includeSortVector ?? true);
   }
 
   /**
+   * ##### Overview
+   *
    * Sets the projection for the cursor, overwriting any previous projection.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply
-   * returns a new, uninitialized cursor with the given new projection set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new projection.
    *
-   * **To properly type this method, you should provide a type argument to specify the shape of the projected
-   * records.**
+   * > **🚨Important:** To properly type this method, you should provide a type argument to specify the shape of the projected
+   * records.
    *
-   * **Note that you may NOT provide a projection after a mapping is already provided, to prevent potential
-   * de-sync errors.** If you really want to do so, you may use {@link FindAndRerankCursor.clone} to create a new cursor
-   * with the same configuration, but without the mapping, and then set the projection.
+   * > **⚠️Warning:** You may *NOT* provide a projection after a mapping is already provided, to prevent potential type de-sync errors.
    *
    * @example
-   * ```typescript
+   * ```ts
    * const cursor = table.findAndRerank({ name: 'John' }).sort(...);
    *
-   * // T is `any` because the type is not specified
+   * // T is `RerankedResult<Partial<Schema>>` because the type is not specified
    * const rawProjected = cursor.project({ id: 0, name: 1 });
    *
-   * // T is { name: string }
+   * // T is `RerankedResult<{ name: string }>`
    * const projected = cursor.project<{ name: string }>({ id: 0, name: 1 });
    *
    * // You can also chain instead of using intermediate variables
@@ -545,13 +546,8 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *   .findAndRerank({ name: 'John' })
    *   .sort(...)
    *   .project<{ name: string }>({ id: 0, name: 1 });
-   *
-   * // It's important to keep mapping in mind
-   * const mapProjected = table
-   *   .findAndRerank({ name: 'John' })
-   *   .sort(...)
-   *   .map(doc => doc.name);
-   *   .project<string>({ id: 0, name: 1 });
+   *   .map(res => res.document)
+   *   .map(row => row.name);
    * ```
    *
    * @param projection - Specifies which fields should be included/excluded in the returned records.
@@ -559,7 +555,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new projection set.
    */
   public project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RerankedResult<RRaw>, RRaw> {
-    return buildFLCPreMapOption(this, 'projection', projection);
+    return this._internal.withPreMapOption('projection', projection);
   }
 
   /**
@@ -568,16 +564,16 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * Map all records using the provided mapping function. Previous mapping functions will be composed with the new
    * mapping function (new ∘ old).
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new projection set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new mapping function applied.
    *
-   * **You may NOT set a projection after a mapping is already provided, to prevent potential de-sync errors.**
+   * > **⚠️Warning:** You may *NOT* provide a projection after a mapping is already provided, to prevent potential type de-sync errors.
    *
    * @example
    * ```ts
    * const cursor = table.findAndRerank({});
    *   .sort({ $hybrid: 'old man' })
    *   .map(res => res.document);
-   *   .map(doc => doc.name.toLowerCase());
+   *   .map(row => row.name.toLowerCase());
    *
    * // T is `string` because the mapping function returns a string
    * const name = await cursor.next();
@@ -589,7 +585,30 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new mapping set.
    */
   public map<R>(map: (doc: T) => R): FindAndRerankCursor<R, TRaw> {
-    return buildFLCMap(this, map);
+    return this._internal.withMap(map);
+  }
+
+  /**
+   * ##### Overview 🚨
+   *
+   * Sets the initial page state for the cursor, allowing you to resume fetching results from a specific point.
+   *
+   * > **🚨Important:** `findAndRerank` operations are not currently paginated, and as such, this construct mainly exists for consistency with {@link FindCursor.initialPageState}.
+   * >
+   * > Regardless, the page state mechanism is still full functional on the client side, in case it is available in the future.
+   *
+   * See {@link FindCursor.initialPageState} for more information on, and warnings about, the initial page state.
+   *
+   * @param initialPageState - The page state to resume from, or `undefined` to start from the beginning
+   *
+   * @returns A new cursor with the initial page state set
+   *
+   * @remarks `null` initial page states are rejected to prevent the user from accidentally creating an infinite loop of fetching.
+   *
+   * @see FindAndRerankCursor.fetchNextPage
+   */
+  public initialPageState(initialPageState?: string): this {
+    return this._internal.withInitialPageState(initialPageState);
   }
 
   /**
@@ -597,98 +616,139 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * Retrieves the vector used to perform the vector search, if applicable.
    *
-   * - If `includeSortVector` is not `true`, this will unconditionally return `null`. No find request will be made.
+   * > **🚨Important:** This will only return a non-null value if {@link FindAndRerankCursor.includeSortVector} is set.
    *
-   * - If `sort: { $hybrid: { $vector } }` was used, `getSortVector()` will simply regurgitate that same `$vector`.
+   * @example
+   * ```ts
+   * // Using $vector
+   * const vector = new DataAPIVector([0.1, 0.2, 0.3]);
+   * const cursor = collection.findAndRerank({})
+   *   .sort({ $hybrid: { $vector: vector, ... } })
+   *   .includeSortVector();
    *
-   * - If `sort: { $hybrid: { $vectorize } }` was used, `getSortVector()` will return the `$vector` that was created from the text.
+   * const sortVector = await cursor.getSortVector();
+   * // Returns the same vector used in the sort
    *
-   * - If vector search is not used, `getSortVector()` will simply return `null`. A find request will still be made.
+   * // Using $vectorize
+   * const cursor = collection.findAndRerank({})
+   *   .sort({ $hybrid: { $vectorize: 'some text', ... } })
+   *   .includeSortVector();
    *
-   * If `includeSortVector` is `true`, and this function is called before any other cursor operation (such as
-   * `.next()` or `.toArray()`), it'll make an API request to fetch the sort vector, filling the cursor's buffer
-   * in the process.
+   * const sortVector = await cursor.getSortVector();
+   * // Returns the vector generated from the text
+   * ```
    *
-   * If the cursor has already been executed before this function has been called, no additional API request
-   * will be made to fetch the sort vector, as it has already been cached.
+   * ---
    *
-   * But to reiterate, if `includeSortVector` is `false`, and this function is called, no API request is made, and
-   * the cursor's buffer is not populated; it simply returns `null`.
+   * ##### Method Behavior
    *
-   * @returns The sort vector, or `null` if none was used (or if `includeSortVector !== true`).
+   * This method will:
+   * - Return `null` if `includeSortVector` was not set to `true`
+   * - Return the original vector if `sort: { $hybrid: { $vector } }` was used
+   * - Return the generated vector if `sort: { $hybrid: { $vectorize } }` was used
+   *
+   * If this method is called before the cursor has been executed, it will make an API request to fetch the sort vector and also populate the cursor's buffer.
+   *
+   * If the cursor has already been executed, the sort vector will have already been cached, so no additional request will be made.
+   *
+   * @returns The sort vector used to perform the vector search, or `null` if not applicable.
    */
   public async getSortVector(): Promise<DataAPIVector | null> {
-    if (this._sortVector.state === QueryState.Unattempted && this._options.includeSortVector) {
-      const reset2idle = this._state === 'idle';
-
-      await this._next(true, '.getSortVector');
-
-      if (reset2idle) {
-        this._state = 'idle';
-      }
-    }
-
-    return this._sortVector.unwrap();
+    return this._internal.getSortVector();
   }
 
   /**
    * ##### Overview
    *
-   * Creates, a new, uninitialized copy of this cursor with the exact same options and mapping.
+   * Creates a new cursor with the exact same configuration as the current cursor.
    *
-   * See {@link FindAndRerankCursor.rewind} for resetting the same instance of the cursor.
+   * The new cursor will be in the `'idle'` state, regardless of the state of the current cursor, and will start its own iteration from the beginning, sending new queries to the server, even if the resultant data was already fetched by the original cursor.
+   *
+   * @example
+   * ```ts
+   * const cursor = collection.findAndRerank({ age: { $gt: 30 } })
+   *   .sort({ $hybrid: 'old man' });
+   *
+   * // Clone the cursor before use
+   * const clone1 = cursor.clone();
+   * const clone2 = cursor.clone();
+   *
+   * // Each cursor operates independently
+   * const firstResult = await clone1.toArray();
+   * const firstTwoRecords = await clone2.next();
+   *
+   * // Original cursor is still usable
+   * for await (const doc of cursor) {
+   *   console.log(doc);
+   * }
+   * ```
+   *
+   * ---
+   *
+   * ##### Cloning vs Rewinding
+   *
+   * Cloning a cursor is different from rewinding it. Cloning creates an independent new cursor with the same configuration as the original, while rewinding resets the current cursor to its initial state.
+   *
+   * See {@link FindAndRerankCursor.rewind} for more information on rewinding.
+   *
+   * @returns A new cursor with the same configuration as the current cursor.
+   *
+   * @see FindAndRerankCursor.rewind
    */
   public override clone(): this {
-    return cloneFLC(this, this._filter, this._options, this._mapping);
+    return this._internal.freshClone();
   }
 
   /**
    * @internal
    */
-  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankedResult<TRaw>[]> {
-    const command = {
-      findAndRerank: {
-        filter: this._filter[0],
-        projection: this._options.projection,
-        sort: this._options.sort,
-        options: {
-          limit: this._options.limit,
-          hybridLimits: this._options.hybridLimits,
-          rerankOn: this._options.rerankOn,
-          rerankQuery: this._options.rerankQuery,
-          includeScores: this._options.includeScores,
-          includeSortVector: this._options.includeSortVector,
-        },
-      },
-    };
+  private static InternalNextPageOptions = <const>{
+    commandName: 'findAndRerank',
+    commandOptions: ['limit', 'hybridLimits', 'rerankOn', 'rerankQuery', 'includeScores', 'includeSortVector'],
+    mapPage<TRaw extends SomeDoc>(page: FindAndRerankPage<SomeDoc>, raw: RawDataAPIResponse) {
+      for (let i = 0, n = page.result.length; i < n; i++) {
+        page.result[i] = new RerankedResult(page.result[i], raw.status?.documentResponses?.[i]?.scores ?? {});
+      }
 
-    const raw = await this._httpClient.executeCommand(command, {
-      timeoutManager: tm ?? this._httpClient.tm.single('generalMethodTimeoutMs', this._options),
-      bigNumsPresent: this._filter[1],
-      extraLogInfo: extra,
-    });
+      return {
+        nextPageState: page.nextPageState,
+        result: page.result as TRaw[],
+        sortVector: page.sortVector,
+      };
+    },
+  };
 
-    this._nextPageState.swap(raw.data?.nextPageState);
+  /**
+   * ##### Overview 🚨
+   *
+   * Fetches the next complete page of results from the server and returns it directly.
+   *
+   * > **🚨Important:** `findAndRerank` operations are not currently paginated, and as such, this construct mainly exists for consistency with {@link FindCursor.fetchNextPage}.
+   * >
+   * > Regardless, the page state mechanism is still full functional on the client side, in case it is available in the future.
+   *
+   * See {@link FindCursor.fetchNextPage} for more information on fetching the next page.
+   *
+   * @returns A page object containing the results, the next page state, and optionally the sort vector.
+   *
+   * @see FindAndRerank.initialPageState
+   * @see FindAndRerank.toArray
+   */
+  public async fetchNextPage(): Promise<FindAndRerankPage<T>> {
+    return this._internal.fetchNextPageMapped(FindAndRerankCursor.InternalNextPageOptions);
+  }
 
-    /* c8 ignore next: don't think it's possible for documents to be nullish, but just in case */
-    const buffer = raw.data?.documents ?? [];
-
-    for (let i = 0, n = buffer.length; i < n; i++) {
-      const deserialized = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
-      buffer[i] = new RerankedResult(deserialized, raw.status?.documentResponses?.[i]?.scores ?? {});
-    }
-
-    const sortVector = raw.status?.sortVector;
-    this._sortVector.swap(sortVector ? vector(sortVector) : sortVector);
-    this._options.includeSortVector = false;
-
-    return buffer;
+  /**
+   * @internal
+   */
+  protected async _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[FindAndRerankPage<RerankedResult<TRaw>>, boolean]> {
+    return this._internal.fetchNextPageRaw(extra, tm, FindAndRerankCursor.InternalNextPageOptions);
   }
 
   /**
    * @internal
    */
   protected _tm(): Timeouts {
-    return this._httpClient.tm;
+    return this._internal._httpClient.tm;
   }
 }

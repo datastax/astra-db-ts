@@ -196,7 +196,7 @@ export class DataAPIClient extends HierarchicalLogger<DataAPIClientEventMap> {
    *
    * ##### Disclaimer
    *
-   * > **🚨Important**: This does _not_ verify the existence of the database—it only creates a reference.
+   * > **🚨Important:** This does _not_ verify the existence of the database—it only creates a reference.
    * >
    * > Use {@link AstraAdmin.createDatabase} to create a new database if you need to.
    *

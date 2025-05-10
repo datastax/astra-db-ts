@@ -133,7 +133,7 @@ export interface DataAPIErrorDescriptor {
  *
  * This represents a warning that occurred during the operation which should likely be addressed by the user, but had no actual impact on the success or failure of the operation itself.
  *
- * > **⚠️Note**: This is identical to the {@link DataAPIErrorDescriptor} in every way, except {@link DataAPIErrorDescriptor.scope} is always `'WARNING'`.
+ * > **⚠️Note:** This is identical to the {@link DataAPIErrorDescriptor} in every way, except {@link DataAPIErrorDescriptor.scope} is always `'WARNING'`.
  *
  * @see CommandWarningEvent
  * @see AdminCommandWarningEvent

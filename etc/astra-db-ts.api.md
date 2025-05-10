@@ -36,38 +36,36 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
     buffered(): number;
     // @deprecated
     bufferedCount: 'ERROR: `.bufferedCount()` has been renamed to be simply `.buffered()`';
-    // (undocumented)
     abstract clone(): this;
     close(): void;
     consumeBuffer(max?: number): TRaw[];
     consumed(): number;
+    // @internal (undocumented)
+    protected _currentPage?: {
+        result: TRaw[];
+    };
+    // Warning: (ae-forgotten-export) The symbol "TimeoutManager" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    protected abstract _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[page: typeof AbstractCursor._currentPage, isNextPage: boolean]>;
     forEach(consumer: ((doc: T) => boolean | Promise<boolean>) | ((doc: T) => void | Promise<void>)): Promise<void>;
     hasNext(): Promise<boolean>;
-    // (undocumented)
     abstract map<R>(map: (doc: T) => R): AbstractCursor<R, TRaw>;
     // @internal (undocumented)
     readonly _mapping?: (doc: any) => T;
     next(): Promise<T | null>;
     // @internal (undocumented)
-    protected _next(peek: true, method: string, tm?: TimeoutManager): Promise<boolean>;
+    _next(peek: true, method: string, tm?: TimeoutManager): Promise<true | null>;
     // @internal (undocumented)
-    protected _next(peek: false, method: string, tm?: TimeoutManager): Promise<T | null>;
-    // Warning: (ae-forgotten-export) The symbol "TimeoutManager" needs to be exported by the entry point index.d.ts
-    //
-    // @internal (undocumented)
-    protected abstract _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]>;
-    // Warning: (ae-forgotten-export) The symbol "QueryState" needs to be exported by the entry point index.d.ts
-    //
-    // @internal (undocumented)
-    protected _nextPageState: QueryState<string>;
-    // @internal (undocumented)
-    readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
+    _next(peek: false, method: string, tm?: TimeoutManager): Promise<T | null>;
     // @deprecated
     readBufferedDocuments: 'ERROR: `.readBufferedDocuments()` has been renamed to be `.consumeBuffer()`';
     rewind(): void;
     get state(): CursorState;
     // @internal (undocumented)
     protected _state: CursorState;
+    // @internal (undocumented)
+    readonly _timeoutOptions: WithTimeout<'generalMethodTimeoutMs'>;
     // Warning: (ae-forgotten-export) The symbol "Timeouts" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
@@ -457,7 +455,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     findOne<TRaw extends SomeDoc = WithSim<RSchema>>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions): Promise<TRaw | null>;
     findOneAndDelete<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
     findOneAndReplace<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
-    findOneAndUpdate(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<RSchema | null>;
+    findOneAndUpdate<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<TRaw | null>;
     get _httpClient(): OpaqueHttpClient;
     insertMany(documents: readonly MaybeId<WSchema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<RSchema>>;
     insertOne(document: MaybeId<WSchema>, options?: CollectionInsertOneOptions): Promise<CollectionInsertOneResult<RSchema>>;
@@ -616,9 +614,7 @@ export type CollectionFilterOps<Elem> = {
 export class CollectionFindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindAndRerankCursor<T, TRaw> {
     get dataSource(): Collection;
     filter(filter: CollectionFilter<TRaw>): this;
-    // (undocumented)
     map: <R>(map: (doc: T) => R) => CollectionFindAndRerankCursor<R, TRaw>;
-    // (undocumented)
     project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => CollectionFindAndRerankCursor<RerankedResult<RRaw>, RRaw>;
 }
 
@@ -629,11 +625,8 @@ export type CollectionFindAndRerankOptions = GenericFindAndRerankOptions;
 export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
     get dataSource(): Collection;
     filter(filter: CollectionFilter<TRaw>): this;
-    // (undocumented)
     includeSimilarity: (includeSimilarity?: boolean) => CollectionFindCursor<WithSim<TRaw>, WithSim<TRaw>>;
-    // (undocumented)
     map: <R>(map: (doc: T) => R) => CollectionFindCursor<R, TRaw>;
-    // (undocumented)
     project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => CollectionFindCursor<RRaw, RRaw>;
 }
 
@@ -1651,37 +1644,43 @@ export type Filter = Record<string, any>;
 export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankedResult<TRaw>> {
     // @internal
     [$CustomInspect](): string;
-    // @internal
-    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T);
-    clone(): this;
-    abstract get dataSource(): Table<SomeRow> | Collection;
-    filter(filter: Filter): this;
+    // Warning: (ae-forgotten-export) The symbol "SerDes" needs to be exported by the entry point index.d.ts
     // Warning: (ae-forgotten-export) The symbol "SerializedFilter" needs to be exported by the entry point index.d.ts
     //
+    // @internal
+    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T, initialPage?: FindAndRerankPage<RerankedResult<TRaw>>);
+    clone(): this;
+    // (undocumented)
+    _currentPage?: FindAndRerankPage<RerankedResult<TRaw>>;
+    abstract get dataSource(): Table<SomeRow> | Collection;
+    fetchNextPage(): Promise<FindAndRerankPage<T>>;
     // @internal (undocumented)
-    readonly _filter: SerializedFilter;
+    protected _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[FindAndRerankPage<RerankedResult<TRaw>>, boolean]>;
+    filter(filter: Filter): this;
     getSortVector(): Promise<DataAPIVector | null>;
     hybridLimits(hybridLimits: number | Record<string, number>): this;
     includeScores(includeScores?: boolean): this;
     includeSortVector(includeSortVector?: boolean): this;
+    initialPageState(initialPageState?: string): this;
+    // Warning: (ae-forgotten-export) The symbol "FLCInternal" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    readonly _internal: FLCInternal<RerankedResult<TRaw>, FindAndRerankPage<RerankedResult<TRaw>>, GenericFindAndRerankOptions>;
     limit(limit: number): this;
     map<R>(map: (doc: T) => R): FindAndRerankCursor<R, TRaw>;
-    // @internal (undocumented)
-    protected _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankedResult<TRaw>[]>;
-    // @internal (undocumented)
-    readonly _options: GenericFindAndRerankOptions;
-    // @internal (undocumented)
-    readonly _parent: Table<SomeRow> | Collection;
     project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RerankedResult<RRaw>, RRaw>;
     rerankOn(rerankOn: string): this;
     rerankQuery(rerankQuery: string): this;
-    // Warning: (ae-forgotten-export) The symbol "SerDes" needs to be exported by the entry point index.d.ts
-    //
-    // @internal (undocumented)
-    readonly _serdes: SerDes;
     sort(sort: HybridSort): this;
     // @internal (undocumented)
     protected _tm(): Timeouts;
+}
+
+// @public
+export interface FindAndRerankPage<T> {
+    nextPageState: string | null;
+    result: T[];
+    sortVector?: DataAPIVector;
 }
 
 // @public
@@ -1689,28 +1688,26 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
     // @internal
     [$CustomInspect](): string;
     // @internal
-    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
+    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T, initialPage?: FindPage<TRaw>);
     clone(): this;
-    abstract get dataSource(): Table<SomeRow> | Collection;
-    filter(filter: Filter): this;
     // @internal (undocumented)
-    readonly _filter: SerializedFilter;
+    _currentPage?: FindPage<TRaw>;
+    abstract get dataSource(): Table<SomeRow> | Collection;
+    fetchNextPage(): Promise<FindPage<T>>;
+    // @internal (undocumented)
+    protected _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[FindPage<TRaw>, boolean]>;
+    filter(filter?: Filter): this;
     getSortVector(): Promise<DataAPIVector | null>;
     includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>>;
     includeSortVector(includeSortVector?: boolean): this;
-    limit(limit: number): this;
+    initialPageState(initialPageState?: string): this;
+    // @internal (undocumented)
+    readonly _internal: FLCInternal<TRaw, FindPage<TRaw>, GenericFindOptions>;
+    limit(limit?: number): this;
     map<R>(map: (doc: T) => R): FindCursor<R, TRaw>;
-    // @internal (undocumented)
-    protected _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]>;
-    // @internal (undocumented)
-    readonly _options: GenericFindOptions;
-    // @internal (undocumented)
-    readonly _parent: Table<SomeRow> | Collection;
     project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw>;
-    // @internal (undocumented)
-    readonly _serdes: SerDes;
-    skip(skip: number): this;
-    sort(sort: Sort): this;
+    skip(skip?: number): this;
+    sort(sort?: Sort): this;
     // @internal (undocumented)
     protected _tm(): Timeouts;
 }
@@ -1718,6 +1715,13 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
 // @public
 export interface FindEmbeddingProvidersResult {
     embeddingProviders: Record<string, EmbeddingProviderInfo>;
+}
+
+// @public
+export interface FindPage<T> {
+    nextPageState: string | null;
+    result: T[];
+    sortVector?: DataAPIVector;
 }
 
 // @public
@@ -1781,17 +1785,12 @@ export type GenericEstimatedCountOptions = WithTimeout<'generalMethodTimeoutMs'>
 
 // @public
 export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-    // (undocumented)
     hybridLimits?: number | Record<string, number>;
-    // (undocumented)
     includeScores?: boolean;
-    // (undocumented)
     includeSortVector?: boolean;
     limit?: number;
     projection?: Projection;
-    // (undocumented)
     rerankOn?: string;
-    // (undocumented)
     rerankQuery?: string;
     sort?: HybridSort;
 }
@@ -1845,6 +1844,7 @@ export interface GenericFindOneOptions extends WithTimeout<'generalMethodTimeout
 export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     includeSimilarity?: boolean;
     includeSortVector?: boolean;
+    initialPageState?: string | null;
     limit?: number;
     projection?: Projection;
     skip?: number;
@@ -1971,16 +1971,15 @@ export type HttpOptions = FetchH2HttpClientOptions | FetchHttpClientOptions | Cu
 };
 
 // @public (undocumented)
-export type HybridSort = Record<string, SortDirection | string | number[] | DataAPIVector | HybridSortObject> & {
+export interface HybridSort {
+    // (undocumented)
     $hybrid: string | HybridSortObject;
-};
+}
 
 // @public (undocumented)
 export interface HybridSortObject {
     // (undocumented)
     $lexical?: string;
-    // (undocumented)
-    $vector?: number[] | DataAPIVector;
     // (undocumented)
     $vectorize?: string;
     // (undocumented)
@@ -2049,7 +2048,7 @@ export interface LexicalDoc {
 export const LIB_NAME = "astra-db-ts";
 
 // @public
-export const LIB_VERSION = "2.0.0";
+export const LIB_VERSION = "2.0.1";
 
 // @public
 export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
@@ -2582,11 +2581,8 @@ export type TableFindAndRerankOptions = GenericFindAndRerankOptions;
 export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCursor<T, TRaw> {
     get dataSource(): Table<SomeRow>;
     filter(filter: TableFilter<TRaw>): this;
-    // (undocumented)
     includeSimilarity: (includeSimilarity?: boolean) => TableFindCursor<WithSim<TRaw>, WithSim<TRaw>>;
-    // (undocumented)
     map: <R>(map: (doc: T) => R) => TableFindCursor<R, TRaw>;
-    // (undocumented)
     project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindCursor<RRaw, RRaw>;
 }
 

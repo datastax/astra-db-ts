@@ -80,7 +80,7 @@ const jbi = JBI;
  *
  * Represents the interface to a collection in a Data-API-enabled database.
  *
- * > **⚠️Warning**: This isn't directly instantiated, but spawned via {@link Db.createCollection} or {@link Db.collection}.
+ * > **⚠️Warning:** This isn't directly instantiated, but spawned via {@link Db.createCollection} or {@link Db.collection}.
  *
  * @example
  * ```ts
@@ -265,7 +265,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * // Insert a document with a specific ID
    * await collection.insertOne({ _id: '1', name: 'John Doe' });
-   * await collection.insertOne({ _id: new ObjectID(), name: 'Jane Doe' });
+   * await collection.insertOne({ _id: new ObjectId(), name: 'Jane Doe' });
    * await collection.insertOne({ _id: UUID.v7(), name: 'Dane Joe' });
    *
    * // Insert a document with a vector (if enabled on the collection)
@@ -1499,7 +1499,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns The document before/after the update, depending on the type of `returnDocument`
    */
-  public async findOneAndUpdate(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<RSchema | null> {
+  public async findOneAndUpdate<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<TRaw | null> {
     return this.#commands.findOneAndUpdate(filter, update, options);
   }
 
@@ -1547,7 +1547,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * ##### Disclaimer 🚨
    *
-   * > **🚨Important**: Once the collection is dropped, this object is still technically "usable", but any further operations on it will fail at the Data API level; thus, it's the user's responsibility to make sure that the {@link Collection} object is no longer used.
+   * > **🚨Important:** Once the collection is dropped, this object is still technically "usable", but any further operations on it will fail at the Data API level; thus, it's the user's responsibility to make sure that the {@link Collection} object is no longer used.
    *
    * @param options - The options for this operation.
    *

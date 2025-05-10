@@ -20,13 +20,13 @@ import { FindAndRerankCursor } from '@/src/documents/index.js';
  *
  * A lazy iterator over the results of a `findAndRerank` operation on a {@link Collection}.
  *
- * > **⚠️Warning**: Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}.
+ * > **⚠️Warning:** Shouldn't be directly instantiated, but rather spawned via {@link Collection.findAndRerank}.
  *
  * ---
  *
  * ##### Typing
  *
- * > **🚨Important:** For most intents and purposes, you may treat the cursor as if it is typed simply as `Cursor<T>`.
+ * > **✏️Note:** You may generally treat the cursor as if it were typed as `FindAndRerankCursor<T>`.
  * >
  * > If you're using a projection, it is heavily recommended to provide an explicit type representing the type of the document after projection.
  *
@@ -78,7 +78,7 @@ export class CollectionFindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ex
    * ```
    */
   public override get dataSource(): Collection  {
-    return this._parent as Collection;
+    return this._internal._parent as Collection;
   }
 
   /**
@@ -86,19 +86,19 @@ export class CollectionFindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ex
    *
    * Sets the filter for the cursor, overwriting any previous filter.
    *
-   * *Note: this method does **NOT** mutate the cursor; it simply returns a new, uninitialized cursor with the given new filter set.*
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new `filter`.
    *
    * @example
    * ```ts
-   * await table.insertOne({ name: 'John', ... });
+   * await collection.insertOne({ name: 'John', ... });
    *
-   * const cursor = table.findAndRerank({})
+   * const cursor = collection.findAndRerank({})
    *   .sort({ $hybrid: 'big burly man' })
    *   .filter({ name: 'John' });
    *
    * // The cursor will only return records with the name 'John'
-   * const john = await cursor.next();
-   * john.name === 'John'; // true
+   * const { document } = await cursor.next();
+   * document.name === 'John'; // true
    * ```
    *
    * @param filter - A filter to select which records to return.
@@ -109,7 +109,68 @@ export class CollectionFindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ex
     return super.filter(filter);
   }
 
+  /**
+   * ##### Overview
+   *
+   * Sets the projection for the cursor, overwriting any previous projection.
+   *
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new projection.
+   *
+   * > **🚨Important:** To properly type this method, you should provide a type argument to specify the shape of the projected
+   * records.
+   *
+   * > **⚠️Warning:** You may *NOT* provide a projection after a mapping is already provided, to prevent potential type de-sync errors.
+   *
+   * @example
+   * ```ts
+   * const cursor = collection.findAndRerank({ name: 'John' }).sort(...);
+   *
+   * // T is `RerankedResult<Partial<Schema>>` because the type is not specified
+   * const rawProjected = cursor.project({ id: 0, name: 1 });
+   *
+   * // T is `RerankedResult<{ name: string }>`
+   * const projected = cursor.project<{ name: string }>({ id: 0, name: 1 });
+   *
+   * // You can also chain instead of using intermediate variables
+   * const fluentlyProjected = collection
+   *   .findAndRerank({ name: 'John' })
+   *   .sort(...)
+   *   .project<{ name: string }>({ id: 0, name: 1 });
+   *   .map(res => res.document)
+   *   .map(doc => doc.name);
+   * ```
+   *
+   * @param projection - Specifies which fields should be included/excluded in the returned records.
+   *
+   * @returns A new cursor with the new projection set.
+   */
   declare public project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => CollectionFindAndRerankCursor<RerankedResult<RRaw>, RRaw>;
 
+  /**
+   * ##### Overview
+   *
+   * Map all records using the provided mapping function. Previous mapping functions will be composed with the new
+   * mapping function (new ∘ old).
+   *
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new mapping function applied.
+   *
+   * > **⚠️Warning:** You may *NOT* provide a projection after a mapping is already provided, to prevent potential type de-sync errors.
+   *
+   * @example
+   * ```ts
+   * const cursor = collection.findAndRerank({ name: 'John' })
+   *   .sort({ $hybrid: 'old man' })
+   *   .map(res => res.document.name);
+   *   .map(name => name.toLowerCase());
+   *
+   * // T is `string` because the mapping function returns a string
+   * const name = await cursor.next();
+   * name === 'john'; // true
+   * ```
+   *
+   * @param map - The mapping function to apply to all records.
+   *
+   * @returns A new cursor with the new mapping set.
+   */
   declare public map: <R>(map: (doc: T) => R) => CollectionFindAndRerankCursor<R, TRaw>;
 }

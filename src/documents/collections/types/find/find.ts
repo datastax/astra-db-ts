@@ -15,15 +15,39 @@
 import type { GenericFindOptions } from '@/src/documents/index.js';
 
 /**
- * Options for the collection `find` method.
+ * ##### Overview
  *
- * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
- * @field projection - Specifies which fields should be included/excluded in the returned documents.
- * @field limit - Max number of documents to return in the lifetime of the cursor.
- * @field skip - Number of documents to skip if using a sort.
- * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
+ * The options for a `find` command on a {@link Collection}.
+ *
+ * @example
+ * ```ts
+ * const results = await collection.find({
+ *   category: 'electronics',
+ * }, {
+ *   sort: { price: 1 },
+ *   limit: 10,
+ *   timeout: 10000,
+ * });
+ * ```
+ *
+ * ---
+ *
+ * ##### Builder Methods
+ *
+ * You can also use fluent builder methods on the cursor:
+ *
+ * @example
+ * ```ts
+ * const cursor = collection.find({ category: 'electronics' })
+ *   .sort({ price: 1 })
+ *   .limit(10)
+ *   .skip(5);
+ *
+ * const results = await cursor.toArray();
+ * ```
  *
  * @see Collection.find
+ * @see CollectionFindCursor
  *
  * @public
  */

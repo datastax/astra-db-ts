@@ -22,7 +22,7 @@ import { FindAndRerankCursor } from '@/src/documents/index.js';
  */
 export class TableFindAndRerankCursor<T, TRaw extends SomeRow = SomeRow> extends FindAndRerankCursor<T, TRaw> {
   public get dataSource(): Table<SomeRow> {
-    return this._parent as Table<SomeRow>;
+    return this._internal._parent as Table<SomeRow>;
   }
 
   public override filter(filter: TableFilter<TRaw>): this {

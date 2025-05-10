@@ -15,3 +15,4 @@
 export * from './abstract-cursor.js';
 export * from './find-cursor.js';
 export * from './rerank-cursor.js';
+export * from './cursor-error.js';
