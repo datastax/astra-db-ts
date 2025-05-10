@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * ##### Overview
@@ -70,7 +70,7 @@ export type GenericInsertManyOptions =
  *
  * @public
  */
-export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericInsertManyOrderedOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   /**
    * If `true`, the records are inserted in the order provided. If an error occurs, the operation stops and the
    * remaining records are not inserted.
@@ -120,7 +120,7 @@ export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMet
  *
  * @public
  */
-export interface GenericInsertManyUnorderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericInsertManyUnorderedOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   /**
    * If `false`, the records are inserted in an arbitrary order. If an error occurs, the operation does not stop
    * and the remaining records are inserted. This allows the operation to be parallelized for better performance.

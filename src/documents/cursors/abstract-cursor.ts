@@ -13,8 +13,9 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/index.js';
-import type { TimeoutManager, Timeouts, WithTimeout } from '@/src/lib/api/timeouts/timeouts.js';
+import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import { CursorError } from '@/src/documents/cursors/cursor-error.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * ##### Overview
@@ -99,14 +100,14 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal
    */
-  readonly _timeoutOptions: WithTimeout<'generalMethodTimeoutMs'>;
+  readonly _timeoutOptions: CommandOptions;
 
   /**
    * Should not be instantiated directly.
    *
    * @internal
    */
-  protected constructor(options: WithTimeout<'generalMethodTimeoutMs'>, mapping?: (doc: any) => T) {
+  protected constructor(options: CommandOptions, mapping?: (doc: any) => T) {
     this._timeoutOptions = options;
     this._mapping = mapping;
   }

@@ -15,7 +15,7 @@
 
 import type { CreateAstraKeyspaceOptions, DropAstraKeyspaceOptions } from '@/src/administration/types/index.js';
 import { DbAdmin } from '@/src/administration/db-admin.js';
-import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
+import type { OpaqueHttpClient, CommandOptions } from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants.js';
@@ -145,7 +145,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraFullDatabaseInfo> {
+  public async info(options?: CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }>): Promise<AstraFullDatabaseInfo> {
     const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
     return this.#info('dbAdmin.info', tm);
   }
@@ -166,7 +166,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  public override async listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]> {
+  public override async listKeyspaces(options?: CommandOptions<{ timeout: 'keyspaceAdminTimeoutMs' }>): Promise<string[]> {
     const tm = this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options);
     return this.#info('dbAdmin.listKeyspaces', tm).then(i => i.keyspaces);
   }

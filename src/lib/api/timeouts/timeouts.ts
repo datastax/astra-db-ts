@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { nullish, ReadonlyNonEmpty } from '@/src/lib/index.js';
+import type { CommandOptions, nullish, ReadonlyNonEmpty } from '@/src/lib/index.js';
 import type { HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
 import type { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler.js';
 import { TimeoutCfgHandler } from '@/src/lib/api/timeouts/cfg-handler.js';
@@ -76,9 +76,9 @@ export type TimedOutCategories = ReadonlyNonEmpty<keyof TimeoutDescriptor> | 'pr
  * });
  * ```
  *
- * ###### The `WithTimeout` interface
+ * ###### The {@link CommandOptions.timeout} option
  *
- * The {@link WithTimeout} interface lets you specify timeouts for individual methods, in two different formats:
+ * The omnipresent {@link CommandOptions.timeout} option lets you specify timeouts for individual methods, in two different formats:
  * - A subtype of {@link TimeoutDescriptor}, which lets you specify the timeout for specific categories.
  * - A number, which specifies the "happy path" timeout for the method.
  *   - In single-call methods, this sets both the request & overall method timeouts.
@@ -155,7 +155,7 @@ export type TimedOutCategories = ReadonlyNonEmpty<keyof TimeoutDescriptor> | 'pr
  *   - (create, drop, list)
  *   - Default: 30 seconds
  *
- * @see WithTimeout
+ * @see CommandOptions
  *
  * @public
  */
@@ -237,45 +237,11 @@ export interface TimeoutDescriptor {
 }
 
 /**
- * ##### Overview
+ * ##### Overview (Deprecated)
  *
- * Lets you specify timeouts for individual methods, in two different formats:
- * - A subtype of {@link TimeoutDescriptor}, which lets you specify the timeout for specific categories.
- * - A number, which specifies the "happy path" timeout for the method.
- *   - In single-call methods, this sets both the request & overall method timeouts.
- *   - In multi-call methods, this sets the overall method timeout (request timeouts are kept as default).
+ * Moved to {@link CommandOptions.timeout}.
  *
- * @example
- * ```ts
- * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 1000ms.
- * await coll.insertOne({ ... }, { timeout: 1000 });
- *
- * // `requestTimeoutMs` is left as default, `generalMethodTimeoutMs` is set to 2000ms.
- * await coll.insertOne({ ... }, { timeout: { generalMethodTimeoutMs: 2000 } });
- *
- * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 2000ms.
- * await coll.insertMany([...], {
- *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
- * });
- * ```
- *
- * @example
- * ```ts
- * // `requestTimeoutMs` is left as default, `generalMethodTimeoutMs` is set to 2000ms.
- * await coll.insertMany([...], { timeout: 2000 });
- *
- * // `requestTimeoutMs` is left as default, `generalMethodTimeoutMs` is set to 2000ms.
- * await coll.insertMany([...], { timeout: { generalMethodTimeoutMs: 2000 } });
- *
- * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 2000ms.
- * await coll.insertMany([...], {
- *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
- * });
- * ```
- *
- * See {@link TimeoutDescriptor} for much more information.
- *
- * @see TimeoutDescriptor
+ * @deprecated - Moved to {@link CommandOptions.timeout}.
  *
  * @public
  */
@@ -333,7 +299,7 @@ export class Timeouts {
     this.baseTimeouts = TimeoutCfgHandler.concat([Timeouts.Default, baseTimeouts]) as TimeoutDescriptor;
   }
 
-  public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {
+  public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: Pick<CommandOptions, 'timeout'> | nullish): TimeoutManager {
     if (typeof override?.timeout === 'number') {
       const timeout = override.timeout || EffectivelyInfinity;
 
@@ -366,7 +332,7 @@ export class Timeouts {
     });
   }
 
-  public multipart(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {
+  public multipart(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: Pick<CommandOptions, 'timeout'> | nullish): TimeoutManager {
     const _requestTimeout =
       (typeof override?.timeout === 'object')
         ? override.timeout?.requestTimeoutMs ?? this.baseTimeouts.requestTimeoutMs

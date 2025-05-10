@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { Projection, Sort } from '@/src/documents/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Represents the options for the `findOneAndReplace` command.
@@ -28,7 +28,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export interface GenericFindOneAndReplaceOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOneAndReplaceOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   /**
    * Specifies whether to return the document before or after the update.
    *

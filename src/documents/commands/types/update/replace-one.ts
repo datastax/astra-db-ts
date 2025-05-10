@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 import type { Sort } from '@/src/documents/index.js';
 
 /**
@@ -24,7 +24,7 @@ import type { Sort } from '@/src/documents/index.js';
  *
  * @public
  */
-export interface GenericReplaceOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericReplaceOneOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   upsert?: boolean,
   sort?: Sort,
   /**

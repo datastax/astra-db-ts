@@ -14,10 +14,10 @@
 
 import type { FoundDoc, SomeDoc, WithId } from '@/src/documents/collections/index.js';
 import { Collection } from '@/src/documents/collections/index.js';
-import type { RawDataAPIResponse, WithTimeout } from '@/src/lib/api/index.js';
+import type { RawDataAPIResponse } from '@/src/lib/api/index.js';
 import { DEFAULT_KEYSPACE, type OpaqueHttpClient } from '@/src/lib/api/index.js';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
-import type { DataAPIEnvironment } from '@/src/lib/types.js';
+import type { CommandOptions, DataAPIEnvironment } from '@/src/lib/types.js';
 import { extractDbComponentsFromAstraUrl } from '@/src/documents/utils.js';
 import type { DbAdmin } from '@/src/administration/index.js';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin.js';
@@ -501,7 +501,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraPartialDatabaseInfo> {
+  public async info(options?: CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }>): Promise<AstraPartialDatabaseInfo> {
     if (this.#defaultOpts.environment !== 'astra') {
       throw new InvalidEnvironmentError('db.info()', this.#defaultOpts.environment, ['astra'], 'info() is only available for Astra databases');
     }
@@ -760,7 +760,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    *
    * This overload of `createTable` infers the TS-equivalent schema of the table from the provided `CreateTableDefinition`.
    *
-   * Provide an explicit `Schema` type to disable this (i.e. `db.createTable<Tyoe>(...)`).
+   * Provide an explicit `Schema` type to disable this (i.e. `db.createTable<Type>(...)`).
    *
    * > **💡Tip:** You may use `db.createTable<SomeRow>(...)` to spawn an untyped table.
    *

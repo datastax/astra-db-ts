@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Options for creating a new index via {@link Table.createTextIndex}
  *
  * @public
  */
-export interface TableCreateTextIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableCreateTextIndexOptions extends CommandOptions<{ timeout: 'tableAdminTimeoutMs' }> {
   /**
    * Options available for `text` and `ascii` indexes
    */

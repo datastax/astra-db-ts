@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * @public
@@ -24,7 +24,7 @@ export type TableCreateIndexColumn<WSchema> = keyof WSchema | Partial<Record<(ke
  *
  * @public
  */
-export interface TableCreateIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableCreateIndexOptions extends CommandOptions<{ timeout: 'tableAdminTimeoutMs' }> {
   /**
    * Options available for `text` and `ascii` indexes
    */

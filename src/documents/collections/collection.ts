@@ -55,7 +55,7 @@ import type {
 } from '@/src/db/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
 import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
-import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
+import type { OpaqueHttpClient, CommandOptions } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { CommandEventMap, RerankedResult, ToDotNotation, WithSim } from '@/src/documents/index.js';
@@ -1520,7 +1520,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
-  public async options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>> {
+  public async options(options?: CommandOptions<{ timeout: 'collectionAdminTimeoutMs' }>): Promise<CollectionDefinition<SomeDoc>> {
     const resp = await this.#db.listCollections({ ...options, keyspace: this.keyspace });
 
     const collection = resp.find((c) => c.name === this.name);

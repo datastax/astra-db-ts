@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { AstraDatabaseCloudProvider, AstraDatabaseStatus } from '@/src/administration/types/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Represents all possible statuses of a database that you can filter by.
@@ -39,7 +39,7 @@ export type AstraDatabaseCloudProviderFilter = AstraDatabaseCloudProvider | 'ALL
  *
  * @public
  */
-export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
+export interface ListAstraDatabasesOptions extends CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }> {
   /**
    * Allows filtering so that databases in listed states are returned.
    */

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { DataAPIVector, Projection } from '@/src/documents/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * @public
@@ -68,7 +68,7 @@ export interface HybridSortObject {
  *
  * @public
  */
-export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindAndRerankOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   /**
    * The order in which to apply the update if the filter selects multiple records.
    *

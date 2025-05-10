@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 import type { Sort } from '@/src/documents/index.js';
 
 /**
@@ -34,7 +34,7 @@ export interface GenericDeleteOneResult {
  *
  * @public
  */
-export interface GenericDeleteOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericDeleteOneOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   sort?: Sort,
   /**
    * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*

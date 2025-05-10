@@ -16,7 +16,7 @@ import type { AstraAdminBlockingOptions, AstraDatabaseCloudProvider } from '@/sr
 
 
 import type { DbOptions } from '@/src/client/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * ##### Overview
@@ -112,7 +112,7 @@ export interface AstraDatabaseConfig {
  *
  * @public
  */
-export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'> & {
+export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }> & {
   /**
    * Optional overrides for the {@link Db} instance underlying the {@link AstraDbAdmin} that is returned once the database is created.
    *

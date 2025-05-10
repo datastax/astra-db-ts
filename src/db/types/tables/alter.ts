@@ -14,14 +14,14 @@
 
 import type { SomeRow } from '@/src/documents/index.js';
 import type { CreateTableColumnDefinitions, RerankServiceOptions, VectorizeServiceOptions } from '@/src/db/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Options for altering a table.
  *
  * @public
  */
-export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface AlterTableOptions<Schema extends SomeRow> extends CommandOptions<{ timeout: 'tableAdminTimeoutMs' }> {
   /**
    * The operations to perform on the table. Must pick just one of `add`, `drop`, `addVectorize`, or `dropVectorize`.
    */

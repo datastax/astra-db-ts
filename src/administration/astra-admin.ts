@@ -23,7 +23,7 @@ import { Db } from '@/src/db/db.js';
 import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
-import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions, OpaqueHttpClient } from '@/src/lib/index.js';
 import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
 import type { AstraFullDatabaseInfo } from '@/src/administration/types/admin/database-info.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
@@ -275,7 +275,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraFullDatabaseInfo> {
+  public async dbInfo(id: string, options?: CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }>): Promise<AstraFullDatabaseInfo> {
     const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
 
     const resp = await this.#httpClient.request({

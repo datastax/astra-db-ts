@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 import { HierarchicalLogger } from '@/src/lib/index.js';
 import type { Db } from '@/src/db/index.js';
 import type { AdminCommandEventMap } from '@/src/administration/events.js';
@@ -67,7 +67,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  abstract listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
+  abstract listKeyspaces(options?: CommandOptions<{ timeout: 'keyspaceAdminTimeoutMs' }>): Promise<string[]>;
 
   /**
    * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
@@ -106,7 +106,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract createKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+  abstract createKeyspace(keyspace: string, options?: CommandOptions<{ timeout: 'keyspaceAdminTimeoutMs' }>): Promise<void>;
 
   /**
    * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
@@ -146,7 +146,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+  abstract dropKeyspace(keyspace: string, options?: CommandOptions<{ timeout: 'keyspaceAdminTimeoutMs' }>): Promise<void>;
 
   /**
    * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
@@ -171,7 +171,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns The available embedding providers.
    */
-  public async findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult> {
+  public async findEmbeddingProviders(options?: CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }>): Promise<FindEmbeddingProvidersResult> {
     const httpClient = this._getDataAPIHttpClient();
 
     const resp = await httpClient.executeCommand({ findEmbeddingProviders: {} }, {
@@ -199,7 +199,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns The available reranking providers.
    */
-  public async findRerankingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindRerankingProvidersResult> {
+  public async findRerankingProviders(options?: CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }>): Promise<FindRerankingProvidersResult> {
     const httpClient = this._getDataAPIHttpClient();
 
     const resp = await httpClient.executeCommand({ findRerankingProviders: {} }, {

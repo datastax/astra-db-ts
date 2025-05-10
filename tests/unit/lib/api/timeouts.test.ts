@@ -294,7 +294,7 @@ describe('unit.lib.api.timeouts', () => {
 
     it('should set the proper initial timeout', () => {
       fc.assert(
-        fc.property(fc.option(fc.nat()), fc.option(fc.nat()), fc.option(fc.nat()), (overrideDA, overrideRT, overrideGM) => {
+        fc.property(fc.option(fc.nat(), { nil: undefined }), fc.option(fc.nat(), { nil: undefined }), fc.option(fc.nat(), { nil: undefined }), (overrideDA, overrideRT, overrideGM) => {
           const tm = timeouts.multipart('databaseAdminTimeoutMs', { timeout: { generalMethodTimeoutMs: overrideGM, requestTimeoutMs: overrideRT, databaseAdminTimeoutMs: overrideDA } });
 
           assert.deepStrictEqual(tm.initial(), {

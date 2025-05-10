@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { Projection, Sort } from '@/src/documents/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Represents the options for some generic `findOne` command.
@@ -25,7 +25,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export interface GenericFindOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOneOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   /**
    * The order in which to apply the update if the filter selects multiple records.
    *

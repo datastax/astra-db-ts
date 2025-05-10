@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { Projection, Sort } from '@/src/documents/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Represents the options for the `findOneAndDelete` command.
@@ -26,7 +26,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export interface GenericFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOneAndDeleteOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *
