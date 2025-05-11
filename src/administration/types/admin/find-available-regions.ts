@@ -43,7 +43,7 @@ export interface AstraFindAvailableRegionsOptions extends WithTimeout<'databaseA
    *
    * Defaults to `true`.
    */
-  onlyOrgEnabledRegions?: boolean;
+  onlyOrgEnabledRegions?: boolean,
 }
 
 /**
@@ -108,7 +108,7 @@ export interface AstraAvailableRegionInfo {
    * 'standard'
    * ```
    */
-  classification: AstraRegionClassification;
+  classification: AstraRegionClassification,
   /**
    * The cloud provider hosting this region.
    *
@@ -117,7 +117,7 @@ export interface AstraAvailableRegionInfo {
    * 'GCP'
    * ```
    */
-  cloudProvider: AstraDatabaseCloudProvider;
+  cloudProvider: AstraDatabaseCloudProvider,
   /**
    * A human-readable display name for the region.
    *
@@ -126,13 +126,13 @@ export interface AstraAvailableRegionInfo {
    * 'Moncks Corner, South Carolina'
    * ```
    */
-  displayName: string;
+  displayName: string,
   /**
    * Whether this region is currently enabled for use.
    *
    * > **✏️Note:** If {@link AstraFindAvailableRegionsOptions.onlyOrgEnabledRegions} is `false`, and `enabled` is still `true`, it does not guarantee that the region is usable by the current organization.
    */
-  enabled: boolean;
+  enabled: boolean,
   /**
    * The unique identifier for the region.
    *
@@ -141,11 +141,11 @@ export interface AstraAvailableRegionInfo {
    * 'us-east1'
    * ```
    */
-  name: string;
+  name: string,
   /**
    * Whether this region is reserved for qualified users only, meaning special access is required to use it.
    */
-  reservedForQualifiedUsers: boolean;
+  reservedForQualifiedUsers: boolean,
   /**
    * The geographic zone where this region is located.
    *
@@ -154,5 +154,5 @@ export interface AstraAvailableRegionInfo {
    * 'na'
    * ```
    */
-  zone: AstraRegionZone;
+  zone: AstraRegionZone,
 }
