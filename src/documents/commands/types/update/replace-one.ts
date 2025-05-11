@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { CommandOptions } from '@/src/lib/index.js';
-import type { Sort } from '@/src/documents/index.js';
+import type { Sort, WithDeprecatedVectorSortOptions } from '@/src/documents/index.js';
 
 /**
  * Represents the options for some generic `replaceOne` command.
@@ -24,19 +24,7 @@ import type { Sort } from '@/src/documents/index.js';
  *
  * @public
  */
-export interface GenericReplaceOneOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
+export interface GenericReplaceOneOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }>, WithDeprecatedVectorSortOptions {
   upsert?: boolean,
   sort?: Sort,
-  /**
-   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
-   *
-   * @deprecated - Use `sort: { $vector: [...] }` instead.
-   */
-  vector?: 'ERROR: Use `sort: { $vector: [...] }` instead',
-  /**
-   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
-   *
-   * @deprecated - Use `sort: { $vectorize: '...' }` instead.
-   */
-  vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead',
 }
