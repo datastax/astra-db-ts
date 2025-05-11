@@ -85,11 +85,28 @@ export type NonEmpty<T> = [T, ...T[]];
  */
 export type ReadonlyNonEmpty<T> = readonly [T, ...T[]];
 
-export interface CommandOptionsOptions {
+/**
+ * Specializes a usage of {@link CommandOptions}.
+ *
+ * @public
+ */
+export interface CommandOptionsSpec {
   timeout?: keyof TimeoutDescriptor,
 }
 
-export interface CommandOptions<Cfg extends CommandOptionsOptions = Required<CommandOptionsOptions>> {
+/**
+ * ##### Overview
+ *
+ * The base options for all methods which make a request to the Data API or the DevOps API.
+ *
+ * @example
+ * ```ts
+ * await collection.insertOne({ ... }, { timeout: 5000 });
+ * ```
+ *
+ * @public
+ */
+export interface CommandOptions<Spec extends CommandOptionsSpec = Required<CommandOptionsSpec>> {
   /**
    * ##### Overview
    *
@@ -133,7 +150,7 @@ export interface CommandOptions<Cfg extends CommandOptionsOptions = Required<Com
    *
    * @public
    */
-  timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Exclude<Cfg['timeout'], undefined>>;
+  timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Exclude<Spec['timeout'], undefined>>;
   /**
    * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
    *
