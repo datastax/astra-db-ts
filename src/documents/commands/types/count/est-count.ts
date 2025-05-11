@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
-export type GenericEstimatedCountOptions = WithTimeout<'generalMethodTimeoutMs'>;
+export type GenericEstimatedCountOptions = CommandOptions<{ timeout: 'generalMethodTimeoutMs' }>;

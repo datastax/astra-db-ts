@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { VectorizeServiceOptions } from '@/src/db/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 import type { TableOptions } from '@/src/db/types/tables/spawn.js';
 
 /**
@@ -32,7 +32,7 @@ import type { TableOptions } from '@/src/db/types/tables/spawn.js';
  *
  * @public
  */
-export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
+export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition> extends CommandOptions<{ timeout: 'tableAdminTimeoutMs' }>, TableOptions {
   definition: Def,
   ifNotExists?: boolean,
 }

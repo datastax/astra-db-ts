@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Represents the options for dropping an astra keyspace (i.e. blocking options + timeout options).
  *
  * @public
  */
-export type DropAstraKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'>;
+export type DropAstraKeyspaceOptions = AstraAdminBlockingOptions & CommandOptions<{ timeout: 'keyspaceAdminTimeoutMs' }>;

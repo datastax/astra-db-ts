@@ -14,6 +14,7 @@
 /* eslint-disable @typescript-eslint/no-empty-object-type -- Used for when intersection w/ {} is a "noop" */
 
 import type { DataAPIEnvironments } from '@/src/lib/constants.js';
+import type { TimeoutDescriptor } from '@/src/lib/api/index.js';
 
 /**
  * Shorthand type to represent some nullish value.
@@ -83,3 +84,77 @@ export type NonEmpty<T> = [T, ...T[]];
  * @public
  */
 export type ReadonlyNonEmpty<T> = readonly [T, ...T[]];
+
+/**
+ * Specializes a usage of {@link CommandOptions}.
+ *
+ * @public
+ */
+export interface CommandOptionsSpec {
+  timeout?: keyof TimeoutDescriptor,
+}
+
+/**
+ * ##### Overview
+ *
+ * The base options for all methods which make a request to the Data API or the DevOps API.
+ *
+ * @example
+ * ```ts
+ * await collection.insertOne({ ... }, { timeout: 5000 });
+ * ```
+ *
+ * @public
+ */
+export interface CommandOptions<Spec extends CommandOptionsSpec = Required<CommandOptionsSpec>> {
+  /**
+   * ##### Overview
+   *
+   * Lets you specify timeouts for individual methods, in two different formats:
+   * - A subtype of {@link TimeoutDescriptor}, which lets you specify the timeout for specific categories.
+   * - A number, which specifies the "happy path" timeout for the method.
+   *   - In single-call methods, this sets both the request & overall method timeouts.
+   *   - In multi-call methods, this sets the overall method timeout (request timeouts are kept as default).
+   *
+   * @example
+   * ```ts
+   * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 1000ms.
+   * await coll.insertOne({ ... }, { timeout: 1000 });
+   *
+   * // `requestTimeoutMs` is left as default, `generalMethodTimeoutMs` is set to 2000ms.
+   * await coll.insertOne({ ... }, { timeout: { generalMethodTimeoutMs: 2000 } });
+   *
+   * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 2000ms.
+   * await coll.insertMany([...], {
+   *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
+   * });
+   * ```
+   *
+   * @example
+   * ```ts
+   * // `requestTimeoutMs` is left as default, `generalMethodTimeoutMs` is set to 2000ms.
+   * await coll.insertMany([...], { timeout: 2000 });
+   *
+   * // `requestTimeoutMs` is left as default, `generalMethodTimeoutMs` is set to 2000ms.
+   * await coll.insertMany([...], { timeout: { generalMethodTimeoutMs: 2000 } });
+   *
+   * // Both `requestTimeoutMs` and `generalMethodTimeoutMs` are set to 2000ms.
+   * await coll.insertMany([...], {
+   *   timeout: { requestTimeoutMs: 2000, generalMethodTimeoutMs: 2000 },
+   * });
+   * ```
+   *
+   * See {@link TimeoutDescriptor} for much more information.
+   *
+   * @see TimeoutDescriptor
+   *
+   * @public
+   */
+  timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Exclude<Spec['timeout'], undefined>>;
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`, and defaults in `timeoutDefaults`. You may generally Ctrl+R replace `maxTimeMS` with `timeout` to retain the same behavior.
+   */
+  maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`',
+}

@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Represents the options for dropping a database (i.e. blocking options + timeout options).
  *
  * @public
  */
-export type AstraDropDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'>;
+export type AstraDropDatabaseOptions = AstraAdminBlockingOptions & CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }>;

@@ -136,3 +136,27 @@ export interface ProjectionSlice {
  * @public
  */
 export type WithSim<Schema extends SomeDoc> = Schema & { $similarity?: number };
+
+/**
+ * ##### Overview (Migration required)
+ *
+ * The `vector` and `vectorize` properties are deprecated and will be removed in a future version.
+ *
+ * Use `sort: { $vector[ize]: ... }` instead.
+ *
+ * @public
+ */
+export interface WithDeprecatedVectorSortOptions {
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vector: [...] }` instead.
+   */
+  vector?: 'ERROR: Use `sort: { $vector: [...] }` instead',
+  /**
+   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
+   *
+   * @deprecated - Use `sort: { $vectorize: '...' }` instead.
+   */
+  vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead',
+}

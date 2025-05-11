@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 import type { WithKeyspace } from '@/src/db/index.js';
 
 /**
@@ -20,7 +20,7 @@ import type { WithKeyspace } from '@/src/db/index.js';
  *
  * @public
  */
-export interface DropTableOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
+export interface DropTableOptions extends CommandOptions<{ timeout: 'tableAdminTimeoutMs' }>, WithKeyspace {
   /**
    * If `true`, no error will be thrown if the table does not exist.
    *

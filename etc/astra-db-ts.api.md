@@ -32,7 +32,7 @@ export const $SerializeForTable: unique symbol;
 export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
     // @internal
-    protected constructor(options: WithTimeout<'generalMethodTimeoutMs'>, mapping?: (doc: any) => T);
+    protected constructor(options: CommandOptions, mapping?: (doc: any) => T);
     buffered(): number;
     // @deprecated
     bufferedCount: 'ERROR: `.bufferedCount()` has been renamed to be simply `.buffered()`';
@@ -65,7 +65,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
     // @internal (undocumented)
     protected _state: CursorState;
     // @internal (undocumented)
-    readonly _timeoutOptions: WithTimeout<'generalMethodTimeoutMs'>;
+    readonly _timeoutOptions: CommandOptions;
     // Warning: (ae-forgotten-export) The symbol "Timeouts" needs to be exported by the entry point index.d.ts
     //
     // @internal (undocumented)
@@ -206,7 +206,9 @@ export interface AlterTableOperations<Schema extends SomeRow> {
 }
 
 // @public
-export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface AlterTableOptions<Schema extends SomeRow> extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}> {
     operation: AlterTableOperations<Schema>;
 }
 
@@ -246,7 +248,9 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     db(id: string, region: string, options?: DbOptions): Db;
     dbAdmin(endpoint: string, options?: DbOptions): AstraDbAdmin;
     dbAdmin(id: string, region: string, options?: DbOptions): AstraDbAdmin;
-    dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraFullDatabaseInfo>;
+    dbInfo(id: string, options?: CommandOptions<{
+        timeout: 'databaseAdminTimeoutMs';
+    }>): Promise<AstraFullDatabaseInfo>;
     dropDatabase(db: Db | string, options?: AstraDropDatabaseOptions): Promise<void>;
     // (undocumented)
     get _httpClient(): OpaqueHttpClient;
@@ -311,12 +315,18 @@ export class AstraDbAdmin extends DbAdmin {
     // (undocumented)
     get _httpClient(): OpaqueHttpClient;
     get id(): string;
-    info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraFullDatabaseInfo>;
-    listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
+    info(options?: CommandOptions<{
+        timeout: 'databaseAdminTimeoutMs';
+    }>): Promise<AstraFullDatabaseInfo>;
+    listKeyspaces(options?: CommandOptions<{
+        timeout: 'keyspaceAdminTimeoutMs';
+    }>): Promise<string[]>;
 }
 
 // @public
-export type AstraDropDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'>;
+export type AstraDropDatabaseOptions = AstraAdminBlockingOptions & CommandOptions<{
+    timeout: 'databaseAdminTimeoutMs';
+}>;
 
 // @public
 export interface AstraFullDatabaseInfo extends AstraBaseDatabaseInfo {
@@ -461,7 +471,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     insertOne(document: MaybeId<WSchema>, options?: CollectionInsertOneOptions): Promise<CollectionInsertOneResult<RSchema>>;
     readonly keyspace: string;
     readonly name: string;
-    options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>>;
+    options(options?: CommandOptions<{
+        timeout: 'collectionAdminTimeoutMs';
+    }>): Promise<CollectionDefinition<SomeDoc>>;
     replaceOne(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<RSchema>>;
     updateMany(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<RSchema>>;
     updateOne(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<RSchema>>;
@@ -879,6 +891,19 @@ export class CommandFailedEvent extends CommandEvent {
     trimDuplicateFields(): this;
 }
 
+// @public (undocumented)
+export interface CommandOptions<Cfg extends CommandOptionsOptions = Required<CommandOptionsOptions>> {
+    // @deprecated
+    maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`';
+    timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Exclude<Cfg['timeout'], undefined>>;
+}
+
+// @public (undocumented)
+export interface CommandOptionsOptions {
+    // (undocumented)
+    timeout?: keyof TimeoutDescriptor;
+}
+
 // @public
 export class CommandStartedEvent extends CommandEvent {
     // @internal
@@ -923,12 +948,16 @@ export type ContainsDate<Schema> = IsDate<Schema[keyof Schema]>;
 export type CqlType2TSType<Def extends CreateTableColumnDefinitions[string], Overrides extends TableSchemaTypeOverrides = Record<never, never>> = CqlType2TSTypeInternal<PickCqlType<Def>, Def, Overrides>;
 
 // @public
-export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'> & {
+export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & CommandOptions<{
+    timeout: 'databaseAdminTimeoutMs';
+}> & {
     dbOptions?: DbOptions;
 };
 
 // @public
-export type CreateAstraKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'> & {
+export type CreateAstraKeyspaceOptions = AstraAdminBlockingOptions & CommandOptions<{
+    timeout: 'keyspaceAdminTimeoutMs';
+}> & {
     updateDbKeyspace?: boolean;
 };
 
@@ -943,7 +972,9 @@ export interface CreateCollectionOptions<Schema extends SomeDoc> extends Collect
 }
 
 // @public
-export interface CreateDataAPIKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
+export interface CreateDataAPIKeyspaceOptions extends CommandOptions<{
+    timeout: 'keyspaceAdminTimeoutMs';
+}> {
     // (undocumented)
     replication?: KeyspaceReplicationOptions;
     // (undocumented)
@@ -960,7 +991,9 @@ export interface CreateTableDefinition<Def extends CreateTableDefinition<Def> = 
 }
 
 // @public
-export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
+export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition> extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}>, TableOptions {
     // (undocumented)
     definition: Def;
     // (undocumented)
@@ -1096,12 +1129,16 @@ export class DataAPIDbAdmin extends DbAdmin {
     constructor(db: Db, client: DataAPIClient, httpClient: DataAPIHttpClient, rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions);
     createKeyspace(keyspace: string, options?: CreateDataAPIKeyspaceOptions): Promise<void>;
     db(): Db;
-    dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+    dropKeyspace(keyspace: string, options?: CommandOptions<{
+        timeout: 'keyspaceAdminTimeoutMs';
+    }>): Promise<void>;
     // @internal (undocumented)
     protected _getDataAPIHttpClient(): DataAPIHttpClient<'admin'>;
     // (undocumented)
     get _httpClient(): OpaqueHttpClient;
-    listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
+    listKeyspaces(options?: CommandOptions<{
+        timeout: 'keyspaceAdminTimeoutMs';
+    }>): Promise<string[]>;
 }
 
 // @public
@@ -1342,7 +1379,9 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     readonly endpoint: string;
     get _httpClient(): OpaqueHttpClient;
     get id(): string;
-    info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraPartialDatabaseInfo>;
+    info(options?: CommandOptions<{
+        timeout: 'databaseAdminTimeoutMs';
+    }>): Promise<AstraPartialDatabaseInfo>;
     get keyspace(): string;
     listCollections(options: ListCollectionsOptions & {
         nameOnly: true;
@@ -1365,18 +1404,28 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
 
 // @public
 export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
-    abstract createKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+    abstract createKeyspace(keyspace: string, options?: CommandOptions<{
+        timeout: 'keyspaceAdminTimeoutMs';
+    }>): Promise<void>;
     // @deprecated
     createNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
     abstract db(): Db;
-    abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+    abstract dropKeyspace(keyspace: string, options?: CommandOptions<{
+        timeout: 'keyspaceAdminTimeoutMs';
+    }>): Promise<void>;
     // @deprecated
     dropNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
-    findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
-    findRerankingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindRerankingProvidersResult>;
+    findEmbeddingProviders(options?: CommandOptions<{
+        timeout: 'databaseAdminTimeoutMs';
+    }>): Promise<FindEmbeddingProvidersResult>;
+    findRerankingProviders(options?: CommandOptions<{
+        timeout: 'databaseAdminTimeoutMs';
+    }>): Promise<FindRerankingProvidersResult>;
     // @internal (undocumented)
     protected abstract _getDataAPIHttpClient(): DataAPIHttpClient<'admin'>;
-    abstract listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
+    abstract listKeyspaces(options?: CommandOptions<{
+        timeout: 'keyspaceAdminTimeoutMs';
+    }>): Promise<string[]>;
     // @deprecated
     listNamespaces: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
 }
@@ -1457,10 +1506,14 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
 }
 
 // @public
-export type DropAstraKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'>;
+export type DropAstraKeyspaceOptions = AstraAdminBlockingOptions & CommandOptions<{
+    timeout: 'keyspaceAdminTimeoutMs';
+}>;
 
 // @public
-export interface DropCollectionOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {
+export interface DropCollectionOptions extends CommandOptions<{
+    timeout: 'collectionAdminTimeoutMs';
+}>, WithKeyspace {
 }
 
 // @public
@@ -1472,7 +1525,9 @@ export interface DropColumnOperation<Schema extends SomeRow> {
 export type DropRerankingOperation = Record<never, never>;
 
 // @public
-export interface DropTableOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
+export interface DropTableOptions extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}>, WithKeyspace {
     ifExists?: boolean;
 }
 
@@ -1751,10 +1806,14 @@ export interface FullCreateTablePrimaryKeyDefinition<PKCols extends string> {
 }
 
 // @public (undocumented)
-export type GenericCountOptions = WithTimeout<'generalMethodTimeoutMs'>;
+export type GenericCountOptions = CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}>;
 
 // @public (undocumented)
-export type GenericDeleteManyOptions = WithTimeout<'generalMethodTimeoutMs'>;
+export type GenericDeleteManyOptions = CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}>;
 
 // @public
 export interface GenericDeleteManyResult {
@@ -1762,7 +1821,9 @@ export interface GenericDeleteManyResult {
 }
 
 // @public
-export interface GenericDeleteOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericDeleteOneOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     // (undocumented)
     sort?: Sort;
     // @deprecated
@@ -1778,13 +1839,19 @@ export interface GenericDeleteOneResult {
 }
 
 // @public (undocumented)
-export type GenericDistinctOptions = WithTimeout<'generalMethodTimeoutMs'>;
+export type GenericDistinctOptions = CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}>;
 
 // @public (undocumented)
-export type GenericEstimatedCountOptions = WithTimeout<'generalMethodTimeoutMs'>;
+export type GenericEstimatedCountOptions = CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}>;
 
 // @public
-export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindAndRerankOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     hybridLimits?: number | Record<string, number>;
     includeScores?: boolean;
     includeSortVector?: boolean;
@@ -1796,7 +1863,9 @@ export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodT
 }
 
 // @public
-export interface GenericFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOneAndDeleteOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     projection?: Projection;
     sort?: Sort;
     // @deprecated
@@ -1806,19 +1875,9 @@ export interface GenericFindOneAndDeleteOptions extends WithTimeout<'generalMeth
 }
 
 // @public
-export interface GenericFindOneAndReplaceOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-    projection?: Projection;
-    returnDocument?: 'before' | 'after';
-    sort?: Sort;
-    upsert?: boolean;
-    // @deprecated
-    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
-    // @deprecated
-    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
-}
-
-// @public
-export interface GenericFindOneAndUpdateOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOneAndReplaceOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     projection?: Projection;
     returnDocument?: 'before' | 'after';
     sort?: Sort;
@@ -1830,7 +1889,23 @@ export interface GenericFindOneAndUpdateOptions extends WithTimeout<'generalMeth
 }
 
 // @public
-export interface GenericFindOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOneAndUpdateOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
+    projection?: Projection;
+    returnDocument?: 'before' | 'after';
+    sort?: Sort;
+    upsert?: boolean;
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
+}
+
+// @public
+export interface GenericFindOneOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     includeSimilarity?: boolean;
     projection?: Projection;
     sort?: Sort;
@@ -1841,7 +1916,9 @@ export interface GenericFindOneOptions extends WithTimeout<'generalMethodTimeout
 }
 
 // @public
-export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     includeSimilarity?: boolean;
     includeSortVector?: boolean;
     initialPageState?: string | null;
@@ -1859,7 +1936,9 @@ export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'
 export type GenericInsertManyOptions = GenericInsertManyUnorderedOptions | GenericInsertManyOrderedOptions;
 
 // @public
-export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericInsertManyOrderedOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     chunkSize?: number;
     ordered: true;
     // @deprecated
@@ -1869,7 +1948,9 @@ export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMet
 }
 
 // @public
-export interface GenericInsertManyUnorderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericInsertManyUnorderedOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     chunkSize?: number;
     concurrency?: number;
     ordered?: false;
@@ -1880,10 +1961,14 @@ export interface GenericInsertManyUnorderedOptions extends WithTimeout<'generalM
 }
 
 // @public
-export type GenericInsertOneOptions = WithTimeout<'generalMethodTimeoutMs'>;
+export type GenericInsertOneOptions = CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}>;
 
 // @public
-export interface GenericReplaceOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericReplaceOneOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     // (undocumented)
     sort?: Sort;
     // (undocumented)
@@ -1895,13 +1980,17 @@ export interface GenericReplaceOneOptions extends WithTimeout<'generalMethodTime
 }
 
 // @public
-export interface GenericUpdateManyOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericUpdateManyOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     // (undocumented)
     upsert?: boolean;
 }
 
 // @public
-export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericUpdateOneOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     sort?: Sort;
     upsert?: boolean;
     // @deprecated
@@ -2051,7 +2140,9 @@ export const LIB_NAME = "astra-db-ts";
 export const LIB_VERSION = "2.0.1";
 
 // @public
-export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
+export interface ListAstraDatabasesOptions extends CommandOptions<{
+    timeout: 'databaseAdminTimeoutMs';
+}> {
     include?: AstraDatabaseStatusFilter;
     limit?: number;
     provider?: AstraDatabaseCloudProviderFilter;
@@ -2059,7 +2150,9 @@ export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTim
 }
 
 // @public
-export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {
+export interface ListCollectionsOptions extends CommandOptions<{
+    timeout: 'collectionAdminTimeoutMs';
+}>, WithKeyspace {
     nameOnly?: boolean;
 }
 
@@ -2083,7 +2176,9 @@ export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition &
 export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition<any>>;
 
 // @public
-export interface ListTablesOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
+export interface ListTablesOptions extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}>, WithKeyspace {
     nameOnly?: boolean;
 }
 
@@ -2312,7 +2407,9 @@ export type RootAdminOptions = Omit<AdminOptions, 'logging' | 'timeoutDefaults'>
 export type RootDbOptions = Omit<DbOptions, 'logging' | 'timeoutDefaults'>;
 
 // @public
-export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface RunCommandOptions extends CommandOptions<{
+    timeout: 'generalMethodTimeoutMs';
+}> {
     collection?: string;
     extraLogInfo?: Record<string, unknown>;
     keyspace?: string | null;
@@ -2417,7 +2514,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomePKey = Partial<Foun
     createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void>;
     createTextIndex(name: string, column: keyof WSchema, options?: TableCreateTextIndexOptions): Promise<void>;
     createVectorIndex(name: string, column: keyof WSchema, options?: TableCreateVectorIndexOptions): Promise<void>;
-    definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
+    definition(options?: CommandOptions<{
+        timeout: 'tableAdminTimeoutMs';
+    }>): Promise<ListTableDefinition>;
     deleteMany(filter: TableFilter<WSchema>, options?: TableDeleteManyOptions): Promise<void>;
     deleteOne(filter: TableFilter<WSchema>, options?: TableDeleteOneOptions): Promise<void>;
     drop(options?: Omit<DropTableOptions, keyof WithKeyspace>): Promise<void>;
@@ -2484,19 +2583,25 @@ export class TableCodecs {
 export type TableCreateIndexColumn<WSchema> = keyof WSchema | Partial<Record<(keyof WSchema & string), `$${string}`>>;
 
 // @public
-export interface TableCreateIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableCreateIndexOptions extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}> {
     ifNotExists?: boolean;
     options?: TableIndexOptions;
 }
 
 // @public
-export interface TableCreateTextIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableCreateTextIndexOptions extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}> {
     ifNotExists?: boolean;
     options?: TableTextIndexOptions;
 }
 
 // @public
-export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableCreateVectorIndexOptions extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}> {
     ifNotExists?: boolean;
     options?: TableVectorIndexOptions;
 }
@@ -2523,7 +2628,9 @@ export interface TableDesCtx extends BaseDesCtx<TableDesCtx> {
 }
 
 // @public
-export interface TableDropIndexOptions extends WithKeyspace, WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableDropIndexOptions extends WithKeyspace, CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}> {
     ifExists?: boolean;
 }
 
@@ -2889,7 +2996,7 @@ export type WithSim<Schema extends SomeDoc> = Schema & {
     $similarity?: number;
 };
 
-// @public
+// @public @deprecated
 export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
     // @deprecated
     maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`';

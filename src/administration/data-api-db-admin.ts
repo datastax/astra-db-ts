@@ -15,7 +15,7 @@
 
 import type { CreateDataAPIKeyspaceOptions } from '@/src/administration/types/index.js';
 import { DbAdmin } from '@/src/administration/db-admin.js';
-import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
+import type { OpaqueHttpClient, CommandOptions } from '@/src/lib/index.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { Db } from '@/src/db/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
@@ -115,7 +115,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  public override async listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]> {
+  public override async listKeyspaces(options?: CommandOptions<{ timeout: 'keyspaceAdminTimeoutMs' }>): Promise<string[]> {
     const resp = await this.#httpClient.executeCommand({ findKeyspaces: {} }, {
       timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
       methodName: 'dbAdmin.listKeyspaces',
@@ -192,7 +192,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void> {
+  public override async dropKeyspace(keyspace: string, options?: CommandOptions<{ timeout: 'keyspaceAdminTimeoutMs' }>): Promise<void> {
     await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, {
       timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
       methodName: 'dbAdmin.dropKeyspace',

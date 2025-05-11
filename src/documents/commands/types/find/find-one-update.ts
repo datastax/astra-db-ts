@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Projection, Sort } from '@/src/documents/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { Projection, Sort, WithDeprecatedVectorSortOptions } from '@/src/documents/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Represents the options for the `findOneAndUpdate` command.
@@ -29,7 +29,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export interface GenericFindOneAndUpdateOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOneAndUpdateOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }>, WithDeprecatedVectorSortOptions {
   /**
    * Specifies whether to return the document before or after the update.
    *
@@ -97,16 +97,4 @@ export interface GenericFindOneAndUpdateOptions extends WithTimeout<'generalMeth
    * ```
    */
   projection?: Projection,
-  /**
-   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
-   *
-   * @deprecated - Use `sort: { $vector: [...] }` instead.
-   */
-  vector?: 'ERROR: Use `sort: { $vector: [...] }` instead',
-  /**
-   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
-   *
-   * @deprecated - Use `sort: { $vectorize: '...' }` instead.
-   */
-  vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead',
 }

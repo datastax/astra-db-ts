@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Projection, Sort } from '@/src/documents/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { Projection, Sort, WithDeprecatedVectorSortOptions } from '@/src/documents/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * ##### Overview
@@ -51,7 +51,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }>, WithDeprecatedVectorSortOptions {
   /**
    * The order in which to apply the update if the filter selects multiple records.
    *
@@ -94,16 +94,4 @@ export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'
    * See {@link FindCursor.initialPageState} for more details and examples.
    */
   initialPageState?: string | null,
-  /**
-   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
-   *
-   * @deprecated - Use `sort: { $vector: [...] }` instead.
-   */
-  vector?: 'ERROR: Use `sort: { $vector: [...] }` instead',
-  /**
-   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
-   *
-   * @deprecated - Use `sort: { $vectorize: '...' }` instead.
-   */
-  vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead',
 }

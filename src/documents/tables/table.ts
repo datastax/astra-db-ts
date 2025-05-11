@@ -14,7 +14,8 @@
 
 import type {
   CommandEventMap,
-  FoundRow, SomePKey,
+  FoundRow,
+  SomePKey,
   SomeRow,
   TableCreateIndexColumn,
   TableCreateIndexOptions,
@@ -29,7 +30,8 @@ import type {
   TableInsertOneOptions,
   TableInsertOneResult,
   TableUpdateFilter,
-  TableUpdateOneOptions, WithSim,
+  TableUpdateOneOptions,
+  WithSim,
 } from '@/src/documents/index.js';
 import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
@@ -44,7 +46,7 @@ import type {
   WithKeyspace,
 } from '@/src/db/index.js';
 import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
-import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions, OpaqueHttpClient } from '@/src/lib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
@@ -1187,7 +1189,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomePKey = Partial<Foun
    *
    * @returns The definition of the table.
    */
-  public async definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition> {
+  public async definition(options?: CommandOptions<{ timeout: 'tableAdminTimeoutMs' }>): Promise<ListTableDefinition> {
     const resp = await this.#db.listTables({
       timeout: options?.timeout,
       keyspace: this.keyspace,

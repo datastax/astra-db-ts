@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 import type { LitUnion } from '@/src/lib/types.js';
 
 /**
@@ -20,7 +20,7 @@ import type { LitUnion } from '@/src/lib/types.js';
  *
  * @public
  */
-export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableCreateVectorIndexOptions extends CommandOptions<{ timeout: 'tableAdminTimeoutMs' }> {
   /**
    * Options available for the vector index.
    */

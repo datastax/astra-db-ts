@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * ##### Overview
@@ -70,7 +70,7 @@ export type GenericInsertManyOptions =
  *
  * @public
  */
-export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericInsertManyOrderedOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   /**
    * If `true`, the records are inserted in the order provided. If an error occurs, the operation stops and the
    * remaining records are not inserted.
@@ -120,7 +120,7 @@ export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMet
  *
  * @public
  */
-export interface GenericInsertManyUnorderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericInsertManyUnorderedOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   /**
    * If `false`, the records are inserted in an arbitrary order. If an error occurs, the operation does not stop
    * and the remaining records are inserted. This allows the operation to be parallelized for better performance.
@@ -169,33 +169,3 @@ export interface GenericInsertManyResult<ID> {
  * @internal
  */
 export type GenericInsertManyDocumentResponse<_T> = any;
-
-// /**
-//  * Represents the specific status and id for a document present in the `insertMany` command. Present when an
-//  * {@link InsertManyError} is thrown.
-//  *
-//  * @see Collection.insertMany
-//  * @see InsertManyError
-//  *
-//  * @public
-//  */
-// export interface GenericInsertManyDocumentResponse<ID> {
-//   /**
-//    * The exact value of the `_id` field of the document that was inserted, whether it be the value passed by the client,
-//    * or a server generated ID.
-//    */
-//   _id: ID,
-//   /**
-//    * The processing status of the document
-//    * - `OK`: The document was successfully processed, in which case the `error` field will be undefined for this object
-//    * - `ERROR`: There was an error processing the document, in which case the `error` field will be present for this object
-//    * - `SKIPPED`: The document was not processed because either the `insertMany` command was processing documents in order
-//    * which means the processing fails at the first failure, or some other failure occurred before this document was
-//    * processed. The `error` field will be undefined for this object.
-//    */
-//   status: 'OK' | 'ERROR' | 'SKIPPED',
-//   /**
-//    * The error which caused this document to fail insertion.
-//    */
-//   error?: DataAPIErrorDescriptor,
-// }

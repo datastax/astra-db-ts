@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  Options for some generic `updateMany` command
@@ -22,6 +22,6 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export interface GenericUpdateManyOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericUpdateManyOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> {
   upsert?: boolean,
 }

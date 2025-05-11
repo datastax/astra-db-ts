@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 import type { CollectionDefinition, WithKeyspace } from '@/src/db/index.js';
 import type { SomeDoc } from '@/src/documents/index.js';
 
@@ -27,7 +27,7 @@ import type { SomeDoc } from '@/src/documents/index.js';
  *
  * @public
  */
-export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {
+export interface ListCollectionsOptions extends CommandOptions<{ timeout: 'collectionAdminTimeoutMs' }>, WithKeyspace {
   /**
    * If true, only the name of the collections is returned.
    *

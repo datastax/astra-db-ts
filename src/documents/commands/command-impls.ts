@@ -39,7 +39,7 @@ import type {
   Table,
   UpdateFilter,
 } from '@/src/documents/index.js';
-import type { nullish, WithTimeout } from '@/src/lib/index.js';
+import type { nullish, CommandOptions } from '@/src/lib/index.js';
 import type { InsertManyErrorConstructor } from '@/src/documents/commands/helpers/insertion.js';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion.js';
 import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates.js';
@@ -63,7 +63,7 @@ export class CommandImpls<ID> {
     this._parent = parent;
   }
 
-  public async insertOne(_document: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | nullish): Promise<GenericInsertOneResult<ID>> {
+  public async insertOne(_document: SomeDoc, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | nullish): Promise<GenericInsertOneResult<ID>> {
     const document = this._serdes.serialize(_document, SerDesTarget.Record);
 
     const command = mkBasicCmd('insertOne', {
@@ -188,7 +188,7 @@ export class CommandImpls<ID> {
     };
   }
 
-  public async deleteMany(_filter: Filter, options: WithTimeout<'generalMethodTimeoutMs'> | nullish, mkError: (e: unknown, result: GenericDeleteManyResult) => Error): Promise<GenericDeleteManyResult> {
+  public async deleteMany(_filter: Filter, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | nullish, mkError: (e: unknown, result: GenericDeleteManyResult) => Error): Promise<GenericDeleteManyResult> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
     const command = mkBasicCmd('deleteMany', {
@@ -302,7 +302,7 @@ export class CommandImpls<ID> {
     return this._serdes.deserialize(resp.data!.document, resp, SerDesTarget.Record);
   }
 
-  public async distinct(key: string, filter: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
+  public async distinct(key: string, filter: SomeDoc, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
     const projection = pullSafeProjection4Distinct(key);
     /* c8 ignore next: not sure why this is being flagged as not run during tests, but it is */
     const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 }, timeout: options?.timeout }, mkCursor);
@@ -332,7 +332,7 @@ export class CommandImpls<ID> {
     return ret;
   }
 
-  public async countDocuments(_filter: Filter, upperBound: number, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, error: new (count: number, hitLimit: boolean) => Error): Promise<number> {
+  public async countDocuments(_filter: Filter, upperBound: number, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | undefined, error: new (count: number, hitLimit: boolean) => Error): Promise<number> {
     if (!upperBound) {
       throw new Error('upperBound is required');
     }
@@ -364,7 +364,7 @@ export class CommandImpls<ID> {
     return resp.status?.count;
   }
 
-  public async estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
+  public async estimatedDocumentCount(options?: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }>): Promise<number> {
     const command = mkBasicCmd('estimatedDocumentCount', {});
 
     const resp = await this._httpClient.executeCommand(command, {

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Projection, Sort } from '@/src/documents/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { Projection, Sort, WithDeprecatedVectorSortOptions } from '@/src/documents/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * Represents the options for the `findOneAndDelete` command.
@@ -26,7 +26,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  *
  * @public
  */
-export interface GenericFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOneAndDeleteOptions extends CommandOptions<{ timeout: 'generalMethodTimeoutMs' }>, WithDeprecatedVectorSortOptions {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *
@@ -73,16 +73,4 @@ export interface GenericFindOneAndDeleteOptions extends WithTimeout<'generalMeth
    * ```
    */
   projection?: Projection,
-  /**
-   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
-   *
-   * @deprecated - Use `sort: { $vector: [...] }` instead.
-   */
-  vector?: 'ERROR: Use `sort: { $vector: [...] }` instead',
-  /**
-   * *This temporary error-ing property exists for migration convenience, and will be removed in a future version.*
-   *
-   * @deprecated - Use `sort: { $vectorize: '...' }` instead.
-   */
-  vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead',
 }
