@@ -85,7 +85,8 @@ export type Projection = Record<string, 1 | 0 | boolean | ProjectionSlice>;
  * Specifies the number of elements in an array to return in the query result.
  *
  * Has one of the following forms:
- * ```
+ *
+ * ```ts
  * // Return the first two elements
  * { $slice: 2 }
  *
