@@ -9,8 +9,8 @@ import { trimIndent } from './utils/utils.js';
 import strip from 'strip-comments';
 
 const args = new Args({
-  UpdateReport: [['-update-report', '-r'], 'boolean'],
-  BuildingForREPL: [['-for-repl', '-r'], 'boolean'],
+  UpdateReport: [['-update-report', '-r'], 'boolean', false],
+  BuildingForREPL: [['-for-repl', '-r'], 'boolean', false],
 }).parse();
 
 const mkSteps = () => {

@@ -1,6 +1,6 @@
 import { which } from 'zx';
 
-type ArgParseOptions = Record<string, [args: string[], type: 'string' | 'boolean', opts?: AdditionalArgParseOptions]>;
+type ArgParseOptions = Record<string, [args: string[], type: 'string' | 'boolean', opts?: AdditionalArgParseOptions | string | boolean]>;
 
 type AdditionalArgParseOptions =
   | { default?: undefined, listen?: (value: string | boolean | undefined) => void }
@@ -44,12 +44,12 @@ export class Args<const T extends ArgParseOptions> {
     }
 
     for (const [key, [,, opts]] of Object.entries(this._options)) {
-      if (opts?.default !== undefined && !(key in parsedArgs)) {
-        parsedArgs[key] = opts.default;
+      if (getDefault(opts) !== undefined && !(key in parsedArgs)) {
+        parsedArgs[key] = getDefault(opts)!;
       }
 
-      if (opts?.listen) {
-        opts.listen(parsedArgs[key]);
+      if (getListen(opts)) {
+        getListen(opts)!(parsedArgs[key]);
       }
     }
 
@@ -73,7 +73,34 @@ export class Args<const T extends ArgParseOptions> {
 
     console.error(`Invalid option '${arg}'`);
     console.error();
+    console.error('Available options:');
+
+    for (const [args, type, opts] of Object.values(this._options)) {
+      console.error(`${args.join(', ')} :: ${type}` + (getDefault(opts) !== undefined ? ' = ' + getDefault(opts) : ''));
+    }
+
+    console.error();
     console.error(`Use 'scripts/${arg} -help' to see all available options/flags & examples of general usage for ${arg}`);
     process.exit(1);
   }
+}
+
+function getDefault(opts?: AdditionalArgParseOptions | string | boolean) {
+  if (opts === undefined) {
+    return undefined;
+  }
+
+  if (typeof opts === 'string' || typeof opts === 'boolean') {
+    return opts;
+  }
+
+  return opts.default;
+}
+
+function getListen(opts?: AdditionalArgParseOptions | string | boolean) {
+  if (opts && typeof opts === 'object') {
+    return opts.listen;
+  }
+
+  return undefined;
 }
