@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { AstraDatabaseCloudProvider } from './admin-common.js';
-import type { WithTimeout } from '@/src/lib/index.js';
+import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
  * ##### Overview
@@ -32,7 +32,7 @@ import type { WithTimeout } from '@/src/lib/index.js';
  * 
  * @public
  */
-export interface AstraFindAvailableRegionsOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
+export interface AstraFindAvailableRegionsOptions extends CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }> {
   /**
    * Whether to only return regions that are enabled for the current organization.
    *
