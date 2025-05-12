@@ -58,7 +58,7 @@ print_failed() {
 
 build_if_not_built() {
   if [ -z "$built" ]; then
-    scripts/build.sh > /dev/null
+    npx tsx scripts/build.ts > /dev/null
     built=true
   fi
 }
@@ -151,7 +151,7 @@ for check_type in $check_types; do
         continue
       fi
 
-      res=$(node -e '
+      res=$(npx tsx -e '
         import("./dist/esm/index.js").then(Object.keys).then(esm => {
           const cjs = Object.keys(require("./dist/cjs/index.js"));
 

@@ -35,7 +35,7 @@ print_green() {
 }
 
 print_green "Building the project..." \
-  && sh scripts/build.sh $build_args \
+  && npx tsx scripts/build.ts $build_args \
   && print_green "Project built successfully!" \
   && print_green "Checking the project..." \
   && sh scripts/check.sh $check_args \

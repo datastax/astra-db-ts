@@ -46,7 +46,7 @@ if [ -z "$CLIENT_DB_TOKEN" ] || [ -z "$CLIENT_DB_TOKEN" ]; then
 fi
 
 # Rebuild the client (without types or any extra processing for speed)
-sh scripts/build.sh -for-repl || exit 2
+npx tsx scripts/build.ts -for-repl || exit 2
 
 # Start the REPL w/ some utility stuff and stuff
 node -i -e "

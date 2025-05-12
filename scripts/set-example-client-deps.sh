@@ -42,7 +42,7 @@ for dir in $dirs; do
   fi
 done
 
-if ! scripts/build.sh; then
+if ! npx tsx scripts/build.ts; then
   exit 1
 fi
 

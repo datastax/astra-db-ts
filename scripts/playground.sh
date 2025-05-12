@@ -55,7 +55,7 @@ if [ "$action" = "create" ]; then
     rm -rf "$dir"
   fi
 
-  scripts/build.sh
+  npx tsx scripts/build.ts
 
   mkdir -p "$dir"
   cd "$dir" || exit 1
