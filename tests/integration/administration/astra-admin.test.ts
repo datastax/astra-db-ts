@@ -14,13 +14,39 @@
 // noinspection DuplicatedCode
 
 import { describe, it } from '@/tests/testlib/index.js';
+import type { AstraAvailableRegionInfo } from '@/src/index.js';
 import { DataAPIClient, DevOpsAPIResponseError } from '@/src/index.js';
 import assert from 'assert';
 
-describe('integration.administration.astra-admin', () => {
+describe('(ASTRA) integration.administration.astra-admin', ({ admin }) => {
   it('should not stop you from creating an AstraAdmin without a token', async () => {
     const client = new DataAPIClient();
     const admin = client.admin();
     await assert.rejects(() => admin.listDatabases(), DevOpsAPIResponseError);
+  });
+
+  describe('findAvailableRegions', () => {
+    it('should work', async () => {
+      const verifyStructure = (region: AstraAvailableRegionInfo) => {
+        assert.ok(region);
+        assert.ok(['standard', 'premium', 'premium_plus'].includes(region.classification));
+        assert.ok(['AWS', 'GCP', 'AZURE'].includes(region.cloudProvider));
+        assert.ok(typeof region.displayName as unknown === 'string');
+        assert.ok(typeof region.enabled as unknown === 'boolean');
+        assert.ok(typeof region.name as unknown === 'string');
+        assert.ok(typeof region.reservedForQualifiedUsers as unknown === 'boolean');
+        assert.ok(['na', 'apac', 'emea', 'sa'].includes(region.zone));
+      };
+
+      const regions = await admin.findAvailableRegions();
+      assert.ok(regions.length);
+      regions.forEach(verifyStructure);
+
+      const allRegions = await admin.findAvailableRegions({ onlyOrgEnabledRegions: false });
+      assert.ok(allRegions.length);
+      allRegions.forEach(verifyStructure);
+
+      assert.ok(regions.length < allRegions.length);
+    });
   });
 });
