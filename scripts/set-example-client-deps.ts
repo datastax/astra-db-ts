@@ -24,18 +24,18 @@ const opts = new Opts('set-example-client-deps.ts')
 const TarFile = `${root}/examples/astra-db-ts.tgz`;
 
 await new Steps()
-  .one(Cleanup(), {
+  .do(Cleanup(), {
     spinner: 'Cleaning up previous installations...',
   })
-  .one(ValidateDirectories(), {
+  .do(ValidateDirectories(), {
     spinner: 'Finding and validating directories...',
   })
-  .one(LogFoundDirectories())
-  .one(BuildLibrary(), {
+  .do(LogFoundDirectories())
+  .do(BuildLibrary(), {
     spinner: 'Building the library...',
   })
-  .one(SetupForInstallation(opts.Mode))
-  .one(InstallLibrary())
+  .do(SetupForInstallation(opts.Mode))
+  .do(InstallLibrary())
   .run()
 
 function Cleanup(): Step {

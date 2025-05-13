@@ -5,15 +5,17 @@ import { Opts } from './utils/arg-parse.js';
 import { Step, Steps } from './utils/steps.js';
 import 'dotenv/config';
 
-const opts = new Opts('repl.ts').real({
-  Local: [['-local'], 'boolean', false],
-  Logging: [['-l', '-logging'], 'boolean', false],
-  CollName: [['-c', '-coll-name'], 'string', 'test_coll'],
-  TableName: [['-t', '-table-name'], 'string', 'test_table'],
-  KeyspaceName: [['-k', '-keyspace-name'], 'string', 'default_keyspace'],
-  Exec: [['-e', '-exec'], 'string', undefined],
-  NoBuild: [['-B', '-no-build'], 'boolean', false],
-}).parse();
+const opts = new Opts('repl.ts')
+  .real({
+    Local: [['-local'], 'boolean', false],
+    Logging: [['-l', '-logging'], 'boolean', false],
+    CollName: [['-c', '-coll-name'], 'string', 'test_coll'],
+    TableName: [['-t', '-table-name'], 'string', 'test_table'],
+    KeyspaceName: [['-k', '-keyspace-name'], 'string', 'default_keyspace'],
+    Exec: [['-e', '-exec'], 'string', undefined],
+    NoBuild: [['-B', '-no-build'], 'boolean', false],
+  })
+  .parse();
 
 if (opts.Local) {
   process.env.CLIENT_DB_ENVIRONMENT = 'hcd';
@@ -27,13 +29,13 @@ if (!process.env.CLIENT_DB_TOKEN || !process.env.CLIENT_DB_URL) {
 }
 
 await new Steps()
-  .one(SetupConfig(), {
+  .do(SetupConfig(), {
     spinner: 'Setting up config...',
   })
   .if(!opts.NoBuild, BuildClient(), {
     spinner: 'Building the client...',
   })
-  .one(LaunchRepl())
+  .do(LaunchRepl())
   .run();
 
 interface Config {

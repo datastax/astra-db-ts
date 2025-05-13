@@ -8,35 +8,37 @@ import fs from 'fs/promises';
 import { trimIndent } from './utils/utils.js';
 import strip from 'strip-comments';
 
-const opts = new Opts('build.sh').real({
-  UpdateReport: [['-update-report', '-r'], 'boolean', false],
-  BuildingForREPL: [['-for-repl'], 'boolean', false],
-}).parse();
+const opts = new Opts('build.sh')
+  .real({
+    UpdateReport: [['-update-report', '-r'], 'boolean', false],
+    BuildingForREPL: [['-for-repl'], 'boolean', false],
+  })
+  .parse();
 
 if (opts.BuildingForREPL) {
   await new Steps()
-    .one(Clean(), {
+    .do(Clean(), {
       spinner: 'Cleaning previous build...',
     })
-    .one(Transpile('cjs', { noCheck: true }), {
+    .do(Transpile('cjs', { noCheck: true }), {
       spinner: 'Transpiling to CommonJS...',
     })
     .run();
 } else {
   await new Steps()
-    .one(Clean(), {
+    .do(Clean(), {
       spinner: 'Cleaning previous build...',
     })
-    .all(Transpile('cjs'), Transpile('esm'), {
+    .doAll([Transpile('cjs'), Transpile('esm')], {
       spinner: 'Transpiling to CommonJS and ESM...',
     })
-    .one(Rollup(), {
+    .do(Rollup(), {
       spinner: 'Running API extractor and processing rollup declaration file...',
     })
-    .one(CleanupDist(), {
+    .do(CleanupDist(), {
       spinner: 'Cleaning up dist folder...',
     })
-    .all(CreateIndexFile('cjs'), CreateIndexFile('esm'), {
+    .doAll([CreateIndexFile('cjs'), CreateIndexFile('esm')], {
       spinner: 'Creating index files...',
     })
     .run()

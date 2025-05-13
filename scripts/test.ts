@@ -56,8 +56,8 @@ const opts = new Opts('test.ts')
 process.env.CLIENT_DYNAMIC_JS_ENV_CHECK = '1'
 
 await new Steps()
-  .one(PrepareTest())
-  .one(RunTests())
+  .do(PrepareTest())
+  .do(RunTests())
   .run();
 
 function PrepareTest(): Step {

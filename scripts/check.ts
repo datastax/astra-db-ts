@@ -12,15 +12,17 @@ const mainDir = process.cwd();
 const Utils = mkUtils();
 let failed = false;
 
-const checks = new Opts('check.ts').real({
-  TypeCheck: [['tc'], 'boolean', false],
-  Lint: [['lint'], 'boolean', false],
-  Licensing: [['licensing'], 'boolean', false],
-  TestExts: [['test-exts'], 'boolean', false],
-  TestNames: [['test-names'], 'boolean', false],
-  LibCheck: [['lib-check'], 'boolean', false],
-  ModuleExportsDiff: [['module-exports-diff'], 'boolean', false],
-}).parse();
+const checks = new Opts('check.ts')
+  .real({
+    TypeCheck: [['tc'], 'boolean', false],
+    Lint: [['lint'], 'boolean', false],
+    Licensing: [['licensing'], 'boolean', false],
+    TestExts: [['test-exts'], 'boolean', false],
+    TestNames: [['test-names'], 'boolean', false],
+    LibCheck: [['lib-check'], 'boolean', false],
+    ModuleExportsDiff: [['module-exports-diff'], 'boolean', false],
+  })
+  .parse();
 
 if (Object.values(checks).every(v => !v)) {
   for (const key of Object.keys(checks)) {
@@ -29,13 +31,13 @@ if (Object.values(checks).every(v => !v)) {
 }
 
 await new Steps()
-  .one(TypeCheck())
-  .one(Lint())
-  .one(Licensing())
-  .one(TestExts())
-  .one(TestNames())
-  .one(LibCheck())
-  .one(ModuleExportsDiff())
+  .do(TypeCheck())
+  .do(Lint())
+  .do(Licensing())
+  .do(TestExts())
+  .do(TestNames())
+  .do(LibCheck())
+  .do(ModuleExportsDiff())
   .run();
 
 if (!failed) {

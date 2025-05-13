@@ -13,20 +13,30 @@ export class Steps<Ctx extends Record<string, any> & never> {
 
   public if(condition: boolean, step: Step<Ctx>, opts?: StepOption): Steps<Ctx> {
     if (condition) {
-      return this.one(step, opts) as any;
+      return this.do(step, opts) as any;
     }
     return this as any;
   }
 
-  public one<R extends Record<string, any> | void>(step: Step<Ctx, R>, opts?: StepOption): Steps<Ctx & Exclude<R, void>> {
-    this._steps.push(this._maybeWrapWithSpinner((ctx) => step(ctx).then(r => r ?? {}), opts));
+  public do<R extends Record<string, any> | void>(step: Step<Ctx, R>, opts?: StepOption): Steps<Ctx & Exclude<R, void>> {
+    const wrappedStep = (ctx: Ctx) => step(ctx).then(r => r ?? {});
+
+    this._steps.push(
+      this._maybeWrapWithSpinner(wrappedStep, opts)
+    );
+
     return this as any;
   }
 
-  public all(...steps: (Step<Ctx> | StepOption)[]): Steps<Ctx> {
-    const stepOptions = typeof steps.at(-1) !== 'function' ? steps.pop() as StepOption : undefined;
-    const step = (ctx: Ctx) => Promise.all(steps.map(step => (step as Step<Ctx>)(ctx))).then(_ => ({}));
-    this._steps.push(this._maybeWrapWithSpinner(step, stepOptions));
+  public doAll(steps: Step<Ctx>[], stepOptions: StepOption): Steps<Ctx> {
+    const parallelStep = (ctx: Ctx) =>
+      Promise.all(steps.map(step => step(ctx)))
+        .then(_ => ({}));
+
+    this._steps.push(
+      this._maybeWrapWithSpinner(parallelStep, stepOptions)
+    );
+
     return this;
   }
 

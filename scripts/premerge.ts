@@ -4,18 +4,20 @@ import 'zx/globals';
 import { Opts } from './utils/arg-parse.js';
 import { Step, Steps } from './utils/steps.js';
 
-const opts = new Opts('premerge.ts').real({
-  BuildArgs: [['-build-args'], 'string', '-r'],
-  TestArgs: [['-test-args'], 'string', '-b'],
-  CheckArgs: [['-check-args'], 'string', ''],
-  ExampleDepsArgs: [['-example-deps-args'], 'string', '-tar'],
-}).parse();
+const opts = new Opts('premerge.ts')
+  .real({
+    BuildArgs: [['-build-args'], 'string', '-r'],
+    TestArgs: [['-test-args'], 'string', '-b'],
+    CheckArgs: [['-check-args'], 'string', ''],
+    ExampleDepsArgs: [['-example-deps-args'], 'string', '-tar'],
+  })
+  .parse();
 
 await new Steps()
-  .one(BuildProject())
-  .one(CheckProject())
-  .one(RunTests())
-  .one(SetExampleDeps())
+  .do(BuildProject())
+  .do(CheckProject())
+  .do(RunTests())
+  .do(SetExampleDeps())
   .run();
 
 function BuildProject(): Step {
