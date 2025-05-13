@@ -1,7 +1,7 @@
 #!/usr/bin/env -S npx tsx
 
 import 'zx/globals';
-import { Args } from './utils/arg-parse-v2.js';
+import { Args } from './utils/arg-parse.js';
 import { Step, Steps } from './utils/steps.js';
 import 'dotenv/config';
 

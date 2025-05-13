@@ -2,7 +2,7 @@
 
 import 'zx/globals';
 import { Step, Steps } from './utils/steps.js';
-import { Args } from './utils/arg-parse-v2.js';
+import { Args } from './utils/arg-parse.js';
 
 const opts = new Args('premerge.ts')
   .string('BuildArgs', {

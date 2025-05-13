@@ -5,9 +5,8 @@ import path from 'path';
 import fs from 'fs/promises';
 import { Step, Steps } from './utils/steps.js';
 import { spinner } from 'zx';
-import { Args } from './utils/arg-parse-v2.js';
-
-const mainDir = process.cwd();
+import { Args } from './utils/arg-parse.js';
+import { root } from './utils/constants.js';
 
 const Utils = mkUtils();
 let failed = false;
@@ -126,7 +125,7 @@ function LibCheck(): Step {
     Utils.printGreenWithStatus('Running library compilation with skipLibCheck: false...');
 
     const tmpDir = 'tmp-lib-check';
-    await $`rm -rf ${tmpDir} ${mainDir}/dist`;
+    await $`rm -rf ${tmpDir} ${root}/dist`;
 
     try {
       await spinner('Building library...', Utils.buildIfNotBuilt);
@@ -141,7 +140,7 @@ function LibCheck(): Step {
     try {
       await spinner('Initializing new project...', async () => {
         await $`npm init -y > /dev/null`;
-        await $`npm install typescript "${mainDir}" > /dev/null`;
+        await $`npm install typescript "${root}" > /dev/null`;
         await fs.writeFile('src.ts', `import '@datastax/astra-db-ts'`);
         await $`npx tsc --init --skipLibCheck false --typeRoots "./node_modules/**" --target es2020 > /dev/null`;
       });
@@ -158,7 +157,7 @@ function LibCheck(): Step {
         Utils.printFailed('Could not set up library for lib-check phase');
       }
     } finally {
-      cd(mainDir);
+      cd(root);
       await $`rm -rf ${tmpDir}`;
     }
   };

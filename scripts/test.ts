@@ -2,56 +2,12 @@
 // noinspection ES6PreferShortImport
 
 import 'zx/globals';
-import { Opts } from './utils/arg-parse.js';
 import { Step, Steps } from './utils/steps.js';
 import 'dotenv/config';
 import { RawTestCfg } from '../tests/testlib/index.js';
-import { Args } from './utils/arg-parse-v2.js';
+import { Args } from './utils/arg-parse.js';
 
 const testCmd = 'mocha --import=tsx/esm -r tsconfig-paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs --exit ';
-
-// const opts = new Opts('test.ts')
-//   .backing({
-//     TestType: [(v) => v as 'all' | 'light' | 'coverage', 'all'],
-//     FilterCombinator: [(v) => v as 'and' | 'or', 'and'],
-//   })
-//   .real({
-//     FilterExact: [['-f'], 'string[]', []],
-//     FilterNotExact: [['-F'], 'string[]', []],
-//     FilterMatch: [['-g'], 'string[]', []],
-//     FilterNotMatch: [['-G'], 'string[]', []],
-//
-//     LoggingPredicate: [['-L', '-logging-pred'], 'string', undefined],
-//
-//     VectorizeWhitelist: [['-w'], 'string', undefined],
-//     InvertVectorizeWhitelist: [['-W'], 'boolean', undefined],
-//
-//     Bail: [['-b', '-bail'], 'boolean', false],
-//     NoReport: [['-R', '-no-report'], 'boolean', false],
-//     HttpClient: [['-c'], 'string', undefined],
-//     Environment: [['-e'], 'string', process.env.CLIENT_DB_ENVIRONMENT],
-//     SkipPrelude: [['-P', '-skip-prelude'], 'boolean', undefined],
-//     Watch: [['-watch'], 'boolean', false],
-//     TestTimeout: [['-test-timeout', '-t'], 'number', undefined],
-//   })
-//   .faux([
-//     [['-all'], 'boolean', (v, opts) => v && (opts.TestType = 'all')],
-//     [['-light'], 'boolean', (v, opts) => v && (opts.TestType = 'light')],
-//     [['-coverage'], 'boolean', (v, opts) => v && (opts.TestType = 'coverage')],
-//
-//     [['-fand'], 'boolean', (v, opts) => v && (opts.FilterCombinator = 'and')],
-//     [['-for'], 'boolean', (v, opts) => v && (opts.FilterCombinator = 'or')],
-//     [['-u'], 'boolean', (v, opts) => v && (opts.TestType = 'light') && (opts.FilterExact.push('unit.'))],
-//
-//     [['-l', '-logging'], 'boolean', (v, opts) => v && (opts.LoggingPredicate = '!isGlobal')],
-//
-//     [['-local'], 'boolean', (v, opts) => v && (() => {
-//       opts.Environment = 'dse';
-//       process.env.CLIENT_DB_TOKEN = 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh';
-//       process.env.CLIENT_DB_URL = 'http://localhost:8181';
-//     })()],
-//   ])
-//   .parse();
 
 const opts = new Args('test.ts')
   .stringEnum('TestType', {
@@ -111,6 +67,42 @@ const opts = new Args('test.ts')
   .number('TestTimeout', {
     flags: ['-test-timeout', '-t'],
     default: undefined,
+  })
+  .string('LoggingPredicate', {
+    flags: ['-L', '-logging-pred'],
+    default: 'false',
+  })
+  .fake({
+    flags: ['-l', '-logging'],
+    type: 'boolean',
+    use: (v: boolean, opts) => {
+      if (v) {
+        opts.LoggingPredicate = '!isGlobal';
+      } else {
+        opts.LoggingPredicate = 'false';
+      }
+    },
+  })
+  .fake({
+    flags: ['-local'],
+    type: 'boolean',
+    use: (v: boolean, opts) => {
+      if (v) {
+        opts.Environment = 'dse';
+        process.env.CLIENT_DB_TOKEN = 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh';
+        process.env.CLIENT_DB_URL = 'http://localhost:8181';
+      }
+    }
+  })
+  .fake({
+    flags: ['-u'],
+    type: 'boolean',
+    use: (v: boolean, opts) => {
+      if (v) {
+        opts.TestType = 'light';
+        opts.FilterExact.push('unit.');
+      }
+    }
   })
   .parse()
 

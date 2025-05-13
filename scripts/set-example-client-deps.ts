@@ -1,7 +1,7 @@
 #!/usr/bin/env -S npx tsx
 
 import 'zx/globals';
-import { Args } from './utils/arg-parse-v2.js';
+import { Args } from './utils/arg-parse.js';
 import path from 'path';
 import { chalk, globby, spinner } from 'zx';
 import { root } from './utils/constants.js';

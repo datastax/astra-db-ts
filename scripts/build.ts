@@ -6,7 +6,7 @@ import { dist, etc, LicenceHeaders, packageJson, src } from './utils/constants.j
 import fs from 'fs/promises';
 import { trimIndent } from './utils/utils.js';
 import strip from 'strip-comments';
-import { Args } from './utils/arg-parse-v2.js';
+import { Args } from './utils/arg-parse.js';
 
 const opts = new Args('build.ts')
   .boolean('UpdateReport', {

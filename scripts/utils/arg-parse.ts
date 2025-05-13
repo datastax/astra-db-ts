@@ -1,24 +1,8 @@
 import 'zx/globals';
+import { chalk } from 'zx';
 
 type OptType = string | boolean | string[] | number;
 type OptTypeSpecifier = 'string' | 'boolean' | 'string[]' | 'number' | string[];
-
-type RealOptsConfig = Record<string, {
-  flags: string[],
-  type: OptTypeSpecifier,
-  default?: OptType,
-}>;
-
-type BackingOptsConfig = Record<string, {
-  type: OptTypeSpecifier,
-  default?: OptType,
-}>;
-
-type FauxOptsConfig<Opts extends Record<string, any>> = {
-  flags: string[],
-  type: OptTypeSpecifier,
-  use: (opt: any, opts: Opts) => void,
-}[];
 
 type TypeOfOpt<Specifier extends OptTypeSpecifier> =
   Specifier extends 'string'
@@ -29,140 +13,217 @@ type TypeOfOpt<Specifier extends OptTypeSpecifier> =
     ? string[] :
   Specifier extends 'number'
     ? number :
-  Specifier extends (infer U)[]
+  Specifier extends (infer U extends string)[]
     ? U
     : never;
 
-type TypeOfRealOpts<T extends RealOptsConfig> = {
-  -readonly [K in keyof T]: TypeOfOpt<T[K]['type']>;
+type BasicOpt<Type> = {
+  flags: string[],
+  default?: Type,
+};
+
+type WithBasicOpt<Opts extends Record<string, any>, Key extends string, Opt extends Partial<BasicOpt<any>>, Type> =
+  Args<Opts & Record<Key, Type | ('default' extends keyof Opt ? Opt['default'] : never)>>;
+
+type EnumOpt<Opt extends { choices: Record<string, string[]> }> = {
+  choices: Record<string, string[]>,
+  default?: keyof Opt['choices'] & string,
+};
+
+type WithEnumOpt<Opts extends Record<string, any>, Key extends string, Opt extends EnumOpt<any>> =
+  Args<Opts & Record<Key, (keyof Opt['choices'] & string)>>
+
+type FakeOpt<Opt extends { type: OptTypeSpecifier }> = {
+  flags: string[],
+  type: Opt['type'],
+  use: (v: TypeOfOpt<Opt['type']>, opts: Record<string, any>) => void,
 }
 
-type TypeOfBackingOpts<T extends BackingOptsConfig> = {
-  -readonly [K in keyof T]: TypeOfOpt<T[K]['type']>;
-}
+const $NoDefault = Symbol('NoDefault');
 
-export type TypeOfOpts<RealOpts extends RealOptsConfig, BackingOpts extends BackingOptsConfig> = TypeOfRealOpts<RealOpts> & TypeOfBackingOpts<BackingOpts>;
-
-interface NormalizedOpt {
-  kind: 'real' | 'backing' | 'faux',
+interface NormalizedOption {
+  key: string,
   flags: string[],
   type: OptTypeSpecifier,
-  default?: OptType,
-  use?: (opt: any, opts: any) => void,
+  default: OptType | undefined | typeof $NoDefault,
+  isFake?: boolean,
+  setValue: (flag: string, value: any, opts: Record<string, any>) => void,
 }
 
-export class Opts<const Real extends RealOptsConfig, const Backing extends BackingOptsConfig> {
-  private _options: Record<string, NormalizedOpt> = {};
+export class Args<Opts extends Record<string, any> = {}> {
+  private _options: NormalizedOption[] = [];
 
   constructor(private _file: string) {}
 
-  public real<const NewReal extends RealOptsConfig>(options: NewReal): Opts<NewReal & Omit<Real, keyof NewReal>, Backing> {
-    for (const [key, opts] of Object.entries(options)) {
-      this._options[key] = { kind: 'real', ...opts };
-    }
+  public boolean<const Key extends string, const Opt extends BasicOpt<boolean>>(key: Key, opt: Opt): WithBasicOpt<Opts, Key, { default: boolean }, boolean> {
+    this._options.push({
+      key,
+      type: 'boolean',
+      flags: opt.flags,
+      default: 'default' in opt ? opt.default : false,
+      setValue: (_, val, opts) => {
+        this._setOpt(key, this._coerceOpt(key, val, 'boolean'), opts);
+      },
+    });
     return this as any;
   }
 
-  public backing<const NewBacking extends BackingOptsConfig>(options: NewBacking): Opts<Real, NewBacking & Omit<Backing, keyof NewBacking>> {
-    for (const [key, opts] of Object.entries(options)) {
-      this._options[key] = { kind: 'backing', flags: [], ...opts };
-    }
+  public string<const Key extends string, const Opt extends BasicOpt<string>>(key: Key, opt: Opt): WithBasicOpt<Opts, Key, Opt, string> {
+    this._options.push({
+      key,
+      flags: opt.flags,
+      type: 'string',
+      default: 'default' in opt ? opt.default : $NoDefault,
+      setValue: (_, val, opts) => {
+        this._setOpt(key, val, opts);
+      },
+    });
+
     return this as any;
   }
 
-  public faux(options: FauxOptsConfig<TypeOfOpts<Real, Backing>>): Opts<Real, Backing> {
-    for (const opts of options) {
-      this._options[Math.random()] = { kind: 'faux', ...opts };
-    }
+  public number<const Key extends string, const Opt extends BasicOpt<number>>(key: Key, opt: Opt): WithBasicOpt<Opts, Key, Opt, number> {
+    this._options.push({
+      key,
+      flags: opt.flags,
+      type: 'number',
+      default: 'default' in opt ? opt.default : $NoDefault,
+      setValue: (_, val, opts) => {
+        this._setOpt(key, this._coerceOpt(key, val, 'number'), opts);
+      },
+    });
+
+    return this as any;
+  }
+
+  public stringArray<const Key extends string, const Opt extends BasicOpt<string[]>>(key: Key, opt: Opt): WithBasicOpt<Opts, Key, { default: [] }, string[]> {
+    this._options.push({
+      key,
+      flags: opt.flags,
+      type: 'string[]',
+      default: 'default' in opt ? opt.default : [],
+      setValue: (_, val, opts) => {
+        this._setOpt(key, this._coerceOpt(key, val, 'string[]'), opts);
+      },
+    });
+
+    return this as any;
+  }
+
+  public stringEnum<const Key extends string, const Opt extends { choices: Record<string, string[]> } & EnumOpt<Opt>>(key: Key, opt: Opt): WithEnumOpt<Opts, Key, Opt> {
+    this._options.push({
+      key,
+      flags: Object.values(opt.choices).flat(),
+      type: 'boolean',
+      default: 'default' in opt ? opt.default : $NoDefault,
+      setValue: (flag, _, opts) => {
+        const [choice] = Object.entries(opt.choices).find(([_, flags]) => flags.includes(flag))!;
+        this._setOpt(key, choice, opts);
+      },
+    });
+
+    return this as any;
+  }
+
+  public fake<const Opt extends { type: OptTypeSpecifier } & FakeOpt<Opt>>(opt: Opt): this {
+    this._options.push({
+      key: opt.flags[0].slice(1),
+      flags: opt.flags,
+      type: opt.type,
+      default: $NoDefault,
+      isFake: true,
+      setValue: (flag, val, opts) => {
+        opt.use(this._coerceOpt(flag, val, opt.type) as any, opts);
+      },
+    });
+
     return this;
   }
 
-  public parse(rawArgs = process.argv.slice(2)): TypeOfOpts<Real, Backing> {
-    const parsedOpts = {} as TypeOfOpts<Real, Backing>;
-    const reverseLUT = Object.fromEntries(Object.entries(this._options).flatMap(([key, { flags }]) => flags.map(flag => [flag, key])));
+  public parse(rawArgs = process.argv.slice(2)): Opts {
+    const parsedOpts = {} as Opts;
 
-    for (let rawArg = rawArgs.shift(); rawArg !== undefined; rawArg = rawArgs.shift()) {
-      const optName = reverseLUT[rawArg] ?? this._throwUnknownArgument(rawArg);
-      const { type } = this._options[optName];
+    const flagToCfgLUT = Object.fromEntries(
+      this._options.flatMap((cfg) => cfg.flags.map(flag => [flag, cfg])),
+    );
 
-      switch (true) {
-        case type === 'string[]': {
-          const value = rawArgs.shift();
-
-          if (value === undefined) {
-            throw new Error(`Missing string value for argument: ${rawArg}`);
-          }
-
-          ((<string[]>parsedOpts[optName]) ??= []).push(value);
-          break;
-        }
-
-        case type === 'string': {
-          const value = rawArgs.shift();
-
-          if (value === undefined) {
-            throw new Error(`Missing string value for argument: ${rawArg}`);
-          }
-
-          (<string>parsedOpts[optName]) = value;
-          break;
-        }
-
-        case type === 'number': {
-          const value = rawArgs.shift();
-
-          if (value === undefined) {
-            throw new Error(`Missing numerical value for argument: ${rawArg}`);
-          }
-
-          if (isNaN(Number(value))) {
-            throw new Error(`Invalid numerical value for argument: ${rawArg}`);
-          }
-
-          (<number>parsedOpts[optName]) = Number(value);
-          break;
-        }
-
-        case type === 'boolean' && ['true', 'false'].includes(rawArgs[0]?.toLowerCase()):
-          (<boolean>parsedOpts[optName]) = rawArgs[0].toLowerCase() === 'true';
-          break;
-
-        case type === 'boolean':
-          (<boolean>parsedOpts[optName]) = true;
-          break;
-
-        case Array.isArray(type):
-          const value = rawArgs.shift();
-
-          if (value === undefined) {
-            throw new Error(`Missing value for argument: ${rawArg}`);
-          }
-
-          (<unknown>parsedOpts[optName]) = value;
-          break;
+    for (const cfg of this._options) {
+      if (cfg.default !== $NoDefault) {
+        this._setOpt(cfg.key, cfg.default!, parsedOpts);
       }
     }
 
-    for (const [key, cfg] of Object.entries(this._options)) {
-      if (!(key in parsedOpts) && 'default' in cfg && cfg.kind !== 'faux') {
-        (<unknown>parsedOpts[key]) = cfg.default;
-      }
+    for (let opt = this._readOpt(rawArgs, flagToCfgLUT); opt !== null; opt = this._readOpt(rawArgs, flagToCfgLUT)) {
+      const cfg = flagToCfgLUT[opt.flag];
+      cfg.setValue(opt.flag, opt.value, parsedOpts);
     }
-
-    for (const [key, cfg] of Object.entries(this._options)) {
-      cfg?.use?.(parsedOpts[key], parsedOpts);
-    }
-
-    for (const [key, cfg] of Object.entries(this._options)) {
-      if (!(key in parsedOpts) && cfg.kind !== 'faux') {
-        throw new Error(`Missing required argument: ${key}`);
-      }
-    }
-
+    
     return parsedOpts;
   }
 
-  private _throwUnknownArgument(arg: string): never {
+  private _readOpt(rawArgs: string[], flagToCfgLUT: Record<string, NormalizedOption>): { flag: string, value: string } | null {
+    if (!rawArgs.length) {
+      return null;
+    }
+
+    const flag = rawArgs.shift()!;
+    const cfg = flagToCfgLUT[flag];
+
+    if (!cfg) {
+      this._errorUnknownArgument(flag);
+    }
+
+    const isExplicitBoolean = (rawArgs.length > 0 && ['true', 'false'].includes(rawArgs[0].toLowerCase()));
+
+    if (cfg.type === 'boolean' && !isExplicitBoolean) {
+      return { flag, value: 'true' };
+    }
+
+    if (!rawArgs.length) {
+      console.log(chalk.red(`Missing value for flag '${flag}'`));
+      process.exit(1);
+    }
+
+    return { flag, value: rawArgs.shift()! };
+  }
+
+  private _setOpt(key: string, value: OptType, opts: Record<string, any>) {
+    switch (true) {
+      case Array.isArray(value):
+        (opts[key] ??= []).push(...value);
+        break;
+      default:
+        opts[key] = value;
+        break;
+    }
+  }
+
+  private _coerceOpt(key: string, value: string, type: OptTypeSpecifier): OptType {
+    switch (true) {
+      case type === 'string':
+        return value;
+      case type === 'boolean':
+        return value.toLowerCase() === 'true';
+      case type === 'string[]':
+        return [value];
+      case type === 'number':
+        if (isNaN(Number(value))) {
+          console.error(`Invalid value '${value}' for flag '${key}'—expected a number`);
+          process.exit(1);
+        }
+        return Number(value);
+      case Array.isArray(type):
+        if (!type.includes(value)) {
+          console.error(`Invalid value '${value}' for flag '${key}'—expected one of: ${type.map(v => `'${v}'`).join(', ')}`);
+          process.exit(1);
+        }
+        return value;
+    }
+
+    throw new Error(`Unknown type '${type}' for flag '${key}'`); // shouldn't happen
+  }
+
+  private _errorUnknownArgument(arg: string): never {
     if (['-h', '-help', '--help'].includes(arg)) {
       const docFile = `scripts/docs/${this._file}.md`;
 
@@ -175,15 +236,14 @@ export class Opts<const Real extends RealOptsConfig, const Backing extends Backi
 
       console.log(`See ${docFile} for more information on how to use this script.`);
       process.exit(0);
-
     }
 
     console.error(`Invalid option '${arg}'`);
     console.error();
-    console.error('Available options:');
+    console.error('Available flags:');
 
-    for (const opts of Object.values(this._options)) if (opts.kind !== 'backing') {
-      console.error(`${opts.flags.join(', ')} :: ${opts.type}` + (('default' in opts) ? ' = ' + opts.default : ''));
+    for (const opts of Object.values(this._options)) {
+      console.error(`${opts.flags.join(', ')} :: ${opts.type}` + ((opts.default !== $NoDefault) ? ' = ' + opts.default : ''));
     }
 
     console.error();
