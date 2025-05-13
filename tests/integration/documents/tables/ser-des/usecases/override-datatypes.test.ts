@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_TABLE_NAME, it, parallel } from '@/tests/testlib/index.js';
+import { Cfg, it, parallel } from '@/tests/testlib/index.js';
 import { blob, TableCodecs, uuid } from '@/src/index.js';
 import assert from 'assert';
 
@@ -29,7 +29,7 @@ parallel('integration.documents.tables.ser-des.usecases.override-datatypes', ({ 
       },
     });
 
-    const table = db.table(DEFAULT_TABLE_NAME, {
+    const table = db.table(Cfg.DefaultTableName, {
       serdes: { codecs: [BufferCodec], sparseData: true },
     });
 
@@ -48,7 +48,7 @@ parallel('integration.documents.tables.ser-des.usecases.override-datatypes', ({ 
       },
     });
 
-    const table = db.table(DEFAULT_TABLE_NAME, {
+    const table = db.table(Cfg.DefaultTableName, {
       serdes: { codecs: [MapCodec], sparseData: true },
     });
 

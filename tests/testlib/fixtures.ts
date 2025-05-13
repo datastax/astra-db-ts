@@ -20,16 +20,6 @@
 import * as fetchH2 from 'fetch-h2';
 import { DataAPIClient } from '@/src/client/index.js';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
-import {
-  DEFAULT_COLLECTION_NAME,
-  DEFAULT_TABLE_NAME,
-  ENVIRONMENT,
-  LOGGING_PRED,
-  OTHER_KEYSPACE,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-  TEST_HTTP_CLIENT, TEST_OPENAI_KEY, VECTORIZE_VECTOR_LENGTH,
-} from '@/tests/testlib/config.js';
 import type { BaseClientEvent, DataAPIClientEventMap, LoggingConfig } from '@/src/lib/index.js';
 import type { InferTableSchema } from '@/src/db/index.js';
 import * as util from 'node:util';
@@ -37,10 +27,11 @@ import { Table } from '@/src/documents/index.js';
 import { memoizeRequests } from '@/tests/testlib/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants.js';
 import { extractAstraEnvironment } from '@/src/administration/utils.js';
+import { Cfg } from '@/tests/testlib/config.js';
 
 export interface TestObjectsOptions {
-  httpClient?: typeof TEST_HTTP_CLIENT,
-  env?: typeof ENVIRONMENT,
+  httpClient?: typeof Cfg.HttpClient,
+  env?: typeof Cfg.DbEnvironment,
   logging?: LoggingConfig,
   isGlobal?: boolean,
 }
@@ -102,8 +93,8 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
     map: { type: 'map', keyType: 'text', valueType: 'uuid' },
     set: { type: 'set', valueType: 'uuid' },
     list: { type: 'list', valueType: 'uuid' },
-    vector1: { type: 'vector', dimension: VECTORIZE_VECTOR_LENGTH, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
-    vector2: { type: 'vector', dimension: VECTORIZE_VECTOR_LENGTH, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+    vector1: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+    vector2: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
   },
   primaryKey: {
     partitionBy: ['text'],
@@ -113,8 +104,8 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
 
 export function initTestObjects(opts?: TestObjectsOptions) {
   const {
-    httpClient = TEST_HTTP_CLIENT,
-    env = ENVIRONMENT,
+    httpClient = Cfg.HttpClient,
+    env = Cfg.DbEnvironment,
     logging = [{ events: 'all', emits: 'event' }],
     isGlobal = false,
   } = opts ?? {};
@@ -122,38 +113,38 @@ export function initTestObjects(opts?: TestObjectsOptions) {
   const preferHttp2 = httpClient === 'fetch-h2:http2';
   const clientType = httpClient?.split(':')[0];
 
-  const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
+  const client = new DataAPIClient(Cfg.DbToken, {
     httpOptions: clientType ? { preferHttp2, client: <any>clientType, fetchH2 } : undefined,
     timeoutDefaults: { requestTimeoutMs: 60000 },
     dbOptions: { keyspace: DEFAULT_KEYSPACE },
-    adminOptions: { endpointUrl: DEFAULT_DEVOPS_API_ENDPOINTS[(() => { try { return extractAstraEnvironment(TEST_APPLICATION_URI); } catch (_) { return undefined!; } })()] },
+    adminOptions: { endpointUrl: DEFAULT_DEVOPS_API_ENDPOINTS[(() => { try { return extractAstraEnvironment(Cfg.DbUrl); } catch (_) { return undefined!; } })()] },
     environment: env,
     logging,
   });
 
   for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed', 'adminCommandStarted', 'adminCommandWarnings', 'adminCommandPolling'] as (keyof DataAPIClientEventMap)[]) {
-    client.on(event, (e: BaseClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
+    client.on(event, (e: BaseClientEvent) => Cfg.LoggingPredicate.test(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
   }
 
-  const db = client.db(TEST_APPLICATION_URI);
+  const db = client.db(Cfg.DbUrl);
 
-  const collection = db.collection(DEFAULT_COLLECTION_NAME);
-  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, {
-    embeddingApiKey: TEST_OPENAI_KEY,
-    keyspace: OTHER_KEYSPACE,
+  const collection = db.collection(Cfg.DefaultCollectionName);
+  const collection_ = db.collection(Cfg.DefaultCollectionName, {
+    embeddingApiKey: Cfg.EmbeddingAPIKey,
+    keyspace: Cfg.OtherKeyspace,
   });
 
-  const table = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME);
-  const table_ = db.table<EverythingTableSchemaWithVectorize>(DEFAULT_TABLE_NAME, {
-    embeddingApiKey: TEST_OPENAI_KEY,
-    keyspace: OTHER_KEYSPACE,
+  const table = db.table<EverythingTableSchema>(Cfg.DefaultTableName);
+  const table_ = db.table<EverythingTableSchemaWithVectorize>(Cfg.DefaultTableName, {
+    embeddingApiKey: Cfg.EmbeddingAPIKey,
+    keyspace: Cfg.OtherKeyspace,
   });
 
-  const dbAdmin = (ENVIRONMENT === 'astra')
-    ? db.admin({ environment: ENVIRONMENT })
-    : db.admin({ environment: ENVIRONMENT });
+  const dbAdmin = (Cfg.DbEnvironment === 'astra')
+    ? db.admin({ environment: Cfg.DbEnvironment })
+    : db.admin({ environment: Cfg.DbEnvironment });
 
-  const admin = (ENVIRONMENT === 'astra')
+  const admin = (Cfg.DbEnvironment === 'astra')
     ? client.admin()
     : null!;
 
@@ -211,10 +202,10 @@ export const createSampleDocWithMultiLevel = (key: string) =>
 export const createSampleDoc2WithMultiLevel = (key: string) =>
   ({
     key,
-    username: 'jimr',
+    username: 'jim_r',
     human: true,
     age: 52,
-    password: 'gasxaq==',
+    password: 'has_gas==',
     address: {
       number: 45,
       street: 'main street',
@@ -231,7 +222,7 @@ export const createSampleDoc3WithMultiLevel = (key: string) =>
     username: 'saml',
     human: false,
     age: 25,
-    password: 'jhkasfka==',
+    password: 'jan_k_vans==',
     address: {
       number: 123,
       street: 'church street',
@@ -241,3 +232,5 @@ export const createSampleDoc3WithMultiLevel = (key: string) =>
       country: 'usa',
     },
   }) as Employee;
+
+export const DemoAstraEndpoint = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra.datastax.com';

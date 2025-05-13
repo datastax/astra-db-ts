@@ -16,9 +16,8 @@
 import { checkTestsEnabled } from '@/tests/testlib/utils.js';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel.js';
 import { CURRENT_DESCRIBE_NAMES, RUNNING_INT_TESTS } from '@/tests/testlib/global.js';
-import { DEFAULT_TEST_TIMEOUT } from '@/tests/testlib/config.js';
 import { UUID } from '@/src/documents/index.js';
-import { backgroundTestState, TEST_FILTER } from '@/tests/testlib/index.js';
+import { backgroundTestState, Cfg } from '@/tests/testlib/index.js';
 
 export type TestFn = SyncTestFn | AsyncTestFn;
 
@@ -55,7 +54,7 @@ it = function (name: string, optsOrFn: TestOptions | TestFn, maybeFn?: TestFn) {
 
   name.includes('integration.administration.lifecycle') && console.log('name:', name);
 
-  if (!TEST_FILTER.test(name, ...CURRENT_DESCRIBE_NAMES)) {
+  if (!Cfg.Filter.test(name, ...CURRENT_DESCRIBE_NAMES)) {
     return null;
   }
 
@@ -74,7 +73,7 @@ it = function (name: string, optsOrFn: TestOptions | TestFn, maybeFn?: TestFn) {
     if (skipped) {
       this.skip();
     }
-    this.timeout(DEFAULT_TEST_TIMEOUT);
+    this.timeout(Cfg.TestTimeout);
 
     const keys = Array.from({ length: testFn.length }, () => UUID.v4().toString());
     return pretendingEnv(opts?.pretendEnv ?? 'server', testFn)(...keys);

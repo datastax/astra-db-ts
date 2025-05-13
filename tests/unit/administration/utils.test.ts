@@ -13,14 +13,14 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEMO_APPLICATION_URI, describe, it } from '@/tests/testlib/index.js';
+import { DemoAstraEndpoint, describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { extractAstraEnvironment } from '@/src/administration/utils.js';
 
 describe('unit.administration.utils', () => {
   describe('extractAstraEnvironment', () => {
     it('works', () => {
-      assert.strictEqual(extractAstraEnvironment(DEMO_APPLICATION_URI), 'prod');
+      assert.strictEqual(extractAstraEnvironment(DemoAstraEndpoint), 'prod');
       assert.strictEqual(extractAstraEnvironment('|apps.astra-dev.datastax.com|'), 'dev');
       assert.strictEqual(extractAstraEnvironment('|apps.astra-test.datastax.com|'), 'test');
       assert.throws(() => extractAstraEnvironment('|apps.astra-car.datastax.com|'));

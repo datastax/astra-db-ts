@@ -14,11 +14,7 @@
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
 import {
-  DEFAULT_COLLECTION_NAME,
-  DEFAULT_TABLE_NAME,
-  OTHER_KEYSPACE,
-  SKIP_PRELUDE,
-  VECTORIZE_VECTOR_LENGTH,
+  Cfg,
 } from '@/tests/testlib/config.js';
 import {
   EverythingTableSchema,
@@ -28,10 +24,10 @@ import {
 } from '@/tests/testlib/index.js';
 import type { InferTableSchema } from '@/src/db/index.js';
 
-const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
+const TEST_KEYSPACES = [DEFAULT_KEYSPACE, Cfg.OtherKeyspace];
 
 before(async () => {
-  if (SKIP_PRELUDE) {
+  if (Cfg.SkipPrelude) {
     console.warn('Skipping prelude.test.ts due to SKIP_PRELUDE being set');
     return;
   }
@@ -60,12 +56,12 @@ before(async () => {
   
   const createTCPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
-      await db.createCollection(DEFAULT_COLLECTION_NAME, {
-        vector: (keyspace === DEFAULT_KEYSPACE) ? { dimension: 5, metric: 'cosine' } : { dimension: VECTORIZE_VECTOR_LENGTH, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+      await db.createCollection(Cfg.DefaultCollectionName, {
+        vector: (keyspace === DEFAULT_KEYSPACE) ? { dimension: 5, metric: 'cosine' } : { dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
         keyspace,
       }).then(c => c.deleteMany({}));
 
-      const table = await db.createTable(DEFAULT_TABLE_NAME, {
+      const table = await db.createTable(Cfg.DefaultTableName, {
         definition: (keyspace === DEFAULT_KEYSPACE) ? EverythingTableSchema : EverythingTableSchemaWithVectorize,
         ifNotExists: true,
         keyspace,
@@ -96,7 +92,7 @@ before(async () => {
   const delCollections = allCollections
     .map(async ([keyspace, colls]) => {
       await colls
-        .filter(c => TEST_KEYSPACES.includes(keyspace) ? c !== DEFAULT_COLLECTION_NAME : true)
+        .filter(c => TEST_KEYSPACES.includes(keyspace) ? c !== Cfg.DefaultCollectionName : true)
         .tap(c => console.warn(`deleting collection '${keyspace}.${c}'`))
         .map(c => db.dropCollection(c, { keyspace }))
         .awaitAll();
@@ -106,7 +102,7 @@ before(async () => {
   const delTables = allTables
     .map(async ([keyspace, tables]) => {
       await tables
-        .filter(t => TEST_KEYSPACES.includes(keyspace) ? t !== DEFAULT_TABLE_NAME : true)
+        .filter(t => TEST_KEYSPACES.includes(keyspace) ? t !== Cfg.DefaultTableName : true)
         .tap(t => console.warn(`deleting table '${keyspace}.${t}'`))
         .map(t => db.dropTable(t, { keyspace }))
         .awaitAll();

@@ -1,42 +1,54 @@
 #!/usr/bin/env -S npx tsx
 
 import 'zx/globals';
-import { Args } from './utils/arg-parse.js';
+import { Opts } from './utils/arg-parse.js';
 import { Step, Steps } from './utils/steps.js';
 import { dist, etc, LicenceHeaders, packageJson, src } from './utils/constants.js';
 import fs from 'fs/promises';
 import { trimIndent } from './utils/utils.js';
 import strip from 'strip-comments';
 
-const args = new Args({
+const opts = new Opts('build.sh').real({
   UpdateReport: [['-update-report', '-r'], 'boolean', false],
   BuildingForREPL: [['-for-repl', '-r'], 'boolean', false],
 }).parse();
 
-const mkSteps = () => {
-  if (args.UpdateReport) {
-    return new Steps([
-      [new CleanStep],
-      [new TranspileStep('cjs', { noCheck: true })],
-    ]);
-  }
-
-  return new Steps([
-    [new CleanStep],
-    [new TranspileStep('cjs'), new TranspileStep('esm')],
-    [new RollupStep],
-    [new CleanupDistStep],
-    [new CreateIndexFileStep('cjs'), new CreateIndexFileStep('esm')],
-  ]);
+if (opts.BuildingForREPL) {
+  await new Steps()
+    .one(Clean(), {
+      spinner: 'Cleaning previous build...',
+    })
+    .one(Transpile('cjs', { noCheck: true }), {
+      spinner: 'Transpiling to CommonJS...',
+    })
+    .run();
+} else {
+  await new Steps()
+    .one(Clean(), {
+      spinner: 'Cleaning previous build...',
+    })
+    .all(Transpile('cjs'), Transpile('esm'), {
+      spinner: 'Transpiling to CommonJS and ESM...',
+    })
+    .one(Rollup(), {
+      spinner: 'Running API extractor and processing rollup declaration file...',
+    })
+    .one(CleanupDist(), {
+      spinner: 'Cleaning up dist folder...',
+    })
+    .all(CreateIndexFile('cjs'), CreateIndexFile('esm'), {
+      spinner: 'Creating index files...',
+    })
+    .run()
 }
 
-class CleanStep implements Step {
-  public async run() {
+function Clean(): Step {
+  return async () => {
     await $`rm -rf ${dist}`;
-    await fs.writeFile(`${src}/version.ts`, this._mkVersionFileText());
-  }
+    await fs.writeFile(`${src}/version.ts`, _mkVersionFileText());
+  };
 
-  private _mkVersionFileText() {
+  function _mkVersionFileText() {
     return [
       LicenceHeaders.Long,
       ``,
@@ -57,114 +69,108 @@ class CleanStep implements Step {
   }
 }
 
-class TranspileStep implements Step {
-  private readonly _moduleType: 'commonjs' | 'module';
-  private readonly _noCheck: boolean;
+function Transpile(outputFormat: 'cjs' | 'esm', opts?: { noCheck?: boolean }): Step {
+  const moduleType = outputFormat === 'cjs' ? 'commonjs' : 'module';
 
-  constructor(private readonly _outputFormat: 'cjs' | 'esm', opts?: { noCheck?: boolean }) {
-    this._moduleType = _outputFormat === 'cjs' ? 'commonjs' : 'module';
-    this._noCheck = !!opts?.noCheck;
+  return async () => {
+    await transpile();
+    await runTSCAlias();
+    await createPackageJSON();
   }
 
-  public async run() {
-    await this._transpile();
-    await this._runTSCAlias();
-    await this._createPackageJSON();
-  }
-
-  private async _transpile() {
-    if (this._noCheck) {
-      await $`npx tsc -p ${etc}/tsconfig.${this._outputFormat}.json --noCheck`;
+  async function transpile() {
+    if (!!opts?.noCheck) {
+      await $`npx tsc -p ${etc}/tsconfig.${outputFormat}.json --noCheck`;
     } else {
-      await $`npx tsc -p ${etc}/tsconfig.${this._outputFormat}.json`;
+      await $`npx tsc -p ${etc}/tsconfig.${outputFormat}.json`;
     }
   }
 
-  private async _runTSCAlias() {
-    await $`npx tsc-alias -p ${etc}/tsconfig.${this._outputFormat}.json`;
+  async function runTSCAlias() {
+    await $`npx tsc-alias -p ${etc}/tsconfig.${outputFormat}.json`;
   }
 
-  private async _createPackageJSON() {
-    await fs.writeFile(`${dist}/${this._outputFormat}/package.json`, JSON.stringify({ type: this._moduleType }));
+  async function createPackageJSON() {
+    await fs.writeFile(`${dist}/${outputFormat}/package.json`, JSON.stringify({ type: moduleType }));
   }
 }
 
-class RollupStep implements Step {
-  public async run() {
-    await this._runAPIExtractor();
+function Rollup(): Step {
+  return async () => {
+    await _runAPIExtractor();
 
-    if (args.UpdateReport) {
-      await this._saveAPIReport();
+    if (opts.UpdateReport) {
+      await _saveAPIReport();
     }
     await $`rm -r ./temp`;
 
-    await this._processRollup();
+    await _processRollup();
   }
 
-  private async _runAPIExtractor() {
+  async function _runAPIExtractor() {
     await $`npx api-extractor run -c ./api-extractor.jsonc --local`;
   }
 
-  private async _saveAPIReport() {
+  async function _saveAPIReport() {
     await $`mv -f ./temp/*.api.md ./etc`;
   }
 
-  private async _processRollup() {
+  async function _processRollup() {
     const rollupContent = await fs.readFile(`${dist}/astra-db-ts.d.ts`, 'utf-8');
 
     const updatedContent = [
-      this._removeUnnecessaryImports,
-      this._removeHashtagPrivate,
-      this._prependTSVersionFunction,
-      this._prependLicense,
+      _removeUnnecessaryImports,
+      _removeHashtagPrivate,
+      _prependTSVersionFunction,
+      _prependLicense,
     ].reduce((content, fn) => fn(content), rollupContent);
 
     await fs.writeFile(`${dist}/astra-db-ts.d.ts`, updatedContent);
   }
 
-  private _removeUnnecessaryImports(content: string) {
+  function _removeUnnecessaryImports(content: string) {
     return content.replace(/^import.*from\s+(['"](?:decoders|\.{1,2}[^'"]*)['"]);\s*\n/gm, '');
   }
 
-  private _removeHashtagPrivate(content: string) {
+  function _removeHashtagPrivate(content: string) {
     return content.replace(/^\s+#private;\s*\n/gm, '');
   }
 
-  private _prependTSVersionFunction(content: string) {
+  function _prependTSVersionFunction(content: string) {
     const tsVersionFunction = 'declare function astraDbTsRequiresTypeScriptV5OrGreater<const AstraDbTsRequiresTypeScriptV5OrGreater>(_: AstraDbTsRequiresTypeScriptV5OrGreater): void;'
     return tsVersionFunction + '\n\n' + content;
   }
 
-  private _prependLicense(content: string) {
+  function _prependLicense(content: string) {
     return LicenceHeaders.Long + '\n\n' + content;
   }
 }
 
-class CleanupDistStep implements Step {
-  private readonly _targetContentCJS = trimIndent`
+function CleanupDist(): Step {
+  const _targetContentCJS = trimIndent`
     "use strict";
     // Copyright Datastax, Inc
     // SPDX-License-Identifier: Apache-2.0
     Object.defineProperty(exports, "__esModule", { value: true });`;
 
-  private readonly _targetContentESM = trimIndent`
+  const _targetContentESM = trimIndent`
     // Copyright Datastax, Inc
     // SPDX-License-Identifier: Apache-2.0
     export {};`;
 
-  public async run() {
-    await this._deleteLeftoverDeclarationFiles();
-    await this._reduceComments()
-    await this._deleteEmptyFiles(`${dist}/cjs`, this._targetContentCJS + '\n');
-    await this._deleteEmptyFiles(`${dist}/esm`, this._targetContentESM + '\n');
-    await this._deleteEmptyDirectories();
+  return async () => {
+    await _deleteLeftoverDeclarationFiles();
+    await _reduceComments();
+    await _deleteEmptyFiles(`${dist}/cjs`, _targetContentCJS + '\n');
+    await _deleteEmptyFiles(`${dist}/esm`, _targetContentESM + '\n');
+    await _deleteEmptyDirectories();
   }
 
-  private async _deleteLeftoverDeclarationFiles() {
+  async function _deleteLeftoverDeclarationFiles() {
     await $`find ${dist}/esm -type f -name '*.d.ts' -exec rm {} +`;
   }
 
-  private async _reduceComments() {
+  async function _reduceComments() {
     const files = (await $`find ${dist} -type f -name "*.js" -print`).lines();
 
     await Promise.all(files.map(async (file) => {
@@ -174,22 +180,22 @@ class CleanupDistStep implements Step {
     }));
   }
 
-  private async _deleteEmptyFiles(path: string, targetContent: string) {
-    const numDeleted = await this._deleteEmptyFilesImpl(path, targetContent);
+  async function _deleteEmptyFiles(path: string, targetContent: string) {
+    const numDeleted = await _deleteEmptyFilesImpl(path, targetContent);
 
     if (numDeleted < 10) {
       throw new Error(`Failsafe triggered: Only ${numDeleted} empty files deleted. Please check the deletion logic—the "empty" JS file output may have changed for ${path.split('/').at(-1)}.`);
     }
   }
 
-  private async _deleteEmptyFilesImpl(path: string, targetContent: string): Promise<number> {
+  async function _deleteEmptyFilesImpl(path: string, targetContent: string): Promise<number> {
     const entries = await fs.readdir(path, { withFileTypes: true });
 
     const deletedCounts = await Promise.all(entries.map(async (entry) => {
       const fullPath = `${path}/${entry.name}`;
 
       if (entry.isDirectory()) {
-        return await this._deleteEmptyFilesImpl(fullPath, targetContent);
+        return await _deleteEmptyFilesImpl(fullPath, targetContent);
       }
 
       if (entry.isFile()) {
@@ -207,35 +213,31 @@ class CleanupDistStep implements Step {
     return deletedCounts.reduce((acc, count) => acc + count, 0);
   }
 
-  private async _deleteEmptyDirectories() {
+  async function _deleteEmptyDirectories() {
     await $`find ./dist -type d -empty -delete`;
   }
 }
 
-class CreateIndexFileStep implements Step {
-  constructor(private readonly _outputFormat: 'cjs' | 'esm') {}
-
-  public async run() {
-    await this._writeDummyJSFile();
-    await this._writeIndexDeclarationFile();
-    await this._updateVersionFile();
+function CreateIndexFile(outputFormat: 'cjs' | 'esm'): Step {
+  return async () => {
+    await _writeDummyJSFile();
+    await _writeIndexDeclarationFile();
+    await _updateVersionFile();
   }
 
-  private async _writeDummyJSFile() {
+  async function _writeDummyJSFile() {
     await fs.writeFile(`${dist}/astra-db-ts.js`, '');
   }
 
-  private async _writeIndexDeclarationFile() {
-    await fs.writeFile(`${dist}/${this._outputFormat}/index.d.ts`, `export * from '../astra-db-ts.js'; export declare const LIB_BUILD: '${this._outputFormat}';`);
+  async function _writeIndexDeclarationFile() {
+    await fs.writeFile(`${dist}/${outputFormat}/index.d.ts`, `export * from '../astra-db-ts.js'; export declare const LIB_BUILD: '${outputFormat}';`);
   }
 
-  private async _updateVersionFile() {
-    const declaration = (this._outputFormat === 'esm')
+  async function _updateVersionFile() {
+    const declaration = (outputFormat === 'esm')
       ? 'export const LIB_BUILD'
       : 'exports.LIB_BUILD';
 
-    await fs.appendFile(`${dist}/${this._outputFormat}/version.js`, `${declaration} = '${this._outputFormat}';`);
+    await fs.appendFile(`${dist}/${outputFormat}/version.js`, `${declaration} = '${outputFormat}';`);
   }
 }
-
-await mkSteps().run();

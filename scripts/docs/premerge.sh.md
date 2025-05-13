@@ -6,7 +6,7 @@ Pretty much equivalent to:
 sh scripts/build.sh -update-report
 sh scripts/check.sh
 sh scripts/test.sh -bail
-sh scripts/set-example-client-deps.sh tar
+sh scripts/set-example-client-deps.sh -tar
 ```
 
 ...but all in one script, so now there's no excuse for me to miss any step.
@@ -19,7 +19,7 @@ You can override the arguments passed to any of the four scripts by providing an
 - `-build-args` (`-r` by default)
 - `-check-args` (empty by default)
 - `-test-args` (`-b` by default)
-- `-example-deps-args` (`tar` by default)
+- `-example-deps-args` (`-tar` by default)
 
 For example:
 

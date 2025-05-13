@@ -16,14 +16,7 @@
 import { DataAPIClient } from '@/src/client/index.js';
 import { ObjectId, UUID } from '@/src/documents/index.js';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
-import {
-  ENVIRONMENT,
-  it,
-  OTHER_KEYSPACE,
-  parallel,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/testlib/index.js';
+import { Cfg, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
@@ -33,8 +26,8 @@ parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
       $vector?: number[],
     }
 
-    const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-    const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
+    const client = new DataAPIClient(Cfg.DbToken, { environment: Cfg.DbEnvironment });
+    const db = client.db(Cfg.DbUrl, { keyspace: DEFAULT_KEYSPACE });
 
     const collection = await db.createCollection<Idea>('vector_5_collection', { vector: { dimension: 5, metric: 'cosine' }, timeout: 60000 });
 
@@ -84,10 +77,10 @@ parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
   });
 
   it('(NOT-DEV) (ASTRA) works for the admin-quickstart', async () => {
-    const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
+    const client = new DataAPIClient(Cfg.DbToken);
     const admin = client.admin();
 
-    const idAndRegion = TEST_APPLICATION_URI.split('.')[0].split('https://')[1].split('-');
+    const idAndRegion = Cfg.DbUrl.split('.')[0].split('https://')[1].split('-');
     const id = idAndRegion.slice(0, 5).join('-');
     const region = idAndRegion.slice(5).join('-');
 
@@ -97,13 +90,13 @@ parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
     assert.strictEqual(dbInfo.id, id);
     assert.strictEqual(dbInfo.regions.length, 1);
     assert.strictEqual(dbInfo.regions[0].name, region);
-    assert.strictEqual(dbInfo.regions[0].apiEndpoint, TEST_APPLICATION_URI);
+    assert.strictEqual(dbInfo.regions[0].apiEndpoint, Cfg.DbUrl);
     assert.ok(dbInfo.regions[0].createdAt as unknown instanceof Date);
 
     const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.regions[0].name);
     const keyspaces = await dbAdmin.listKeyspaces();
     assert.ok(keyspaces.includes(DEFAULT_KEYSPACE));
-    assert.ok(keyspaces.includes(OTHER_KEYSPACE));
+    assert.ok(keyspaces.includes(Cfg.OtherKeyspace));
 
     await client.close();
   });
@@ -115,8 +108,8 @@ parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
       friendId?: string,
     }
 
-    const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-    const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
+    const client = new DataAPIClient(Cfg.DbToken, { environment: Cfg.DbEnvironment });
+    const db = client.db(Cfg.DbUrl, { keyspace: DEFAULT_KEYSPACE });
 
     const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' }, timeout: 60000 });
 
@@ -141,8 +134,8 @@ parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
   });
 
   it('works for the portal quickstart', async () => {
-    const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-    const db = client.db(TEST_APPLICATION_URI, { keyspace: OTHER_KEYSPACE });
+    const client = new DataAPIClient(Cfg.DbToken, { environment: Cfg.DbEnvironment });
+    const db = client.db(Cfg.DbUrl, { keyspace: Cfg.OtherKeyspace });
     assert.ok(Array.isArray(await db.listCollections()));
   });
 });

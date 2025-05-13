@@ -13,14 +13,14 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, describe, it, parallel, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
+import { Cfg, describe, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('(ASTRA) integration.misc.hierarchy-traversal', ({ client, db }) => {
   let id: string, region: string;
 
   before(() => {
-    const idAndRegion = TEST_APPLICATION_URI
+    const idAndRegion = Cfg.DbUrl
       .split('.')[0]
       .split('https://')[1]
       .split('-');
@@ -52,22 +52,22 @@ parallel('(ASTRA) integration.misc.hierarchy-traversal', ({ client, db }) => {
       assert.deepStrictEqual(collections, collections1);
       assert.deepStrictEqual(collections, collections2);
 
-      assert.doesNotThrow(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
-      assert.doesNotThrow(async () => await db2.collection(DEFAULT_COLLECTION_NAME).findOne({}));
+      assert.doesNotThrow(async () => await db1.collection(Cfg.DefaultCollectionName).findOne({}));
+      assert.doesNotThrow(async () => await db2.collection(Cfg.DefaultCollectionName).findOne({}));
     });
   });
 
   describe('(NOT-DEV) client->admin->dbAdmin <-> client->db->admin', () => {
     it('is essentially a noop', async () => {
-      const dbAdmin1 = client.admin().dbAdmin(TEST_APPLICATION_URI);
-      const dbAdmin2 = client.db(TEST_APPLICATION_URI).admin();
+      const dbAdmin1 = client.admin().dbAdmin(Cfg.DbUrl);
+      const dbAdmin2 = client.db(Cfg.DbUrl).admin();
       assert.strictEqual(dbAdmin1.db().id, dbAdmin2.db().id);
       assert.strictEqual(dbAdmin1.db().keyspace, dbAdmin2.db().keyspace);
     });
 
     it('works with endpoint', async () => {
-      const dbAdmin1 = client.admin().dbAdmin(TEST_APPLICATION_URI);
-      const dbAdmin2 = client.db(TEST_APPLICATION_URI).admin();
+      const dbAdmin1 = client.admin().dbAdmin(Cfg.DbUrl);
+      const dbAdmin2 = client.db(Cfg.DbUrl).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
       assert.deepStrictEqual(info1.name, info2.name);
@@ -76,7 +76,7 @@ parallel('(ASTRA) integration.misc.hierarchy-traversal', ({ client, db }) => {
 
     it('works with id + region & endpoint', async () => {
       const dbAdmin1 = client.admin().dbAdmin(id, region);
-      const dbAdmin2 = client.db(TEST_APPLICATION_URI).admin();
+      const dbAdmin2 = client.db(Cfg.DbUrl).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
       assert.deepStrictEqual(info1.name, info2.name);
@@ -86,28 +86,28 @@ parallel('(ASTRA) integration.misc.hierarchy-traversal', ({ client, db }) => {
 
   describe('(NOT-DEV) client->admin->dbAdmin->db <-> client->db->admin->db', () => {
     it('is essentially a noop', async () => {
-      const db1 = client.admin().dbAdmin(TEST_APPLICATION_URI).db();
-      const db2 = client.db(TEST_APPLICATION_URI).admin().db();
+      const db1 = client.admin().dbAdmin(Cfg.DbUrl).db();
+      const db2 = client.db(Cfg.DbUrl).admin().db();
       assert.strictEqual(db1.id, db2.id);
       assert.strictEqual(db1.keyspace, db2.keyspace);
 
-      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
-      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
+      await assert.doesNotReject(async () => await db1.collection(Cfg.DefaultCollectionName).findOne({}));
+      await assert.doesNotReject(async () => await db1.collection(Cfg.DefaultCollectionName).findOne({}));
     });
 
     it('works with endpoint', async () => {
-      const db1 = client.admin().dbAdmin(TEST_APPLICATION_URI).db();
+      const db1 = client.admin().dbAdmin(Cfg.DbUrl).db();
       const collections1 = await db1.listCollections();
       assert.ok(Array.isArray(collections1));
 
-      const db2 = client.db(TEST_APPLICATION_URI).admin().db();
+      const db2 = client.db(Cfg.DbUrl).admin().db();
       const collections2 = await db2.listCollections();
       assert.ok(Array.isArray(collections2));
 
       assert.deepStrictEqual(collections1, collections2);
 
-      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
-      await assert.doesNotReject(async () => await db2.collection(DEFAULT_COLLECTION_NAME).findOne({}));
+      await assert.doesNotReject(async () => await db1.collection(Cfg.DefaultCollectionName).findOne({}));
+      await assert.doesNotReject(async () => await db2.collection(Cfg.DefaultCollectionName).findOne({}));
     });
 
     it('works with id + region & endpoint', async () => {
@@ -115,7 +115,7 @@ parallel('(ASTRA) integration.misc.hierarchy-traversal', ({ client, db }) => {
       const collections1 = await db1.listCollections();
       assert.ok(Array.isArray(collections1));
 
-      const db2 = client.db(TEST_APPLICATION_URI).admin().db();
+      const db2 = client.db(Cfg.DbUrl).admin().db();
       const collections2 = await db2.listCollections();
       assert.ok(Array.isArray(collections2));
 

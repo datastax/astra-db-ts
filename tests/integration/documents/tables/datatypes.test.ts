@@ -13,21 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type {
-  DataAPIBlob, DataAPIInet,
-  DataAPIVector,
-  SomeRow,
-  Table} from '@/src/documents/index.js';
-import {
-  blob,
-  DataAPIResponseError,
-  date,
-  duration, inet,
-  time,
-  uuid,
-  vector,
-} from '@/src/documents/index.js';
-import { it, parallel, VECTORIZE_VECTOR_LENGTH } from '@/tests/testlib/index.js';
+import type { DataAPIBlob, DataAPIInet, DataAPIVector, SomeRow, Table } from '@/src/documents/index.js';
+import { blob, DataAPIResponseError, date, duration, inet, time, uuid, vector } from '@/src/documents/index.js';
+import { Cfg, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 
@@ -208,7 +196,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
   });
 
   it('should handle different vectorize insertion cases', async (key) => {
-    const dummyVec = vector(Array.from({ length: VECTORIZE_VECTOR_LENGTH }, () => .5));
+    const dummyVec = vector(Array.from({ length: Cfg.VectorizeVectorLength }, () => .5));
 
     const colAsserter = mkColumnAsserter(key, 'vector1', {
       eqOn: (a: DataAPIVector) => a.length,

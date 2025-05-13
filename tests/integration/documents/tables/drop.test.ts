@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EverythingTableSchema, it, OTHER_KEYSPACE, parallel } from '@/tests/testlib/index.js';
+import { Cfg, EverythingTableSchema, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.tables.drop', { drop: 'colls:after' }, ({ db }) => {
   it('(LONG) should drop a table using the table method', async () => {
-    const table = await db.createTable('penguin_grass_three', { definition: EverythingTableSchema, keyspace: OTHER_KEYSPACE });
+    const table = await db.createTable('penguin_grass_three', { definition: EverythingTableSchema, keyspace: Cfg.OtherKeyspace });
     await table.drop();
     const tables = await db.listTables();
     const foundTable = tables.find(c => c.name === 'penguin_grass_three');

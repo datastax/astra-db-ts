@@ -13,18 +13,17 @@
 // limitations under the License.
 
 import assert from 'assert';
-import type { Collection} from '@/src/documents/index.js';
+import type { Collection } from '@/src/documents/index.js';
 import { UUID } from '@/src/documents/index.js';
 import * as fs from 'fs';
-import type { EmbeddingProviderInfo } from '@/src/administration/types/db-admin/find-embedding-providers.js';
-import { describe, it, parallel } from '@/tests/testlib/index.js';
-import { negate } from '@/tests/testlib/utils.js';
-import { whitelistImplFor } from '@/tests/testlib/vectorize/vec-whitelist-imp.js';
+import { Cfg, describe, it, parallel } from '@/tests/testlib/index.js';
 import type { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches.js';
 import { branchOnModel } from '@/tests/testlib/vectorize/vec-test-branches.js';
 import type { VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups.js';
 import { createTestGroups } from '@/tests/testlib/vectorize/vec-test-groups.js';
 import type { Db } from '@/src/db/index.js';
+import sp from 'synchronized-promise';
+import type { DbAdmin } from '@/src/administration/index.js';
 
 export type VectorizeTestSpec = Record<string, {
     headers?: Record<`x-${string}`, string>
@@ -36,11 +35,7 @@ export type VectorizeTestSpec = Record<string, {
     warmupErr?: string,
   }>;
 
-const createTestBranches = (): FinalVectorizeTestBranch[] => {
-  if (!process.env.CLIENT_VECTORIZE_PROVIDERS || process.env.CLIENT_VECTORIZE_PROVIDERS === 'null') {
-    return [];
-  }
-
+const createTestBranches = (dbAdmin: DbAdmin): FinalVectorizeTestBranch[] => {
   if (!fs.existsSync('vectorize_test_spec.json')) {
     return [];
   }
@@ -51,18 +46,11 @@ const createTestBranches = (): FinalVectorizeTestBranch[] => {
     return [];
   }
 
-  const embeddingProviders = JSON.parse(process.env.CLIENT_VECTORIZE_PROVIDERS) as Record<string, EmbeddingProviderInfo>;
-
-  const whitelist = whitelistImplFor(process.env.CLIENT_VECTORIZE_WHITELIST ?? '$model-limit:1');
-  const invertWhitelist = !!process.env.CLIENT_VECTORIZE_WHITELIST_INVERT;
-
-  const filter = (invertWhitelist)
-    ? negate(whitelist.test.bind(whitelist))
-    : whitelist.test.bind(whitelist);
+  const { embeddingProviders } = sp.default(() => dbAdmin.findEmbeddingProviders())();
 
   return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
-    .filter(filter);
+    .filter(Cfg.VectorizeWhitelist.test);
 };
 
 const createVectorizeProvidersTest = (db: Db, batchIdx: number) => (group: VectorizeTestGroup) => {
@@ -129,8 +117,8 @@ const createVectorizeProvidersTest = (db: Db, batchIdx: number) => (group: Vecto
   });
 };
 
-describe('(VECTORIZE) (LONG) integration.documents.vectorize', ({ db }) => {
-  const tests = createTestBranches();
+describe('(VECTORIZE) (LONG) integration.documents.vectorize', ({ db, dbAdmin }) => {
+  const tests = createTestBranches(dbAdmin);
   const groups = createTestGroups(tests);
 
   for (let i = 0, n = groups.length; i < n; i += 6) {

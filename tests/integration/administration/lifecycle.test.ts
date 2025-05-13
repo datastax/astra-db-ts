@@ -15,7 +15,7 @@
 
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/administration/index.js';
-import { background, initTestObjects, it, TEMP_DB_NAME } from '@/tests/testlib/index.js';
+import { background, Cfg, initTestObjects, it } from '@/tests/testlib/index.js';
 import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 
@@ -26,7 +26,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     async function dropTestDbs() {
       for (const db of await admin.listDatabases()) {
-        if (db.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
+        if (db.name === Cfg.TempDbName && db.status !== 'TERMINATING') {
           await admin.dropDatabase(db.id, { blocking: false });
         }
       }
@@ -38,7 +38,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     });
 
     const asyncDbAdmin = await admin.createDatabase({
-      name: TEMP_DB_NAME,
+      name: Cfg.TempDbName,
       cloudProvider: 'GCP',
       region: 'us-east1',
       keyspace: 'my_keyspace',
@@ -57,7 +57,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     {
       const dbInfo1 = await asyncDbAdmin.info();
       assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo1.status));
-      assert.strictEqual(dbInfo1.name, TEMP_DB_NAME);
+      assert.strictEqual(dbInfo1.name, Cfg.TempDbName);
       assert.strictEqual(dbInfo1.cloudProvider, 'GCP');
       assert.deepStrictEqual(dbInfo1.regions.length, 1);
       assert.deepStrictEqual({ ...dbInfo1.regions[0], createdAt: 0 }, { name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo1.id, 'us-east1'), createdAt: 0 });
@@ -106,7 +106,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     const syncDbAdmin = await monitoringAdmin.createDatabase({
-      name: TEMP_DB_NAME,
+      name: Cfg.TempDbName,
       cloudProvider: 'GCP',
       region: 'us-east1',
     }, { timeout: 720000 });
@@ -126,7 +126,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       const dbInfo = await syncDb.info();
-      assert.strictEqual(dbInfo.name, TEMP_DB_NAME);
+      assert.strictEqual(dbInfo.name, Cfg.TempDbName);
       assert.strictEqual(dbInfo.cloudProvider, 'GCP');
       assert.strictEqual(dbInfo.region, 'us-east1');
       assert.deepStrictEqual(dbInfo.keyspaces, [DEFAULT_KEYSPACE]);
@@ -146,7 +146,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
       const dbInfo = await dbAdmin.info();
       assert.strictEqual(dbInfo.status, 'ACTIVE');
-      assert.strictEqual(dbInfo.name, TEMP_DB_NAME);
+      assert.strictEqual(dbInfo.name, Cfg.TempDbName);
       assert.strictEqual(dbInfo.cloudProvider, 'GCP');
       assert.deepStrictEqual(dbInfo.regions.length, 1);
       assert.deepStrictEqual({ ...dbInfo.regions[0], createdAt: 0 }, { name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo.id, 'us-east1'), createdAt: 0 });

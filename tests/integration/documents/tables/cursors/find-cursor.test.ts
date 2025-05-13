@@ -13,13 +13,13 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_TABLE_NAME, describe, OTHER_KEYSPACE } from '@/tests/testlib/index.js';
+import { Cfg, describe } from '@/tests/testlib/index.js';
 import { integrationTestFindCursor } from '@/tests/integration/documents/__common/cursors/find-cursor.js';
 
 describe('integration.documents.tables.cursors.find-cursor', ({ db }) => {
   integrationTestFindCursor({
     for: 'tables',
-    mkSource: () => db.table(DEFAULT_TABLE_NAME, { serdes: { sparseData: true } }),
-    mkSource_: () => db.table(DEFAULT_TABLE_NAME, { keyspace: OTHER_KEYSPACE, serdes: { sparseData: true } }),
+    mkSource: () => db.table(Cfg.DefaultTableName, { serdes: { sparseData: true } }),
+    mkSource_: () => db.table(Cfg.DefaultTableName, { keyspace: Cfg.OtherKeyspace, serdes: { sparseData: true } }),
   });
 });

@@ -16,15 +16,7 @@
 import { DataAPIClient } from '@/src/client/index.js';
 import { DEFAULT_KEYSPACE, FetchNative } from '@/src/lib/api/index.js';
 import assert from 'assert';
-import {
-  DEFAULT_COLLECTION_NAME,
-  describe,
-  ENVIRONMENT,
-  it,
-  parallel,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/testlib/index.js';
+import { Cfg, describe, it, parallel } from '@/tests/testlib/index.js';
 import type { Ref } from '@/src/lib/types.js';
 import { HeadersProvider, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib/index.js';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/src/lib/api/constants.js';
@@ -33,7 +25,7 @@ parallel('integration.misc.headers', () => {
   const fetchNative = new FetchNative();
 
   const mkClient = (latestHeaders: Ref<Record<string, string | undefined>>, tp?: string | TokenProvider) => new DataAPIClient(tp, {
-    environment: ENVIRONMENT,
+    environment: Cfg.DbEnvironment,
     httpOptions: {
       client: 'custom',
       fetcher: {
@@ -49,7 +41,7 @@ parallel('integration.misc.headers', () => {
   });
 
   class AsyncTokenProvider extends TokenProvider {
-    tp = new StaticTokenProvider(TEST_APPLICATION_TOKEN);
+    tp = new StaticTokenProvider(Cfg.DbToken);
 
     async getToken() {
       return this.tp.getToken();
@@ -84,8 +76,8 @@ parallel('integration.misc.headers', () => {
     it('should call the provider on a per-call basis to the Data API', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);
-      const db = client.db(TEST_APPLICATION_URI, { token: new CyclingTokenProvider() });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
+      const db = client.db(Cfg.DbUrl, { token: new CyclingTokenProvider() });
+      const collection = db.collection(Cfg.DefaultCollectionName);
 
       await assert.rejects(() => collection.findOne({}));
       assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], 'tree');
@@ -100,16 +92,16 @@ parallel('integration.misc.headers', () => {
     it('should work with an async provider', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);
-      const db = client.db(TEST_APPLICATION_URI, { token: new AsyncTokenProvider() });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
+      const db = client.db(Cfg.DbUrl, { token: new AsyncTokenProvider() });
+      const collection = db.collection(Cfg.DefaultCollectionName);
       await collection.findOne({});
-      assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
+      assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], Cfg.DbToken);
     });
 
     it('(ASTRA) should call the provider on a per-call basis to the DevOps API', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);
-      const db = client.db(TEST_APPLICATION_URI, { token: new CyclingTokenProvider() });
+      const db = client.db(Cfg.DbUrl, { token: new CyclingTokenProvider() });
       const dbAdmin = db.admin();
 
       await assert.rejects(() => dbAdmin.listKeyspaces());
@@ -125,16 +117,16 @@ parallel('integration.misc.headers', () => {
 
     it('(ASTRA) should properly set/override tokens throughout the hierarchy', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
-      const client = mkClient(latestHeaders, TEST_APPLICATION_TOKEN);
+      const client = mkClient(latestHeaders, Cfg.DbToken);
 
-      const db1 = client.db(TEST_APPLICATION_URI);
-      const coll1 = db1.collection(DEFAULT_COLLECTION_NAME);
+      const db1 = client.db(Cfg.DbUrl);
+      const coll1 = db1.collection(Cfg.DefaultCollectionName);
       await coll1.findOne({});
-      assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
+      assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], Cfg.DbToken);
 
       const tp = new UsernamePasswordTokenProvider('cadence of', 'her last breath');
-      const db2 = client.db(TEST_APPLICATION_URI, { token: tp });
-      const coll2 = db2.collection(DEFAULT_COLLECTION_NAME);
+      const db2 = client.db(Cfg.DbUrl, { token: tp });
+      const coll2 = db2.collection(Cfg.DefaultCollectionName);
       await assert.rejects(() => coll2.findOne({}));
       assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], tp.getToken());
 
@@ -145,7 +137,7 @@ parallel('integration.misc.headers', () => {
       const dbAdmin1 = db1.admin();
       const keyspaces = await dbAdmin1.listKeyspaces();
       assert.ok(Array.isArray(keyspaces));
-      assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${TEST_APPLICATION_TOKEN}`);
+      assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${Cfg.DbToken}`);
 
       const dbAdmin2 = db1.admin({ adminToken: badTokenProvider });
       await assert.rejects(() => dbAdmin2.listKeyspaces());
@@ -157,8 +149,8 @@ parallel('integration.misc.headers', () => {
     it('should call the provider on a per-call basis to the Data API', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);
-      const db = client.db(TEST_APPLICATION_URI, { token: TEST_APPLICATION_TOKEN });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME, { embeddingApiKey: new CyclingEmbeddingHeadersProvider() });
+      const db = client.db(Cfg.DbUrl, { token: Cfg.DbToken });
+      const collection = db.collection(Cfg.DefaultCollectionName, { embeddingApiKey: new CyclingEmbeddingHeadersProvider() });
 
       await collection.findOne({});
       assert.strictEqual(latestHeaders.ref['x-my-custom-header'], 'tree');
@@ -174,8 +166,8 @@ parallel('integration.misc.headers', () => {
       const ehp = new AsyncEmbeddingHeadersProvider();
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);
-      const db = client.db(TEST_APPLICATION_URI, { token: TEST_APPLICATION_TOKEN });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME, { embeddingApiKey: ehp });
+      const db = client.db(Cfg.DbUrl, { token: Cfg.DbToken });
+      const collection = db.collection(Cfg.DefaultCollectionName, { embeddingApiKey: ehp });
       await collection.findOne({});
       assert.strictEqual(latestHeaders.ref['x-my-custom-header'], (await ehp.getHeaders())['x-my-custom-header']);
     });

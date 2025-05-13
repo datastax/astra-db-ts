@@ -18,7 +18,7 @@ import { type FetcherResponseInfo } from '@/src/lib/api/index.js';
 import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2.js';
 import type { FetcherRequestInfo } from '@/src/lib/api/fetch/fetcher.js';
 import { UsernamePasswordTokenProvider } from '@/src/lib/index.js';
-import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
+import { describe, it, Cfg } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { $CustomInspect, DataAPIEnvironments } from '@/src/lib/constants.js';
 import { InvalidEnvironmentError } from '@/src/db/index.js';
@@ -143,21 +143,21 @@ describe('unit.client.data-api-client', () => {
   describe('using fetch-h2', () => {
     it('uses http2 by default', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2 } });
-      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
+      const httpClient = client.db(Cfg.DbUrl)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx._http1 !== httpClient.fetchCtx.ctx._preferred);
     });
 
     it('uses http2 when forced', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2, preferHttp2: true } });
-      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
+      const httpClient = client.db(Cfg.DbUrl)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx._http1 !== httpClient.fetchCtx.ctx._preferred);
     });
 
     it('uses http1.1 when forced', () => {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2, preferHttp2: false } });
-      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
+      const httpClient = client.db(Cfg.DbUrl)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx._http1 === httpClient.fetchCtx.ctx._preferred);
     });
@@ -175,7 +175,7 @@ describe('unit.client.data-api-client', () => {
         httpOptions: { client: 'custom', fetcher: new CustomFetcher() },
       });
 
-      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
+      const httpClient = client.db(Cfg.DbUrl)._httpClient;
       assert.strictEqual(await httpClient.fetchCtx.ctx.fetch(null!), 3);
       assert.strictEqual(httpClient.fetchCtx.ctx.close, undefined);
     });
