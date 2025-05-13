@@ -1,4 +1,4 @@
-# `repl.sh` (The godsend)
+# `repl.ts` (The godsend)
 
 An extremely useful script for both debugging & testing purposes. Like, _extremely_ useful.
 
@@ -52,7 +52,7 @@ haven't overridden the default values)</small>.
 The API for the REPL script is as follows:
 
 ```fortran
-scripts/repl.sh [-local] [-l | -logging] [-c | -coll-name <name>]  [-t | -table-name <name>] [-k | -keyspace <name>]
+scripts/repl.ts [-local] [-l | -logging] [-c | -coll-name <name>]  [-t | -table-name <name>] [-k | -keyspace <name>]
 ```
 
 ### Running on local Stargate (`[-local]`)
@@ -62,7 +62,7 @@ If you want to run the REPL against a local Stargate instance, you can use this 
 
 It'll also automatically set the environment to `dse`.
 
-Note that you'll still need to run stargate yourself. See [startgate.sh.md](./startgate.sh.md) for more info.
+Note that you'll still need to run stargate yourself. See [startgate.ts.md](./startgate.ts.md) for more info.
 
 ### Enabling verbose logging (`[-l | -logging]`)
 
@@ -276,5 +276,5 @@ The available options are:
 
 ## See also
 
-- [The custom checker script](./check.sh.md)
-- [The custom test script](./test.sh.md)
+- [The custom checker script](./check.ts.md)
+- [The custom test script](./test.ts.md)

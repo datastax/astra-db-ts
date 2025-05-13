@@ -1,4 +1,4 @@
-# `check.sh` (The custom checker script)
+# `check.ts` (The custom checker script)
 
 A script that checks various aspects of the project to ensure that it is in a good state, including: 
 - Type-checking,
@@ -26,7 +26,7 @@ much more often than just that.
 The API for the check script is as follows, where all checks are run by default if no arguments are provided:
 
 ```fortran
-scripts/check.sh [tc] [lint] [licensing] [lib-check] [test-exts] [test-names]
+scripts/check.ts [tc] [lint] [licensing] [lib-check] [test-exts] [test-names]
 ```
 
 One or more of the above checks may be specified otherwise, to run only the specified checks in the order they are provided.
@@ -104,5 +104,5 @@ This works even if the root-level suite is a `parallel` or `background` block.
 
 ## See also
 
-- [The custom test script](./test.sh.md)
-- [The all-in-one "premerge" script](./premerge.sh.md)
+- [The custom test script](./test.ts.md)
+- [The all-in-one "premerge" script](./premerge.ts.md)

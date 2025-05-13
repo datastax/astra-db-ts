@@ -8,7 +8,7 @@ interface StepOption {
   readonly spinner?: string,
 }
 
-export class Steps<Ctx extends Record<string, any>> {
+export class Steps<Ctx extends Record<string, any> & never> {
   private readonly _steps: Step<Ctx, Record<string, any>>[] = [];
 
   public if(condition: boolean, step: Step<Ctx>, opts?: StepOption): Steps<Ctx> {

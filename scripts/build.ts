@@ -10,7 +10,7 @@ import strip from 'strip-comments';
 
 const opts = new Opts('build.sh').real({
   UpdateReport: [['-update-report', '-r'], 'boolean', false],
-  BuildingForREPL: [['-for-repl', '-r'], 'boolean', false],
+  BuildingForREPL: [['-for-repl'], 'boolean', false],
 }).parse();
 
 if (opts.BuildingForREPL) {

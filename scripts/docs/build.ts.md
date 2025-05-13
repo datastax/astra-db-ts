@@ -1,12 +1,12 @@
-# `build.sh` (The messy build script)
+# `build.ts` (The messy build script)
 
-`astra-db-ts` uses a multistep build process to properly dual support ESM & CJS while keeping the package size slim.
+`astra-db-ts` uses a multistep build process to properly dual support ESM & CJS while keeping the package size (relatively) slim.
 
 ## Contents
 
 1. [Usage](#usage)
-   1. [Updating the API report](#updating-the-api-report--r)
-   2. [Building for the REPL](#building-for-the-repl--for-repl)
+   1. [Updating the API report (`[-r | -update-report]`)](#updating-the-api-report--r---update-report)
+   2. [Building for the REPL (`[-for-repl]`)](#building-for-the-repl--for-repl)
 2. [Steps](#steps)
    1. [1. Clean](#1-clean)
    2. [2. Transpile](#2-transpile)
@@ -18,15 +18,15 @@
 
 ## Usage
 
-In the vast majority of cases, the build script can be used simply, with no arguments: `scripts/build.sh`.
+In the vast majority of cases, the build script can be used simply, with no arguments: `scripts/build.ts`.
 
-### Updating the API report (`-r`)
+### Updating the API report (`[-r | -update-report]`)
 
-However, at the very least before merging, the API report needs to be updated. This may be done by running the build script with the `r`, or `-update-report`, flag: `scripts/build.sh -r`.
+However, at the very least before merging, the API report needs to be updated. This may be done by running the build script with the `-update-report` (or `-r`) flag: `scripts/build.ts -update-report`.
 
-If you use `scripts/premerge.sh`, it will automatically do this for you.
+If you use `scripts/premerge.ts`, it will automatically do this for you.
 
-### Building for the REPL (`-for-repl`)
+### Building for the REPL (`[-for-repl]`)
 
 This is simply a flag which enables a much faster build process, emitting only CJS code with no type checking or type output.
 
@@ -90,7 +90,7 @@ This function declaration is added to the top of the file to ensure that a reada
 declare function astraDbTsRequiresTypeScriptV5OrGreater<const AstraDbTsRequiresTypeScriptV5OrGreater>(_: AstraDbTsRequiresTypeScriptV5OrGreater): void;
 ```
 
-Also, for reasons unknown to me, API Extractor will output invalid exports in the rollup `.d.ts` file. 
+Also, for reasons unknown to me, API Extractor will output invalid exports in the rollup `.d.ts` file.
 
 Such imports may include those as the following, which are never even used in the public API (hence my confusion):
 
@@ -145,9 +145,9 @@ Because that is on par with the level of intuitiveness present in the rest of th
 
 Regardless, it works, and saves us from having to duplicate the >600MB rollup file.
 
-Also, a `LIB_BUILD` export is manually written to each distribution for each distribution here for debugging purposes. It will contain either `'esm'` or `'cjs'` depending on the build type. 
+Also, a `LIB_BUILD` export is manually written to each distribution for each distribution here for debugging purposes. It will contain either `'esm'` or `'cjs'` depending on the build type.
 
 ## See also
 
-- [The all-in-one "premerge" script](./premerge.sh.md)
-- [The development REPL](./repl.sh.md)
+- [The all-in-one "premerge" script](./premerge.ts.md)
+- [The development REPL](./repl.ts.md)

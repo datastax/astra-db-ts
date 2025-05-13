@@ -78,15 +78,15 @@ const TestCfgDecoder = RawTestCfgDecoder
     },
   }))
   .transform((v) => {
-    if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN || !process.env.TEST_OPENAI_KEY) {
-      throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN and TEST_OPENAI_KEY env vars are set');
+    if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN || !process.env.CLIENT_EMBEDDING_API_KEY) {
+      throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN and CLIENT_EMBEDDING_API_KEY env vars are set');
     }
 
     return {
       ...v,
       DbUrl: process.env.CLIENT_DB_URL,
       DbToken: process.env.CLIENT_DB_TOKEN,
-      EmbeddingAPIKey: process.env.TEST_OPENAI_KEY,
+      EmbeddingAPIKey: process.env.CLIENT_EMBEDDING_API_KEY,
     };
   })
   .transform((v => ({

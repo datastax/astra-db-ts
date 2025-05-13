@@ -12,7 +12,7 @@ const mainDir = process.cwd();
 const Utils = mkUtils();
 let failed = false;
 
-const checks = new Opts('check.sh').real({
+const checks = new Opts('check.ts').real({
   TypeCheck: [['tc'], 'boolean', false],
   Lint: [['lint'], 'boolean', false],
   Licensing: [['licensing'], 'boolean', false],

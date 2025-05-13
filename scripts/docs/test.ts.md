@@ -1,4 +1,4 @@
-# `test.sh` (The custom test script)
+# `test.ts` (The custom test script)
 
 The `astra-db-ts` test suite uses a custom wrapper around [ts-mocha](https://www.npmjs.com/package/ts-mocha), including its own custom test script.
 
@@ -14,7 +14,7 @@ You can read more about the custom wrapper and why it exists [here](https://gith
 1. [Prerequisites](#prerequisites)
 2. [Just give me a TL;DR please](#just-give-me-a-tldr-please)
 3. [Test script usage](#test-script-usage)
-   1. [The test file (`scripts/test.sh`)](#1-the-test-file-scriptstestsh)
+   1. [The test file (`scripts/test.ts`)](#1-the-test-file-scriptstestsh)
    2. [The test types (`[-all | -light | -coverage]`)](#2-the-test-types--all---light---coverage)
    3. [The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+ [-u]`)](#3-the-test-filters--fand---for--ff-match--gg-regex--u)
    4. [The vectorize whitelist (`[-w/W <vectorize_whitelist>]`)](#4-the-vectorize-whitelist--ww-vectorize_whitelist)
@@ -66,10 +66,10 @@ sure why you'd have a namespace named that, but if you do, you have a good taste
 
 ```sh
 # Runs the full test suite (~10m + setup time)
-sh scripts/test.sh
+./scripts/test.ts
 
 # Runs a version of the test suite that omits all longer-running tests (~4m + setup time)
-sh scripts/test.sh -light
+./scripts/test.ts -light
 ```
 
 ## Test script usage
@@ -77,7 +77,7 @@ sh scripts/test.sh -light
 The API for the test script is as follows:
 
 ```fortran
-1. scripts/test.sh 
+1. scripts/test.ts 
 2.  [-all | -light | -coverage] 
 3.  [-fand | -for] [-f/F <match>]+ [-g/G <regex>]+ [-u]
 4.  [-w/W <vectorize_whitelist>]
@@ -93,13 +93,13 @@ The API for the test script is as follows:
 
 The test script will return a non-zero exit code if any of the tests fail, and will print out the results of each test as it runs.
 
-### 1. The test file (`scripts/test.sh`)
+### 1. The test file (`scripts/test.ts`)
 
 While you can use `npm run test` or `bun run test` if you so desire, attempting to use the test script's flags with it
 may be a bit iffy, as the inputs are first "de-quoted" (evaluated) when you use the shell command, but they're
 "de-quoted" again when the package manager runs the actual shell command.
 
-Just use `scripts/test.sh` (or `sh scripts/test.sh`) directly if you're using command-line flags and want to
+Just use `scripts/test.ts` (or `npx tsx scripts/test.ts`) directly if you're using command-line flags and want to
 avoid a headache.
 
 ### 2. The test types (`[-all | -light | -coverage]`)
@@ -109,7 +109,7 @@ There are three main test types:
 - `-light`: This is a shorthand for disabling the aforementioned tests. This runs only the normal tests, which are much quicker to run in comparison
 - `-coverage`: This runs all tests, but uses `nyc` to test for coverage statistics. Enables the `-b` (bail) flag, as no point continuing if a test fails
 
-By default, just running `scripts/test.sh` will be like using `-light`, but you can set the default config for which tests
+By default, just running `scripts/test.ts` will be like using `-light`, but you can set the default config for which tests
 to enable in your `.env` file, through the `CLIENT_RUN_*_TESTS` env vars.
 
 ### 3. The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+ [-u]`)
@@ -206,7 +206,7 @@ If you're running the tests on a local Stargate instance, you can use this flag 
 
 It'll also automatically set the environment to `dse`.
 
-Note that you'll still need to run stargate yourself. See [startgate.sh.md](./startgate.sh.md) for more info.
+Note that you'll still need to run stargate yourself. See [startgate.ts.md](./startgate.ts.md) for more info.
 
 ### 10. Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)
 
@@ -311,7 +311,7 @@ This spec is cross-referenced with `findEmbeddingProviders` to create a suite of
 parameter, with tests names of the format `providerName@modelName@authType@dimension`, where each section is another
 potential branch.
 
-To run *only* the vectorize tests, a common pattern I use is `scripts/test.sh -f VECTORIZE [-w <vectorize_whitelist>]`.
+To run *only* the vectorize tests, a common pattern I use is `scripts/test.ts -f VECTORIZE [-w <vectorize_whitelist>]`.
 
 ### Test tags (only important if writing tests)
 
@@ -389,7 +389,7 @@ This is by no means an exhaustive list of all the ways you can use the test scri
 Often, I'll combine these (and more), and end up with a long, useful test command which I could never do with Mocha alone, such as:
 
 ```sh
-scripts/test.sh -R -f integration. -f object-mapping -f explicit -P -L '!isGlobal && e.commandName === "findOne"' -local
+scripts/test.ts -R -f integration. -f object-mapping -f explicit -P -L '!isGlobal && e.commandName === "findOne"' -local
 ```
 
 ### Simply running all tests
@@ -399,7 +399,7 @@ Normally takes ~10m + the time it takes to run `prelude.test.ts` if you don't us
 If you don't run the `AstraAdmin` lifecycle test (`-F integration.administration.lifecycle`), it'll take ~6m instead (+ prelude time ofc).
 
 ```sh
-scripts/test.sh
+scripts/test.ts
 ```
 
 ### Running all non-long-running tests
@@ -407,7 +407,7 @@ scripts/test.sh
 Runs in ~4m + prelude time.
 
 ```sh
-scripts/test.sh -light
+scripts/test.ts -light
 ```
 
 ### Running all tests, but with coverage
@@ -417,19 +417,19 @@ Uses NYC to test for coverage statistics. Enables the `-b` (bail) flag, since th
 Also takes ~10m + prelude time.
 
 ```sh
-scripts/test.sh -coverage
+scripts/test.ts -coverage
 ```
 
 ### Running only unit tests
 
-Equivalent to running `scripts/test.sh -f unit. -light`.
+Equivalent to running `scripts/test.ts -f unit. -light`.
 
 Takes advantage of the naming convention of root-level `describe`/`parallel` blocks' names to be equivalent to the test file's directory + name, relative to `./tests` (e.g. `unit.documents.tables.ser-des.key-transformer`).
 
 Because the `-light` option is implicitly appended, the unit tests will run in just a manner of milliseconds (otherwise, there are a couple of longer-running unit tests that take 10s to complete).
 
 ```sh
-scripts/test.sh -u
+scripts/test.ts -u
 ```
 
 ### Running a specific test file
@@ -439,7 +439,7 @@ I use this very frequently.
 Takes advantage of the naming convention of root-level `describe`/`parallel` blocks' names to be equivalent to the test file's directory + name, relative to `./tests` (e.g. `unit.documents.tables.ser-des.key-transformer`).
 
 ```sh
-scripts/test.sh -f integration.documents.tables.ser-des.key-transformer
+scripts/test.ts -f integration.documents.tables.ser-des.key-transformer
 ```
 
 ### Running some tests without the lengthy setup step
@@ -451,7 +451,7 @@ Note that if you're running only unit tests, the prelude will automatically be s
 Also, you'll probably have a bad time if the DB isn't already set up properly.
 
 ```sh
-scripts/test.sh -f integration.documents.tables.ser-des.key-transformer -P
+scripts/test.ts -f integration.documents.tables.ser-des.key-transformer -P
 ```
 
 ### Running tests on local stargate
@@ -462,10 +462,10 @@ Also sets the environment to `dse` implicitly.
 
 ```sh
 # Secondary terminal window to spin up a local stargate data api instance
-scripts/startgate.sh
+scripts/startgate.ts
 
 # Main terminal window after waiting for stargate to start-gate (heh)
-scripts/test.sh -local
+scripts/test.ts -local
 ```
 
 ### Running tests without a specific test tag
@@ -473,7 +473,7 @@ scripts/test.sh -local
 Don't use this as often, but it's nice for when I need it.
 
 ```sh
-scripts/test.sh -F VECTORIZE
+scripts/test.ts -F VECTORIZE
 ```
 
 ### Running tests with logging
@@ -482,10 +482,10 @@ Now this, this is I use _all the time_. It's so useful for debugging requests, a
 
 ```sh
 # Most of the time
-scripts/test.sh -l
+scripts/test.ts -l
 
 # Though sometimes I want something more specific
-scripts/test.sh -L '!isGlobal && e.commandName === "find"'
+scripts/test.ts -L '!isGlobal && e.commandName === "find"'
 ```
 
 ### Running unit tests while you write them
@@ -493,11 +493,11 @@ scripts/test.sh -L '!isGlobal && e.commandName === "find"'
 Quite helpful when developing unit tests or updating a feature, as it'll rerun the tests whenever you edit a test file.
 
 ```sh
-scripts/test.sh -f unit. -watch
+scripts/test.ts -f unit. -watch
 ```
 
 ## See also
 
-- [The custom checker script](./check.sh.md)
-- [Local Data API spawning script](./startgate.sh.md)
-- [The all-in-one "premerge" script](./premerge.sh.md)
+- [The custom checker script](./check.ts.md)
+- [Local Data API spawning script](./startgate.ts.md)
+- [The all-in-one "premerge" script](./premerge.ts.md)

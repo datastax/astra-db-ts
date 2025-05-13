@@ -9,7 +9,7 @@ import { RawTestCfg } from '../tests/testlib/index.js';
 
 const testCmd = 'mocha --import=tsx/esm -r tsconfig-paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs --exit ';
 
-const opts = new Opts('test.sh')
+const opts = new Opts('test.ts')
   .backing({
     TestType: [(v) => v as 'all' | 'light' | 'coverage', 'all'],
     FilterCombinator: [(v) => v as 'and' | 'or', 'and'],

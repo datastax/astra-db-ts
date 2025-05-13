@@ -21,21 +21,52 @@ if (opts.Local) {
   process.env.CLIENT_DB_URL = 'http://localhost:8181';
 }
 
-if (opts.Logging) {
-  process.env.LOG_ALL_TO_STDOUT = 'true';
-}
-
 if (!process.env.CLIENT_DB_TOKEN || !process.env.CLIENT_DB_URL) {
   console.error('Missing CLIENT_DB_TOKEN and/or CLIENT_DB_URL');
   process.exit(1);
 }
 
 await new Steps()
+  .one(SetupConfig(), {
+    spinner: 'Setting up config...',
+  })
   .if(!opts.NoBuild, BuildClient(), {
     spinner: 'Building the client...',
   })
   .one(LaunchRepl())
   .run();
+
+interface Config {
+  token: string,
+  url: string,
+  env: string,
+  embeddingApiKey?: string,
+}
+
+function SetupConfig(): Step<never, Config> {
+  return async () => {
+    if (opts.Local) {
+      return {
+        token: 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh',
+        url: 'http://localhost:8181',
+        env: 'hcd',
+        embeddingApiKey: process.env.CLIENT_EMBEDDING_API_KEY,
+      }
+    }
+
+    if (!process.env.CLIENT_DB_TOKEN || !process.env.CLIENT_DB_URL) {
+      console.error('Missing CLIENT_DB_TOKEN and/or CLIENT_DB_URL');
+      process.exit(1);
+    }
+
+    return {
+      token: process.env.CLIENT_DB_TOKEN,
+      url: process.env.CLIENT_DB_URL,
+      env: process.env.CLIENT_DB_ENVIRONMENT || 'astra',
+      embeddingApiKey: process.env.CLIENT_EMBEDDING_API_KEY,
+    }
+  };
+}
 
 function BuildClient(): Step {
   return async () => {
@@ -48,9 +79,9 @@ function BuildClient(): Step {
   };
 }
 
-function LaunchRepl(): Step {
-  return async () => {
-    const replScript = _buildReplScript();
+function LaunchRepl(): Step<Config> {
+  return async (cfg) => {
+    const replScript = _buildReplScript(cfg);
 
     if (opts.Exec) {
       const execScript = _buildExecScript(opts.Exec);
@@ -64,7 +95,7 @@ function LaunchRepl(): Step {
     return `(async () => { const r = (${script}); console.log(r instanceof Promise ? await r : r); })();`
   }
 
-  function _buildReplScript(): string {
+  function _buildReplScript(cfg: Config): string {
     return `
       require('./node_modules/dotenv/config');
 
@@ -102,7 +133,7 @@ function LaunchRepl(): Step {
           },
         },
         logging: {
-          _on: !!process.env.LOG_ALL_TO_STDOUT,
+          _on: ${opts.Logging},
           get on() {
             this._on = true;
             return 'Enabled event logging';
@@ -123,20 +154,20 @@ function LaunchRepl(): Step {
         },
       };
 
-      let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }], httpOptions: { client: 'custom', fetcher } });
-      let db = client.db(process.env.CLIENT_DB_URL, { keyspace: '${opts.KeyspaceName}' });
-      let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
+      let client = new $.DataAPIClient('${cfg.token}', { environment: '${cfg.env}', logging: [{ events: 'all', emits: 'event' }], httpOptions: { client: 'custom', fetcher } });
+      let db = client.db('${cfg.url}', { keyspace: '${opts.KeyspaceName}' });
+      let dbAdmin = db.admin({ environment: '${cfg.env}' });
 
-      const isAstra = !process.env.CLIENT_DB_ENVIRONMENT || process.env.CLIENT_DB_ENVIRONMENT === 'astra';
+      const isAstra = '${cfg.env}' === 'astra';
 
       let admin = (isAstra)
         ? client.admin()
         : null;
 
       let coll = withLaxPropertyAccess(db.collection('${opts.CollName}'));
-      let coll_ = withLaxPropertyAccess(db.collection('${opts.CollName}', { keyspace: 'other_keyspace', embeddingApiKey: process.env.TEST_OPENAI_KEY }));
+      let coll_ = withLaxPropertyAccess(db.collection('${opts.CollName}', { keyspace: 'other_keyspace', embeddingApiKey: '${cfg.embeddingApiKey}' }));
       let table = withLaxPropertyAccess(db.table('${opts.TableName}'));
-      let table_ = withLaxPropertyAccess(db.table('${opts.TableName}', { keyspace: 'other_keyspace', embeddingApiKey: process.env.TEST_OPENAI_KEY }));
+      let table_ = withLaxPropertyAccess(db.table('${opts.TableName}', { keyspace: 'other_keyspace', embeddingApiKey: '${cfg.embeddingApiKey}' }));
 
       for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed', /.*Warning/]) {
         client.on(event, (e) => cfg.logging._on && console.dir(e, { depth: null }));
