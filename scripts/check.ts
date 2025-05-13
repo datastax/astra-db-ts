@@ -3,24 +3,36 @@
 import 'zx/globals';
 import path from 'path';
 import fs from 'fs/promises';
-import { Opts } from './utils/arg-parse.js';
 import { Step, Steps } from './utils/steps.js';
 import { spinner } from 'zx';
+import { Args } from './utils/arg-parse-v2.js';
 
 const mainDir = process.cwd();
 
 const Utils = mkUtils();
 let failed = false;
 
-const checks = new Opts('check.ts')
-  .real({
-    TypeCheck: [['tc'], 'boolean', false],
-    Lint: [['lint'], 'boolean', false],
-    Licensing: [['licensing'], 'boolean', false],
-    TestExts: [['test-exts'], 'boolean', false],
-    TestNames: [['test-names'], 'boolean', false],
-    LibCheck: [['lib-check'], 'boolean', false],
-    ModuleExportsDiff: [['module-exports-diff'], 'boolean', false],
+const checks = new Args('check.ts')
+  .boolean('TypeCheck', {
+    flags: ['tc'],
+  })
+  .boolean('Lint', {
+    flags: ['lint'],
+  })
+  .boolean('Licensing', {
+    flags: ['licensing'],
+  })
+  .boolean('TestExts', {
+    flags: ['test-exts'],
+  })
+  .boolean('TestNames', {
+    flags: ['test-names'],
+  })
+  .boolean('LibCheck', {
+    flags: ['lib-check'],
+  })
+  .boolean('ModuleExportsDiff', {
+    flags: ['module-exports-diff'],
   })
   .parse();
 

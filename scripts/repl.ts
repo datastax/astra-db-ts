@@ -1,19 +1,34 @@
 #!/usr/bin/env -S npx tsx
 
 import 'zx/globals';
-import { Opts } from './utils/arg-parse.js';
+import { Args } from './utils/arg-parse-v2.js';
 import { Step, Steps } from './utils/steps.js';
 import 'dotenv/config';
 
-const opts = new Opts('repl.ts')
-  .real({
-    Local: [['-local'], 'boolean', false],
-    Logging: [['-l', '-logging'], 'boolean', false],
-    CollName: [['-c', '-coll-name'], 'string', 'test_coll'],
-    TableName: [['-t', '-table-name'], 'string', 'test_table'],
-    KeyspaceName: [['-k', '-keyspace-name'], 'string', 'default_keyspace'],
-    Exec: [['-e', '-exec'], 'string', undefined],
-    NoBuild: [['-B', '-no-build'], 'boolean', false],
+const opts = new Args('repl.ts')
+  .boolean('Local', {
+    flags: ['-local'],
+  })
+  .boolean('Logging', {
+    flags: ['-l', '-logging'],
+  })
+  .string('CollName', {
+    flags: ['-c', '-coll-name'],
+    default: 'test_coll',
+  })
+  .string('TableName', {
+    flags: ['-t', '-table-name'],
+    default: 'test_table',
+  })
+  .string('KeyspaceName', {
+    flags: ['-k', '-keyspace-name'],
+    default: 'default_keyspace',
+  })
+  .string('Exec', {
+    flags: ['-e', '-exec'],
+  })
+  .boolean('NoBuild', {
+    flags: ['-B', '-no-build'],
   })
   .parse();
 

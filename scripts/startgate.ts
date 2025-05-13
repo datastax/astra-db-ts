@@ -1,9 +1,9 @@
 #!/usr/bin/env -S npx tsx
 
-import { Opts } from './utils/arg-parse.js';
 import 'zx/globals';
+import { Args } from './utils/arg-parse-v2.js';
 
-new Opts('startgate.ts').parse();
+new Args('startgate.ts').parse();
 
 if (which.sync('docker-compose', { nothrow: true })) {
   await $`docker-compose -f scripts/utils/docker-compose-stargate.yml up`;

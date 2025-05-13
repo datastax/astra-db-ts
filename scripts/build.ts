@@ -1,17 +1,19 @@
 #!/usr/bin/env -S npx tsx
 
 import 'zx/globals';
-import { Opts } from './utils/arg-parse.js';
 import { Step, Steps } from './utils/steps.js';
 import { dist, etc, LicenceHeaders, packageJson, src } from './utils/constants.js';
 import fs from 'fs/promises';
 import { trimIndent } from './utils/utils.js';
 import strip from 'strip-comments';
+import { Args } from './utils/arg-parse-v2.js';
 
-const opts = new Opts('build.sh')
-  .real({
-    UpdateReport: [['-update-report', '-r'], 'boolean', false],
-    BuildingForREPL: [['-for-repl'], 'boolean', false],
+const opts = new Args('build.ts')
+  .boolean('UpdateReport', {
+    flags: ['-update-report', '-r'],
+  })
+  .boolean('BuildingForREPL', {
+    flags: ['-for-repl'],
   })
   .parse();
 

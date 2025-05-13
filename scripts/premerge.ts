@@ -1,15 +1,25 @@
 #!/usr/bin/env -S npx tsx
 
 import 'zx/globals';
-import { Opts } from './utils/arg-parse.js';
 import { Step, Steps } from './utils/steps.js';
+import { Args } from './utils/arg-parse-v2.js';
 
-const opts = new Opts('premerge.ts')
-  .real({
-    BuildArgs: [['-build-args'], 'string', '-r'],
-    TestArgs: [['-test-args'], 'string', '-b'],
-    CheckArgs: [['-check-args'], 'string', ''],
-    ExampleDepsArgs: [['-example-deps-args'], 'string', '-tar'],
+const opts = new Args('premerge.ts')
+  .string('BuildArgs', {
+    flags: ['-build-args'],
+    default: '-r',
+  })
+  .string('TestArgs', {
+    flags: ['-test-args'],
+    default: '-b',
+  })
+  .string('CheckArgs', {
+    flags: ['-check-args'],
+    default: '',
+  })
+  .string('ExampleDepsArgs', {
+    flags: ['-example-deps-args'],
+    default: '-tar',
   })
   .parse();
 

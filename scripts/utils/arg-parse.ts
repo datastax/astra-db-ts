@@ -1,11 +1,24 @@
 import 'zx/globals';
 
 type OptType = string | boolean | string[] | number;
-type OptTypeSpecifier = 'string' | 'boolean' | 'string[]' | 'number' | ((v: string) => any);
+type OptTypeSpecifier = 'string' | 'boolean' | 'string[]' | 'number' | string[];
 
-type RealOptsConfig = Record<string, [args: string[], type: OptTypeSpecifier, ifNotPresent?: OptType]>;
-type BackingOptsConfig = Record<string, [type: OptTypeSpecifier, ifNotPresent?: OptType]>;
-type FauxOptsConfig<Opts extends Record<string, any>> = [args: string[], type: OptTypeSpecifier, use?: (opt: any, opts: Opts) => void][]
+type RealOptsConfig = Record<string, {
+  flags: string[],
+  type: OptTypeSpecifier,
+  default?: OptType,
+}>;
+
+type BackingOptsConfig = Record<string, {
+  type: OptTypeSpecifier,
+  default?: OptType,
+}>;
+
+type FauxOptsConfig<Opts extends Record<string, any>> = {
+  flags: string[],
+  type: OptTypeSpecifier,
+  use: (opt: any, opts: Opts) => void,
+}[];
 
 type TypeOfOpt<Specifier extends OptTypeSpecifier> =
   Specifier extends 'string'
@@ -16,16 +29,16 @@ type TypeOfOpt<Specifier extends OptTypeSpecifier> =
     ? string[] :
   Specifier extends 'number'
     ? number :
-  Specifier extends (v: string) => infer U
+  Specifier extends (infer U)[]
     ? U
     : never;
 
 type TypeOfRealOpts<T extends RealOptsConfig> = {
-  -readonly [K in keyof T]: TypeOfOpt<T[K][1]>;
+  -readonly [K in keyof T]: TypeOfOpt<T[K]['type']>;
 }
 
 type TypeOfBackingOpts<T extends BackingOptsConfig> = {
-  -readonly [K in keyof T]: TypeOfOpt<T[K][0]>;
+  -readonly [K in keyof T]: TypeOfOpt<T[K]['type']>;
 }
 
 export type TypeOfOpts<RealOpts extends RealOptsConfig, BackingOpts extends BackingOptsConfig> = TypeOfRealOpts<RealOpts> & TypeOfBackingOpts<BackingOpts>;
@@ -34,34 +47,32 @@ interface NormalizedOpt {
   kind: 'real' | 'backing' | 'faux',
   flags: string[],
   type: OptTypeSpecifier,
-  default?: OptType | typeof $NoDefault,
+  default?: OptType,
   use?: (opt: any, opts: any) => void,
 }
-
-const $NoDefault = Symbol('NoDefault');
 
 export class Opts<const Real extends RealOptsConfig, const Backing extends BackingOptsConfig> {
   private _options: Record<string, NormalizedOpt> = {};
 
   constructor(private _file: string) {}
 
-  public real<const NewReal extends RealOptsConfig>(options: NewReal): Opts<NewReal, Backing> {
+  public real<const NewReal extends RealOptsConfig>(options: NewReal): Opts<NewReal & Omit<Real, keyof NewReal>, Backing> {
     for (const [key, opts] of Object.entries(options)) {
-      this._options[key] = { kind: 'real', flags: opts[0], type: opts[1], default: opts.length > 2 ? opts[2] : $NoDefault };
+      this._options[key] = { kind: 'real', ...opts };
     }
     return this as any;
   }
 
-  public backing<const NewBacking extends BackingOptsConfig>(options: NewBacking): Opts<Real, NewBacking> {
+  public backing<const NewBacking extends BackingOptsConfig>(options: NewBacking): Opts<Real, NewBacking & Omit<Backing, keyof NewBacking>> {
     for (const [key, opts] of Object.entries(options)) {
-      this._options[key] = { kind: 'backing', flags: [], type: opts[0], default: opts.length > 1 ? opts[1] : $NoDefault };
+      this._options[key] = { kind: 'backing', flags: [], ...opts };
     }
     return this as any;
   }
 
   public faux(options: FauxOptsConfig<TypeOfOpts<Real, Backing>>): Opts<Real, Backing> {
-    for (const [args, type, use] of options) {
-      this._options[Math.random()] = { kind: 'faux', flags: args, type, use };
+    for (const opts of options) {
+      this._options[Math.random()] = { kind: 'faux', ...opts };
     }
     return this;
   }
@@ -120,20 +131,20 @@ export class Opts<const Real extends RealOptsConfig, const Backing extends Backi
           (<boolean>parsedOpts[optName]) = true;
           break;
 
-        case typeof type === 'function':
+        case Array.isArray(type):
           const value = rawArgs.shift();
 
           if (value === undefined) {
             throw new Error(`Missing value for argument: ${rawArg}`);
           }
 
-          (<unknown>parsedOpts[optName]) = type(value);
+          (<unknown>parsedOpts[optName]) = value;
           break;
       }
     }
 
     for (const [key, cfg] of Object.entries(this._options)) {
-      if (!(key in parsedOpts) && cfg.default !== $NoDefault && cfg.kind !== 'faux') {
+      if (!(key in parsedOpts) && 'default' in cfg && cfg.kind !== 'faux') {
         (<unknown>parsedOpts[key]) = cfg.default;
       }
     }
@@ -172,7 +183,7 @@ export class Opts<const Real extends RealOptsConfig, const Backing extends Backi
     console.error('Available options:');
 
     for (const opts of Object.values(this._options)) if (opts.kind !== 'backing') {
-      console.error(`${opts.flags.join(', ')} :: ${opts.type}` + (opts.default !== $NoDefault ? ' = ' + opts.default : ''));
+      console.error(`${opts.flags.join(', ')} :: ${opts.type}` + (('default' in opts) ? ' = ' + opts.default : ''));
     }
 
     console.error();

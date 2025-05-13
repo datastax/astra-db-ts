@@ -6,51 +6,113 @@ import { Opts } from './utils/arg-parse.js';
 import { Step, Steps } from './utils/steps.js';
 import 'dotenv/config';
 import { RawTestCfg } from '../tests/testlib/index.js';
+import { Args } from './utils/arg-parse-v2.js';
 
 const testCmd = 'mocha --import=tsx/esm -r tsconfig-paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs --exit ';
 
-const opts = new Opts('test.ts')
-  .backing({
-    TestType: [(v) => v as 'all' | 'light' | 'coverage', 'all'],
-    FilterCombinator: [(v) => v as 'and' | 'or', 'and'],
+// const opts = new Opts('test.ts')
+//   .backing({
+//     TestType: [(v) => v as 'all' | 'light' | 'coverage', 'all'],
+//     FilterCombinator: [(v) => v as 'and' | 'or', 'and'],
+//   })
+//   .real({
+//     FilterExact: [['-f'], 'string[]', []],
+//     FilterNotExact: [['-F'], 'string[]', []],
+//     FilterMatch: [['-g'], 'string[]', []],
+//     FilterNotMatch: [['-G'], 'string[]', []],
+//
+//     LoggingPredicate: [['-L', '-logging-pred'], 'string', undefined],
+//
+//     VectorizeWhitelist: [['-w'], 'string', undefined],
+//     InvertVectorizeWhitelist: [['-W'], 'boolean', undefined],
+//
+//     Bail: [['-b', '-bail'], 'boolean', false],
+//     NoReport: [['-R', '-no-report'], 'boolean', false],
+//     HttpClient: [['-c'], 'string', undefined],
+//     Environment: [['-e'], 'string', process.env.CLIENT_DB_ENVIRONMENT],
+//     SkipPrelude: [['-P', '-skip-prelude'], 'boolean', undefined],
+//     Watch: [['-watch'], 'boolean', false],
+//     TestTimeout: [['-test-timeout', '-t'], 'number', undefined],
+//   })
+//   .faux([
+//     [['-all'], 'boolean', (v, opts) => v && (opts.TestType = 'all')],
+//     [['-light'], 'boolean', (v, opts) => v && (opts.TestType = 'light')],
+//     [['-coverage'], 'boolean', (v, opts) => v && (opts.TestType = 'coverage')],
+//
+//     [['-fand'], 'boolean', (v, opts) => v && (opts.FilterCombinator = 'and')],
+//     [['-for'], 'boolean', (v, opts) => v && (opts.FilterCombinator = 'or')],
+//     [['-u'], 'boolean', (v, opts) => v && (opts.TestType = 'light') && (opts.FilterExact.push('unit.'))],
+//
+//     [['-l', '-logging'], 'boolean', (v, opts) => v && (opts.LoggingPredicate = '!isGlobal')],
+//
+//     [['-local'], 'boolean', (v, opts) => v && (() => {
+//       opts.Environment = 'dse';
+//       process.env.CLIENT_DB_TOKEN = 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh';
+//       process.env.CLIENT_DB_URL = 'http://localhost:8181';
+//     })()],
+//   ])
+//   .parse();
+
+const opts = new Args('test.ts')
+  .stringEnum('TestType', {
+    choices: {
+      'all': ['-all'],
+      'light': ['-light'],
+      'coverage': ['-coverage'],
+    },
+    default: 'all',
   })
-  .real({
-    FilterExact: [['-f'], 'string[]', []],
-    FilterNotExact: [['-F'], 'string[]', []],
-    FilterMatch: [['-g'], 'string[]', []],
-    FilterNotMatch: [['-G'], 'string[]', []],
-
-    LoggingPredicate: [['-L', '-logging-pred'], 'string', undefined],
-
-    VectorizeWhitelist: [['-w'], 'string', undefined],
-    InvertVectorizeWhitelist: [['-W'], 'boolean', undefined],
-
-    Bail: [['-b', '-bail'], 'boolean', false],
-    NoReport: [['-R', '-no-report'], 'boolean', false],
-    HttpClient: [['-c'], 'string', undefined],
-    Environment: [['-e'], 'string', process.env.CLIENT_DB_ENVIRONMENT],
-    SkipPrelude: [['-P', '-skip-prelude'], 'boolean', undefined],
-    Watch: [['-watch'], 'boolean', false],
-    TestTimeout: [['-test-timeout', '-t'], 'number', undefined],
+  .stringEnum('FilterCombinator', {
+    choices: {
+      'and': ['-fand'],
+      'or': ['-for'],
+    },
+    default: 'and',
   })
-  .faux([
-    [['-all'], 'boolean', (v, opts) => v && (opts.TestType = 'all')],
-    [['-light'], 'boolean', (v, opts) => v && (opts.TestType = 'light')],
-    [['-coverage'], 'boolean', (v, opts) => v && (opts.TestType = 'coverage')],
-
-    [['-fand'], 'boolean', (v, opts) => v && (opts.FilterCombinator = 'and')],
-    [['-for'], 'boolean', (v, opts) => v && (opts.FilterCombinator = 'or')],
-    [['-u'], 'boolean', (v, opts) => v && (opts.TestType = 'light') && (opts.FilterExact.push('unit.'))],
-
-    [['-l', '-logging'], 'boolean', (v, opts) => v && (opts.LoggingPredicate = '!isGlobal')],
-
-    [['-local'], 'boolean', (v, opts) => v && (() => {
-      opts.Environment = 'dse';
-      process.env.CLIENT_DB_TOKEN = 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh';
-      process.env.CLIENT_DB_URL = 'http://localhost:8181';
-    })()],
-  ])
-  .parse();
+  .stringArray('FilterExact', {
+    flags: ['-f'],
+  })
+  .stringArray('FilterNotExact', {
+    flags: ['-F'],
+  })
+  .stringArray('FilterMatch', {
+    flags: ['-g'],
+  })
+  .stringArray('FilterNotMatch', {
+    flags: ['-G'],
+  })
+  .string('VectorizeWhitelist', {
+    flags: ['-w'],
+    default: undefined,
+  })
+  .boolean('InvertVectorizeWhitelist', {
+    flags: ['-W'],
+  })
+  .boolean('Bail', {
+    flags: ['-b', '-bail'],
+  })
+  .boolean('NoReport', {
+    flags: ['-R', '-no-report'],
+  })
+  .string('HttpClient', {
+    flags: ['-c'],
+    default: undefined,
+  })
+  .string('Environment', {
+    flags: ['-e'],
+    default: process.env.CLIENT_DB_ENVIRONMENT,
+  })
+  .boolean('SkipPrelude', {
+    flags: ['-P', '-skip-prelude'],
+  })
+  .boolean('Watch', {
+    flags: ['-watch'],
+  })
+  .number('TestTimeout', {
+    flags: ['-test-timeout', '-t'],
+    default: undefined,
+  })
+  .parse()
 
 // Required for tests
 process.env.CLIENT_DYNAMIC_JS_ENV_CHECK = '1'

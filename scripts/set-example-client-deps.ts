@@ -1,24 +1,24 @@
 #!/usr/bin/env -S npx tsx
 
 import 'zx/globals';
-import { Opts } from './utils/arg-parse.js';
+import { Args } from './utils/arg-parse-v2.js';
 import path from 'path';
 import { chalk, globby, spinner } from 'zx';
 import { root } from './utils/constants.js';
 import { Step, Steps } from './utils/steps.js';
 import * as readline from 'node:readline';
 
-const opts = new Opts('set-example-client-deps.ts')
-  .backing({
-    Mode: [(v) => v as 'tar' | 'sym'],
+const opts = new Args('set-example-client-deps.ts')
+  .stringArray('DirPatterns', {
+    flags: ['-d', '-dirs'],
+    default: ['examples/*/'],
   })
-  .real({
-    DirPatterns: [['-d', '-dirs'], 'string[]', ['examples/*/']],
+  .stringEnum('Mode', {
+    choices: {
+      tar: ['-tar'],
+      sym: ['-sym'],
+    },
   })
-  .faux([
-    [['-tar'], 'boolean', (v, opts) => v && (opts.Mode = 'tar')],
-    [['-sym'], 'boolean', (v, opts) => v && (opts.Mode = 'sym')],
-  ])
   .parse();
 
 const TarFile = `${root}/examples/astra-db-ts.tgz`;
