@@ -17,6 +17,7 @@ import type {
   AstraDatabaseConfig,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
+  AstraAvailableRegionInfo, AstraFindAvailableRegionsOptions,
 } from '@/src/administration/types/index.js';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
 import { Db } from '@/src/db/db.js';
@@ -469,6 +470,71 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       timeoutManager: tm,
       options,
     });
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Finds available regions for Astra database deployments.
+   *
+   * The returned information includes details about each region such as its cloud provider,
+   * classification tier, geographic zone, and availability status.
+   *
+   * @example
+   * ```ts
+   * // Find all regions enabled for the current organization (default)
+   * const enabledRegions = await admin.findAvailableRegions();
+   *
+   * // Find AWS regions in North America
+   * const awsNaRegions = allRegions
+   *   .filter(r => r.cloudProvider === 'AWS' && r.zone === 'na');
+   * ```
+   *
+   * ---
+   *
+   * ##### Including non-org-enabled regions
+   *
+   * By default, it returns only regions that are enabled for the current organization, but this behavior can be controlled with the {@link AstraFindAvailableRegionsOptions.onlyOrgEnabledRegions} option.
+   *
+   * @example
+   * ```ts
+   * // Find all regions, including those not enabled for the current organization
+   * const allRegions = await admin.findAvailableRegions({
+   *   onlyOrgEnabledRegions: false,
+   * });
+   * ```
+   *
+   * @param options - Options for filtering the regions to return
+   *
+   * @returns A promise that resolves to an array of the region information
+   *
+   * @see AstraAvailableRegionInfo
+   * @see AstraRegionClassification
+   */
+  public async findAvailableRegions(options?: AstraFindAvailableRegionsOptions): Promise<AstraAvailableRegionInfo[]> {
+    const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
+
+    const filterByOrg = options?.onlyOrgEnabledRegions !== false ? 'enabled' : 'disabled';
+
+    const resp = await this.#httpClient.request({
+      method: HttpMethods.Get,
+      path: '/regions/serverless',
+      params: {
+        'filter-by-org': filterByOrg,
+        'region-type': 'vector',
+      },
+      methodName: 'admin.findAvailableRegions',
+    }, tm);
+
+    return resp.data!.map((region: any): AstraAvailableRegionInfo => ({
+      classification: region.classification,
+      cloudProvider: region.cloudProvider,
+      displayName: region.displayName,
+      enabled: region.enabled,
+      name: region.name,
+      reservedForQualifiedUsers: region.reservedForQualifiedUsers,
+      zone: region.zone,
+    }));
   }
 
   public get _httpClient(): OpaqueHttpClient {
