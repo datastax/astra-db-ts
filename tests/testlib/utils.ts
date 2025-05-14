@@ -78,9 +78,9 @@ export function checkTestsEnabled(name: string) {
     }
   });
 
-  return ifMatchTag(tags, 'VECTORIZE', () => process.env.CLIENT_RUN_VECTORIZE_TESTS)
-      && ifMatchTag(tags, 'LONG',      () => process.env.CLIENT_RUN_LONG_TESTS)
-      && ifMatchTag(tags, 'ADMIN',     () => process.env.CLIENT_RUN_ADMIN_TESTS)
+  return ifMatchTag(tags, 'VECTORIZE', () => Cfg.RunTests.Vectorize)
+      && ifMatchTag(tags, 'LONG',      () => Cfg.RunTests.LongRunning)
+      && ifMatchTag(tags, 'ADMIN',     () => Cfg.RunTests.Admin)
       && ifMatchTag(tags, 'DEV',       () => Cfg.DbUrl.includes('apps.astra-dev.datastax.com'))
       && ifMatchTag(tags, 'ASTRA',     () => Cfg.DbUrl.includes('datastax.com'))
       // && ifMatchTag(tags, 'RERANKING', () => !Cfg.DbUrl.includes('apps.astra.datastax.com'));

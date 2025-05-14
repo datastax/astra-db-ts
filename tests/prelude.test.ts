@@ -23,6 +23,8 @@ import {
   RUNNING_INT_TESTS,
 } from '@/tests/testlib/index.js';
 import type { InferTableSchema } from '@/src/db/index.js';
+import { spinner } from 'zx';
+import * as readline from 'node:readline';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, Cfg.OtherKeyspace];
 
@@ -40,20 +42,25 @@ before(async () => {
   console.warn('Running prelude.test.ts');
 
   const { db, dbAdmin } = GLOBAL_FIXTURES;
-  const allKeyspaces = await dbAdmin.listKeyspaces();
 
-  if (allKeyspaces.includes('slania')) {
-    console.warn(`deleting keyspace 'slania'`);
-    await dbAdmin.dropKeyspace('slania');
-  }
+  await spinner('Setting up keyspaces', async () => {
+    const allKeyspaces = await dbAdmin.listKeyspaces();
 
-  for (const keyspace of TEST_KEYSPACES) {
-    if (!allKeyspaces.includes(keyspace)) {
-      console.warn(`creating keyspace '${keyspace}'`);
-      await dbAdmin.createKeyspace(keyspace);
+    if (allKeyspaces.includes('slania')) {
+      readline.clearLine(process.stdout, 0);
+      console.warn(`\rdeleting keyspace 'slania'`);
+      await dbAdmin.dropKeyspace('slania');
     }
-  }
-  
+
+    for (const keyspace of TEST_KEYSPACES) {
+      if (!allKeyspaces.includes(keyspace)) {
+        readline.clearLine(process.stdout, 0);
+        console.warn(`\rcreating keyspace '${keyspace}'`);
+        await dbAdmin.createKeyspace(keyspace);
+      }
+    }
+  });
+
   const createTCPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
       await db.createCollection(Cfg.DefaultCollectionName, {
@@ -75,21 +82,21 @@ before(async () => {
     })
     .awaitAll();
 
-  const allCollections = await TEST_KEYSPACES
+  const allCollections = TEST_KEYSPACES
     .map(async (keyspace) => {
       const colls = await db.listCollections({ keyspace, nameOnly: true });
       return [keyspace, colls] as const;
     })
     .awaitAll();
 
-  const allTables = await TEST_KEYSPACES
+  const allTables = TEST_KEYSPACES
     .map(async (keyspace) => {
       const tables = await db.listTables({ keyspace, nameOnly: true });
       return [keyspace, tables] as const;
     })
     .awaitAll();
 
-  const delCollections = allCollections
+  const delCollections = allCollections.then((allColls) => allColls
     .map(async ([keyspace, colls]) => {
       await colls
         .filter(c => TEST_KEYSPACES.includes(keyspace) ? c !== Cfg.DefaultCollectionName : true)
@@ -97,9 +104,10 @@ before(async () => {
         .map(c => db.dropCollection(c, { keyspace }))
         .awaitAll();
     })
-    .awaitAll();
+    .awaitAll(),
+  );
 
-  const delTables = allTables
+  const delTables = allTables.then((allTables) => allTables
     .map(async ([keyspace, tables]) => {
       await tables
         .filter(t => TEST_KEYSPACES.includes(keyspace) ? t !== Cfg.DefaultTableName : true)
@@ -107,9 +115,10 @@ before(async () => {
         .map(t => db.dropTable(t, { keyspace }))
         .awaitAll();
     })
-    .awaitAll();
+    .awaitAll(),
+  );
 
-  await delCollections;
-  await delTables;
-  await createTCPromises;
+  await spinner('Deleting all collections...', () => delCollections);
+  await spinner('Deleting all tables...', () => delTables);
+  await spinner('Creating all collections and tables...', () => createTCPromises);
 });

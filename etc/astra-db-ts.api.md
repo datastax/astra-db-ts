@@ -252,6 +252,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
         timeout: 'databaseAdminTimeoutMs';
     }>): Promise<AstraFullDatabaseInfo>;
     dropDatabase(db: Db | string, options?: AstraDropDatabaseOptions): Promise<void>;
+    findAvailableRegions(options?: AstraFindAvailableRegionsOptions): Promise<AstraAvailableRegionInfo[]>;
     // (undocumented)
     get _httpClient(): OpaqueHttpClient;
     listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraFullDatabaseInfo[]>;
@@ -259,6 +260,17 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
 
 // @public
 export type AstraAdminBlockingOptions = AstraPollBlockingOptions | AstraNoBlockingOptions;
+
+// @public
+export interface AstraAvailableRegionInfo {
+    classification: AstraRegionClassification;
+    cloudProvider: AstraDatabaseCloudProvider;
+    displayName: string;
+    enabled: boolean;
+    name: string;
+    reservedForQualifiedUsers: boolean;
+    zone: AstraRegionZone;
+}
 
 // @public
 export interface AstraBaseDatabaseInfo {
@@ -329,6 +341,13 @@ export type AstraDropDatabaseOptions = AstraAdminBlockingOptions & CommandOption
 }>;
 
 // @public
+export interface AstraFindAvailableRegionsOptions extends CommandOptions<{
+    timeout: 'databaseAdminTimeoutMs';
+}> {
+    onlyOrgEnabledRegions?: boolean;
+}
+
+// @public
 export interface AstraFullDatabaseInfo extends AstraBaseDatabaseInfo {
     createdAt: Date;
     lastUsed: Date;
@@ -353,6 +372,12 @@ export interface AstraPollBlockingOptions {
     blocking?: true;
     pollInterval?: number;
 }
+
+// @public
+export type AstraRegionClassification = 'standard' | 'premium' | 'premium_plus';
+
+// @public
+export type AstraRegionZone = 'na' | 'apac' | 'emea' | 'sa';
 
 // @public
 export class AWSEmbeddingHeadersProvider extends StaticHeadersProvider<'embedding'> {
@@ -891,15 +916,15 @@ export class CommandFailedEvent extends CommandEvent {
     trimDuplicateFields(): this;
 }
 
-// @public (undocumented)
-export interface CommandOptions<Cfg extends CommandOptionsOptions = Required<CommandOptionsOptions>> {
+// @public
+export interface CommandOptions<Spec extends CommandOptionsSpec = Required<CommandOptionsSpec>> {
     // @deprecated
     maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`';
-    timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Exclude<Cfg['timeout'], undefined>>;
+    timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Exclude<Spec['timeout'], undefined>>;
 }
 
-// @public (undocumented)
-export interface CommandOptionsOptions {
+// @public
+export interface CommandOptionsSpec {
     // (undocumented)
     timeout?: keyof TimeoutDescriptor;
 }
@@ -1823,13 +1848,9 @@ export interface GenericDeleteManyResult {
 // @public
 export interface GenericDeleteOneOptions extends CommandOptions<{
     timeout: 'generalMethodTimeoutMs';
-}> {
+}>, WithDeprecatedVectorSortOptions {
     // (undocumented)
     sort?: Sort;
-    // @deprecated
-    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
-    // @deprecated
-    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1865,60 +1886,44 @@ export interface GenericFindAndRerankOptions extends CommandOptions<{
 // @public
 export interface GenericFindOneAndDeleteOptions extends CommandOptions<{
     timeout: 'generalMethodTimeoutMs';
-}> {
+}>, WithDeprecatedVectorSortOptions {
     projection?: Projection;
     sort?: Sort;
-    // @deprecated
-    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
-    // @deprecated
-    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
 export interface GenericFindOneAndReplaceOptions extends CommandOptions<{
     timeout: 'generalMethodTimeoutMs';
-}> {
+}>, WithDeprecatedVectorSortOptions {
     projection?: Projection;
     returnDocument?: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
-    // @deprecated
-    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
-    // @deprecated
-    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
 export interface GenericFindOneAndUpdateOptions extends CommandOptions<{
     timeout: 'generalMethodTimeoutMs';
-}> {
+}>, WithDeprecatedVectorSortOptions {
     projection?: Projection;
     returnDocument?: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
-    // @deprecated
-    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
-    // @deprecated
-    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
 export interface GenericFindOneOptions extends CommandOptions<{
     timeout: 'generalMethodTimeoutMs';
-}> {
+}>, WithDeprecatedVectorSortOptions {
     includeSimilarity?: boolean;
     projection?: Projection;
     sort?: Sort;
-    // @deprecated
-    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
-    // @deprecated
-    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
 export interface GenericFindOptions extends CommandOptions<{
     timeout: 'generalMethodTimeoutMs';
-}> {
+}>, WithDeprecatedVectorSortOptions {
     includeSimilarity?: boolean;
     includeSortVector?: boolean;
     initialPageState?: string | null;
@@ -1926,10 +1931,6 @@ export interface GenericFindOptions extends CommandOptions<{
     projection?: Projection;
     skip?: number;
     sort?: Sort;
-    // @deprecated
-    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
-    // @deprecated
-    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1968,15 +1969,11 @@ export type GenericInsertOneOptions = CommandOptions<{
 // @public
 export interface GenericReplaceOneOptions extends CommandOptions<{
     timeout: 'generalMethodTimeoutMs';
-}> {
+}>, WithDeprecatedVectorSortOptions {
     // (undocumented)
     sort?: Sort;
     // (undocumented)
     upsert?: boolean;
-    // @deprecated
-    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
-    // @deprecated
-    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -1990,13 +1987,9 @@ export interface GenericUpdateManyOptions extends CommandOptions<{
 // @public
 export interface GenericUpdateOneOptions extends CommandOptions<{
     timeout: 'generalMethodTimeoutMs';
-}> {
+}>, WithDeprecatedVectorSortOptions {
     sort?: Sort;
     upsert?: boolean;
-    // @deprecated
-    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
-    // @deprecated
-    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public
@@ -2977,6 +2970,14 @@ export interface VectorizeServiceOptions {
     modelName: LitUnion<'endpoint-defined-model'>;
     parameters?: Record<string, unknown>;
     provider: string;
+}
+
+// @public
+export interface WithDeprecatedVectorSortOptions {
+    // @deprecated
+    vector?: 'ERROR: Use `sort: { $vector: [...] }` instead';
+    // @deprecated
+    vectorize?: 'ERROR: Use `sort: { $vectorize: "..." }` instead';
 }
 
 // @public

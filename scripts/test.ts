@@ -157,9 +157,9 @@ function PrepareTest(): Step {
 
   function _buildRunTests(): RawTestCfg['RunTests'] {
     return {
-      Vectorize: opts.TestType === "all" || opts.TestType === "coverage",
-      LongRunning: opts.TestType === "all" || opts.TestType === "coverage",
-      Admin: opts.TestType === "all" || opts.TestType === "coverage",
+      Vectorize: opts.TestType === 'all' || opts.TestType === 'coverage',
+      LongRunning: opts.TestType === 'all' || opts.TestType === 'coverage',
+      Admin: opts.TestType === 'all' || opts.TestType === 'coverage',
     }
   }
 }
