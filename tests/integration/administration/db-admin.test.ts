@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { describe, ENVIRONMENT, it, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
+import { Cfg, describe, it } from '@/tests/testlib/index.js';
 import { DataAPIDbAdmin, DevOpsAPITimeoutError } from '@/src/administration/index.js';
 
 describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
@@ -35,11 +35,11 @@ describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
       polling++;
     });
 
-    const db = client.db(TEST_APPLICATION_URI);
+    const db = client.db(Cfg.DbUrl);
 
-    const dbAdmin = (ENVIRONMENT === 'astra')
-      ? db.admin({ environment: ENVIRONMENT })
-      : db.admin({ environment: ENVIRONMENT });
+    const dbAdmin = (Cfg.DbEnvironment === 'astra')
+      ? db.admin({ environment: Cfg.DbEnvironment })
+      : db.admin({ environment: Cfg.DbEnvironment });
 
     await dbAdmin.createKeyspace('slania', { updateDbKeyspace: true });
     assert.strictEqual(db.keyspace, 'slania');
@@ -56,7 +56,7 @@ describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
     assert.strictEqual(succeeded, 4);
     assert.strictEqual(warnings, 0);
 
-    if (dbAdmin instanceof DataAPIDbAdmin) {
+    if (dbAdmin as unknown instanceof DataAPIDbAdmin) {
       assert.strictEqual(polling, 0);
     } else {
       assert.ok(polling > 0);

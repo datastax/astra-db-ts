@@ -14,54 +14,93 @@
 
 import * as process from 'node:process';
 import dotenv from 'dotenv';
-import { DataAPIEnvironments } from '@/src/lib/constants.js';
 import type { BaseClientEvent, DataAPIEnvironment } from '@/src/lib/index.js';
+import { DEFAULT_KEYSPACE } from '@/src/lib/index.js';
+import type { DecoderType } from 'decoders';
+import { array, boolean, exact, object, oneOf, optional, positiveInteger, string } from 'decoders';
+import { jsonTryParse } from '@/src/lib/utils.js';
+import { FilterBuilder, VecWhitelistBuilder } from '@/tests/testlib/config-builders.js';
 
 dotenv.config();
 
-if (process.env.USING_LOCAL_STARGATE) {
-  process.env.CLIENT_DB_ENVIRONMENT = 'dse';
-  process.env.CLIENT_DB_TOKEN = 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh';
-  process.env.CLIENT_DB_URL = 'http://localhost:8181';
-}
+const RawTestCfgDecoder = exact({
+  DbEnvironment: optional(string),
 
-if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN || !process.env.TEST_OPENAI_KEY) {
-  throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN and TEST_OPENAI_KEY env vars are set');
-}
+  HttpClient: optional(string),
 
-const testHttpClient = process.env.CLIENT_TEST_HTTP_CLIENT;
+  TestTimeout: optional(positiveInteger),
 
-if (testHttpClient && testHttpClient !== 'fetch-h2:http2' && testHttpClient !== 'fetch-h2:http1' && testHttpClient !== 'fetch') {
-  throw new Error('CLIENT_TEST_HTTP_CLIENT must be one of \'fetch-h2:http2\', \'fetch-h2:http1\', \'fetch\', or unset to default to the client default');
-}
+  LoggingPredicate: optional(string),
 
-const environment = (process.env.CLIENT_DB_ENVIRONMENT ?? 'astra');
+  SkipPrelude: optional(boolean),
 
-if (!DataAPIEnvironments.includes(<any>environment)) {
-  throw new Error(`CLIENT_DB_ENVIRONMENT must be one of ${DataAPIEnvironments.map(e => `'${e}'`).join(', ')}, or unset to default to 'astra'`);
-}
+  Filter: optional(object({
+    Parts: optional(array(string)),
+    Combinator: optional(oneOf(['and', 'or'] as const)),
+  })),
 
-export const ENVIRONMENT = environment as DataAPIEnvironment;
-export const TEMP_DB_NAME = 'astra-test-db-plus-random-name-1284';
+  VectorizeWhitelist: optional(object({
+    Whitelist: optional(string),
+    Inverted: optional(boolean),
+  })),
 
-export const DEFAULT_COLLECTION_NAME = 'test_coll';
-export const DEFAULT_TABLE_NAME = 'test_table';
+  RunTests: optional(object({
+    Vectorize: optional(boolean),
+    LongRunning: optional(boolean),
+    Admin: optional(boolean),
+  })),
+});
 
-export const OTHER_KEYSPACE = 'other_keyspace';
+export type RawTestCfg = DecoderType<typeof RawTestCfgDecoder>;
 
-export const TEST_HTTP_CLIENT = testHttpClient;
+const TestCfgDecoder = RawTestCfgDecoder
+  .transform((v) => ({
+    DbEnvironment: v.DbEnvironment as DataAPIEnvironment ?? 'astra',
 
-export const TEST_APPLICATION_TOKEN = process.env.CLIENT_DB_TOKEN;
-export const TEST_APPLICATION_URI = process.env.CLIENT_DB_URL;
-export const TEST_OPENAI_KEY = process.env.TEST_OPENAI_KEY;
-export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra.datastax.com';
+    HttpClient: optional(oneOf(['fetch-h2:http2', 'fetch-h2:http1', 'fetch'] as const), 'fetch-h2:http2').verify(v.HttpClient),
 
-export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;
+    TestTimeout: v.TestTimeout ?? 90000,
 
-export const LOGGING_PRED: (e: BaseClientEvent, isGlobal: boolean) => boolean = process.env.LOGGING_PRED
-  ? new Function("e", "isGlobal", "return " + process.env.LOGGING_PRED) as any
-  : () => false;
+    LoggingPredicate: {
+      test: new Function('e', 'isGlobal', 'return ' + (v.LoggingPredicate ?? 'false')) as (e: BaseClientEvent, isGlobal: boolean) => boolean,
+    },
 
-export const SKIP_PRELUDE = !!process.env.SKIP_PRELUDE || false;
+    SkipPrelude: v.SkipPrelude ?? false,
 
-export const VECTORIZE_VECTOR_LENGTH = 4096;
+    Filter: new FilterBuilder(v.Filter?.Parts ?? [], v.Filter?.Combinator ?? 'and').build(),
+
+    VectorizeWhitelist: new VecWhitelistBuilder(v.VectorizeWhitelist?.Whitelist ?? '$model-limit:1', v.VectorizeWhitelist?.Inverted ?? false).build(),
+
+    RunTests: {
+      Vectorize: v.RunTests?.Vectorize ?? true,
+      LongRunning: v.RunTests?.LongRunning ?? false,
+      Admin: v.RunTests?.Admin ?? false,
+    },
+  }))
+  .transform((v) => {
+    if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN || !process.env.CLIENT_EMBEDDING_API_KEY) {
+      throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN and CLIENT_EMBEDDING_API_KEY env vars are set');
+    }
+
+    return {
+      ...v,
+      DbUrl: process.env.CLIENT_DB_URL,
+      DbToken: process.env.CLIENT_DB_TOKEN,
+      EmbeddingAPIKey: process.env.CLIENT_EMBEDDING_API_KEY,
+    };
+  })
+  .transform((v => ({
+    ...v,
+
+    TempDbName: 'astra-test-db-plus-random-name-1284',
+
+    DefaultCollectionName: 'test_coll',
+    DefaultTableName: 'test_table',
+
+    DefaultKeyspace: DEFAULT_KEYSPACE,
+    OtherKeyspace: 'other_keyspace',
+
+    VectorizeVectorLength: 4096,
+  })));
+
+export const Cfg = TestCfgDecoder.verify(jsonTryParse(process.env.CLIENT_TEST_CONFIG!, {}));

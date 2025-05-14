@@ -17,14 +17,10 @@ import { DataAPIClient } from '@/src/client/index.js';
 import assert from 'assert';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/documents/events.js';
 import {
-  DEFAULT_COLLECTION_NAME,
+  Cfg,
   describe,
-  ENVIRONMENT,
   it,
-  OTHER_KEYSPACE,
   parallel,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
 } from '@/tests/testlib/index.js';
 import { DataAPIResponseError, DataAPITimeoutError, UUID } from '@/src/documents/index.js';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
@@ -35,22 +31,22 @@ import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 describe('integration.client.data-api-client', () => {
   parallel('db', () => {
     it('properly connects to a db by endpoint', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
+      const client = new DataAPIClient(Cfg.DbToken, { environment: Cfg.DbEnvironment });
+      const db = client.db(Cfg.DbUrl, { keyspace: DEFAULT_KEYSPACE });
       const collections = await db.listCollections();
       assert.ok(Array.isArray(collections));
     });
 
     it('lets Data API deal with throwing missing token error', async () => {
-      const db = new DataAPIClient({ environment: ENVIRONMENT }).db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
+      const db = new DataAPIClient({ environment: Cfg.DbEnvironment }).db(Cfg.DbUrl, { keyspace: DEFAULT_KEYSPACE });
       await assert.rejects(() => db.listCollections(), { message: 'Role unauthorized for operation: Missing token, expecting one in the Token header.' });
     });
   });
 
   describe('close', () => {
     it('should not allow operations after closing the client', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
+      const client = new DataAPIClient(Cfg.DbToken, { environment: Cfg.DbEnvironment });
+      const db = client.db(Cfg.DbUrl, { keyspace: DEFAULT_KEYSPACE });
       await client.close();
 
       try {
@@ -86,9 +82,9 @@ describe('integration.client.data-api-client', () => {
       for (const conf of [undefined, [], [{ events: 'all', emits: [] }]]) {
         stdout = []; stderr = [];
 
-        const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { logging: conf as any, environment: ENVIRONMENT });
-        const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
-        const collection = db.collection(DEFAULT_COLLECTION_NAME);
+        const client = new DataAPIClient(Cfg.DbToken, { logging: conf as any, environment: Cfg.DbEnvironment });
+        const db = client.db(Cfg.DbUrl, { keyspace: DEFAULT_KEYSPACE });
+        const collection = db.collection(Cfg.DefaultCollectionName);
 
         client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
         client.on('commandSucceeded', () => assert.fail('should not have emitted commandSucceeded event'));
@@ -101,10 +97,10 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should allow cross-collections monitoring of successful commands when enabled', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { logging: ['all', { events: 'commandSucceeded', emits: ['event', 'stdout'] }], environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
-      const collection1 = db.collection(DEFAULT_COLLECTION_NAME);
-      const collection2 = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
+      const client = new DataAPIClient(Cfg.DbToken, { logging: ['all', { events: 'commandSucceeded', emits: ['event', 'stdout'] }], environment: Cfg.DbEnvironment });
+      const db = client.db(Cfg.DbUrl, { keyspace: DEFAULT_KEYSPACE });
+      const collection1 = db.collection(Cfg.DefaultCollectionName);
+      const collection2 = db.collection(Cfg.DefaultCollectionName, { keyspace: Cfg.OtherKeyspace });
 
       const startedEvents: CommandStartedEvent[] = [];
       const succeededEvents: CommandSucceededEvent[] = [];
@@ -136,20 +132,20 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvents[1].commandName, 'deleteOne');
       assert.strictEqual(succeededEvents[1].commandName, 'deleteOne');
 
-      assert.strictEqual(startedEvents[0].target.keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(succeededEvents[0].target.keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(startedEvents[1].target.keyspace, OTHER_KEYSPACE);
-      assert.strictEqual(succeededEvents[1].target.keyspace, OTHER_KEYSPACE);
+      assert.strictEqual(startedEvents[0].target.keyspace, Cfg.DefaultKeyspace);
+      assert.strictEqual(succeededEvents[0].target.keyspace, Cfg.DefaultKeyspace);
+      assert.strictEqual(startedEvents[1].target.keyspace, Cfg.OtherKeyspace);
+      assert.strictEqual(succeededEvents[1].target.keyspace, Cfg.OtherKeyspace);
 
-      assert.strictEqual(startedEvents[0].target.collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(succeededEvents[0].target.collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(startedEvents[1].target.collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(succeededEvents[1].target.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvents[0].target.collection, Cfg.DefaultCollectionName);
+      assert.strictEqual(succeededEvents[0].target.collection, Cfg.DefaultCollectionName);
+      assert.strictEqual(startedEvents[1].target.collection, Cfg.DefaultCollectionName);
+      assert.strictEqual(succeededEvents[1].target.collection, Cfg.DefaultCollectionName);
 
-      assert.strictEqual(startedEvents[0].target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(succeededEvents[0].target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(startedEvents[1].target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(succeededEvents[1].target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvents[0].target.url, `${Cfg.DbUrl}/${DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment]}/${Cfg.DefaultKeyspace}/${Cfg.DefaultCollectionName}`);
+      assert.strictEqual(succeededEvents[0].target.url, `${Cfg.DbUrl}/${DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment]}/${Cfg.DefaultKeyspace}/${Cfg.DefaultCollectionName}`);
+      assert.strictEqual(startedEvents[1].target.url, `${Cfg.DbUrl}/${DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment]}/${Cfg.OtherKeyspace}/${Cfg.DefaultCollectionName}`);
+      assert.strictEqual(succeededEvents[1].target.url, `${Cfg.DbUrl}/${DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment]}/${Cfg.OtherKeyspace}/${Cfg.DefaultCollectionName}`);
 
       assert.deepStrictEqual(startedEvents[0].timeout, { generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       assert.ok(succeededEvents[0].duration > 0);
@@ -170,9 +166,9 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should allow monitoring of failed commands when enabled', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { logging: ['all', { events: 'commandSucceeded', emits: ['event', 'stdout'] }], keyspace: DEFAULT_KEYSPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
+      const client = new DataAPIClient(Cfg.DbToken, { environment: Cfg.DbEnvironment });
+      const db = client.db(Cfg.DbUrl, { logging: ['all', { events: 'commandSucceeded', emits: ['event', 'stdout'] }], keyspace: DEFAULT_KEYSPACE });
+      const collection = db.collection(Cfg.DefaultCollectionName);
 
       let startedEvent: CommandStartedEvent | undefined;
       let failedEvent: CommandFailedEvent | undefined;
@@ -209,11 +205,11 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.target.keyspace, DEFAULT_KEYSPACE);
       assert.strictEqual(failedEvent.target.keyspace, DEFAULT_KEYSPACE);
 
-      assert.strictEqual(startedEvent.target.collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(failedEvent.target.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvent.target.collection, Cfg.DefaultCollectionName);
+      assert.strictEqual(failedEvent.target.collection, Cfg.DefaultCollectionName);
 
-      assert.strictEqual(startedEvent.target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(failedEvent.target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvent.target.url, `${Cfg.DbUrl}/${DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment]}/${DEFAULT_KEYSPACE}/${Cfg.DefaultCollectionName}`);
+      assert.strictEqual(failedEvent.target.url, `${Cfg.DbUrl}/${DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment]}/${DEFAULT_KEYSPACE}/${Cfg.DefaultCollectionName}`);
 
       assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       assert.ok(failedEvent.duration > 0);
@@ -230,9 +226,9 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should allow monitoring of timed-out commands when enabled', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { logging: ['all', { events: 'commandStarted', emits: ['event', 'stderr'] }], keyspace: DEFAULT_KEYSPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
+      const client = new DataAPIClient(Cfg.DbToken, { environment: Cfg.DbEnvironment });
+      const db = client.db(Cfg.DbUrl, { logging: ['all', { events: 'commandStarted', emits: ['event', 'stderr'] }], keyspace: DEFAULT_KEYSPACE });
+      const collection = db.collection(Cfg.DefaultCollectionName);
 
       let startedEvent: CommandStartedEvent | undefined;
       let failedEvent: CommandFailedEvent | undefined;
@@ -262,11 +258,11 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.target.keyspace, DEFAULT_KEYSPACE);
       assert.strictEqual(failedEvent.target.keyspace, DEFAULT_KEYSPACE);
 
-      assert.strictEqual(startedEvent.target.collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(failedEvent.target.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvent.target.collection, Cfg.DefaultCollectionName);
+      assert.strictEqual(failedEvent.target.collection, Cfg.DefaultCollectionName);
 
-      assert.strictEqual(startedEvent.target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(failedEvent.target.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvent.target.url, `${Cfg.DbUrl}/${DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment]}/${DEFAULT_KEYSPACE}/${Cfg.DefaultCollectionName}`);
+      assert.strictEqual(failedEvent.target.url, `${Cfg.DbUrl}/${DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment]}/${DEFAULT_KEYSPACE}/${Cfg.DefaultCollectionName}`);
 
       assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeoutMs: 1, requestTimeoutMs: 1 });
       assert.ok(failedEvent.duration > 0);

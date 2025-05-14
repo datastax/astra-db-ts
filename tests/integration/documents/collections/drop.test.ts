@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { it, OTHER_KEYSPACE, parallel } from '@/tests/testlib/index.js';
+import { Cfg, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.collections.drop', { drop: 'colls:after' }, ({ db }) => {
   it('(LONG) should drop a collection using the collection method', async () => {
-    const coll = await db.createCollection('purple_gassy_balloon', { keyspace: OTHER_KEYSPACE, indexing: { deny: ['*'] } });
+    const coll = await db.createCollection('purple_gassy_balloon', { keyspace: Cfg.OtherKeyspace, indexing: { deny: ['*'] } });
     await coll.drop();
     const collections = await db.listCollections();
     const foundColl = collections.find(c => c.name === 'purple_gassy_balloon');

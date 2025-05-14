@@ -13,17 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, initTestObjects, it, parallel } from '@/tests/testlib/index.js';
-import type {
-  CollectionCodec,
-  CollectionDesCtx,
-  CollectionSerCtx,
-  CommandSucceededEvent} from '@/src/index.js';
-import {
-  $DeserializeForCollection,
-  $SerializeForCollection,
-  CollectionCodecs,
-} from '@/src/index.js';
+import { Cfg, initTestObjects, it, parallel } from '@/tests/testlib/index.js';
+import type { CollectionCodec, CollectionDesCtx, CollectionSerCtx, CommandSucceededEvent } from '@/src/index.js';
+import { $DeserializeForCollection, $SerializeForCollection, CollectionCodecs } from '@/src/index.js';
 import { BigNumber } from 'bignumber.js';
 import assert from 'assert';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
@@ -135,7 +127,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
       },
     });
 
-    const coll = db.collection(DEFAULT_COLLECTION_NAME, {
+    const coll = db.collection(Cfg.DefaultCollectionName, {
       serdes: {
         enableBigNumbers: () => 'bignumber',
         codecs: [ISBNCodec, BookCodec, SetCodec, ReviewCodec],
@@ -266,7 +258,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
 
     const { client, db } = initTestObjects();
 
-    const coll = db.collection(DEFAULT_COLLECTION_NAME, {
+    const coll = db.collection(Cfg.DefaultCollectionName, {
       serdes: {
         enableBigNumbers: () => 'bignumber',
         codecs: [

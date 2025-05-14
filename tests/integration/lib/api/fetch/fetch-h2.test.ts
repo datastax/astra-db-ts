@@ -13,14 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import {
-  DEMO_APPLICATION_URI,
-  ENVIRONMENT,
-  it,
-  parallel,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/testlib/index.js';
+import { Cfg, DemoAstraEndpoint, it, parallel } from '@/tests/testlib/index.js';
 import { DEFAULT_KEYSPACE, FetchH2 } from '@/src/lib/api/index.js';
 import assert from 'assert';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
@@ -28,10 +21,10 @@ import * as fetchH2 from 'fetch-h2';
 
 parallel('integration.lib.api.fetch.fetch-h2', () => {
   const genericOptions = <const>{
-    url: `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}`,
+    url: `${Cfg.DbUrl}/${DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment]}/${DEFAULT_KEYSPACE}`,
     method: 'POST',
     body: JSON.stringify({ findCollections: {} }),
-    headers: { Token: TEST_APPLICATION_TOKEN },
+    headers: { Token: Cfg.DbToken },
     timeout: 10000,
     mkTimeoutError: () => { throw new Error('timeout'); },
     forceHttp1: false,
@@ -124,7 +117,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
   it('should rethrow underlying error if not a timeout', async () => {
     const fetcher = new FetchH2({ client: 'fetch-h2', fetchH2, preferHttp2: true });
     try {
-      await fetcher.fetch({ ...genericOptions, url: DEMO_APPLICATION_URI });
+      await fetcher.fetch({ ...genericOptions, url: DemoAstraEndpoint });
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof Error);

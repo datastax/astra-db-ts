@@ -15,20 +15,20 @@
 
 import assert from 'assert';
 import { ObjectId, UUID } from '@/src/documents/index.js';
-import { useSuiteResources, DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib/index.js';
+import { Cfg, it, parallel, useSuiteResources } from '@/tests/testlib/index.js';
 
 parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) => {
   const collections = useSuiteResources(() => ({
-    default: db.collection(DEFAULT_COLLECTION_NAME).deleteMany({}).then(_ => db.collection(DEFAULT_COLLECTION_NAME)),
-    uuid: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuid`, { defaultId: { type: 'uuid' } }),
-    uuidv6: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuidv6`, { defaultId: { type: 'uuidv6' } }),
-    uuidv7: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuidv7`, { defaultId: { type: 'uuidv7' } }),
-    objectId: db.createCollection(`${DEFAULT_COLLECTION_NAME}_objectId`, { defaultId: { type: 'objectId' } }),
+    default: db.collection(Cfg.DefaultCollectionName).deleteMany({}).then(_ => db.collection(Cfg.DefaultCollectionName)),
+    uuid: db.createCollection(`${Cfg.DefaultCollectionName}_uuid`, { defaultId: { type: 'uuid' } }),
+    uuidv6: db.createCollection(`${Cfg.DefaultCollectionName}_uuidv6`, { defaultId: { type: 'uuidv6' } }),
+    uuidv7: db.createCollection(`${Cfg.DefaultCollectionName}_uuidv7`, { defaultId: { type: 'uuidv7' } }),
+    objectId: db.createCollection(`${Cfg.DefaultCollectionName}_objectId`, { defaultId: { type: 'objectId' } }),
   }));
 
   it('default id is not in listCollections', async () => {
     const collections = await db.listCollections();
-    const collection = collections.find(c => c.name === DEFAULT_COLLECTION_NAME);
+    const collection = collections.find(c => c.name === Cfg.DefaultCollectionName);
     assert.ok(collection);
     assert.strictEqual(collection.definition.defaultId, undefined);
   });
@@ -44,7 +44,7 @@ parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) =
 
   it('uuid is set in listCollections', async () => {
     const collections = await db.listCollections();
-    const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_uuid`);
+    const collection = collections.find(c => c.name === `${Cfg.DefaultCollectionName}_uuid`);
     assert.ok(collection);
     assert.deepStrictEqual(collection.definition.defaultId, { type: 'uuid' });
   });
@@ -62,7 +62,7 @@ parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) =
 
   it('uuidv6 is set in listCollections', async () => {
     const collections = await db.listCollections();
-    const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_uuidv6`);
+    const collection = collections.find(c => c.name === `${Cfg.DefaultCollectionName}_uuidv6`);
     assert.ok(collection);
     assert.deepStrictEqual(collection.definition.defaultId, { type: 'uuidv6' });
   });
@@ -80,7 +80,7 @@ parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) =
 
   it('uuidv7 is set in listCollections', async () => {
     const collections = await db.listCollections();
-    const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_uuidv7`);
+    const collection = collections.find(c => c.name === `${Cfg.DefaultCollectionName}_uuidv7`);
     assert.ok(collection);
     assert.deepStrictEqual(collection.definition.defaultId, { type: 'uuidv7' });
   });
@@ -98,7 +98,7 @@ parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) =
 
   it('objectId is set in listCollections', async () => {
     const collections = await db.listCollections();
-    const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_objectId`);
+    const collection = collections.find(c => c.name === `${Cfg.DefaultCollectionName}_objectId`);
     assert.ok(collection);
     assert.deepStrictEqual(collection.definition.defaultId, { type: 'objectId' });
   });

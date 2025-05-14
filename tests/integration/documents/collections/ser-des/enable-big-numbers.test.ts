@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib/index.js';
+import { Cfg, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 import type {
@@ -163,7 +163,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
   });
 
   const mkAsserter = (opts: CollNumCoercionFn | CollNumCoercionCfg) => ({
-    coll: db.collection(DEFAULT_COLLECTION_NAME, {
+    coll: db.collection(Cfg.DefaultCollectionName, {
       serdes: {
         codecs: [CollectionCodecs.forName('camelCaseName2', Newtype)],
         enableBigNumbers: opts,
@@ -247,7 +247,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
       }[],
     }
 
-    const orders = db.collection<Order>(DEFAULT_COLLECTION_NAME, {
+    const orders = db.collection<Order>(Cfg.DefaultCollectionName, {
       serdes: {
         enableBigNumbers: {
           '*': 'number',

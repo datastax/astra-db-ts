@@ -14,16 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import {
-  DEFAULT_COLLECTION_NAME,
-  describe,
-  initTestObjects,
-  it,
-  OTHER_KEYSPACE,
-  parallel,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/testlib/index.js';
+import { Cfg, describe, initTestObjects, it, parallel } from '@/tests/testlib/index.js';
 import { DataAPIResponseError } from '@/src/documents/index.js';
 import { DataAPIClient } from '@/src/client/index.js';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants.js';
@@ -38,10 +29,10 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     });
 
     it('should create a collections in another keyspace', async () => {
-      const res = await db.createCollection('coll_2c', { keyspace: OTHER_KEYSPACE, indexing: { deny: ['*'] } });
+      const res = await db.createCollection('coll_2c', { keyspace: Cfg.OtherKeyspace, indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.name, 'coll_2c');
-      assert.strictEqual(res.keyspace, OTHER_KEYSPACE);
+      assert.strictEqual(res.keyspace, Cfg.OtherKeyspace);
     });
 
     it('should create collections idempotently', async () => {
@@ -82,10 +73,10 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
       assert.ok(res);
       assert.strictEqual(res.name, 'coll_7c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
-      const res2 = await db.createCollection('coll_7c', { indexing: { deny: ['*'] }, keyspace: OTHER_KEYSPACE });
+      const res2 = await db.createCollection('coll_7c', { indexing: { deny: ['*'] }, keyspace: Cfg.OtherKeyspace });
       assert.ok(res2);
       assert.strictEqual(res2.name, 'coll_7c');
-      assert.strictEqual(res2.keyspace, OTHER_KEYSPACE);
+      assert.strictEqual(res2.keyspace, Cfg.OtherKeyspace);
     });
 
     it('(RERANKING) should create a collection with reranking/lexical enabled', async () => {
@@ -116,9 +107,9 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     });
 
     it('(ASTRA) should work even when instantiated weirdly', async () => {
-      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { keyspace: '123123123', dataApiPath: 'King' } })
+      const db = new DataAPIClient(Cfg.DbToken, { dbOptions: { keyspace: '123123123', dataApiPath: 'King' } })
         .admin({ adminToken: 'dummy-token' })
-        .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS.astra, keyspace: DEFAULT_KEYSPACE })
+        .dbAdmin(Cfg.DbUrl, { dataApiPath: DEFAULT_DATA_API_PATHS.astra, keyspace: DEFAULT_KEYSPACE })
         .db()
         .admin({ adminToken: 'tummy-token', astraEnv: 'dev' })
         .db();
@@ -140,8 +131,8 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     });
 
     it('should drop a collections in non-default keyspace', async () => {
-      await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, keyspace: OTHER_KEYSPACE });
-      await db.dropCollection('coll_3d', { keyspace: OTHER_KEYSPACE });
+      await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, keyspace: Cfg.OtherKeyspace });
+      await db.dropCollection('coll_3d', { keyspace: Cfg.OtherKeyspace });
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_3d');
       assert.strictEqual(collection, undefined);
@@ -149,7 +140,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
 
     it('should not drop a collections in different keyspace', async () => {
       await db.createCollection('coll_4d', { indexing: { deny: ['*'] } });
-      await db.dropCollection('coll_4d', { keyspace: OTHER_KEYSPACE });
+      await db.dropCollection('coll_4d', { keyspace: Cfg.OtherKeyspace });
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_4d');
       assert.ok(collection);
@@ -159,13 +150,13 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
   describe('listCollections', () => {
     it('should return a list of just names of collections with nameOnly set to true', async () => {
       const res = await db.listCollections({ nameOnly: true });
-      const found = res.find((collection) => collection === DEFAULT_COLLECTION_NAME);
+      const found = res.find((collection) => collection === Cfg.DefaultCollectionName);
       assert.ok(found);
     });
 
     it('should return a list of collections infos with nameOnly set to false', async () => {
       const res = await db.listCollections({ nameOnly: false });
-      const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
+      const found = res.find((collection) => collection.name === Cfg.DefaultCollectionName);
       assert.ok(found);
       assert.strictEqual(found.definition.vector?.dimension, 5);
       assert.strictEqual(found.definition.vector.metric, 'cosine');
@@ -173,14 +164,14 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
 
     it('should return a list of collections infos with nameOnly not set', async () => {
       const res = await db.listCollections();
-      const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
+      const found = res.find((collection) => collection.name === Cfg.DefaultCollectionName);
       assert.ok(found);
       assert.strictEqual(found.definition.vector?.dimension, 5);
       assert.strictEqual(found.definition.vector.metric, 'cosine');
     });
 
     it('should not list collections in another keyspace', async () => {
-      const res = await db.listCollections({ keyspace: OTHER_KEYSPACE });
+      const res = await db.listCollections({ keyspace: Cfg.OtherKeyspace });
       assert.strictEqual(res.length, 1);
     });
   });
@@ -194,7 +185,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     });
 
     it('should execute a db-level command in different keyspace', async () => {
-      const resp = await db.command({ findCollections: {} }, { keyspace: OTHER_KEYSPACE });
+      const resp = await db.command({ findCollections: {} }, { keyspace: Cfg.OtherKeyspace });
       assert.strictEqual(resp.status?.data, undefined);
       assert.strictEqual(resp.status?.errors, undefined);
       assert.ok(resp.status?.collections instanceof Array);
@@ -203,17 +194,17 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     // TODO
     // it('should execute a collections-level command', async () => {
     //   const uuid = UUID.v4();
-    //   const collection = db.collection(DEFAULT_COLLECTION_NAME);
+    //   const collection = db.collection(Cfg.DefaultCollectionName);
     //   await collection.insertOne({ _id: uuid });
-    //   const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME });
+    //   const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: Cfg.DefaultCollectionName });
     //   assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
     // });
     //
     // it('should execute a collections-level command in different keyspace', async () => {
     //   const uuid = UUID.v4();
-    //   const collection = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
+    //   const collection = db.collection(Cfg.DefaultCollectionName, { keyspace: Cfg.OtherKeyspace });
     //   await collection.insertOne({ _id: uuid });
-    //   const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME, keyspace: OTHER_KEYSPACE });
+    //   const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: Cfg.DefaultCollectionName, keyspace: Cfg.OtherKeyspace });
     //   assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
     // });
 

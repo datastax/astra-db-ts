@@ -16,7 +16,6 @@ export * from './test-fns/background.js';
 export * from './config.js';
 export * from './test-fns/describe.js';
 export * from './fixtures.js';
-export * from './filter.js';
 export * from './global.js';
 export * from './test-fns/it.js';
 export * from './test-fns/parallel.js';

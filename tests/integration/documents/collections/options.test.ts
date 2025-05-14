@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib/index.js';
+import { Cfg, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.collections.options', { drop: 'colls:after' }, ({ db }) => {
   it('lists its own options', async () => {
-    const coll = db.collection(DEFAULT_COLLECTION_NAME);
+    const coll = db.collection(Cfg.DefaultCollectionName);
     const res = await coll.options();
     assert.ok(typeof res === 'object');
   });

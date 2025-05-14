@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { describe, it, TEST_APPLICATION_TOKEN } from '@/tests/testlib/index.js';
+import { Cfg, describe, it } from '@/tests/testlib/index.js';
 import { StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib/index.js';
 import { OptionParseError } from '@/src/lib/opts-handlers.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
@@ -40,7 +40,7 @@ describe('unit.lib.token-providers.opts-handler', () => {
 
     it('should convert a string to a StaticTokenProvider', () => {
       parseEq('hello', new StaticTokenProvider('hello'));
-      parseEq(TEST_APPLICATION_TOKEN, new StaticTokenProvider(TEST_APPLICATION_TOKEN));
+      parseEq(Cfg.DbToken, new StaticTokenProvider(Cfg.DbToken));
       parseEq('', new StaticTokenProvider(''));
     });
 

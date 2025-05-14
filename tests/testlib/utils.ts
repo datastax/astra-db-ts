@@ -14,12 +14,7 @@
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
 import type { FetcherResponseInfo } from '@/src/index.js';
-import {
-  DEFAULT_COLLECTION_NAME,
-  DEFAULT_TABLE_NAME,
-  OTHER_KEYSPACE,
-  TEST_APPLICATION_URI,
-} from '@/tests/testlib/config.js';
+import { Cfg } from '@/tests/testlib/config.js';
 import { GLOBAL_FIXTURES } from '@/tests/testlib/global.js';
 import type { SomeDoc } from '@/src/documents/index.js';
 import assert from 'assert';
@@ -47,11 +42,11 @@ export function tryCatchErrSync(fn: () => void) {
 export async function dropEphemeralColls() {
   const promises: Promise<unknown>[] = [];
 
-  for (const keyspace of [DEFAULT_KEYSPACE, OTHER_KEYSPACE]) {
+  for (const keyspace of [DEFAULT_KEYSPACE, Cfg.OtherKeyspace]) {
     const collections = await GLOBAL_FIXTURES.db.listCollections({ keyspace, nameOnly: true });
 
     collections
-      .filter(c => c !== DEFAULT_COLLECTION_NAME)
+      .filter(c => c !== Cfg.DefaultCollectionName)
       .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c, { keyspace })));
   }
 
@@ -62,11 +57,11 @@ export async function dropEphemeralColls() {
 export async function dropEphemeralTables() {
   const promises: Promise<unknown>[] = [];
 
-  for (const keyspace of [DEFAULT_KEYSPACE, OTHER_KEYSPACE]) {
+  for (const keyspace of [DEFAULT_KEYSPACE, Cfg.OtherKeyspace]) {
     const tables = await GLOBAL_FIXTURES.db.listTables({ keyspace, nameOnly: true });
 
     tables
-      .filter(t => t !== DEFAULT_TABLE_NAME)
+      .filter(t => t !== Cfg.DefaultTableName)
       .forEach(t => promises.push(GLOBAL_FIXTURES.db.dropTable(t, { keyspace })));
   }
 
@@ -83,12 +78,11 @@ export function checkTestsEnabled(name: string) {
     }
   });
 
-  return ifMatchTag(tags, 'VECTORIZE', () => process.env.CLIENT_RUN_VECTORIZE_TESTS)
-      && ifMatchTag(tags, 'LONG',      () => process.env.CLIENT_RUN_LONG_TESTS)
-      && ifMatchTag(tags, 'ADMIN',     () => process.env.CLIENT_RUN_ADMIN_TESTS)
-      && ifMatchTag(tags, 'DEV',       () => TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com'))
-      && ifMatchTag(tags, 'ASTRA',     () => TEST_APPLICATION_URI.includes('datastax.com'))
-      // && ifMatchTag(tags, 'RERANKING', () => !TEST_APPLICATION_URI.includes('apps.astra.datastax.com'));
+  return ifMatchTag(tags, 'VECTORIZE', () => Cfg.RunTests.Vectorize)
+      && ifMatchTag(tags, 'LONG',      () => Cfg.RunTests.LongRunning)
+      && ifMatchTag(tags, 'ADMIN',     () => Cfg.RunTests.Admin)
+      && ifMatchTag(tags, 'DEV',       () => Cfg.DbUrl.includes('apps.astra-dev.datastax.com'))
+      && ifMatchTag(tags, 'ASTRA',     () => Cfg.DbUrl.includes('datastax.com'))
       && ifMatchTag(tags, 'RERANKING', () => true);
 }
 

@@ -18,7 +18,7 @@ import { Db } from '@/src/db/db.js';
 import { DataAPIEnvironments, StaticTokenProvider, TokenProvider } from '@/src/lib/index.js';
 import type { AdminOptions, DbOptions } from '@/src/client/index.js';
 import { DataAPIClient } from '@/src/client/index.js';
-import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
+import { Cfg, DemoAstraEndpoint, describe, it } from '@/tests/testlib/index.js';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
@@ -48,7 +48,7 @@ describe('unit.db.db', () => {
 
     it('should not throw on missing token', () => {
       const client = new DataAPIClient();
-      assert.doesNotThrow(() => client.db(TEST_APPLICATION_URI));
+      assert.doesNotThrow(() => client.db(Cfg.DbUrl));
     });
   });
 
@@ -67,64 +67,64 @@ describe('unit.db.db', () => {
     });
 
     it('is initialized with default keyspace', () => {
-      const db = new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.empty);
+      const db = new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.empty);
       assert.strictEqual(db.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('uses custom keyspace when provided', () => {
-      const db = new Db(internalOps({ keyspace: 'new_keyspace' }), TEST_APPLICATION_URI, DbOptsHandler.empty);
+      const db = new Db(internalOps({ keyspace: 'new_keyspace' }), Cfg.DbUrl, DbOptsHandler.empty);
       assert.strictEqual(db.keyspace, 'new_keyspace');
     });
 
     it('overrides keyspace in db when provided', () => {
-      const db = new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ keyspace: 'new_keyspace' }));
+      const db = new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ keyspace: 'new_keyspace' }));
       assert.strictEqual(db.keyspace, 'new_keyspace');
     });
 
     it('throws error on empty keyspace', () => {
       assert.throws(() => {
-        new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ keyspace: '' }));
+        new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ keyspace: '' }));
       });
     });
 
     it('throws error on invalid keyspace', () => {
       assert.throws(() => {
-        new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ keyspace: 'bad keyspace' }));
+        new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ keyspace: 'bad keyspace' }));
       });
     });
 
     it('handles different dataApiPath', () => {
-      const db = new Db(internalOps({ dataApiPath: 'api/json/v2' }), TEST_APPLICATION_URI, DbOptsHandler.empty);
-      assert.strictEqual(db._httpClient.baseUrl, `${TEST_APPLICATION_URI}/api/json/v2`);
+      const db = new Db(internalOps({ dataApiPath: 'api/json/v2' }), Cfg.DbUrl, DbOptsHandler.empty);
+      assert.strictEqual(db._httpClient.baseUrl, `${Cfg.DbUrl}/api/json/v2`);
     });
 
     it('handles different dataApiPath when overridden', () => {
-      const db = new Db(internalOps({ dataApiPath: 'api/json/v2' }), TEST_APPLICATION_URI, DbOptsHandler.parse({ dataApiPath: 'api/json/v3' }));
-      assert.strictEqual(db._httpClient.baseUrl, `${TEST_APPLICATION_URI}/api/json/v3`);
+      const db = new Db(internalOps({ dataApiPath: 'api/json/v2' }), Cfg.DbUrl, DbOptsHandler.parse({ dataApiPath: 'api/json/v3' }));
+      assert.strictEqual(db._httpClient.baseUrl, `${Cfg.DbUrl}/api/json/v3`);
     });
 
     it('should accept valid logging', () => {
-      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({})));
-      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: 'all' })));
-      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: ['adminCommandPolling', 'adminCommandStarted'] })));
-      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: ['all', { events: 'all', emits: 'event' }] })));
-      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: [{ events: ['adminCommandPolling', 'adminCommandSucceeded'], emits: ['event', 'stdout'] }]})));
+      assert.ok(new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({})));
+      assert.ok(new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ logging: 'all' })));
+      assert.ok(new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ logging: ['adminCommandPolling', 'adminCommandStarted'] })));
+      assert.ok(new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ logging: ['all', { events: 'all', emits: 'event' }] })));
+      assert.ok(new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ logging: [{ events: ['adminCommandPolling', 'adminCommandSucceeded'], emits: ['event', 'stdout'] }]})));
     });
 
     it('should accept valid dataApiPath', () => {
-      assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({})));
-      assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ dataApiPath: 'api/json/v2' })));
-      assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ dataApiPath: null! })));
-      assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ dataApiPath: undefined })));
+      assert.ok(() => new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({})));
+      assert.ok(() => new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ dataApiPath: 'api/json/v2' })));
+      assert.ok(() => new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ dataApiPath: null! })));
+      assert.ok(() => new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ dataApiPath: undefined })));
     });
 
     it('should throw on invalid dataApiPath', () => {
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ dataApiPath: 1 })));
+      assert.throws(() => new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ dataApiPath: 1 })));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ dataApiPath: [] })));
+      assert.throws(() => new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ dataApiPath: [] })));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ dataApiPath: {} })));
+      assert.throws(() => new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.parse({ dataApiPath: {} })));
     });
   });
 
@@ -164,17 +164,17 @@ describe('unit.db.db', () => {
 
   describe('keyspace tests', () => {
     it('should return the keyspace passed into the constructor', () => {
-      const db = new Db(internalOps({ keyspace: 'keyspace' }), TEST_APPLICATION_URI, DbOptsHandler.empty);
+      const db = new Db(internalOps({ keyspace: 'keyspace' }), Cfg.DbUrl, DbOptsHandler.empty);
       assert.strictEqual(db.keyspace, 'keyspace');
     });
 
     it('should throw an error if the keyspace is not set in the keyspace', () => {
-      const db = new Db({ ...internalOps(), environment: 'dse' as ParsedEnvironment }, TEST_APPLICATION_URI, DbOptsHandler.empty);
+      const db = new Db({ ...internalOps(), environment: 'dse' as ParsedEnvironment }, Cfg.DbUrl, DbOptsHandler.empty);
       assert.throws(() => db.keyspace);
     });
 
     it('should mutate the keyspace (non-retroactively)', () => {
-      const db = new Db(internalOps({ keyspace: 'keyspace' }), TEST_APPLICATION_URI, DbOptsHandler.empty);
+      const db = new Db(internalOps({ keyspace: 'keyspace' }), Cfg.DbUrl, DbOptsHandler.empty);
       const coll1 = db.collection('coll');
       assert.strictEqual(db.keyspace, 'keyspace');
       assert.strictEqual(coll1.keyspace, 'keyspace');
@@ -187,7 +187,7 @@ describe('unit.db.db', () => {
     });
 
     it('should should not throw an error when getting keyspace if keyspace is set later', () => {
-      const db = new Db({ ...internalOps(), environment: 'dse' as ParsedEnvironment }, TEST_APPLICATION_URI, DbOptsHandler.empty);
+      const db = new Db({ ...internalOps(), environment: 'dse' as ParsedEnvironment }, Cfg.DbUrl, DbOptsHandler.empty);
       assert.throws(() => db.keyspace);
       db.useKeyspace('other_keyspace');
       assert.strictEqual(db.keyspace, 'other_keyspace');
@@ -197,7 +197,7 @@ describe('unit.db.db', () => {
   describe('admin tests', () => {
     it('should accept matching environments', () => {
       assert.doesNotThrow(() => {
-        const db = new DataAPIClient('dummy_token').db(DEMO_APPLICATION_URI);
+        const db = new DataAPIClient('dummy_token').db(DemoAstraEndpoint);
         db.admin();
       });
       assert.doesNotThrow(() => {
@@ -212,15 +212,15 @@ describe('unit.db.db', () => {
 
     it('should throw on mismatching environments', () => {
       assert.throws(() => {
-        const db = new DataAPIClient('dummy_token').db(DEMO_APPLICATION_URI);
+        const db = new DataAPIClient('dummy_token').db(DemoAstraEndpoint);
         db.admin({ environment: 'dse' });
       }, { message: 'Invalid environment \'dse\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'astra\'' });
       assert.throws(() => {
-        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DEMO_APPLICATION_URI);
+        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DemoAstraEndpoint);
         db.admin();
       }, { message: 'Invalid environment \'astra\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'dse\'' });
       assert.throws(() => {
-        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DEMO_APPLICATION_URI);
+        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DemoAstraEndpoint);
         db.admin({ environment: 'hcd' });
       }, { message: 'Invalid environment \'hcd\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'dse\'' });
     });
@@ -234,7 +234,7 @@ describe('unit.db.db', () => {
   describe('info tests', () => {
     it('should error on invalid environment', async () => {
       for (const env of DataAPIEnvironments.filter(e => e !== 'astra')) {
-        const db = new Db({ ...internalOps(), environment: env as ParsedEnvironment }, TEST_APPLICATION_URI, DbOptsHandler.empty);
+        const db = new Db({ ...internalOps(), environment: env as ParsedEnvironment }, Cfg.DbUrl, DbOptsHandler.empty);
         await assert.rejects(() => db.info(), { message: `Invalid environment '${env}' for operation 'db.info()' (info() is only available for Astra databases); expected environment(s): 'astra'` });
       }
     });
@@ -253,8 +253,8 @@ describe('unit.db.db', () => {
 
   describe('inspect tests', () => {
     it('should work', () => {
-      const db = new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.empty);
-      assert.strictEqual((db as any)[$CustomInspect](), `Db(endpoint="${TEST_APPLICATION_URI}",keyspace="${DEFAULT_KEYSPACE}")`);
+      const db = new Db(internalOps(), Cfg.DbUrl, DbOptsHandler.empty);
+      assert.strictEqual((db as any)[$CustomInspect](), `Db(endpoint="${Cfg.DbUrl}",keyspace="${DEFAULT_KEYSPACE}")`);
     });
   });
 });

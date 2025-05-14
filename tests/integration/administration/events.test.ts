@@ -14,7 +14,6 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { ENVIRONMENT, initTestObjects, it, parallel, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
 import type { AdminCommandEventMap, DbAdmin } from '@/src/administration/index.js';
 import {
   AdminCommandFailedEvent,
@@ -27,6 +26,7 @@ import {
 import { memoizeRequests } from '@/tests/testlib/utils.js';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants.js';
 import { extractAstraEnvironment } from '@/src/administration/utils.js';
+import { Cfg, initTestObjects, it, parallel } from '@/tests/testlib/index.js';
 
 parallel('integration.administration.events', () => {
   type EventsTestSpec<EventName extends keyof AdminCommandEventMap> = EventGenerator & EventValidator<AdminCommandEventMap[EventName]> & {
@@ -87,8 +87,8 @@ parallel('integration.administration.events', () => {
     });
   };
 
-  const DevopsApiEndpoint = DEFAULT_DEVOPS_API_ENDPOINTS[(() => { try { return extractAstraEnvironment(TEST_APPLICATION_URI); } catch (_) { return undefined!; } })()];
-  const DataApiPath = DEFAULT_DATA_API_PATHS[ENVIRONMENT];
+  const DevopsApiEndpoint = DEFAULT_DEVOPS_API_ENDPOINTS[(() => { try { return extractAstraEnvironment(Cfg.DbUrl); } catch (_) { return undefined!; } })()];
+  const DataApiPath = DEFAULT_DATA_API_PATHS[Cfg.DbEnvironment];
 
   defineEventsTest('should emit adminCommandStarted events', {
     eventName: 'adminCommandStarted',

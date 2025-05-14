@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import type { EmbeddingProviderInfo, EmbeddingProviderModelInfo } from '@/src/administration/index.js';
-import { ENVIRONMENT } from '@/tests/testlib/index.js';
 import type { VectorizeTestSpec } from '@/tests/integration/documents/vectorize.test.js';
 import type { EmbeddingHeadersProvider} from '@/src/lib/index.js';
 import { HeadersProvider } from '@/src/lib/index.js';
+import { Cfg } from '@/tests/testlib/index.js';
 
 interface ModelBranch {
   providerName: string,
@@ -81,11 +81,11 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
     branches.push({ ...branch, authType: 'header', header: ehp, branchName: `${branch.branchName}@header` });
   }
 
-  if (auth.SHARED_SECRET?.enabled && spec.sharedSecret?.providerKey && ENVIRONMENT === 'astra') {
+  if (auth.SHARED_SECRET?.enabled && spec.sharedSecret?.providerKey && Cfg.DbEnvironment === 'astra') {
     branches.push({ ...branch, authType: 'providerKey', providerKey: spec.sharedSecret?.providerKey, branchName: `${branch.branchName}@providerKey` });
   }
 
-  if (auth.NONE?.enabled && ENVIRONMENT === 'astra') {
+  if (auth.NONE?.enabled && Cfg.DbEnvironment === 'astra') {
     branches.push({ ...branch, authType: 'none', branchName: `${branch.branchName}@none` });
   }
 
