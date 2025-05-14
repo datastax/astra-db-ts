@@ -40,12 +40,14 @@ export class Steps<Ctx extends Record<string, any> & never> {
     return this;
   }
 
-  public async run() {
+  public async run(): Promise<Ctx> {
     const ctx: Ctx = {} as Ctx;
 
     for (const step of this._steps) {
       Object.assign(ctx, await step(ctx));
     }
+
+    return ctx;
   }
 
   private _maybeWrapWithSpinner<T extends Record<string, any>>(step: Step<Ctx, T>, opts?: StepOption): Step<Ctx, T> {

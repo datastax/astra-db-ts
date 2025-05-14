@@ -2,7 +2,7 @@
 // noinspection ES6PreferShortImport
 
 import 'zx/globals';
-import { Step, Steps } from './utils/steps.js';
+import { Steps } from './utils/steps.js';
 import 'dotenv/config';
 import { RawTestCfg } from '../tests/testlib/index.js';
 import { Args } from './utils/arg-parse.js';
@@ -109,12 +109,14 @@ const opts = new Args('test.ts')
 // Required for tests
 process.env.CLIENT_DYNAMIC_JS_ENV_CHECK = '1'
 
-await new Steps()
+const { exitCode } = await new Steps()
   .do(PrepareTest())
   .do(RunTests())
   .run();
 
-function PrepareTest(): Step {
+process.exit(exitCode);
+
+function PrepareTest() {
   return async () => {
     const config: RawTestCfg = {
       DbEnvironment: opts.Environment,
@@ -164,10 +166,10 @@ function PrepareTest(): Step {
   }
 }
 
-function RunTests(): Step {
-  return async () => {
-    await $({ stdio: 'inherit' })`${_buildCommand()}`;
-  }
+function RunTests() {
+  return async () => ({
+    exitCode: await $({ stdio: 'inherit' })`${_buildCommand()}`.nothrow().exitCode,
+  });
 
   function _buildCommand(): string[] {
     const commandParts = ['npx'];

@@ -5,8 +5,10 @@ import { Args } from './utils/arg-parse.js';
 import path from 'path';
 import { chalk, globby, spinner } from 'zx';
 import { root } from './utils/constants.js';
-import { Step, Steps } from './utils/steps.js';
+import { Steps } from './utils/steps.js';
 import * as readline from 'node:readline';
+
+$.nothrow = true;
 
 const opts = new Args('set-example-client-deps.ts')
   .stringArray('DirPatterns', {
@@ -23,7 +25,7 @@ const opts = new Args('set-example-client-deps.ts')
 
 const TarFile = `${root}/examples/astra-db-ts.tgz`;
 
-await new Steps()
+const { exitCode } = await new Steps()
   .do(Cleanup(), {
     spinner: 'Cleaning up previous installations...',
   })
@@ -38,7 +40,9 @@ await new Steps()
   .do(InstallLibrary())
   .run()
 
-function Cleanup(): Step {
+process.exit(exitCode);
+
+function Cleanup() {
   return async () => {
     await $`rm -f ${TarFile}`.nothrow();
   };
@@ -46,8 +50,8 @@ function Cleanup(): Step {
 
 type WithDirs = { dirs: string[]; }
 
-function ValidateDirectories(): Step<never, WithDirs> {
-  return async () => {
+function ValidateDirectories() {
+  return async (): Promise<WithDirs> => {
     const dirs = await globby(opts.DirPatterns.flatMap(d => d.split(',')), { onlyDirectories: true });
 
     if (dirs.length === 0) {
@@ -66,8 +70,8 @@ function ValidateDirectories(): Step<never, WithDirs> {
   };
 }
 
-function LogFoundDirectories(): Step {
-  return async (ctx) => {
+function LogFoundDirectories() {
+  return async (ctx: WithDirs) => {
     console.log(chalk.green(`Found ${ctx.dirs.length} directories to install the library into:`));
 
     for (const dir of ctx.dirs) {
@@ -78,19 +82,19 @@ function LogFoundDirectories(): Step {
   };
 }
 
-function BuildLibrary(): Step {
+function BuildLibrary() {
   return async () => {
-    try {
-      await $`npx tsx scripts/build.ts`.quiet();
-    } catch (error) {
+    if (await $`npx tsx scripts/build.ts`.quiet().exitCode) {
       console.error(chalk.red('Failed to build the library'));
       process.exit(1);
     }
   };
 }
 
-function SetupForInstallation(mode: 'tar' | 'sym'): Step<never, WithInstallDir> {
-  return async () => {
+type WithInstallDir = { installDir: string; }
+
+function SetupForInstallation(mode: 'tar' | 'sym') {
+  return async (): Promise<WithInstallDir> => {
     if (mode === 'tar') {
       await spinner('Creating tarball...', async () => {
         await $`npm pack`.quiet();
@@ -106,17 +110,29 @@ function SetupForInstallation(mode: 'tar' | 'sym'): Step<never, WithInstallDir> 
   };
 }
 
-type WithInstallDir = { installDir: string; }
+function InstallLibrary() {
+  return async (ctx: WithDirs & WithInstallDir) => {
+    let exitCode = 0;
 
-function InstallLibrary(): Step<WithDirs & WithInstallDir> {
-  return async (ctx) => {
     await spinner(`Installing library to ${ctx.dirs.length} directories...`, async () => {
       await Promise.all(ctx.dirs.map(async (dir) => {
-        await $`npm --prefix ${dir} rm @datastax/astra-db-ts`.nothrow();
-        await $`npm --prefix ${dir} i ${ctx.installDir}`;
+        if (await $`npm --prefix ${dir} rm @datastax/astra-db-ts`.exitCode) {
+          readline.clearLine(process.stdout, 0);
+          console.error(chalk.red('Failed to remove existing library from', dir));
+          exitCode = 1;
+        }
+
+        if (await $`npm --prefix ${dir} i ${ctx.installDir}`.exitCode) {
+          readline.clearLine(process.stdout, 0);
+          console.error(chalk.red('Failed to install library to', dir));
+          exitCode = 2;
+        }
+
         readline.clearLine(process.stdout, 0);
         console.log(chalk.green('\r✔ ') + chalk.gray(`Installed library to ${dir}`));
       }));
     });
+
+    return { exitCode };
   };
 }

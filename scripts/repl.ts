@@ -2,8 +2,11 @@
 
 import 'zx/globals';
 import { Args } from './utils/arg-parse.js';
-import { Step, Steps } from './utils/steps.js';
+import { Steps } from './utils/steps.js';
 import 'dotenv/config';
+import { chalk } from 'zx';
+
+$.nothrow = true;
 
 const opts = new Args('repl.ts')
   .boolean('Local', {
@@ -32,18 +35,7 @@ const opts = new Args('repl.ts')
   })
   .parse();
 
-if (opts.Local) {
-  process.env.CLIENT_DB_ENVIRONMENT = 'hcd';
-  process.env.CLIENT_DB_TOKEN = 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh';
-  process.env.CLIENT_DB_URL = 'http://localhost:8181';
-}
-
-if (!process.env.CLIENT_DB_TOKEN || !process.env.CLIENT_DB_URL) {
-  console.error('Missing CLIENT_DB_TOKEN and/or CLIENT_DB_URL');
-  process.exit(1);
-}
-
-await new Steps()
+const { exitCode } = await new Steps()
   .do(SetupConfig(), {
     spinner: 'Setting up config...',
   })
@@ -53,6 +45,8 @@ await new Steps()
   .do(LaunchRepl())
   .run();
 
+process.exit(exitCode);
+
 interface Config {
   token: string,
   url: string,
@@ -60,8 +54,8 @@ interface Config {
   embeddingApiKey?: string,
 }
 
-function SetupConfig(): Step<never, Config> {
-  return async () => {
+function SetupConfig() {
+  return async (): Promise<Config> => {
     if (opts.Local) {
       return {
         token: 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh',
@@ -72,7 +66,7 @@ function SetupConfig(): Step<never, Config> {
     }
 
     if (!process.env.CLIENT_DB_TOKEN || !process.env.CLIENT_DB_URL) {
-      console.error('Missing CLIENT_DB_TOKEN and/or CLIENT_DB_URL');
+      console.error(chalk.red('Missing CLIENT_DB_TOKEN and/or CLIENT_DB_URL'));
       process.exit(1);
     }
 
@@ -85,31 +79,26 @@ function SetupConfig(): Step<never, Config> {
   };
 }
 
-function BuildClient(): Step {
+function BuildClient() {
   return async () => {
-    try {
-      await $`npx tsx scripts/build.ts -for-repl`.quiet();
-    } catch (error) {
+    if (await $`npx tsx scripts/build.ts -for-repl`.quiet().exitCode) {
       console.error(chalk.red('Failed to build the client'));
       process.exit(2);
     }
   };
 }
 
-function LaunchRepl(): Step<Config> {
-  return async (cfg) => {
+function LaunchRepl() {
+  return async (cfg: Config) => {
     const replScript = _buildReplScript(cfg);
 
-    if (opts.Exec) {
-      const execScript = _buildExecScript(opts.Exec);
-      await $({ stdio: 'inherit' })`node -e ${replScript + '\n' + execScript}`;
-    } else {
-      await $({ stdio: 'inherit' })`node -i -e ${replScript}`;
-    }
+    return (opts.Exec)
+      ? await $({ stdio: 'inherit' })`node -e ${replScript + '\n' + _buildExecScript(opts.Exec)}`
+      : await $({ stdio: 'inherit' })`node -i -e ${replScript}`;
   };
 
   function _buildExecScript(script: string): string {
-    return `(async () => { const r = (${script}); console.log(r instanceof Promise ? await r : r); })();`
+    return `(async () => { const v = await (${script}); console.log(typeof v === 'function' ? await v() : v); })();`
   }
 
   function _buildReplScript(cfg: Config): string {
@@ -173,7 +162,7 @@ function LaunchRepl(): Step<Config> {
 
       let client = new $.DataAPIClient('${cfg.token}', { environment: '${cfg.env}', logging: [{ events: 'all', emits: 'event' }], httpOptions: { client: 'custom', fetcher } });
       let db = client.db('${cfg.url}', { keyspace: '${opts.KeyspaceName}' });
-      let dbAdmin = db.admin({ environment: '${cfg.env}' });
+      let dbAdmin = withLaxPropertyAccess(db.admin({ environment: '${cfg.env}' }));
 
       const isAstra = '${cfg.env}' === 'astra';
 
@@ -293,7 +282,11 @@ function LaunchRepl(): Step<Config> {
       }
 
       function withLaxPropertyAccess(obj) {
-        const props = [...Object.getOwnPropertyNames(Object.getPrototypeOf(obj)), ...Object.getOwnPropertyNames(obj)];
+        const props = [
+          ...Object.getOwnPropertyNames(Object.getPrototypeOf(Object.getPrototypeOf(obj)) || {}), 
+          ...Object.getOwnPropertyNames(Object.getPrototypeOf(obj)), 
+          ...Object.getOwnPropertyNames(obj)
+        ];
 
         return new Proxy(obj, {
           get(target, prop) {

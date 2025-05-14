@@ -83,7 +83,6 @@ export function checkTestsEnabled(name: string) {
       && ifMatchTag(tags, 'ADMIN',     () => Cfg.RunTests.Admin)
       && ifMatchTag(tags, 'DEV',       () => Cfg.DbUrl.includes('apps.astra-dev.datastax.com'))
       && ifMatchTag(tags, 'ASTRA',     () => Cfg.DbUrl.includes('datastax.com'))
-      // && ifMatchTag(tags, 'RERANKING', () => !Cfg.DbUrl.includes('apps.astra.datastax.com'));
       && ifMatchTag(tags, 'RERANKING', () => true);
 }
 
