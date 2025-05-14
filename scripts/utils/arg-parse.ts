@@ -127,7 +127,7 @@ export class Args<Opts extends Record<string, any> = {}> {
 
   public fake<const Opt extends { type: OptTypeSpecifier } & FakeOpt<Opt>>(opt: Opt): this {
     this._options.push({
-      key: opt.flags[0].slice(1),
+      key: Math.random().toString(36),
       flags: opt.flags,
       type: opt.type,
       default: $NoDefault,
