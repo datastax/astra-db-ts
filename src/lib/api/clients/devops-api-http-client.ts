@@ -24,8 +24,12 @@ import type { HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients
 import { jsonTryParse } from '@/src/lib/utils.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { NonErrorError } from '@/src/lib/errors.js';
-import { HeadersProvider } from '@/src/lib/index.js';
+import { type CommandOptions, HeadersProvider } from '@/src/lib/index.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import { RetryAdapter, RetryManager } from '@/src/lib/api/retries/manager.js';
+import { DevOpsAPIRetryContext } from '@/src/lib/api/retries/contexts/devops-api.js';
+import type { RetryConfig } from '@/src/lib/api/retries/config.js';
+import { DevOpsAPIRetryAdapter } from '@/src/lib/api/retries/adapters/devops-api.js';
 
 /**
  * @internal
@@ -79,6 +83,10 @@ export class DevOpsAPIHttpClient extends HttpClient {
       ]),
       mkTimeoutError: DevOpsAPITimeoutError.mk,
     });
+  }
+
+  public rm(isSafelyRetryable: boolean, opts: CommandOptions): RetryManager<DevOpsAPIRequestInfo> {
+    return RetryManager.mk(isSafelyRetryable, opts, new DevOpsAPIRetryAdapter(this.logger), undefined);
   }
 
   public async request(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started = 0): Promise<DevopsAPIResponse> {

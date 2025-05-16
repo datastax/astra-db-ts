@@ -14,14 +14,14 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type { InternalLogger } from '@/src/lib/logging/internal-logger.js';
-import type { NonEmpty, RawDataAPIResponse } from '@/src/lib/index.js';
+import type { CommandOptions, NonEmpty, RawDataAPIResponse } from '@/src/lib/index.js';
 import {
   EmbeddingAPIKeyHeaderProvider,
   HeadersProvider,
   RerankingAPIKeyHeaderProvider,
   TokenProvider,
 } from '@/src/lib/index.js';
-import type { DataAPIWarningDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
+import type { CommandEventTarget, DataAPIWarningDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
 import { Collection, DataAPIHttpError, DataAPIResponseError, DataAPITimeoutError } from '@/src/documents/index.js';
 import type { HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types.js';
 import { HttpClient } from '@/src/lib/api/clients/http-client.js';
@@ -36,6 +36,8 @@ import { NonErrorError } from '@/src/lib/errors.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
 import { isNonEmpty } from '@/src/lib/utils.js';
+import { RetryManager } from '@/src/lib/api/retries/manager.js';
+import { DataAPIRetryAdapter } from '@/src/lib/api/retries/adapters/data-api.js';
 
 /**
  * @internal
@@ -58,10 +60,7 @@ type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName
  * @internal
  */
 export interface DataAPIRequestInfo {
-  url: string,
-  tOrC: string | undefined,
-  tOrCType: 'table' | 'collection' | undefined,
-  keyspace: string | null,
+  target: CommandEventTarget,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
   bigNumsPresent: boolean | undefined,
@@ -122,7 +121,7 @@ export const EmissionStrategy: EmissionStrategies = {
 const adaptInfo4Devops = (info: DataAPIRequestInfo, methodName: DevOpsAPIRequestInfo['methodName']) => (<const>{
   method: 'POST',
   data: info.command,
-  path: info.url,
+  path: info.target.url,
   methodName,
 });
 
@@ -171,6 +170,10 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     this.keyspace = opts.keyspace;
     this.#props = opts;
     this.emissionStrategy = opts.emissionStrategy(opts.logger.internal);
+  }
+
+  public rm(isSafelyRetryable: boolean, opts: CommandOptions): RetryManager<DataAPIRequestInfo> {
+    return RetryManager.mk(isSafelyRetryable, opts, new DataAPIRetryAdapter(this.logger), undefined);
   }
 
   public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(tSlashC: Collection | Table<SomeRow>, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
@@ -231,19 +234,16 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
       throw new Error('Keyspace may not be `null` when a table or collection is provided to DataAPIHttpClient.executeCommand()');
     }
 
+    const keyspacePath = keyspace ? `/${keyspace}` : '';
+    const collectionPath = tOrC ? `/${tOrC}` : '';
+    const url = this.baseUrl + keyspacePath + collectionPath;
+
     const info: DataAPIRequestInfo = {
-      url: this.baseUrl,
-      tOrC: tOrC,
-      tOrCType: !tOrC ? undefined : tOrC === (options.table || this.tableName) ? 'table' : 'collection',
-      keyspace: keyspace,
       command: command,
       timeoutManager: options.timeoutManager,
       bigNumsPresent: options.bigNumsPresent,
+      target: mkCommandEventTarget(url, keyspace, tOrC, tOrC ? (tOrC === (options.table || this.tableName) ? 'table' : 'collection') : undefined),
     };
-
-    const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
-    const collectionPath = info.tOrC ? `/${info.tOrC}` : '';
-    info.url += keyspacePath + collectionPath;
 
     const requestId = this.logger.internal.generateCommandRequestId();
 
@@ -258,7 +258,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         : JSON.stringify(info.command);
 
       const resp = await this._request({
-        url: info.url,
+        url: info.target.url,
         data: serialized,
         timeoutManager: info.timeoutManager,
         method: HttpMethods.Post,
@@ -304,3 +304,17 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     }
   }
 }
+
+const mkCommandEventTarget = (url: string, keyspace: string | null, tOrC?: string, tOrCType?: 'table' | 'collection'): Readonly<CommandEventTarget> => {
+  const target = { url } as CommandEventTarget;
+
+  if (keyspace) {
+    target.keyspace = keyspace;
+  }
+
+  if (tOrCType) {
+    target[tOrCType] = tOrC;
+  }
+
+  return target;
+};

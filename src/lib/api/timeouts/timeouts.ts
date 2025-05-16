@@ -269,6 +269,7 @@ export type MkTimeoutError = (info: HTTPRequestInfo, timeoutType: TimedOutCatego
  * @internal
  */
 export interface TimeoutManager {
+  reset(): void,
   initial(): Partial<TimeoutDescriptor>,
   advance(info: HTTPRequestInfo): [number, () => Error],
 }
@@ -374,6 +375,9 @@ export class Timeouts {
 
   public custom(peek: Partial<TimeoutDescriptor>, advance: () => [number, TimedOutCategories]): TimeoutManager {
     return {
+      reset() {
+        // TODO
+      },
       initial() {
         return peek;
       },

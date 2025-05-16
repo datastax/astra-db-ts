@@ -15,6 +15,7 @@
 
 import type { DataAPIEnvironments } from '@/src/lib/constants.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/index.js';
+import { RetryConfig } from '@/src/lib/api/retries/config.js';
 
 /**
  * Shorthand type to represent some nullish value.
@@ -37,6 +38,13 @@ export type DataAPIEnvironment = typeof DataAPIEnvironments[number];
  * @internal
  */
 export interface Ref<T> { ref: T }
+
+/**
+ * @internal
+ */
+export type Mut<T extends object> = {
+  -readonly [K in keyof T]: T[K];
+}
 
 /**
  * Utility type to represent an empty object without eslint complaining.
@@ -157,4 +165,6 @@ export interface CommandOptions<Spec extends CommandOptionsSpec = Required<Comma
    * @deprecated - The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`, and defaults in `timeoutDefaults`. You may generally Ctrl+R replace `maxTimeMS` with `timeout` to retain the same behavior.
    */
   maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`',
+  retry?: RetryConfig,
+  isSafelyRetryable?: boolean,
 }

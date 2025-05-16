@@ -66,20 +66,6 @@ export type CommandEventTarget =
   | { url: string, keyspace: string, table?: never, collection: string }
   | { url: string, keyspace: string, table: string, collection?: never }
 
-const mkCommandEventTarget = (info: DataAPIRequestInfo): Readonly<CommandEventTarget> => {
-  const target = { url: info.url } as CommandEventTarget;
-
-  if (info.keyspace) {
-    target.keyspace = info.keyspace;
-  }
-
-  if (info.tOrCType) {
-    target[info.tOrCType] = info.tOrC;
-  }
-
-  return target;
-};
-
 /**
  * Common base class for all command events.
  *
@@ -116,7 +102,7 @@ export abstract class CommandEvent extends BaseClientEvent {
   protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined) {
     super(name, requestId, extra);
     this.command = info.command;
-    this.target = mkCommandEventTarget(info);
+    this.target = info.target;
   }
 
   /**
