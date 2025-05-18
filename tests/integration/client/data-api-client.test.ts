@@ -165,7 +165,7 @@ describe('integration.client.data-api-client', () => {
       assert.deepStrictEqual(stderr, []);
     });
 
-    it('should allow monitoring of failed commands when enabled', async () => {
+    it('should allow monitoring of failed commands when enabled', async (key) => {
       const client = new DataAPIClient(Cfg.DbToken, { environment: Cfg.DbEnvironment });
       const db = client.db(Cfg.DbUrl, { logging: ['all', { events: 'commandSucceeded', emits: ['event', 'stdout'] }], keyspace: DEFAULT_KEYSPACE });
       const collection = db.collection(Cfg.DefaultCollectionName);
@@ -173,7 +173,7 @@ describe('integration.client.data-api-client', () => {
       let startedEvent: CommandStartedEvent | undefined;
       let failedEvent: CommandFailedEvent | undefined;
 
-      await collection.insertOne({ _id: 0, name: 'Oasis' });
+      await collection.insertOne({ _id: key, name: 'Oasis' });
 
       stdout = []; stderr = [];
 
@@ -189,12 +189,7 @@ describe('integration.client.data-api-client', () => {
         failedEvent = event;
       });
 
-      try {
-        await collection.insertOne({ _id: 0, name: 'Oasis' });
-        assert.fail('should have thrown an error');
-      } catch (e) {
-        assert.ok(e instanceof Error);
-      }
+      await assert.rejects(() => collection.insertOne({ _id: key, name: 'Oasis' }));
 
       assert.ok(startedEvent instanceof CommandStartedEvent);
       assert.ok(failedEvent instanceof CommandFailedEvent);
@@ -214,8 +209,8 @@ describe('integration.client.data-api-client', () => {
       assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       assert.ok(failedEvent.duration > 0);
 
-      assert.deepStrictEqual(startedEvent.command, { insertOne: { document: { _id: 0, name: 'Oasis' } } });
-      assert.deepStrictEqual(failedEvent.command, { insertOne: { document: { _id: 0, name: 'Oasis' } } });
+      assert.deepStrictEqual(startedEvent.command, { insertOne: { document: { _id: key, name: 'Oasis' } } });
+      assert.deepStrictEqual(failedEvent.command, { insertOne: { document: { _id: key, name: 'Oasis' } } });
 
       assert.ok(failedEvent.error instanceof DataAPIResponseError);
       assert.strictEqual(failedEvent.error.errorDescriptors.length, 1);

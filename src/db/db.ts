@@ -177,7 +177,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
       : endpoint;
 
     this.#httpClient = new DataAPIHttpClient({
-      baseUrl: endpoint + (this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment]),
+      baseUrl: endpoint + '/' + (this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment]),
       tokenProvider: this.#defaultOpts.dbOptions.token,
       logger: this,
       fetchCtx: rootOpts.fetchCtx,

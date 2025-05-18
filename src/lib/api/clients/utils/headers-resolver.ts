@@ -58,7 +58,7 @@ export class HeadersResolver {
     ret.push(staticAcc);
 
     return ret.filter((obj) => {
-      return Object.keys(obj).length > 0;
+      return (Object.keys(obj).length > 0) || (obj instanceof HeadersProvider);
     });
   }
 }

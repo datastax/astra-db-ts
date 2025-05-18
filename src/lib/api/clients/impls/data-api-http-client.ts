@@ -43,7 +43,7 @@ import type { TimeoutAdapter } from '@/src/lib/api/timeouts/timeouts.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
 import type { DbAdmin } from '@/src/administration/index.js';
 import { NonErrorError } from '@/src/lib/errors.js';
-import { isNonEmpty } from '@/src/lib/utils.js';
+import { isNonEmpty, isNullish } from '@/src/lib/utils.js';
 import { DataAPIRetryAdapter } from '@/src/lib/api/retries/adapters/data-api.js';
 import type { HeadersResolverAdapter } from '@/src/lib/api/clients/utils/headers-resolver.js';
 import type { DevOpsAPIRequestMetadata, ExecuteDevOpsAPIOperationOptions } from '@/src/lib/api/clients/index.js';
@@ -112,8 +112,9 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends BaseH
       timeoutAdapter: DataAPITimeoutAdapter,
     });
 
-    this.target = new InternalRequestTarget(opts.baseUrl, opts.keyspace);
+    this.target = new InternalRequestTarget(opts);
     this.emissionStrategy = opts.emissionStrategy(opts.logger.internal, this._baseUrl);
+    this.bigNumHack = opts.bigNumHack;
     this.#baseOpts = opts;
   }
 
@@ -188,7 +189,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends BaseH
         /* c8 ignore next: exceptional case */
         : {};
 
-      clonedData = data;
+      clonedData = structuredClone(data);
 
       const warnings = data?.status?.warnings ?? [];
 
@@ -206,7 +207,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends BaseH
         errors: data.errors,
       };
 
-      this.emissionStrategy.emitCommandSucceeded(metadata, data, opts);
+      this.emissionStrategy.emitCommandSucceeded(metadata, clonedData!, opts);
       return respData;
     } catch (thrown) {
       const err = NonErrorError.asError(thrown);
@@ -222,26 +223,38 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends BaseH
 class InternalRequestTarget {
   private _cached: CommandEventTarget;
 
-  constructor(private readonly _baseUrl: string, private readonly _keyspace: KeyspaceRef, coll?: string, table?: string) {
-    this._cached = this._buildCommandEventTarget(this._keyspace.ref, coll, table);
+  private readonly _baseUrl: string;
+  private readonly _keyspace: KeyspaceRef;
+
+  constructor(opts: DataAPIHttpClientOpts<ClientKind>) {
+    this._baseUrl = opts.baseUrl;
+    this._keyspace = opts.keyspace;
+    this._cached = this._buildCommandEventTarget(this._keyspace.ref, opts.collection, opts.table);
   }
 
-  public forRequest(options: ExecuteDataAPICommandOptions<ClientKind>): Readonly<CommandEventTarget> {
+  public forRequest(opts: ExecuteDataAPICommandOptions<ClientKind>): Readonly<CommandEventTarget> {
     this._rebuildCacheIfKeyspaceChanged();
 
-    const keyspace = options.keyspace === undefined ? this._cached.keyspace : options.keyspace;
+    const keyspace = opts.keyspace === undefined ? this._cached.keyspace : opts.keyspace;
 
     if (keyspace === undefined) {
       throw new Error('Db is missing a working keyspace; set one with client.db(..., { keyspace }) or db.useKeyspace()');
     }
 
-    return this._buildCommandEventTarget(keyspace, options.collection, options.table);
+    if (keyspace === this._cached.keyspace) {
+      if ((!opts.collection && !opts.table) || (opts.collection === this._cached.collection && opts.table === this._cached.table)) {
+        return this._cached;
+      }
+    }
+
+    return this._buildCommandEventTarget(keyspace, opts.collection, opts.table);
   }
 
-  private _buildCommandEventTarget(keyspace: string | nullish, coll?: string, table?: string) {
+  private _buildCommandEventTarget(keyspace: string | nullish, coll: string | undefined, table: string | undefined) {
     if (coll && table) {
-      throw new Error('Both `table` and `collection` options may not be set at once when making a request to the Data API');
+      throw new Error('Can\'t provide both `table` and `collection` as options to DataAPIHttpClient.executeCommand()');
     }
+
     const tOrC = coll || table || this._cached?.collection || this._cached?.table;
 
     const keyspacePath = keyspace ? `/${keyspace}` : '';
@@ -251,14 +264,14 @@ class InternalRequestTarget {
       url: this._baseUrl + keyspacePath + collectionPath,
     } as CommandEventTarget;
 
-    if (keyspace) {
+    if (!isNullish(keyspace)) {
       target.keyspace = keyspace;
 
       if (tOrC) {
-        if (tOrC === coll || tOrC === this._cached.collection) {
-          target.collection = coll;
+        if (tOrC === coll || tOrC === this._cached?.collection) {
+          target.collection = tOrC;
         } else {
-          target.table = table;
+          target.table = tOrC;
         }
       }
     } else if (tOrC) {

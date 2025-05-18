@@ -144,22 +144,22 @@ describe('unit.client.data-api-client', () => {
     it('uses http2 by default', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2 } });
       const httpClient = client.db(Cfg.DbUrl)._httpClient;
-      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx._http1 !== httpClient.fetchCtx.ctx._preferred);
+      assert.ok(httpClient._fetchCtx.ctx instanceof FetchH2);
+      assert.ok(httpClient._fetchCtx.ctx._http1 !== httpClient._fetchCtx.ctx._preferred);
     });
 
     it('uses http2 when forced', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2, preferHttp2: true } });
       const httpClient = client.db(Cfg.DbUrl)._httpClient;
-      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx._http1 !== httpClient.fetchCtx.ctx._preferred);
+      assert.ok(httpClient._fetchCtx.ctx instanceof FetchH2);
+      assert.ok(httpClient._fetchCtx.ctx._http1 !== httpClient._fetchCtx.ctx._preferred);
     });
 
     it('uses http1.1 when forced', () => {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2, preferHttp2: false } });
       const httpClient = client.db(Cfg.DbUrl)._httpClient;
-      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx._http1 === httpClient.fetchCtx.ctx._preferred);
+      assert.ok(httpClient._fetchCtx.ctx instanceof FetchH2);
+      assert.ok(httpClient._fetchCtx.ctx._http1 === httpClient._fetchCtx.ctx._preferred);
     });
   });
 
@@ -176,8 +176,8 @@ describe('unit.client.data-api-client', () => {
       });
 
       const httpClient = client.db(Cfg.DbUrl)._httpClient;
-      assert.strictEqual(await httpClient.fetchCtx.ctx.fetch(null!), 3);
-      assert.strictEqual(httpClient.fetchCtx.ctx.close, undefined);
+      assert.strictEqual(await httpClient._fetchCtx.ctx.fetch(null!), 3);
+      assert.strictEqual(httpClient._fetchCtx.ctx.close, undefined);
     });
 
     it('should throw if fetcher not properly implemented', () => {
