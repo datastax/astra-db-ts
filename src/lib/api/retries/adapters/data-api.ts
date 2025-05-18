@@ -14,18 +14,21 @@
 
 import type { RetryAdapter } from '@/src/lib/api/retries/manager.js';
 import { DataAPIRetryContext } from '@/src/lib/api/retries/contexts/data-api.js';
-import type { DataAPIRequestInfo } from '@/src/lib/api/clients/index.js';
+import type { DataAPIRequestMetadata } from '@/src/lib/api/clients/index.js';
 import type { InternalRetryContext } from '@/src/lib/api/retries/contexts/internal.js';
 import { type CommandEventMap, DataAPITimeoutError } from '@/src/documents/index.js';
 import type { HierarchicalLogger } from '@/src/lib/index.js';
 
-export class DataAPIRetryAdapter implements RetryAdapter<DataAPIRetryContext, DataAPIRequestInfo> {
+/**
+ * @internal
+ */
+export class DataAPIRetryAdapter implements RetryAdapter<DataAPIRetryContext, DataAPIRequestMetadata> {
   public readonly policy = 'dataAPIPolicy';
   public readonly TimeoutError = DataAPITimeoutError;
 
   public constructor(private readonly _logger: HierarchicalLogger<CommandEventMap>) {}
 
-  public mkEphemeralCtx(ctx: InternalRetryContext, duration: number, error: Error, req: DataAPIRequestInfo): DataAPIRetryContext {
+  public mkEphemeralCtx(ctx: InternalRetryContext, duration: number, error: Error, req: DataAPIRequestMetadata): DataAPIRetryContext {
     return new DataAPIRetryContext(ctx, duration, error, req);
   }
 

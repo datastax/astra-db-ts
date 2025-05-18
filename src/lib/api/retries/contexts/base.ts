@@ -34,6 +34,11 @@ export abstract class RetryContext {
 
   public readonly requestId: string;
 
+  /**
+   * Should not be instantiated by the user directly.
+   *
+   * @internal
+   */
   protected constructor(ctx: InternalRetryContext, duration: number, error: Error) {
     this.retryCount = ctx.retryCount;
     this.isSafelyRetryable = ctx.isSafelyRetryable;

@@ -19,8 +19,8 @@ import type { OpaqueHttpClient, CommandOptions } from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants.js';
-import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
-import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
+import type { ExecuteDevOpsAPIOperationOptions } from '@/src/lib/api/clients/impls/devops-api-http-client.js';
+import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/impls/devops-api-http-client.js';
 import type { Db } from '@/src/db/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { AstraFullDatabaseInfo } from '@/src/administration/types/admin/database-info.js';
@@ -212,12 +212,12 @@ export class AstraDbAdmin extends DbAdmin {
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
       methodName: 'dbAdmin.createKeyspace',
+      timeoutManager: tm,
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
       legalStates: ['MAINTENANCE'],
       defaultPollInterval: 1000,
-      timeoutManager: tm,
       options,
     });
   }
@@ -260,12 +260,12 @@ export class AstraDbAdmin extends DbAdmin {
       method: HttpMethods.Delete,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
       methodName: 'dbAdmin.dropKeyspace',
+      timeoutManager: tm,
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
       legalStates: ['MAINTENANCE'],
       defaultPollInterval: 1000,
-      timeoutManager: tm,
       options,
     });
   }
@@ -298,12 +298,12 @@ export class AstraDbAdmin extends DbAdmin {
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/terminate`,
       methodName: 'dbAdmin.drop',
+      timeoutManager: tm,
     }, {
       id: this.#db.id,
       target: 'TERMINATED',
       legalStates: ['TERMINATING'],
       defaultPollInterval: 10000,
-      timeoutManager: tm,
       options,
     });
   }
@@ -312,12 +312,13 @@ export class AstraDbAdmin extends DbAdmin {
     return this.#httpClient;
   }
 
-  async #info(methodName: DevOpsAPIRequestInfo['methodName'], tm: TimeoutManager): Promise<AstraFullDatabaseInfo> {
+  async #info(methodName: ExecuteDevOpsAPIOperationOptions['methodName'], tm: TimeoutManager): Promise<AstraFullDatabaseInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${this.#db.id}`,
+      timeoutManager: tm,
       methodName,
-    }, tm);
+    });
 
     return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
   }

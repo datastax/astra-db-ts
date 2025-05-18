@@ -263,7 +263,9 @@ export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
 /**
  * @internal
  */
-export type MkTimeoutError = (info: HTTPRequestInfo, timeoutType: TimedOutCategories) => Error;
+export interface TimeoutAdapter {
+  mkTimeoutError(info: HTTPRequestInfo, timeoutType: TimedOutCategories): Error,
+}
 
 /**
  * @internal
@@ -296,7 +298,7 @@ export class Timeouts {
 
   public readonly baseTimeouts: TimeoutDescriptor;
 
-  constructor(private readonly _mkTimeoutError: MkTimeoutError, baseTimeouts: ParsedTimeoutDescriptor) {
+  constructor(private readonly _adapter: TimeoutAdapter, baseTimeouts: ParsedTimeoutDescriptor) {
     this.baseTimeouts = TimeoutCfgHandler.concat([Timeouts.Default, baseTimeouts]) as TimeoutDescriptor;
   }
 
@@ -384,7 +386,7 @@ export class Timeouts {
       advance: (info) => {
         const advanced = advance() as any;
         const timeoutType = advanced[1];
-        advanced[1] = () => this._mkTimeoutError(info, timeoutType);
+        advanced[1] = () => this._adapter.mkTimeoutError(info, timeoutType);
         return advanced;
       },
     };

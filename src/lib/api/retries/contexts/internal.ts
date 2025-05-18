@@ -14,6 +14,9 @@
 
 import type { TimeoutDescriptor } from '@/src/lib/index.js';
 
+/**
+ * @internal
+ */
 export class InternalRetryContext {
   public retryCount = 0;
 

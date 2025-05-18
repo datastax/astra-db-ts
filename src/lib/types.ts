@@ -15,7 +15,7 @@
 
 import type { DataAPIEnvironments } from '@/src/lib/constants.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/index.js';
-import { RetryConfig } from '@/src/lib/api/retries/config.js';
+import type { RetryConfig } from '@/src/lib/api/retries/config.js';
 
 /**
  * Shorthand type to represent some nullish value.

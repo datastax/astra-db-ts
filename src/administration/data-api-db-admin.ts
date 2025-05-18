@@ -16,7 +16,7 @@
 import type { CreateDataAPIKeyspaceOptions } from '@/src/administration/types/index.js';
 import { DbAdmin } from '@/src/administration/db-admin.js';
 import type { OpaqueHttpClient, CommandOptions } from '@/src/lib/index.js';
-import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/impls/data-api-http-client.js';
 import type { Db } from '@/src/db/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';

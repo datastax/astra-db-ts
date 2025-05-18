@@ -28,7 +28,7 @@ describe('unit.lib.api.timeouts', () => {
     }
   }
 
-  const timeouts = new Timeouts((info, timeoutType) => new TimeoutError(info, timeoutType), Timeouts.Default);
+  const timeouts = new Timeouts({ mkTimeoutError: (info, timeoutType) => new TimeoutError(info, timeoutType) }, Timeouts.Default);
   const info = (timeoutManager: TimeoutManager) => ({ timeoutManager }) as HTTPRequestInfo;
 
   describe('single', () => {

@@ -22,7 +22,7 @@ import { extractDbComponentsFromAstraUrl } from '@/src/documents/utils.js';
 import type { DbAdmin } from '@/src/administration/index.js';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin.js';
 import type { CreateCollectionOptions } from '@/src/db/types/collections/create.js';
-import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client.js';
+import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/impls/data-api-http-client.js';
 import type { KeyspaceRef } from '@/src/lib/api/clients/types.js';
 import type { CommandEventMap, FoundRow, SomePKey, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
 import { Table } from '@/src/documents/index.js';
@@ -177,9 +177,8 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
       : endpoint;
 
     this.#httpClient = new DataAPIHttpClient({
-      baseUrl: endpoint,
+      baseUrl: endpoint + (this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment]),
       tokenProvider: this.#defaultOpts.dbOptions.token,
-      baseApiPath: this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
       logger: this,
       fetchCtx: rootOpts.fetchCtx,
       keyspace: this.#keyspace,

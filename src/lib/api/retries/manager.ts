@@ -22,6 +22,9 @@ import { NonErrorError } from '@/src/lib/errors.js';
 import type { SomeDoc } from '@/src/documents/index.js';
 import { DataAPIError } from '@/src/documents/index.js';
 
+/**
+ * @internal
+ */
 export interface RetryAdapter<Ctx extends RetryContext, ReqInfo> {
   policy: Exclude<keyof RetryConfig, 'defaultPolicy'>,
   mkEphemeralCtx(ctx: InternalRetryContext, duration: number, error: Error, req: ReqInfo): Ctx,
@@ -30,6 +33,9 @@ export interface RetryAdapter<Ctx extends RetryContext, ReqInfo> {
   TimeoutError: SomeConstructor,
 }
 
+/**
+ * @internal
+ */
 export abstract class RetryManager<ReqInfo> {
   public static mk<Ctx extends RetryContext, ReqInfo>(isSafelyRetryable: boolean, opts: CommandOptions, adapter: RetryAdapter<Ctx, ReqInfo>, basePolicy: RetryConfig | undefined): RetryManager<ReqInfo> {
     if (opts.retry ?? basePolicy) {
@@ -46,6 +52,9 @@ export abstract class RetryManager<ReqInfo> {
   public abstract run<T>(info: ReqInfo, started: number, reqId: string, tm: TimeoutManager, fn: () => Promise<T>): Promise<T>;
 }
 
+/**
+ * @internal
+ */
 class RetryingImpl<Ctx extends RetryContext, ReqInfo> extends RetryManager<ReqInfo> {
   private readonly _adapter: RetryAdapter<Ctx, ReqInfo>;
 
@@ -105,6 +114,9 @@ class RetryingImpl<Ctx extends RetryContext, ReqInfo> extends RetryManager<ReqIn
   }
 }
 
+/**
+ * @internal
+ */
 const PassthroughImpl = new class PassthroughImpl extends RetryManager<never> {
   public override run<T>(_: never, __: never, ___: never, ____: never, fn: () => Promise<T>) {
     return fn();

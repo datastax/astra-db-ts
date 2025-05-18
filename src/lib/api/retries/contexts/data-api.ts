@@ -14,7 +14,7 @@
 
 import { RetryContext } from '@/src/lib/api/retries/contexts/base.js';
 import type { InternalRetryContext } from '@/src/lib/api/retries/contexts/internal.js';
-import type { DataAPIRequestInfo } from '@/src/lib/api/clients/index.js';
+import type { DataAPIRequestMetadata } from '@/src/lib/api/clients/index.js';
 import type { CommandEventTarget } from '@/src/documents/index.js';
 
 export class DataAPIRetryContext extends RetryContext {
@@ -26,7 +26,12 @@ export class DataAPIRetryContext extends RetryContext {
 
   public readonly commandName: string;
 
-  public constructor(ctx: InternalRetryContext, duration: number, error: Error, req: DataAPIRequestInfo) {
+  /**
+   * Should not be instantiated by the user directly.
+   *
+   * @internal
+   */
+  public constructor(ctx: InternalRetryContext, duration: number, error: Error, req: DataAPIRequestMetadata) {
     super(ctx, duration, error);
     this.target = req.target;
     this.command = req.command;

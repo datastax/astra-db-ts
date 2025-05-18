@@ -15,7 +15,7 @@
 import type { NonEmpty, ReadonlyNonEmpty } from '@/src/lib/index.js';
 import { type RawDataAPIResponse } from '@/src/lib/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
-import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
+import type { DataAPIRequestMetadata } from '@/src/lib/api/clients/impls/data-api-http-client.js';
 import type { DataAPIWarningDescriptor } from '@/src/documents/errors.js';
 import { DataAPIError } from '@/src/documents/errors.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
@@ -49,11 +49,6 @@ export type CommandEventMap = {
    */
   commandWarnings: CommandWarningsEvent,
 }
-
-// export type CommandEventTarget = { url: string } & (
-//   | { keyspace: string } & ({ table: string, collection?: never } | { collection: string, table?: never })
-//   | { keyspace?: never, table?: never, collection?: never }
-// )
 
 /**
  * The target of the command.
@@ -99,10 +94,10 @@ export abstract class CommandEvent extends BaseClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined) {
-    super(name, requestId, extra);
-    this.command = info.command;
-    this.target = info.target;
+  protected constructor(name: string, metadata: DataAPIRequestMetadata) {
+    super(name, metadata.requestId, metadata.extra);
+    this.command = metadata.command;
+    this.target = metadata.target;
   }
 
   /**
@@ -166,9 +161,9 @@ export class CommandStartedEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined) {
-    super('CommandStarted', requestId, info, extra);
-    this.timeout = info.timeoutManager.initial();
+  constructor(metadata: DataAPIRequestMetadata) {
+    super('CommandStarted', metadata);
+    this.timeout = metadata.timeout;
   }
 
   public override getMessage(): string {
@@ -209,9 +204,9 @@ export class CommandSucceededEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse, started: number) {
-    super('CommandSucceeded', requestId, info, extra);
-    this.duration = performance.now() - started;
+  constructor(metadata: DataAPIRequestMetadata, reply: RawDataAPIResponse) {
+    super('CommandSucceeded', metadata);
+    this.duration = performance.now() - metadata.startTime;
     this.response = reply;
   }
 
@@ -260,9 +255,9 @@ export class CommandFailedEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number) {
-    super('CommandFailed', requestId, info, extra);
-    this.duration = performance.now() - started;
+  constructor(metadata: DataAPIRequestMetadata, reply: RawDataAPIResponse | undefined, error: Error) {
+    super('CommandFailed', metadata);
+    this.duration = performance.now() - metadata.startTime;
     this.response = reply;
     this.error = error;
   }
@@ -304,8 +299,8 @@ export class CommandWarningsEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, warnings: NonEmpty<DataAPIWarningDescriptor>) {
-    super('CommandWarnings', requestId, info, extra);
+  constructor(metadata: DataAPIRequestMetadata, warnings: NonEmpty<DataAPIWarningDescriptor>) {
+    super('CommandWarnings', metadata);
     this.warnings = warnings;
   }
 

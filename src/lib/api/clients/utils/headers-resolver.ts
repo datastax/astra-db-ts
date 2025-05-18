@@ -15,19 +15,23 @@
 import type { ParsedHeadersProviders } from '@/src/lib/headers-providers/root/opts-handlers.js';
 import { type GetHeadersCtx, HeadersProvider, PureHeadersProvider } from '@/src/lib/index.js';
 
+export interface HeadersResolverAdapter {
+  target: GetHeadersCtx['for'];
+}
+
 /**
  * @internal
  */
 export class HeadersResolver {
   private readonly _resolveStrategy: StaticHeadersResolveStrategy | DynamicHeadersResolveStrategy;
 
-  constructor(target: 'data-api' | 'devops-api', additionalHeaders: ParsedHeadersProviders, baseHeaders: Record<string, any>) {
-    const queue = this._mkResolveQueue(target, additionalHeaders);
+  constructor(adapter: HeadersResolverAdapter, additionalHeaders: ParsedHeadersProviders, baseHeaders: Record<string, any>) {
+    const queue = this._mkResolveQueue(adapter, additionalHeaders);
 
     if (queue.length <= 1 && !(queue[0] instanceof HeadersProvider)) {
       this._resolveStrategy = new StaticHeadersResolveStrategy({ ...baseHeaders, ...queue[0] });
     } else {
-      this._resolveStrategy = new DynamicHeadersResolveStrategy(target, baseHeaders, queue);
+      this._resolveStrategy = new DynamicHeadersResolveStrategy(adapter.target, baseHeaders, queue);
     }
   }
 
@@ -35,28 +39,27 @@ export class HeadersResolver {
     return this._resolveStrategy.resolve();
   }
 
-  private _mkResolveQueue(target: 'data-api' | 'devops-api', headerProviders: ParsedHeadersProviders) {
-    const ctx: GetHeadersCtx = { for: target };
+  private _mkResolveQueue(adapter: HeadersResolverAdapter, headerProviders: ParsedHeadersProviders) {
+    const ctx: GetHeadersCtx = { for: adapter.target };
     const ret = [] as (Record<string, string> | HeadersProvider)[];
 
-    let acc = {} as Record<string, string>;
+    let staticAcc = {} as Record<string, string>;
 
     for (const provider of headerProviders.providers) {
       // noinspection SuspiciousTypeOfGuard -- the lsp is wrong here
       if (provider instanceof PureHeadersProvider) {
-        assignNonUndefined(acc, provider.getHeaders(ctx));
+        assignNonUndefined(staticAcc, provider.getHeaders(ctx));
       } else {
-        ret.push(acc);
-        acc = {};
+        ret.push(staticAcc);
         ret.push(provider);
+        staticAcc = {};
       }
     }
+    ret.push(staticAcc);
 
-    if (Object.keys(acc).length > 0) {
-      ret.push(acc);
-    }
-
-    return ret;
+    return ret.filter((obj) => {
+      return Object.keys(obj).length > 0;
+    });
   }
 }
 
@@ -76,7 +79,7 @@ class StaticHeadersResolveStrategy {
  */
 class DynamicHeadersResolveStrategy {
   constructor(
-    private readonly _target: 'data-api' | 'devops-api',
+    private readonly _target: GetHeadersCtx['for'],
     private readonly _baseHeaders: Record<string, any>,
     private readonly _resolveQueue: (Record<string, string | undefined> | HeadersProvider)[],
   ) {}

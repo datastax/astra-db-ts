@@ -14,7 +14,7 @@
 
 import { RetryContext } from '@/src/lib/api/retries/contexts/base.js';
 import type { InternalRetryContext } from '@/src/lib/api/retries/contexts/internal.js';
-import type { DevOpsAPIRequestInfo, HttpMethodStrings } from '@/src/lib/api/clients/index.js';
+import type { DevOpsAPIRequestMetadata, HttpMethodStrings } from '@/src/lib/api/clients/index.js';
 import { EqualityProof } from '@/src/lib/utils.js';
 
 export class DevOpsAPIRetryContext extends RetryContext {
@@ -26,11 +26,16 @@ export class DevOpsAPIRetryContext extends RetryContext {
 
   public readonly path: string;
 
-  public constructor(ctx: InternalRetryContext, duration: number, error: Error, info: DevOpsAPIRequestInfo) {
+  /**
+   * Should not be instantiated by the user directly.
+   *
+   * @internal
+   */
+  public constructor(ctx: InternalRetryContext, duration: number, error: Error, metadata: DevOpsAPIRequestMetadata) {
     super(ctx, duration, error);
-    this.method = info.method;
-    this.methodName = info.methodName;
-    this.path = info.path;
+    this.method = metadata.reqOpts.method;
+    this.methodName = metadata.methodName;
+    this.path = metadata.reqOpts.path;
   }
 }
 
