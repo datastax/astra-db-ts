@@ -94,10 +94,10 @@ export interface AddVectorizeOperation<Schema extends SomeRow> {
 
 // @public
 export abstract class AdminCommandEvent extends BaseClientEvent {
-    // Warning: (ae-forgotten-export) The symbol "DevOpsAPIRequestInfo" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "DevOpsAPIRequestMetadata" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(name: string, requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean);
+    protected constructor(name: string, metadata: DevOpsAPIRequestMetadata);
     // (undocumented)
     getMessagePrefix(): string;
     readonly invokingMethod: string;
@@ -122,7 +122,7 @@ export type AdminCommandEventMap = {
 // @public
 export class AdminCommandFailedEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number);
+    constructor(metadata: DevOpsAPIRequestMetadata, error: Error);
     readonly duration: number;
     readonly error: Error;
     // (undocumented)
@@ -134,7 +134,7 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandPollingEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number);
+    constructor(metadata: DevOpsAPIRequestMetadata, interval: number, pollCount: number);
     readonly elapsed: number;
     // (undocumented)
     getMessage(): string;
@@ -147,7 +147,7 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandStartedEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>);
+    constructor(metadata: DevOpsAPIRequestMetadata);
     // (undocumented)
     getMessage(): string;
     // @internal
@@ -158,7 +158,7 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number);
+    constructor(metadata: DevOpsAPIRequestMetadata, data: Record<string, any> | undefined);
     readonly duration: number;
     // (undocumented)
     getMessage(): string;
@@ -170,7 +170,7 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
     // @internal
-    constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: NonEmpty<DataAPIWarningDescriptor>);
+    constructor(metadata: DevOpsAPIRequestMetadata, warnings: NonEmpty<DataAPIWarningDescriptor>);
     // (undocumented)
     getMessage(): string;
     // @internal
@@ -386,8 +386,10 @@ export class AWSEmbeddingHeadersProvider extends StaticHeadersProvider<'embeddin
 
 // @public
 export abstract class BaseClientEvent {
+    // Warning: (ae-forgotten-export) The symbol "RequestId" needs to be exported by the entry point index.d.ts
+    //
     // @internal
-    protected constructor(name: string, requestId: string, extra: Record<string, unknown> | undefined);
+    protected constructor(name: string, requestId: RequestId, extra: Record<string, unknown> | undefined);
     readonly extraLogInfo?: Record<string, any>;
     format(formatter?: EventFormatter): string;
     formatVerbose(): string;
@@ -855,10 +857,10 @@ export type CollTypeCodecOpts = TypeCodecOpts<CollectionSerCtx, CollectionDesCtx
 
 // @public
 export abstract class CommandEvent extends BaseClientEvent {
-    // Warning: (ae-forgotten-export) The symbol "DataAPIRequestInfo" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "DataAPIRequestMetadata" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined);
+    protected constructor(name: string, metadata: DataAPIRequestMetadata);
     readonly command: Record<string, any>;
     get commandName(): string;
     // @internal (undocumented)
@@ -904,7 +906,7 @@ export type CommandEventTarget = {
 // @public
 export class CommandFailedEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number);
+    constructor(metadata: DataAPIRequestMetadata, reply: RawDataAPIResponse | undefined, error: Error);
     readonly duration: number;
     readonly error: Error;
     // (undocumented)
@@ -918,8 +920,14 @@ export class CommandFailedEvent extends CommandEvent {
 
 // @public
 export interface CommandOptions<Spec extends CommandOptionsSpec = Required<CommandOptionsSpec>> {
+    // (undocumented)
+    isSafelyRetryable?: boolean;
     // @deprecated
     maxTimeMS?: 'ERROR: The `maxTimeMS` option is no longer available; the timeouts system has been overhauled, and timeouts should now be set using `timeout`';
+    // Warning: (ae-forgotten-export) The symbol "RetryConfig" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    retry?: RetryConfig;
     timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Exclude<Spec['timeout'], undefined>>;
 }
 
@@ -932,7 +940,7 @@ export interface CommandOptionsSpec {
 // @public
 export class CommandStartedEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined);
+    constructor(metadata: DataAPIRequestMetadata);
     // (undocumented)
     getMessage(): string;
     // @internal
@@ -943,7 +951,7 @@ export class CommandStartedEvent extends CommandEvent {
 // @public
 export class CommandSucceededEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse, started: number);
+    constructor(metadata: DataAPIRequestMetadata, reply: RawDataAPIResponse);
     readonly duration: number;
     // (undocumented)
     getMessage(): string;
@@ -955,7 +963,7 @@ export class CommandSucceededEvent extends CommandEvent {
 // @public
 export class CommandWarningsEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, warnings: NonEmpty<DataAPIWarningDescriptor>);
+    constructor(metadata: DataAPIRequestMetadata, warnings: NonEmpty<DataAPIWarningDescriptor>);
     // (undocumented)
     getMessage(): string;
     // @internal
@@ -1327,8 +1335,6 @@ export class DataAPITimeoutError extends DataAPIError {
     //
     // @internal
     constructor(info: HTTPRequestInfo, types: TimedOutCategories);
-    // @internal (undocumented)
-    static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError;
     readonly timedOutCategories: TimedOutCategories;
     readonly timeout: Partial<TimeoutDescriptor>;
 }
@@ -1523,8 +1529,6 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
 export class DevOpsAPITimeoutError extends DevOpsAPIError {
     // @internal
     constructor(info: HTTPRequestInfo, types: TimedOutCategories);
-    // @internal (undocumented)
-    static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError;
     readonly timedOutCategories: TimedOutCategories;
     readonly timeout: Partial<TimeoutDescriptor>;
     readonly url: string;
@@ -2226,6 +2230,11 @@ export type MaybeBuffer = typeof globalThis extends {
 // @public
 export type MaybeId<T> = NoId<T> & {
     _id?: IdOf<T>;
+};
+
+// @internal (undocumented)
+export type Mut<T extends object> = {
+    -readonly [K in keyof T]: T[K];
 };
 
 // @public
