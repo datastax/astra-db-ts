@@ -21,56 +21,57 @@ import { RetryPolicy } from '@/src/lib/api/retries/policy.js';
 import { NonErrorError } from '@/src/lib/errors.js';
 import type { SomeDoc } from '@/src/documents/index.js';
 import { DataAPIError } from '@/src/documents/index.js';
+import type { BaseRequestMetadata } from '@/src/lib/api/clients/index.js';
 
 /**
  * @internal
  */
-export interface RetryAdapter<Ctx extends RetryContext, ReqInfo> {
+export interface RetryAdapter<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata> {
   policy: Exclude<keyof RetryConfig, 'defaultPolicy'>,
-  mkEphemeralCtx(ctx: InternalRetryContext, duration: number, error: Error, req: ReqInfo): Ctx,
-  emitRetryEvent(ctx: Ctx, info: ReqInfo): void,
-  emitRetryDeclinedEvent(ctx: Ctx, info: ReqInfo): void,
+  mkEphemeralCtx(ctx: InternalRetryContext, duration: number, error: Error, req: ReqMeta): Ctx,
+  emitRetryEvent(ctx: Ctx, meta: ReqMeta): void,
+  emitRetryDeclinedEvent(ctx: Ctx, meta: ReqMeta): void,
   TimeoutError: SomeConstructor,
 }
 
 /**
  * @internal
  */
-export abstract class RetryManager<ReqInfo> {
-  public static mk<Ctx extends RetryContext, ReqInfo>(isSafelyRetryable: boolean, opts: CommandOptions, adapter: RetryAdapter<Ctx, ReqInfo>, basePolicy: RetryConfig | undefined): RetryManager<ReqInfo> {
+export abstract class RetryManager<ReqMeta extends BaseRequestMetadata> {
+  public static mk<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata>(isSafelyRetryable: boolean, opts: CommandOptions, adapter: RetryAdapter<Ctx, ReqMeta>, basePolicy: RetryConfig | undefined): RetryManager<ReqMeta> {
     if (opts.retry ?? basePolicy) {
       const policy = opts.retry?.[adapter.policy] ?? opts.retry?.defaultPolicy ?? basePolicy?.[adapter.policy] ?? basePolicy?.defaultPolicy;
 
-      if (policy && !(policy instanceof RetryPolicy.Never)) {
-        return new RetryingImpl<Ctx, ReqInfo>(policy, opts.isSafelyRetryable ?? isSafelyRetryable, adapter);
+      if (policy && !(policy as unknown instanceof RetryPolicy.Never)) {
+        return new RetryingImpl<Ctx, ReqMeta>(policy, opts.isSafelyRetryable ?? isSafelyRetryable, adapter);
       }
     }
 
     return PassthroughImpl;
   }
 
-  public abstract run<T>(info: ReqInfo, started: number, reqId: string, tm: TimeoutManager, fn: () => Promise<T>): Promise<T>;
+  public abstract run<T>(meta: ReqMeta, tm: TimeoutManager, fn: () => Promise<T>): Promise<T>;
 }
 
 /**
  * @internal
  */
-class RetryingImpl<Ctx extends RetryContext, ReqInfo> extends RetryManager<ReqInfo> {
-  private readonly _adapter: RetryAdapter<Ctx, ReqInfo>;
+class RetryingImpl<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata> extends RetryManager<ReqMeta> {
+  private readonly _adapter: RetryAdapter<Ctx, ReqMeta>;
 
   private readonly _isSafelyRetryable: boolean;
 
   public readonly _policy: RetryPolicy<Ctx>;
 
-  constructor(policy: RetryPolicy<Ctx>, isSafelyRetryable: boolean, adapter: RetryAdapter<Ctx, ReqInfo>) {
+  constructor(policy: RetryPolicy<Ctx>, isSafelyRetryable: boolean, adapter: RetryAdapter<Ctx, ReqMeta>) {
     super();
     this._policy = policy;
     this._isSafelyRetryable = isSafelyRetryable;
     this._adapter = adapter;
   }
 
-  public override run<T>(info: ReqInfo, started: number, reqId: string, tm: TimeoutManager, fn: () => Promise<T>) {
-    const baseCtx = new InternalRetryContext(this._isSafelyRetryable, tm.initial(), reqId);
+  public override async run<T>(metadata: ReqMeta, tm: TimeoutManager, fn: () => Promise<T>) {
+    const baseCtx = new InternalRetryContext(this._isSafelyRetryable, metadata.timeout, metadata.requestId);
 
     while (true) {
       try {
@@ -78,11 +79,11 @@ class RetryingImpl<Ctx extends RetryContext, ReqInfo> extends RetryManager<ReqIn
       } catch (caught) {
         const error = NonErrorError.asError(caught);
 
-        const ephemeralCtx = this._adapter.mkEphemeralCtx(baseCtx, performance.now() - started, error, info);
+        const ephemeralCtx = this._adapter.mkEphemeralCtx(baseCtx, performance.now() - metadata.startTime, error, metadata);
 
         if (!this._passesInitialRetryChecks(ephemeralCtx) || !this._policy.shouldRetry(ephemeralCtx)) {
           this._policy.onRetryDeclined(ephemeralCtx);
-          this._adapter.emitRetryDeclinedEvent(ephemeralCtx, info);
+          this._adapter.emitRetryDeclinedEvent(ephemeralCtx, metadata);
           throw error;
         }
 
@@ -92,7 +93,13 @@ class RetryingImpl<Ctx extends RetryContext, ReqInfo> extends RetryManager<ReqIn
 
         baseCtx.retryCount++;
         this._policy.onRetry(ephemeralCtx);
-        this._adapter.emitRetryEvent(ephemeralCtx, info);
+        this._adapter.emitRetryEvent(ephemeralCtx, metadata);
+
+        const delay = this._policy.retryDelay(ephemeralCtx);
+
+        if (delay) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
     }
   }
@@ -118,7 +125,7 @@ class RetryingImpl<Ctx extends RetryContext, ReqInfo> extends RetryManager<ReqIn
  * @internal
  */
 const PassthroughImpl = new class PassthroughImpl extends RetryManager<never> {
-  public override run<T>(_: never, __: never, ___: never, ____: never, fn: () => Promise<T>) {
+  public override run<T>(_: never, __: never, fn: () => Promise<T>) {
     return fn();
   }
 }();

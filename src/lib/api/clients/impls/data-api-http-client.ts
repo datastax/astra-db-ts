@@ -15,7 +15,8 @@
 
 import type { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import type {
-  DataAPIClientEventMap, EmptyObj,
+  DataAPIClientEventMap,
+  EmptyObj,
   NonEmpty,
   nullish,
   RawDataAPIResponse,

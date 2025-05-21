@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type { TimeoutDescriptor } from '@/src/lib/index.js';
+import type { RequestId } from '@/src/lib/api/clients/utils/request-id.js';
 
 /**
  * @internal
@@ -26,9 +27,9 @@ export class InternalRetryContext {
 
   public readonly userData: Record<string, any> = {};
 
-  public readonly requestId: string;
+  public readonly requestId: RequestId;
 
-  public constructor(isSafelyRetryable: boolean, timeout: Partial<TimeoutDescriptor>, reqId: string) {
+  public constructor(isSafelyRetryable: boolean, timeout: Partial<TimeoutDescriptor>, reqId: RequestId) {
     this.isSafelyRetryable = isSafelyRetryable;
     this.timeout = timeout;
     this.requestId = reqId;

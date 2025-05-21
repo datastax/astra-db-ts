@@ -46,6 +46,6 @@ export abstract class RetryContext {
     this.userData = ctx.userData;
     this.duration = duration;
     this.error = error;
-    this.requestId = ctx.requestId;
+    this.requestId = ctx.requestId.unwrap;
   }
 }
