@@ -20,7 +20,7 @@ import type { RetryConfig } from '@/src/lib/api/retries/config.js';
 import { RetryPolicy } from '@/src/lib/api/retries/policy.js';
 import { NonErrorError } from '@/src/lib/errors.js';
 import type { SomeDoc } from '@/src/documents/index.js';
-import { DataAPIError } from '@/src/documents/index.js';
+import { DataAPIResponseError } from '@/src/documents/index.js';
 import type { BaseRequestMetadata } from '@/src/lib/api/clients/index.js';
 
 /**
@@ -125,9 +125,9 @@ class RetryingImpl<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata
     }
 
     if (ephemeralCtx.isSafelyRetryable) {
-      return !(ephemeralCtx.error instanceof DataAPIError) || (ephemeralCtx.error as SomeDoc).canRetry === true; // TODO: Swap for actual Data API implementation once available
+      return !(ephemeralCtx.error instanceof DataAPIResponseError) || (ephemeralCtx.error as SomeDoc).canRetry === true; // TODO: Swap for actual Data API implementation once available
     } else {
-      return ephemeralCtx.error instanceof DataAPIError && (ephemeralCtx.error as SomeDoc).canRetry === true;
+      return ephemeralCtx.error instanceof DataAPIResponseError && (ephemeralCtx.error as SomeDoc).canRetry === true;
     }
   }
 
@@ -150,7 +150,7 @@ class RetryDurationTracker {
   public forRequest() {
     this._runningCount++;
 
-    if (!this._retryingStartTime) {
+    if (this._retryingStartTime === undefined) {
       this._retryingStartTime = Date.now();
     }
 
