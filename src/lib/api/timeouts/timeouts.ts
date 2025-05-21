@@ -271,9 +271,9 @@ export interface TimeoutAdapter {
  * @internal
  */
 export interface TimeoutManager {
-  reset(): void,
   initial(): Partial<TimeoutDescriptor>,
   advance(info: HTTPRequestInfo): [number, () => Error],
+  retard(amount: number): void,
 }
 
 /**
@@ -377,9 +377,6 @@ export class Timeouts {
 
   public custom(peek: Partial<TimeoutDescriptor>, advance: () => [number, TimedOutCategories]): TimeoutManager {
     return {
-      reset() {
-        // TODO
-      },
       initial() {
         return peek;
       },
@@ -388,6 +385,9 @@ export class Timeouts {
         const timeoutType = advanced[1];
         advanced[1] = () => this._adapter.mkTimeoutError(info, timeoutType);
         return advanced;
+      },
+      retard() {
+        // TODO
       },
     };
   }

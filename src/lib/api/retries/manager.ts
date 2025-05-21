@@ -59,9 +59,11 @@ export abstract class RetryManager<ReqMeta extends BaseRequestMetadata> {
 class RetryingImpl<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata> extends RetryManager<ReqMeta> {
   private readonly _adapter: RetryAdapter<Ctx, ReqMeta>;
 
+  private readonly _policy: RetryPolicy<Ctx>;
+
   private readonly _isSafelyRetryable: boolean;
 
-  public readonly _policy: RetryPolicy<Ctx>;
+  private readonly _retryDurationTracker = new RetryDurationTracker();
 
   constructor(policy: RetryPolicy<Ctx>, isSafelyRetryable: boolean, adapter: RetryAdapter<Ctx, ReqMeta>) {
     super();
@@ -74,34 +76,43 @@ class RetryingImpl<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata
     const baseCtx = new InternalRetryContext(this._isSafelyRetryable, metadata.timeout, metadata.requestId);
 
     while (true) {
+      const ephemeralDurationTracker = this._retryDurationTracker.forRequest();
+
       try {
+        tm.retard(this._retryDurationTracker.consumeAccumulatedTime());
         return fn();
       } catch (caught) {
-        const error = NonErrorError.asError(caught);
+        const ephemeralCtx = this._mkEphemeralCtx(caught, baseCtx, metadata);
 
-        const ephemeralCtx = this._adapter.mkEphemeralCtx(baseCtx, performance.now() - metadata.startTime, error, metadata);
-
-        if (!this._passesInitialRetryChecks(ephemeralCtx) || !this._policy.shouldRetry(ephemeralCtx)) {
-          this._policy.onRetryDeclined(ephemeralCtx);
-          this._adapter.emitRetryDeclinedEvent(ephemeralCtx, metadata);
-          throw error;
-        }
-
-        if (this._policy.shouldResetTimeout(ephemeralCtx)) {
-          tm.reset();
+        if (!this._shouldRetry(ephemeralCtx)) {
+          this._emitRetryDeclined(ephemeralCtx, metadata);
+          throw ephemeralCtx.error;
         }
 
         baseCtx.retryCount++;
-        this._policy.onRetry(ephemeralCtx);
-        this._adapter.emitRetryEvent(ephemeralCtx, metadata);
+        this._emitRetryAccepted(ephemeralCtx, metadata);
 
         const delay = this._policy.retryDelay(ephemeralCtx);
 
         if (delay) {
           await new Promise(resolve => setTimeout(resolve, delay));
         }
+
+        if (this._policy.shouldResetTimeout(ephemeralCtx)) {
+          ephemeralDurationTracker.end();
+        } else {
+          ephemeralDurationTracker.cancel();
+        }
       }
     }
+  }
+
+  private _mkEphemeralCtx(error: unknown, baseCtx: InternalRetryContext, metadata: ReqMeta) {
+    return this._adapter.mkEphemeralCtx(baseCtx, performance.now() - metadata.startTime, NonErrorError.asError(error), metadata);
+  }
+
+  private _shouldRetry(ephemeralCtx: Ctx) {
+    return this._passesInitialRetryChecks(ephemeralCtx) && this._policy.shouldRetry(ephemeralCtx);
   }
 
   private _passesInitialRetryChecks(ephemeralCtx: Ctx) {
@@ -118,6 +129,50 @@ class RetryingImpl<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata
     } else {
       return ephemeralCtx.error instanceof DataAPIError && (ephemeralCtx.error as SomeDoc).canRetry === true;
     }
+  }
+
+  private _emitRetryAccepted(ephemeralCtx: Ctx, metadata: ReqMeta) {
+    this._policy.onRetry(ephemeralCtx);
+    this._adapter.emitRetryEvent(ephemeralCtx, metadata);
+  }
+
+  private _emitRetryDeclined(ephemeralCtx: Ctx, metadata: ReqMeta) {
+    this._policy.onRetryDeclined(ephemeralCtx);
+    this._adapter.emitRetryDeclinedEvent(ephemeralCtx, metadata);
+  }
+}
+
+class RetryDurationTracker {
+  private _runningCount = 0;
+  private _retryingStartTime?: number;
+  private _debt = 0;
+
+  public forRequest() {
+    this._runningCount++;
+
+    if (!this._retryingStartTime) {
+      this._retryingStartTime = Date.now();
+    }
+
+    return {
+      end: () => {
+        this._runningCount--;
+
+        if (this._runningCount === 0) {
+          this._debt += (Date.now() - this._retryingStartTime!);
+          this._retryingStartTime = undefined;
+        }
+      },
+      cancel: () => {
+        this._runningCount--;
+      },
+    };
+  }
+
+  public consumeAccumulatedTime() {
+    const debt = this._debt;
+    this._debt = 0;
+    return debt;
   }
 }
 
