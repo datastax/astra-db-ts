@@ -79,8 +79,9 @@ class RetryingImpl<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata
       const ephemeralDurationTracker = this._retryDurationTracker.forRequest();
 
       try {
+        console.log(this._retryDurationTracker.consumeAccumulatedTime());
         tm.retard(this._retryDurationTracker.consumeAccumulatedTime());
-        return fn();
+        return await fn();
       } catch (caught) {
         const ephemeralCtx = this._mkEphemeralCtx(caught, baseCtx, metadata);
 

@@ -16,8 +16,8 @@ import { asMut } from '@/src/lib/utils.js';
 import type { RetryContext } from '@/src/lib/api/retries/contexts/base.js';
 
 export abstract class RetryPolicy<Ctx extends RetryContext> {
-  public static readonly Default: typeof RetryPolicy<RetryContext>;
-  public static readonly Never: typeof RetryPolicy<RetryContext>;
+  public static readonly Default: typeof DefaultRetryPolicy;
+  public static readonly Never: typeof NeverRetryPolicy;
 
   public abstract maxRetries(ctx: Ctx): number;
 
@@ -36,22 +36,16 @@ export abstract class RetryPolicy<Ctx extends RetryContext> {
   public onRetryDeclined(_: Ctx): void {}
 }
 
-/**
- * @internal
- */
 class DefaultRetryPolicy extends RetryPolicy<RetryContext> {
   public maxRetries(): number {
     return 3;
   }
 
   public retryDelay(): number {
-    return 1000;
+    return 0;
   }
 }
 
-/**
- * @internal
- */
 class NeverRetryPolicy extends RetryPolicy<RetryContext> {
   public maxRetries(): number {
     return 0;
@@ -62,5 +56,5 @@ class NeverRetryPolicy extends RetryPolicy<RetryContext> {
   }
 }
 
-asMut(DefaultRetryPolicy).Default = DefaultRetryPolicy;
-asMut(DefaultRetryPolicy).Never = NeverRetryPolicy;
+asMut(RetryPolicy).Default = DefaultRetryPolicy;
+asMut(RetryPolicy).Never = NeverRetryPolicy;
