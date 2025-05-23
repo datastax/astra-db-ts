@@ -43,7 +43,7 @@ export abstract class RetryManager<ReqMeta extends BaseRequestMetadata> {
       const policy = opts.retry?.[adapter.policy] ?? opts.retry?.defaultPolicy ?? basePolicy?.[adapter.policy] ?? basePolicy?.defaultPolicy;
 
       if (policy && !(policy as unknown instanceof RetryPolicy.Never)) {
-        return new RetryingImpl<Ctx, ReqMeta>(policy, opts.isSafelyRetryable ?? isSafelyRetryable, adapter);
+        return new RetryingImpl(policy, opts.isSafelyRetryable ?? isSafelyRetryable, adapter);
       }
     }
 
@@ -79,8 +79,6 @@ class RetryingImpl<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata
       const ephemeralDurationTracker = this._retryDurationTracker.forRequest();
 
       try {
-        console.log(this._retryDurationTracker.consumeAccumulatedTime());
-        tm.retard(this._retryDurationTracker.consumeAccumulatedTime());
         return await fn();
       } catch (caught) {
         const ephemeralCtx = this._mkEphemeralCtx(caught, baseCtx, metadata);
@@ -100,10 +98,10 @@ class RetryingImpl<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata
         }
 
         if (this._policy.shouldResetTimeout(ephemeralCtx)) {
-          ephemeralDurationTracker.end();
-        } else {
-          ephemeralDurationTracker.cancel();
+          ephemeralDurationTracker.updateRetryDebt();
         }
+      } finally {
+        tm.retard(ephemeralDurationTracker.endAndConsumeDebt());
       }
     }
   }
@@ -145,35 +143,37 @@ class RetryingImpl<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata
 
 class RetryDurationTracker {
   private _runningCount = 0;
-  private _retryingStartTime?: number;
+  private _debtLastUpdated?: number;
   private _debt = 0;
 
   public forRequest() {
     this._runningCount++;
 
-    if (this._retryingStartTime === undefined) {
-      this._retryingStartTime = Date.now();
+    if (this._debtLastUpdated === undefined) {
+      this._debtLastUpdated = Date.now();
     }
 
     return {
-      end: () => {
-        this._runningCount--;
-
-        if (this._runningCount === 0) {
-          this._debt += (Date.now() - this._retryingStartTime!);
-          this._retryingStartTime = undefined;
-        }
+      updateRetryDebt: () => {
+        this._updateDebt(this._debt + (Date.now() - this._debtLastUpdated!));
       },
-      cancel: () => {
+      endAndConsumeDebt: () => {
         this._runningCount--;
+        const debt = this._debt;
+        this._updateDebt(0);
+        return debt;
       },
     };
   }
 
-  public consumeAccumulatedTime() {
-    const debt = this._debt;
-    this._debt = 0;
-    return debt;
+  private _updateDebt(debt: number) {
+    this._debt = debt;
+
+    if (this._runningCount) {
+      this._debtLastUpdated = Date.now();
+    } else {
+      this._debtLastUpdated = undefined;
+    }
   }
 }
 

@@ -47,14 +47,37 @@ const dummyMd = {
 const dummyTm = new Timeouts({ mkTimeoutError: (info: HTTPRequestInfo) => new Error(JSON.stringify(info)) }, Timeouts.Default)
   .single('generalMethodTimeoutMs', {});
 
-let i = 0;
+await Promise.all([
+  simulateRetrying('#1', 2),
+  simulateRetrying('#2', 2),
+  simulateRetrying('#3', 2),
+]);
 
-await rm.run(dummyMd, dummyTm, async () => {
-  await new Promise(resolve => setTimeout(resolve, 500));
+await simulateRetrying('#4', 2);
 
-  if (i < 5) {
-    throw new Error(`${i++}`);
-  }
+await Promise.all([
+  simulateRetrying('#5', 2),
+  simulateRetrying('#6', 2),
+  simulateRetrying('#7', 2),
+]);
 
-  return Promise.resolve(4);
-});
+async function simulateRetrying(id: string, retryTimes: number) {
+  let i = 0;
+  let startTime = Date.now();
+
+  await rm.run(dummyMd, dummyTm, async () => {
+    if (i < retryTimes) {
+      console.log(`[${id}] Starting retry run after ${Date.now() - startTime}ms`);
+    } else {
+      console.log(`[${id}] Starting successful run after ${Date.now() - startTime}ms`);
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    if (i < retryTimes) {
+      throw new Error(`${i++}`);
+    }
+
+    return Promise.resolve(4);
+  });
+}
