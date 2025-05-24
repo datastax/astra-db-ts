@@ -230,7 +230,7 @@ parallel('integration.lib.logging.lifecycle', () => {
 
   defineLifecycleTest('should work for the lifecycle of a collection', {
     pickEmitter: (objs) => objs.collection,
-    events: { start: 'commandStarted', updateRetryDebt: 'commandFailed' },
+    events: { start: 'commandStarted', end: 'commandFailed' },
     async generateEvents(collection) {
       await collection.insertOne({ '': '' });
     },
@@ -248,7 +248,7 @@ parallel('integration.lib.logging.lifecycle', () => {
 
   defineLifecycleTest('should work for the lifecycle of a table', {
     pickEmitter: (objs) => objs.table,
-    events: { start: 'commandStarted', updateRetryDebt: 'commandWarnings' },
+    events: { start: 'commandStarted', end: 'commandWarnings' },
     async generateEvents(table) {
       await table.findOne({});
     },
@@ -266,7 +266,7 @@ parallel('integration.lib.logging.lifecycle', () => {
 
   defineLifecycleTest('should work for the lifecycle of a db', {
     pickEmitter: (objs) => objs.db,
-    events: { start: 'commandStarted', updateRetryDebt: 'commandSucceeded' },
+    events: { start: 'commandStarted', end: 'commandSucceeded' },
     async generateEvents(db) {
       await db.listTables();
     },
@@ -284,7 +284,7 @@ parallel('integration.lib.logging.lifecycle', () => {
 
   defineLifecycleTest('(ASTRA) should work for the lifecycle of an admin', {
     pickEmitter: (objs) => objs.admin,
-    events: { start: 'adminCommandStarted', updateRetryDebt: 'adminCommandSucceeded' },
+    events: { start: 'adminCommandStarted', end: 'adminCommandSucceeded' },
     async generateEvents(admin) {
       await admin.listDatabases();
     },
@@ -302,7 +302,7 @@ parallel('integration.lib.logging.lifecycle', () => {
 
   defineLifecycleTest('should work for the lifecycle of a dbAdmin', {
     pickEmitter: (objs) => objs.dbAdmin,
-    events: { start: 'adminCommandStarted', updateRetryDebt: 'adminCommandSucceeded' },
+    events: { start: 'adminCommandStarted', end: 'adminCommandSucceeded' },
     async generateEvents(dbAdmin) {
       await dbAdmin.listKeyspaces();
     },

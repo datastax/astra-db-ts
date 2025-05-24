@@ -28,6 +28,7 @@ import { RetryManager } from '@/src/lib/api/retries/manager.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 import type { RetryContext } from '@/src/lib/api/retries/contexts/base.js';
 import { RequestId } from '@/src/lib/api/clients/utils/request-id.js';
+import { RetryCfgHandler } from '@/src/lib/api/retries/cfg-handler.js';
 
 /**
  * @internal
@@ -109,7 +110,7 @@ export abstract class BaseHttpClient<Metadata extends BaseRequestMetadata> {
     this.tm = new Timeouts(adapters.timeoutAdapter, opts.timeoutDefaults);
 
     this.rm = (isSafelyRetryable: boolean, opts: CommandOptions) => {
-      return RetryManager.mk(isSafelyRetryable, opts, adapters.retryAdapter, undefined);
+      return RetryManager.mk(isSafelyRetryable, opts, adapters.retryAdapter, RetryCfgHandler.empty);
     };
   }
 

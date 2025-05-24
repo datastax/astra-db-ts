@@ -17,7 +17,9 @@ import type { RetryContext } from '@/src/lib/api/retries/contexts/base.js';
 import type { DataAPIRetryContext } from '@/src/lib/api/retries/contexts/data-api.js';
 import type { DevOpsAPIRetryContext } from '@/src/lib/api/retries/contexts/devops-api.js';
 
-export interface RetryConfig {
+export type RetryConfig = ExplicitRetryConfig | RetryPolicy<RetryContext>;
+
+export interface ExplicitRetryConfig {
   defaultPolicy?: RetryPolicy<RetryContext>,
   dataAPIPolicy?: RetryPolicy<DataAPIRetryContext>,
   devOpsAPIPolicy?: RetryPolicy<DevOpsAPIRetryContext>,

@@ -16,18 +16,20 @@ import type { RetryContext } from '@/src/lib/api/retries/contexts/base.js';
 import type { CommandOptions, SomeConstructor } from '@/src/lib/index.js';
 import { InternalRetryContext } from '@/src/lib/api/retries/contexts/internal.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
-import type { RetryConfig } from '@/src/lib/api/retries/config.js';
+import type { ParsedRetryConfig} from '@/src/lib/api/retries/cfg-handler.js';
+import { RetryCfgHandler } from '@/src/lib/api/retries/cfg-handler.js';
 import { RetryPolicy } from '@/src/lib/api/retries/policy.js';
 import { NonErrorError } from '@/src/lib/errors.js';
 import type { SomeDoc } from '@/src/documents/index.js';
 import { DataAPIResponseError } from '@/src/documents/index.js';
 import type { BaseRequestMetadata } from '@/src/lib/api/clients/index.js';
+import type { ExplicitRetryConfig } from '@/src/lib/api/retries/config.js';
 
 /**
  * @internal
  */
 export interface RetryAdapter<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata> {
-  policy: Exclude<keyof RetryConfig, 'defaultPolicy'>,
+  policy: Exclude<keyof ExplicitRetryConfig, 'defaultPolicy'>,
   mkEphemeralCtx(ctx: InternalRetryContext, duration: number, error: Error, req: ReqMeta): Ctx,
   emitRetryEvent(ctx: Ctx, meta: ReqMeta): void,
   emitRetryDeclinedEvent(ctx: Ctx, meta: ReqMeta): void,
@@ -38,9 +40,10 @@ export interface RetryAdapter<Ctx extends RetryContext, ReqMeta extends BaseRequ
  * @internal
  */
 export abstract class RetryManager<ReqMeta extends BaseRequestMetadata> {
-  public static mk<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata>(isSafelyRetryable: boolean, opts: CommandOptions, adapter: RetryAdapter<Ctx, ReqMeta>, basePolicy: RetryConfig | undefined): RetryManager<ReqMeta> {
+  public static mk<Ctx extends RetryContext, ReqMeta extends BaseRequestMetadata>(isSafelyRetryable: boolean, opts: CommandOptions, adapter: RetryAdapter<Ctx, ReqMeta>, basePolicy: ParsedRetryConfig): RetryManager<ReqMeta> {
     if (opts.retry ?? basePolicy) {
-      const policy = opts.retry?.[adapter.policy] ?? opts.retry?.defaultPolicy ?? basePolicy?.[adapter.policy] ?? basePolicy?.defaultPolicy;
+      const policies = RetryCfgHandler.concatParseWithin([basePolicy], opts, 'retry');
+      const policy = policies?.[adapter.policy] ?? policies?.defaultPolicy;
 
       if (policy && !(policy as unknown instanceof RetryPolicy.Never)) {
         return new RetryingImpl(policy, opts.isSafelyRetryable ?? isSafelyRetryable, adapter);
@@ -150,12 +153,12 @@ class RetryDurationTracker {
     this._runningCount++;
 
     if (this._debtLastUpdated === undefined) {
-      this._debtLastUpdated = Date.now();
+      this._debtLastUpdated = performance.now();
     }
 
     return {
       updateRetryDebt: () => {
-        this._updateDebt(this._debt + (Date.now() - this._debtLastUpdated!));
+        this._updateDebt(this._debt + (performance.now() - this._debtLastUpdated!));
       },
       endAndConsumeDebt: () => {
         this._runningCount--;
@@ -170,7 +173,7 @@ class RetryDurationTracker {
     this._debt = debt;
 
     if (this._runningCount) {
-      this._debtLastUpdated = Date.now();
+      this._debtLastUpdated = performance.now();
     } else {
       this._debtLastUpdated = undefined;
     }
