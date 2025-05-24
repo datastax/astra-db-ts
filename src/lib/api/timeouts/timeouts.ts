@@ -311,8 +311,26 @@ export class Timeouts {
         [key]: timeout,
       };
 
+      let started: number;
+      let retardAmount = 0;
+
       return this.custom(initial, () => {
-        return [timeout, 'provided'];
+        if (!started) {
+          started = Date.now();
+        }
+
+        const elapsed = Date.now() - started;
+        const adjustedOverallTimeout = timeout + retardAmount;
+        const overallLeft = adjustedOverallTimeout - elapsed;
+        const effectiveTimeout = Math.min(timeout, overallLeft); // Request timeout stays same, but can't exceed overall left
+
+        if (effectiveTimeout <= 0) {
+          return [0, 'provided'];
+        }
+
+        return [effectiveTimeout, 'provided'];
+      }, (amount) => {
+        retardAmount += amount;
       });
     }
 
@@ -321,17 +339,35 @@ export class Timeouts {
       [key]: (override?.timeout?.[key] ?? this.baseTimeouts[key]) || EffectivelyInfinity,
     };
 
-    const timeout = Math.min(timeouts.requestTimeoutMs, timeouts[key]);
-
-    const type: TimedOutCategories =
-      (timeouts.requestTimeoutMs === timeouts[key])
-        ? ['requestTimeoutMs', key] :
-      (timeouts.requestTimeoutMs < timeouts[key])
-        ? ['requestTimeoutMs']
-        : [key];
+    let started: number;
+    let retardAmount = 0;
 
     return this.custom(timeouts, () => {
-      return [timeout, type];
+      if (!started) {
+        started = performance.now();
+      }
+
+      const elapsed = performance.now() - started;
+      const adjustedOverallTimeout = timeouts[key] + retardAmount;
+      const overallLeft = adjustedOverallTimeout - elapsed;
+
+      // Request timeout stays constant, but check against remaining overall time
+      const effectiveRequestTimeout = Math.min(timeouts.requestTimeoutMs, overallLeft);
+
+      if (overallLeft <= 0) {
+        return [0, [key]];
+      }
+
+      const type: TimedOutCategories =
+        (effectiveRequestTimeout === overallLeft)
+          ? ['requestTimeoutMs', key] :
+        (effectiveRequestTimeout < overallLeft)
+          ? ['requestTimeoutMs']
+          : [key];
+
+      return [effectiveRequestTimeout, type];
+    }, (amount) => {
+      retardAmount += amount;
     });
   }
 
@@ -357,13 +393,16 @@ export class Timeouts {
     };
 
     let started: number;
+    let retardAmount = 0;
 
     return this.custom(initial, () => {
       if (!started) {
-        started = Date.now();
+        started = performance.now();
       }
 
-      const overallLeft = overallTimeout - (Date.now() - started);
+      const elapsed = performance.now() - started;
+      const adjustedOverallTimeout = overallTimeout + retardAmount;
+      const overallLeft = adjustedOverallTimeout - elapsed;
 
       if (overallLeft < requestTimeout) {
         return [overallLeft, [key]];
@@ -372,10 +411,12 @@ export class Timeouts {
       } else {
         return [overallLeft, ['requestTimeoutMs', key]];
       }
+    }, (amount) => {
+      retardAmount += amount;
     });
   }
 
-  public custom(peek: Partial<TimeoutDescriptor>, advance: () => [number, TimedOutCategories]): TimeoutManager {
+  public custom(peek: Partial<TimeoutDescriptor>, advance: () => [number, TimedOutCategories], retard?: (amount: number) => void): TimeoutManager {
     return {
       initial() {
         return peek;
@@ -386,8 +427,8 @@ export class Timeouts {
         advanced[1] = () => this._adapter.mkTimeoutError(info, timeoutType);
         return advanced;
       },
-      retard() {
-        // TODO
+      retard(amount: number) {
+        retard?.(amount);
       },
     };
   }
