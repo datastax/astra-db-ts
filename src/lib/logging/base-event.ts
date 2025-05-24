@@ -14,6 +14,7 @@
 
 import type { DataAPIClientEvent } from '@/src/lib/index.js';
 import type { SomeDoc } from '@/src/documents/index.js';
+import type { RequestId } from '@/src/lib/api/clients/utils/request-id.js';
 
 /**
  * @internal
@@ -213,9 +214,9 @@ export abstract class BaseClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string, requestId: string, extra: Record<string, unknown> | undefined) {
+  protected constructor(name: string, requestId: RequestId, extra: Record<string, unknown> | undefined) {
     this.name = name;
-    this.requestId = requestId;
+    this.requestId = requestId.unwrap;
     this.extraLogInfo = (extra && Object.keys(extra).length > 0) ? extra : undefined;
     this.timestamp = new Date();
 

@@ -14,7 +14,7 @@
 
 import assert from 'assert';
 import { describe, it } from '@/tests/testlib/index.js';
-import { HeadersResolver } from '@/src/lib/api/clients/headers-resolver.js';
+import { HeadersResolver } from '@/src/lib/api/clients/utils/headers-resolver.js';
 import { EmbeddingAPIKeyHeaderProvider, HeadersProvider, TokenProvider } from '@/src/lib/index.js';
 import { DEFAULT_DATA_API_AUTH_HEADER } from '@/src/lib/api/constants.js';
 import fc from 'fast-check';
@@ -41,7 +41,7 @@ describe('unit.lib.api.clients.headers-resolver', () => {
         TokenProvider.opts.parse('new').toHeadersProvider(),
       ]);
 
-      const hr = new HeadersResolver('data-api', providers, {
+      const hr = new HeadersResolver({ target: 'data-api' }, providers, {
         'x-foo': 'bar',
         'car': 'bus',
       });
@@ -69,7 +69,7 @@ describe('unit.lib.api.clients.headers-resolver', () => {
             rawHeaders.map((h) => HeadersProvider.opts.fromObj.parse(h)),
           );
 
-          const hr = new HeadersResolver('data-api', providers, baseHeaders);
+          const hr = new HeadersResolver({ target: 'data-api' }, providers, baseHeaders);
           const headers = hr.resolve();
 
           const expected = mergeObjsIgnoringUndefined(baseHeaders, ...rawHeaders);
@@ -105,7 +105,7 @@ describe('unit.lib.api.clients.headers-resolver', () => {
         TokenProvider.opts.parse('new').toHeadersProvider(),
       ]);
 
-      const hr = new HeadersResolver('data-api', providers, {
+      const hr = new HeadersResolver({ target: 'data-api' }, providers, {
         'x-foo': 'bar',
         'car': 'bus',
       });
@@ -146,7 +146,7 @@ describe('unit.lib.api.clients.headers-resolver', () => {
             }),
           );
 
-          const hr = new HeadersResolver('data-api', providers, baseHeaders);
+          const hr = new HeadersResolver({ target: 'data-api' }, providers, baseHeaders);
           const headers = hr.resolve();
 
           const expected = mergeObjsIgnoringUndefined(baseHeaders, ...rawHeaders);

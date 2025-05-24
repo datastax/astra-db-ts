@@ -18,6 +18,7 @@ import { DevOpsAPIResponseError } from '@/src/administration/index.js';
 import { background, Cfg, initTestObjects, it } from '@/tests/testlib/index.js';
 import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
+import { RequestId } from '@/src/lib/api/clients/utils/request-id.js';
 
 background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', () => {
   it('works', async () => {
@@ -133,14 +134,18 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
+      }, {
         target: 'ACTIVE',
         legalStates: ['PENDING', 'INITIALIZING'],
         defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
-      }, 0);
+      }, {
+        requestId: new RequestId(),
+        reqOpts: {},
+      });
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -184,14 +189,18 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.createKeyspace('other_keyspace');
-      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
+      }, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
-        defaultPollInterval: 1000,
+        defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
-      }, 0);
+      }, {
+        requestId: new RequestId(),
+        reqOpts: {},
+      });
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -209,14 +218,18 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.dropKeyspace('other_keyspace', { blocking: true });
-      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
+      }, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
-        defaultPollInterval: 1000,
+        defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
-      }, 0);
+      }, {
+        requestId: new RequestId(),
+        reqOpts: {},
+      });
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -236,14 +249,18 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await admin.dropDatabase(syncDb, { timeout: 1440000 });
-      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
+      }, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
         defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
-      }, 0);
+      }, {
+        requestId: new RequestId(),
+        reqOpts: {},
+      });
     }
 
     for (const [dbAdmin, dbType] of [[syncDbAdmin, 'sync'], [asyncDbAdmin, 'async']] as const) {

@@ -13,7 +13,7 @@
 // limitations under the License.
 // import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
 
-import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
+import type { DevOpsAPIRequestMetadata } from '@/src/lib/api/clients/impls/devops-api-http-client.js';
 import type { DataAPIWarningDescriptor } from '@/src/documents/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
@@ -90,14 +90,14 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string, requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean) {
-    super(name, requestId, undefined);
-    this.url = baseUrl + info.path;
-    this.requestMethod = info.method;
-    this.requestBody = info.data;
-    this.requestParams = info.params;
-    this.isLongRunning = longRunning;
-    this.invokingMethod = info.methodName;
+  protected constructor(name: string, metadata: DevOpsAPIRequestMetadata) {
+    super(name, metadata.requestId, undefined);
+    this.url = metadata.baseUrl + metadata.reqOpts.path;
+    this.requestMethod = metadata.reqOpts.method;
+    this.requestBody = metadata.reqOpts.data;
+    this.requestParams = metadata.reqOpts.params;
+    this.isLongRunning = metadata.isLongRunning;
+    this.invokingMethod = metadata.reqOpts.methodName;
   }
 
   public override getMessagePrefix() {
@@ -135,9 +135,9 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>) {
-    super('AdminCommandStarted', requestId, baseUrl, info, longRunning);
-    this.timeout = timeout;
+  constructor(metadata: DevOpsAPIRequestMetadata) {
+    super('AdminCommandStarted', metadata);
+    this.timeout = metadata.timeout;
   }
 
   public override getMessage(): string {
@@ -182,9 +182,9 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number) {
-    super('AdminCommandPolling', requestId, baseUrl, info, true);
-    this.elapsed = performance.now() - started;
+  constructor(metadata: DevOpsAPIRequestMetadata, interval: number, pollCount: number) {
+    super('AdminCommandPolling', metadata);
+    this.elapsed = performance.now() - metadata.startTime;
     this.pollInterval = interval;
     this.pollCount = pollCount;
   }
@@ -224,9 +224,9 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
-    super('AdminCommandSucceeded', requestId, baseUrl, info, longRunning);
-    this.duration = performance.now() - started;
+  constructor(metadata: DevOpsAPIRequestMetadata, data: Record<string, any> | undefined) {
+    super('AdminCommandSucceeded', metadata);
+    this.duration = performance.now() - metadata.startTime;
     this.responseBody = data || undefined;
   }
 
@@ -268,9 +268,9 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
-    super('AdminCommandFailed', requestId, baseUrl, info, longRunning);
-    this.duration = performance.now() - started;
+  constructor(metadata: DevOpsAPIRequestMetadata, error: Error) {
+    super('AdminCommandFailed', metadata);
+    this.duration = performance.now() - metadata.startTime;
     this.error = error;
   }
 
@@ -304,8 +304,8 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, baseUrl: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: NonEmpty<DataAPIWarningDescriptor>) {
-    super('AdminCommandWarnings', requestId, baseUrl, info, longRunning);
+  constructor(metadata: DevOpsAPIRequestMetadata, warnings: NonEmpty<DataAPIWarningDescriptor>) {
+    super('AdminCommandWarnings', metadata);
     this.warnings = warnings;
   }
 

@@ -23,7 +23,7 @@ import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
 import { Db } from '@/src/db/db.js';
 import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
-import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
+import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/impls/devops-api-http-client.js';
 import type { CommandOptions, OpaqueHttpClient } from '@/src/lib/index.js';
 import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
 import type { AstraFullDatabaseInfo } from '@/src/administration/types/admin/database-info.js';
@@ -283,7 +283,8 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       method: HttpMethods.Get,
       path: `/databases/${id}`,
       methodName: 'admin.dbInfo',
-    }, tm);
+      timeoutManager: tm,
+    });
 
     return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
   }
@@ -341,7 +342,8 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       path: `/databases`,
       params: params,
       methodName: 'admin.listDatabases',
-    }, tm);
+      timeoutManager: tm,
+    });
 
     return resp.data!.map((d: SomeDoc) => buildAstraDatabaseAdminInfo(d, this.#environment));
   }
@@ -414,12 +416,12 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       path: '/databases',
       data: definition,
       methodName: 'admin.createDatabase',
+      timeoutManager: tm,
     }, {
       id: (resp) => resp.headers.location,
       target: 'ACTIVE',
       legalStates: ['INITIALIZING', 'PENDING'],
       defaultPollInterval: 10000,
-      timeoutManager: tm,
       options,
     });
 
@@ -462,12 +464,12 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       method: HttpMethods.Post,
       path: `/databases/${id}/terminate`,
       methodName: 'admin.dropDatabase',
+      timeoutManager: tm,
     }, {
       id: id,
       target: 'TERMINATED',
       legalStates: ['TERMINATING'],
       defaultPollInterval: 10000,
-      timeoutManager: tm,
       options,
     });
   }
@@ -524,7 +526,8 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
         'region-type': 'vector',
       },
       methodName: 'admin.findAvailableRegions',
-    }, tm);
+      timeoutManager: tm,
+    });
 
     return resp.data!.map((region: any): AstraAvailableRegionInfo => ({
       classification: region.classification,

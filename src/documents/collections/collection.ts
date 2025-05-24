@@ -53,7 +53,7 @@ import type {
   DropCollectionOptions,
   WithKeyspace,
 } from '@/src/db/index.js';
-import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
+import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/impls/data-api-http-client.js';
 import { HierarchicalLogger } from '@/src/lib/logging/hierarchical-logger.js';
 import type { OpaqueHttpClient, CommandOptions } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';

@@ -135,7 +135,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   ) {
     [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs.flat());
   }
-
+  
   public serialize(obj: unknown, target: SerDesTarget = SerDesTarget.Record): [unknown, boolean] {
     if (obj === null || obj === undefined) {
       return [obj, false];
