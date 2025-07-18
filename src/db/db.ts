@@ -728,6 +728,8 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
           defaultId: options?.defaultId,
           indexing: options?.indexing as any,
           vector: options?.vector,
+          lexical: options?.lexical,
+          rerank: options?.rerank,
         },
       },
     };
