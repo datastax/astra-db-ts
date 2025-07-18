@@ -152,6 +152,10 @@ function LibCheck(): Step {
           });
         } catch (_) {
           Utils.printFailed('Library compilation failed');
+
+          await spinner('Rerunning tsc with captured output...', async () => {
+            await $({ stdio: 'inherit', nothrow: true })`npx tsc`;
+          });
         }
       } else {
         Utils.printFailed('Could not set up library for lib-check phase');

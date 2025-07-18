@@ -34,7 +34,7 @@ import type {
   WithSim,
 } from '@/src/documents/index.js';
 import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
-import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
+import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/impls/data-api-http-client.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import type {
   AlterTableOptions,

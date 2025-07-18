@@ -220,7 +220,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     it('should throw an error if no keyspace set', async () => {
       const { db } = initTestObjects();
       db.useKeyspace(undefined!);
-      await assert.rejects(() => db.command({ findEmbeddingProviders: {} }), { message: 'Db is missing a required keyspace; be sure to set one with client.db(..., { keyspace }), or db.useKeyspace()' });
+      await assert.rejects(() => db.command({ findEmbeddingProviders: {} }), { message: 'Db is missing a working keyspace; set one with client.db(..., { keyspace }) or db.useKeyspace()' });
     });
 
     it('should not throw an error if no keyspace set but keyspace: null', async () => {

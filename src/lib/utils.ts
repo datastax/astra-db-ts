@@ -15,7 +15,7 @@
 import { BigNumber } from 'bignumber.js';
 import type { Decoder } from 'decoders';
 import { array, define, either, instanceOf } from 'decoders';
-import type { EmptyObj, NonEmpty, nullish } from '@/src/lib/types.js';
+import type { EmptyObj, Mut, NonEmpty, nullish } from '@/src/lib/types.js';
 
 /**
  * @internal
@@ -45,6 +45,11 @@ export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: unk
     return otherwise;
   }
 }
+
+/**
+ * @internal
+ */
+export const asMut = <T extends object>(t: T): Mut<T> => t;
 
 /**
  * ##### Overview

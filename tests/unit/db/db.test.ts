@@ -36,13 +36,13 @@ describe('unit.db.db', () => {
     it('should allow db construction from endpoint', () => {
       const db = new Db(internalOps(), 'https://id-region.apps.astra.datastax.com', DbOptsHandler.empty);
       assert.ok(db);
-      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
+      assert.strictEqual(db._httpClient._baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
     });
 
     it('should trim trailing slash in endpoints', () => {
       for (let i = 0; i < 10; i++) {
         const db = new Db(internalOps(), `https://id-region.apps.astra.datastax.com${'/'.repeat(i)}`, DbOptsHandler.empty);
-        assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
+        assert.strictEqual(db._httpClient._baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
       }
     });
 
@@ -56,13 +56,13 @@ describe('unit.db.db', () => {
     it('should allow db construction from endpoint, using default options', () => {
       const db = new Db(internalOps(), 'https://id-region.apps.astra.datastax.com', DbOptsHandler.empty);
       assert.ok(db);
-      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
+      assert.strictEqual(db._httpClient._baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
     });
 
     it('should allow db construction from endpoint, overwriting options', () => {
       const db = new Db(internalOps({ dataApiPath: 'old', keyspace: 'old' }), 'https://id-region.apps.astra.datastax.com', DbOptsHandler.parse({ dataApiPath: 'new', keyspace: 'new' }));
       assert.ok(db);
-      assert.strictEqual(db._httpClient.baseUrl, 'https://id-region.apps.astra.datastax.com/new');
+      assert.strictEqual(db._httpClient._baseUrl, 'https://id-region.apps.astra.datastax.com/new');
       assert.strictEqual(db.keyspace, 'new');
     });
 
@@ -95,12 +95,12 @@ describe('unit.db.db', () => {
 
     it('handles different dataApiPath', () => {
       const db = new Db(internalOps({ dataApiPath: 'api/json/v2' }), Cfg.DbUrl, DbOptsHandler.empty);
-      assert.strictEqual(db._httpClient.baseUrl, `${Cfg.DbUrl}/api/json/v2`);
+      assert.strictEqual(db._httpClient._baseUrl, `${Cfg.DbUrl}/api/json/v2`);
     });
 
     it('handles different dataApiPath when overridden', () => {
       const db = new Db(internalOps({ dataApiPath: 'api/json/v2' }), Cfg.DbUrl, DbOptsHandler.parse({ dataApiPath: 'api/json/v3' }));
-      assert.strictEqual(db._httpClient.baseUrl, `${Cfg.DbUrl}/api/json/v3`);
+      assert.strictEqual(db._httpClient._baseUrl, `${Cfg.DbUrl}/api/json/v3`);
     });
 
     it('should accept valid logging', () => {

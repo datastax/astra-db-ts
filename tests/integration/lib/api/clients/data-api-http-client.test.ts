@@ -15,7 +15,7 @@
 
 import { Cfg, describe, initTestObjects, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/impls/data-api-http-client.js';
 import { DataAPIHttpError, DataAPIResponseError } from '@/src/documents/index.js';
 
 describe('integration.lib.api.clients.data-api-http-client', ({ db }) => {

@@ -12,7 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './impls/devops-api-http-client.js';
-export * from './impls/data-api-http-client.js';
-export * from './impls/base-http-client.js';
-export type * from './types.js';
+import * as uuid from 'uuid';
+
+/**
+ * @internal
+ */
+export class RequestId {
+  private _id?: string;
+
+  get unwrap() {
+    return (this._id ??= uuid.v4());
+  }
+}
