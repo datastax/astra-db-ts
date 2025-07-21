@@ -58,7 +58,7 @@
     "test": "sh scripts/test.ts",
     "build": "sh scripts/build.ts",
     "version": "sh scripts/utils/version.sh"
-  },g
+  },
   "bugs": {
     "url": "https://github.com/datastax/astra-ts-client/issues"
   },
