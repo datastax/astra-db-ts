@@ -645,6 +645,7 @@ export type CollectionFilterOps<Elem> = {
     $lte?: Elem;
     $gt?: Elem;
     $gte?: Elem;
+    $match?: string;
 } & (any[] extends Elem ? CollectionArrayFilterOps<Elem> : EmptyObj);
 
 // @public
