@@ -55,8 +55,8 @@
   },
   "scripts": {
     "lint": "eslint src/* tests/*",
-    "test": "sh scripts/test.ts",
-    "build": "sh scripts/build.ts",
+    "test": "scripts/test.ts",
+    "build": "scripts/build.ts",
     "version": "sh scripts/utils/version.sh"
   },
   "bugs": {
