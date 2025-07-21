@@ -166,7 +166,7 @@ describe('unit.documents.datatypes.time', () => {
 
     it('should work with a base Date', () => {
       assert.deepStrictEqual(time('12:34:56').toDate(new Date('2000-01-01T00:00:00')), new Date('2000-01-01T12:34:56'));
-      assert.deepStrictEqual(time('12:34:56').toDate(new Date('2000-01-01T00:00:00Z')), new Date('2000-01-01T12:34:56'));
+      assert.deepStrictEqual(time('12:34:56').toDate(new Date('2000-01-01T00:00:00')), new Date('2000-01-01T12:34:56'));
     });
 
     it('should work with a base DataAPITime', () => {

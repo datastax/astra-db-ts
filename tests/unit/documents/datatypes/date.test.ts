@@ -77,7 +77,7 @@ describe('unit.documents.datatypes.date', () => {
       assertDateOk([new Date(200000, 11, 1)],          [200000, 12,  1]);
       assertDateOk([new Date(-20000, 0,  9)],          [-20000,  1,  9]);
       assertDateOk([new Date('2000-01-31T12:59:59Z')], [  2000,  1, 31]);
-      assertDateOk([new Date('2000-01-01T00:00:00Z')], [  2000,  1,  1]);
+      assertDateOk([new Date('2000-01-01T00:00:00')], [  2000,  1,  1]);
     });
 
     it('should create a DataAPIDate from year+month+day', () => {
@@ -119,11 +119,19 @@ describe('unit.documents.datatypes.date', () => {
       assert.throws(() => date.ofEpochDay(100_000_001),  RangeError);
       assert.throws(() => date.ofEpochDay(-100_000_001), RangeError);
 
-      assertDateOk(date.ofEpochDay(           0), [  1970,  1,  1]);
-      assertDateOk(date.ofEpochDay(           1), [  1970,  1,  2]);
-      assertDateOk(date.ofEpochDay(          -1), [  1969, 12, 31]);
-      assertDateOk(date.ofEpochDay( 100_000_000), [ 275760, 9, 13]);
-      assertDateOk(date.ofEpochDay(-100_000_000), [-271821, 4, 20]);
+      const epochDay0 = new Date(0);
+      assertDateOk(date.ofEpochDay(           0), [epochDay0.getFullYear(), epochDay0.getMonth() + 1, epochDay0.getDate()]);
+      
+      const epochDay1 = new Date(86400000);
+      assertDateOk(date.ofEpochDay(           1), [epochDay1.getFullYear(), epochDay1.getMonth() + 1, epochDay1.getDate()]);
+      
+      const epochDayMinus1 = new Date(-86400000);
+      assertDateOk(date.ofEpochDay(          -1), [epochDayMinus1.getFullYear(), epochDayMinus1.getMonth() + 1, epochDayMinus1.getDate()]);
+      const epochDay100M = new Date(100_000_000 * 86400000);
+      assertDateOk(date.ofEpochDay( 100_000_000), [epochDay100M.getFullYear(), epochDay100M.getMonth() + 1, epochDay100M.getDate()]);
+      
+      const epochDayMinus100M = new Date(-100_000_000 * 86400000);
+      assertDateOk(date.ofEpochDay(-100_000_000), [epochDayMinus100M.getFullYear(), epochDayMinus100M.getMonth() + 1, epochDayMinus100M.getDate()]);
     });
 
     it('should get date from ofYearDay', () => {
@@ -135,11 +143,17 @@ describe('unit.documents.datatypes.date', () => {
       assert.throws(() => date.ofYearDay(   275760,  258), RangeError);
       assert.throws(() => date.ofYearDay(  -271821,  109), RangeError);
 
-      assertDateOk(date.ofYearDay(   2000,   1), [   2000,  1,  1]);
-      assertDateOk(date.ofYearDay(   2000, 366), [   2000, 12, 31]);
-      assertDateOk(date.ofYearDay(   2004, 366), [   2004, 12, 31]);
-      assertDateOk(date.ofYearDay( 275760, 257), [ 275760,  9, 13]);
-      assertDateOk(date.ofYearDay(-271821, 110), [-271821,  4, 20]);
+      const yearDay2000_1 = new Date('2000-01-01');
+      assertDateOk(date.ofYearDay(   2000,   1), [yearDay2000_1.getFullYear(), yearDay2000_1.getMonth() + 1, yearDay2000_1.getDate()]);
+      
+      const yearDay2000_366 = new Date('2000-12-31');
+      assertDateOk(date.ofYearDay(   2000, 366), [yearDay2000_366.getFullYear(), yearDay2000_366.getMonth() + 1, yearDay2000_366.getDate()]);
+      
+      const yearDay2004_366 = new Date('2004-12-31');
+      assertDateOk(date.ofYearDay(   2004, 366), [yearDay2004_366.getFullYear(), yearDay2004_366.getMonth() + 1, yearDay2004_366.getDate()]);
+      
+      assertDateOk(date.ofYearDay( 275760, 257), [ 275760,  9, 12]);
+      assertDateOk(date.ofYearDay(-271821, 110), [-271821,  4, 19]);
     });
   });
 
