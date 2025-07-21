@@ -1,6 +1,6 @@
 {
   "name": "@datastax/astra-db-ts",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Data API TypeScript client",
   "contributors": [
     "Kavin Gupta (https://github.com/toptobes)",
@@ -55,10 +55,10 @@
   },
   "scripts": {
     "lint": "eslint src/* tests/*",
-    "test": "sh scripts/test.sh",
-    "build": "sh scripts/build.sh",
+    "test": "sh scripts/test.ts",
+    "build": "sh scripts/build.ts",
     "version": "sh scripts/utils/version.sh"
-  },
+  },g
   "bugs": {
     "url": "https://github.com/datastax/astra-ts-client/issues"
   },
