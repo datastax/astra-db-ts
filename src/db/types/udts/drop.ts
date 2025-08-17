@@ -16,13 +16,15 @@ import type { CommandOptions } from '@/src/lib/index.js';
 import type { WithKeyspace } from '@/src/db/index.js';
 
 /**
- * The options for dropping a table (via {@link Db.dropTable}).
+ * The options for dropping a user-defined type (via {@link Db.dropType}).
+ *
+ * See {@link Db.dropType} for more information.
  *
  * @public
  */
-export interface DropTableOptions extends CommandOptions<{ timeout: 'tableAdminTimeoutMs' }>, WithKeyspace {
+export interface DropTypeOptions extends CommandOptions<{ timeout: 'tableAdminTimeoutMs' }>, WithKeyspace {
   /**
-   * If `true`, no error will be thrown if the table does not exist.
+   * If `true`, no error will be thrown if the UDT does not exist.
    *
    * Defaults to `false`.
    */

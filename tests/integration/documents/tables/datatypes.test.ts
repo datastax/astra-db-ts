@@ -322,4 +322,68 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
 
     await colAsserter.ok('1h', duration);
   });
+
+  it('should handle different UDT insertion cases', async (key) => {
+    const colAsserter = mkColumnAsserter(key, 'example_udt');
+
+    await colAsserter.notOk('invalid udt');
+    await colAsserter.notOk({ invalid: 'structure' });
+    await colAsserter.notOk({ description: 'test', tags: 'invalid', metadata: {} });
+
+    await colAsserter.ok({
+      description: 'test description',
+      tags: ['tag1', 'tag2', 'tag3'],
+      metadata: new Map([['key1', 1], ['key2', 2]]),
+    });
+
+    await colAsserter.ok({
+      description: 'another test',
+      tags: [],
+      metadata: {},
+    }, _ => ({
+      description: 'another test',
+      tags: [],
+      metadata: new Map(),
+    }));
+
+    await colAsserter.ok({
+      description: 'complex test',
+      tags: ['a'.repeat(1000), 'unicode: ⨳⨓⨋'],
+      metadata: { 'complex key': 999, '⨳⨓⨋': -1 },
+    }, _ => ({
+      description: 'complex test',
+      tags: ['a'.repeat(1000), 'unicode: ⨳⨓⨋'],
+      metadata: new Map([['complex key', 999], ['⨳⨓⨋', -1]]),
+    }));
+
+    await colAsserter.ok({}, _ => ({
+      description: null,
+      tags: [],
+      metadata: new Map(),
+    }));
+
+    await colAsserter.ok({
+      description: 'partial test',
+    }, _ => ({
+      description: 'partial test',
+      tags: [],
+      metadata: new Map(),
+    }));
+
+    await colAsserter.ok({
+      tags: ['only-tags'],
+    }, _ => ({
+      description: null,
+      tags: ['only-tags'],
+      metadata: new Map(),
+    }));
+
+    await colAsserter.ok({
+      metadata: { 'only': 123 },
+    }, _ => ({
+      description: null,
+      tags: [],
+      metadata: new Map([['only', 123]]),
+    }));
+  });
 });

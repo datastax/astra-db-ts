@@ -26,7 +26,7 @@ import { unitTestForName } from '@/tests/unit/documents/__common/ser-des/for-nam
 import fc from 'fast-check';
 import { desSchema } from '@/tests/testlib/utils.js';
 import { SerDesTarget } from '@/src/lib/index.js';
-import type { TableScalarType } from '@/src/db/index.js';
+import type { DataAPIScalarTypes } from '@/src/db/index.js';
 import { DataAPIDate, DataAPITime, DataAPIVector } from '@/src/documents/index.js';
 import { BigNumber } from 'bignumber.js';
 
@@ -55,7 +55,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
   describe('implementations', () => {
     const tableKeyArb = arbs.nonProtoString().filter(Boolean);
 
-    for (const column of ['bigint', 'counter', 'varint'] as TableScalarType[]) {
+    for (const column of ['bigint', 'counter', 'varint'] as DataAPIScalarTypes[]) {
       describe(column, () => {
         it('should deserialize integers into a BigInt', () => {
           fc.assert(
@@ -91,7 +91,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
       });
     }
 
-    for (const column of ['float', 'double'] as TableScalarType[]) {
+    for (const column of ['float', 'double'] as DataAPIScalarTypes[]) {
       describe(column, () => {
         const doubleArb = fc.double().map((v: number) => v === 0 ? 0 : v); // -0 not guaranteed to be preserved
 
@@ -129,7 +129,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
       });
     }
 
-    for (const column of ['int', 'smallint', 'tinyint'] as TableScalarType[]) {
+    for (const column of ['int', 'smallint', 'tinyint'] as DataAPIScalarTypes[]) {
       describe(column, () => {
         it('should deserialize integers as themselves', () => {
           fc.assert(

@@ -176,6 +176,295 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     });
   });
 
+  describe('(LONG) createType', () => {
+    it('should create a UDT', async () => {
+      await db.createType('type_1c', {
+        definition: {
+          fields: {
+            street: 'text',
+            city: 'text',
+            zipCode: 'int',
+          },
+        },
+      });
+
+      const types = await db.listTypes();
+      const foundType = types.find(t => t.name === 'type_1c');
+      assert.ok(foundType);
+      assert.strictEqual(foundType.name, 'type_1c');
+    });
+
+    it('should create a UDT in another keyspace', async () => {
+      await db.createType('type_2c', {
+        definition: {
+          fields: {
+            name: 'text',
+            age: 'int',
+          },
+        },
+        keyspace: Cfg.OtherKeyspace,
+      });
+
+      const types = await db.listTypes({ keyspace: Cfg.OtherKeyspace });
+      const foundType = types.find(t => t.name === 'type_2c');
+      assert.ok(foundType);
+    });
+
+    it('should create UDTs idempotently with ifNotExists', async () => {
+      await db.createType('type_4c', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+        ifNotExists: true,
+      });
+
+      await db.createType('type_4c', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+        ifNotExists: true,
+      });
+
+      const types = await db.listTypes();
+      const foundTypes = types.filter(t => t.name === 'type_4c');
+      assert.strictEqual(foundTypes.length, 1);
+    });
+
+    it('should fail creating UDT with same name without ifNotExists', async () => {
+      await db.createType('type_6c', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+      });
+
+      try {
+        await db.createType('type_6c', {
+          definition: {
+            fields: { field2: 'int' },
+          },
+        });
+        assert.fail('Expected an error');
+      } catch (e) {
+        assert.ok(e instanceof DataAPIResponseError);
+      }
+    });
+
+    it('should create UDTs with different options in different keyspaces', async () => {
+      await db.createType('type_7c', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+      });
+
+      await db.createType('type_7c', {
+        definition: {
+          fields: { field2: 'int' },
+        },
+        keyspace: Cfg.OtherKeyspace,
+      });
+
+      const defaultTypes = await db.listTypes();
+      const otherTypes = await db.listTypes({ keyspace: Cfg.OtherKeyspace });
+
+      const defaultType = defaultTypes.find(t => t.name === 'type_7c');
+      const otherType = otherTypes.find(t => t.name === 'type_7c');
+
+      assert.ok(defaultType);
+      assert.ok(otherType);
+    });
+  });
+
+  describe('(LONG) dropType', () => {
+    it('should drop a UDT', async () => {
+      await db.createType('type_1d', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+      });
+
+      await db.dropType('type_1d');
+
+      const types = await db.listTypes();
+      const foundType = types.find(t => t.name === 'type_1d');
+      assert.strictEqual(foundType, undefined);
+    });
+
+    it('should drop a UDT in non-default keyspace', async () => {
+      await db.createType('type_3d', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+        keyspace: Cfg.OtherKeyspace,
+      });
+
+      await db.dropType('type_3d', { keyspace: Cfg.OtherKeyspace });
+
+      const types = await db.listTypes({ keyspace: Cfg.OtherKeyspace });
+      const foundType = types.find(t => t.name === 'type_3d');
+      assert.strictEqual(foundType, undefined);
+    });
+
+    it('should not drop a UDT in different keyspace', async () => {
+      await db.createType('type_4d', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+      });
+
+      await db.dropType('type_4d', { keyspace: Cfg.OtherKeyspace, ifExists: true });
+
+      const types = await db.listTypes();
+      const foundType = types.find(t => t.name === 'type_4d');
+      assert.ok(foundType);
+    });
+  });
+
+  describe('listTypes', () => {
+    it('should return a list of just names of UDTs with nameOnly set to true', async () => {
+      await db.createType('list_test_type', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+      });
+
+      const res = await db.listTypes({ nameOnly: true });
+      assert.ok(Array.isArray(res));
+      assert.ok(res.includes('list_test_type'));
+      assert.strictEqual(typeof res[0], 'string');
+    });
+
+    it('should return a list of UDT infos with nameOnly set to false', async () => {
+      await db.createType('list_test_type_2', {
+        definition: {
+          fields: {
+            name: 'text',
+            count: 'int',
+          },
+        },
+      });
+
+      const res = await db.listTypes({ nameOnly: false });
+      const foundType = res.find(t => t.name === 'list_test_type_2');
+      assert.ok(foundType);
+      assert.ok(foundType.definition);
+      assert.strictEqual(foundType.definition.fields.name.type, 'text');
+      assert.strictEqual(foundType.definition.fields.count.type, 'int');
+    });
+
+    it('should return a list of UDT infos with nameOnly not set', async () => {
+      const res = await db.listTypes();
+      assert.ok(Array.isArray(res));
+      if (res.length > 0) {
+        assert.ok(typeof res[0] === 'object');
+        assert.ok('name' in res[0]);
+      }
+    });
+
+    it('should not list UDTs in another keyspace', async () => {
+      await db.createType('keyspace_specific_type', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+        keyspace: Cfg.OtherKeyspace,
+      });
+
+      const defaultTypes = await db.listTypes();
+      const otherTypes = await db.listTypes({ keyspace: Cfg.OtherKeyspace });
+
+      const defaultHasType = defaultTypes.some(t => t.name === 'keyspace_specific_type');
+      const otherHasType = otherTypes.some(t => t.name === 'keyspace_specific_type');
+
+      assert.strictEqual(defaultHasType, false);
+      assert.strictEqual(otherHasType, true);
+    });
+  });
+
+  describe('(LONG) alterType', () => {
+    it('should add fields to UDT', async () => {
+      await db.createType('alter_test_add', {
+        definition: {
+          fields: {
+            name: 'text',
+          },
+        },
+      });
+
+      await db.alterType('alter_test_add', {
+        operation: {
+          add: {
+            fields: {
+              age: 'int',
+              active: 'boolean',
+            },
+          },
+        },
+      });
+
+      const types = await db.listTypes();
+      const foundType = types.find(t => t.name === 'alter_test_add');
+      assert.ok(foundType);
+      assert.ok(foundType.definition);
+      assert.strictEqual(foundType.definition.fields.name.type, 'text');
+      assert.strictEqual(foundType.definition.fields.age.type, 'int');
+      assert.strictEqual(foundType.definition.fields.active.type, 'boolean');
+    });
+
+    it('should rename fields in UDT', async () => {
+      await db.createType('alter_test_rename', {
+        definition: {
+          fields: {
+            old_name: 'text',
+            zip_code: 'int',
+          },
+        },
+      });
+
+      await db.alterType('alter_test_rename', {
+        operation: {
+          rename: {
+            fields: {
+              old_name: 'new_name',
+              zip_code: 'postal_code',
+            },
+          },
+        },
+      });
+
+      const types = await db.listTypes();
+      const foundType = types.find(t => t.name === 'alter_test_rename');
+      assert.ok(foundType);
+      assert.ok(foundType.definition);
+      assert.ok('new_name' in foundType.definition.fields);
+      assert.ok('postal_code' in foundType.definition.fields);
+      assert.ok(!('old_name' in foundType.definition.fields));
+      assert.ok(!('zip_code' in foundType.definition.fields));
+    });
+
+    it('should alter UDT in different keyspace', async () => {
+      await db.createType('alter_keyspace_test', {
+        definition: {
+          fields: { field1: 'text' },
+        },
+        keyspace: Cfg.OtherKeyspace,
+      });
+
+      await db.alterType('alter_keyspace_test', {
+        operation: {
+          add: {
+            fields: { field2: 'int' },
+          },
+        },
+        keyspace: Cfg.OtherKeyspace,
+      });
+
+      const types = await db.listTypes({ keyspace: Cfg.OtherKeyspace });
+      const foundType = types.find(t => t.name === 'alter_keyspace_test');
+      assert.ok(foundType);
+      assert.ok(foundType.definition);
+      assert.ok('field2' in foundType.definition.fields);
+    });
+  });
+
   describe('command', () => {
     it('should execute a db-level command', async () => {
       const resp = await db.command({ findCollections: {} });
