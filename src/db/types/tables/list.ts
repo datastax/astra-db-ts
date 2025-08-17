@@ -20,7 +20,7 @@ import type { FullCreateTablePrimaryKeyDefinition, StrictCreateTableColumnDefini
  *
  * @field nameOnly - If true, only the name of the tables is returned. If false, the full tables info is returned. Defaults to true.
  * @field keyspace - Overrides the keyspace to list tables from. If not provided, the default keyspace is used.
- * @field timeout - The timeout override for this method
+ * @field timeout - The timeout overrides for this method
  *
  * @see Db.listTables
  *
@@ -188,7 +188,7 @@ export type ListTableColumnDefinitions = Record<string, ListTableKnownColumnDefi
  * @public
  */
 export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition & {
-  apiSupport?: ListTableUnsupportedColumnApiSupport,
+  apiSupport?: TableUnsupportedColumnApiSupport,
 };
 
 /**
@@ -205,7 +205,7 @@ export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition &
  */
 export interface ListTableUnsupportedColumnDefinition {
   type: 'UNSUPPORTED',
-  apiSupport: ListTableUnsupportedColumnApiSupport,
+  apiSupport: TableUnsupportedColumnApiSupport,
 }
 
 /**
@@ -231,7 +231,7 @@ export interface ListTableUnsupportedColumnDefinition {
  *
  * @public
  */
-export interface ListTableUnsupportedColumnApiSupport {
+export interface TableUnsupportedColumnApiSupport {
   createTable: boolean,
   insert: boolean,
   read: boolean,

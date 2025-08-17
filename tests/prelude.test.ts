@@ -19,6 +19,7 @@ import {
 import {
   EverythingTableSchema,
   EverythingTableSchemaWithVectorize,
+  ExampleUDTSchema,
   GLOBAL_FIXTURES,
   RUNNING_INT_TESTS,
 } from '@/tests/testlib/index.js';
@@ -60,6 +61,16 @@ before(async () => {
       }
     }
   });
+
+  const createUDTPromises = TEST_KEYSPACES
+    .map(async (keyspace) => {
+      await db.createType('example_udt', {
+        definition: ExampleUDTSchema,
+        ifNotExists: true,
+        keyspace,
+      });
+    })
+    .awaitAll();
 
   const createTCPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
@@ -120,5 +131,6 @@ before(async () => {
 
   await spinner('Deleting all collections...', () => delCollections);
   await spinner('Deleting all tables...', () => delTables);
+  await spinner('Creating UDTs...', () => createUDTPromises);
   await spinner('Creating all collections and tables...', () => createTCPromises);
 });

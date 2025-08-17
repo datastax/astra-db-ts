@@ -24,6 +24,7 @@ import type { BaseClientEvent, DataAPIClientEventMap, LoggingConfig } from '@/sr
 import type { InferTableSchema } from '@/src/db/index.js';
 import * as util from 'node:util';
 import { Table } from '@/src/documents/index.js';
+import { Db } from '@/src/db/db.js';
 import { memoizeRequests } from '@/tests/testlib/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants.js';
 import { extractAstraEnvironment } from '@/src/administration/utils.js';
@@ -38,6 +39,14 @@ export interface TestObjectsOptions {
 
 export type EverythingTableSchema = InferTableSchema<typeof EverythingTableSchema>;
 export type EverythingTableSchemaWithVectorize = InferTableSchema<typeof EverythingTableSchemaWithVectorize>;
+
+export const ExampleUDTSchema = Db.userDefinedTypeSchema({
+  fields: {
+    description: 'text',
+    tags: { type: 'list', valueType: 'text' },
+    metadata: { type: 'map', keyType: 'text', valueType: 'int' },
+  },
+});
 
 export const EverythingTableSchema = Table.schema({
   columns: {
@@ -63,6 +72,7 @@ export const EverythingTableSchema = Table.schema({
     set: { type: 'set', valueType: 'uuid' },
     list: { type: 'list', valueType: 'uuid' },
     vector: { type: 'vector', dimension: 5 },
+    example_udt: { type: 'userDefined', udtName: 'example_udt' },
   },
   primaryKey: {
     partitionBy: ['text'],
@@ -95,6 +105,7 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
     list: { type: 'list', valueType: 'uuid' },
     vector1: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
     vector2: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+    example_udt: { type: 'userDefined', udtName: 'example_udt' },
   },
   primaryKey: {
     partitionBy: ['text'],

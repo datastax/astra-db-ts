@@ -63,6 +63,11 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
       varint: 12312312312312312312312312312312n,
       vector: new DataAPIVector([.123123, .123, .12321, .123123, .2132]),
       boolean: true,
+      example_udt: {
+        description: 'test UDT',
+        tags: ['tag1', 'tag2'],
+        metadata: new Map([['key1', 100], ['key2', 200]]),
+      },
     });
 
     assert.deepStrictEqual(inserted, {
@@ -93,6 +98,11 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
       varint: 12312312312312312312312312312312n,
       vector: [.123123, .123, .12321, .123123, .2132],
       boolean: true,
+      example_udt: {
+        description: 'raw test UDT',
+        tags: ['raw-tag1', 'raw-tag2'],
+        metadata: { 'raw-key1': 300, 'raw-key2': 400 },
+      },
     } as any);
 
     assert.deepStrictEqual(inserted, {

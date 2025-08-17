@@ -93,6 +93,11 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
       varint: 12312312312312312312312312312312n,
       vector: new DataAPIVector([.123123, .123, .12321, .123123, .2132]),
       boolean: true,
+      example_udt: {
+        description: 'update test UDT',
+        tags: ['update-tag1', 'update-tag2'],
+        metadata: new Map([['update-key1', 500], ['update-key2', 600]]),
+      },
     } satisfies Partial<EverythingTableSchema>;
 
     await table.updateOne({ text: key, int: 0 }, {
@@ -151,6 +156,11 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
 
     assert.ok(found.vector);
     assert.deepStrictEqual(found.vector.asArray(), doc.vector.asArray());
+
+    assert.ok(found.example_udt);
+    assert.strictEqual(found.example_udt.description, doc.example_udt.description);
+    assert.deepStrictEqual(found.example_udt.tags, doc.example_udt.tags);
+    assert.deepStrictEqual(found.example_udt.metadata, doc.example_udt.metadata);
   });
 
   it('should not upsert w/ $unset/null-$set when no matching pk', async (key) => {

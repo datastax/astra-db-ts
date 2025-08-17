@@ -62,6 +62,9 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
           assert.ok(Array.isArray(found.list));
           assert.strictEqual(found.list.length, 0);
           break;
+        case 'example_udt':
+          assert.strictEqual(found.example_udt, null);
+          break;
         default:
           assert.strictEqual(found[key as keyof typeof found], null, key);
       }
@@ -94,6 +97,11 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
       varint: 12312312312312312312312312312312n,
       vector: new DataAPIVector([.123123, .123, .12321, .123123, .2132]),
       boolean: true,
+      example_udt: {
+        description: 'find test UDT',
+        tags: ['find-tag1', 'find-tag2'],
+        metadata: new Map([['find-key1', 700], ['find-key2', 800]]),
+      },
     } satisfies EverythingTableSchema;
 
     const inserted = await table.insertOne(doc);
@@ -149,5 +157,10 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
 
     assert.ok(found.vector);
     assert.deepStrictEqual(found.vector.asArray(), doc.vector.asArray());
+
+    assert.ok(found.example_udt);
+    assert.strictEqual(found.example_udt.description, doc.example_udt.description);
+    assert.deepStrictEqual(found.example_udt.tags, doc.example_udt.tags);
+    assert.deepStrictEqual(found.example_udt.metadata, doc.example_udt.metadata);
   });
 });
