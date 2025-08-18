@@ -13,12 +13,18 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import type { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers.js';
+import type {
+  FindEmbeddingProvidersOptions,
+  FindEmbeddingProvidersResult,
+} from '@/src/administration/types/db-admin/find-embedding-providers.js';
 import type { CommandOptions } from '@/src/lib/index.js';
 import { HierarchicalLogger } from '@/src/lib/index.js';
 import type { Db } from '@/src/db/index.js';
 import type { AdminCommandEventMap } from '@/src/administration/events.js';
-import type { FindRerankingProvidersResult } from '@/src/administration/types/db-admin/find-reranking-providers.js';
+import type {
+  FindRerankingProvidersOptions,
+  FindRerankingProvidersResult,
+} from '@/src/administration/types/db-admin/find-reranking-providers.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 
 /**
@@ -171,7 +177,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns The available embedding providers.
    */
-  public async findEmbeddingProviders(options?: CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }>): Promise<FindEmbeddingProvidersResult> {
+  public async findEmbeddingProviders(options?: FindEmbeddingProvidersOptions): Promise<FindEmbeddingProvidersResult> {
     const httpClient = this._getDataAPIHttpClient();
 
     const resp = await httpClient.executeCommand({ findEmbeddingProviders: {} }, {
@@ -199,7 +205,7 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns The available reranking providers.
    */
-  public async findRerankingProviders(options?: CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }>): Promise<FindRerankingProvidersResult> {
+  public async findRerankingProviders(options?: FindRerankingProvidersOptions): Promise<FindRerankingProvidersResult> {
     const httpClient = this._getDataAPIHttpClient();
 
     const resp = await httpClient.executeCommand({ findRerankingProviders: {} }, {

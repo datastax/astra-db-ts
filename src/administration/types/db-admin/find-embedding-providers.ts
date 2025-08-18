@@ -12,6 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { ModelLifecycleStatus } from '@/src/administration/types/db-admin/common.js';
+import type { CommandOptions, LitUnion } from '@/src/lib/index.js';
+
+/**
+ * Options for finding embedding providers.
+ *
+ * @field filterModelStatus - Filter models by their lifecycle status. If not provided, defaults to 'SUPPORTED' only. Use empty string '' to include all statuses.
+ *
+ * @see DbAdmin.findEmbeddingProviders
+ *
+ * @public
+ */
+export interface FindEmbeddingProvidersOptions extends CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }> {
+  /**
+   * Filter models by their lifecycle status.
+   *
+   * - If not provided: defaults to `'SUPPORTED'` only
+   * - If set to `''`: includes all statuses (`'SUPPORTED'`, `'DEPRECATED'`, `'END_OF_LIFE'`)
+   * - If set to specific status: includes only models with that status
+   *
+   * @example
+   * ```ts
+   * // Only supported models (default behavior)
+   * { filterModelStatus: 'SUPPORTED' }
+   *
+   * // All models regardless of status
+   * { filterModelStatus: '' }
+   *
+   * // Only deprecated models
+   * { filterModelStatus: 'DEPRECATED' }
+   * ```
+   */
+  filterModelStatus?: ModelLifecycleStatus | '';
+}
+
 /**
  * The overarching result containing the `embeddingProviders` map.
  *
@@ -26,7 +61,7 @@ export interface FindEmbeddingProvidersResult {
    * A map of embedding provider names (e.g. `openai`), to information about said provider (e.g. models/auth).
    *
    * @example
-   * ```typescript
+   * ```ts
    * {
    *   openai: {
    *     displayName: 'OpenAI',
@@ -56,7 +91,7 @@ export interface EmbeddingProviderInfo {
    * The prettified name of the provider (as shown in the Astra portal).
    *
    * @example
-   * ```typescript
+   * ```ts
    * // openai.displayName:
    * 'OpenAI'
    * ```
@@ -69,7 +104,7 @@ export interface EmbeddingProviderInfo {
    * parameters (such as `huggingfaceDedicated` or `azureOpenAI`).
    *
    * @example
-   * ```typescript
+   * ```ts
    * // openai.url:
    * 'https://api.openai.com/v1/'
    *
@@ -85,7 +120,7 @@ export interface EmbeddingProviderInfo {
    *
    * - `HEADER`: Authentication using direct API keys passed through headers on every Data API call.
    * See {@link EmbeddingHeadersProvider} for more info.
-   * ```typescript
+   * ```ts
    * const collections = await db.createCollection('my_coll', {
    *   vector: {
    *     service: {
@@ -101,7 +136,7 @@ export interface EmbeddingProviderInfo {
    * ```
    *
    * - `SHARED_SECRET`: Authentication tied to a collections at collections creation time using the Astra KMS.
-   * ```typescript
+   * ```ts
    * const collections = await db.collections('my_coll', {
    *   // Not tied to the collections; can be different every time.
    *   embeddingApiKey: 'sk-...',
@@ -109,7 +144,7 @@ export interface EmbeddingProviderInfo {
    * ```
    *
    * - `NONE`: For when a client doesn't need authentication to use (e.g. nvidia).
-   * ```typescript
+   * ```ts
    * const collections = await db.createCollection('my_coll', {
    *   vector: {
    *     service: {
@@ -121,7 +156,7 @@ export interface EmbeddingProviderInfo {
    * ```
    *
    * @example
-   * ```typescript
+   * ```ts
    * // openai.supportedAuthentication.HEADER:
    * {
    *   enabled: true,
@@ -132,14 +167,14 @@ export interface EmbeddingProviderInfo {
    * }
    * ```
    */
-  supportedAuthentication: Record<string, EmbeddingProviderAuthInfo>,
+  supportedAuthentication: Record<LitUnion<'HEADER' | 'SHARED_SECRET' | 'NONE'>, EmbeddingProviderAuthInfo>,
   /**
    * Any additional, arbitrary parameters the provider may take in. May or may not be required.
    *
    * Passed into the `parameters` block in {@link VectorizeServiceOptions} (except for `vectorDimension`).
    *
    * @example
-   * ```typescript
+   * ```ts
    * // openai.parameters[1]
    * {
    *   name: 'projectId',
@@ -159,7 +194,7 @@ export interface EmbeddingProviderInfo {
    * may be truly arbitrary.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // nvidia.models[0]
    * {
    *   name: 'NV-Embed-QA',
@@ -194,7 +229,7 @@ export interface EmbeddingProviderInfo {
  * See {@link EmbeddingHeadersProvider} for more info about the `HEADER` auth through the client.
  *
  * @example
- * ```typescript
+ * ```ts
  * // openai.supportedAuthentication.HEADER:
  * {
  *   enabled: true,
@@ -231,7 +266,7 @@ export interface EmbeddingProviderAuthInfo {
  * Info on how exactly a method of auth may be used.
  *
  * @example
- * ```typescript
+ * ```ts
  * // openai.supportedAuthentication.HEADER.tokens[0]:
  * {
  *   accepted: 'x-embedding-api-key',
@@ -268,7 +303,7 @@ export interface EmbeddingProviderTokenInfo {
  * set in the upper-level `dimension: number` field).
  *
  * @example
- * ```typescript
+ * ```ts
  * // openai.parameters[1]
  * {
  *   name: 'vectorDimension',
@@ -300,7 +335,7 @@ export interface EmbeddingProviderModelParameterInfo {
    * `vector` block in {@link CollectionVectorOptions}/{@link TableVectorColumnDefinition}.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // huggingface.parameters[0].name
    * endpointName
    * ```
@@ -312,7 +347,7 @@ export interface EmbeddingProviderModelParameterInfo {
    * Commonly `number` or `STRING`.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // huggingface.parameters[0].type
    * STRING
    * ```
@@ -322,7 +357,7 @@ export interface EmbeddingProviderModelParameterInfo {
    * Whether the parameter is required to be passed in.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // huggingface.parameters[0].required
    * true
    * ```
@@ -334,7 +369,7 @@ export interface EmbeddingProviderModelParameterInfo {
    * Will always be in string form (even if the `type` is `'number'`).
    *
    * @example
-   * ```typescript
+   * ```ts
    * // huggingface.parameters[0].defaultValue
    * ''
    * ```
@@ -346,7 +381,7 @@ export interface EmbeddingProviderModelParameterInfo {
    * Commonly either an empty record, or `{ numericRange: [<min>, <max>] }`.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // huggingface.parameters[0].validation
    * {}
    * ```
@@ -356,7 +391,7 @@ export interface EmbeddingProviderModelParameterInfo {
    * Any additional help text/information about the parameter.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // huggingface.parameters[0].help
    * 'The name of your Hugging Face dedicated endpoint, the first part of the Endpoint URL.'
    * ```
@@ -371,7 +406,7 @@ export interface EmbeddingProviderModelParameterInfo {
  * set in the upper-level `dimension: number` field).
  *
  * @example
- * ```typescript
+ * ```ts
  * // openai.parameters[1]
  * {
  *   name: 'projectId',
@@ -404,7 +439,7 @@ export interface EmbeddingProviderProviderParameterInfo extends EmbeddingProvide
    * Display name for the parameter.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // openai.parameters[0].displayName
    * 'Organization ID'
    * ```
@@ -414,7 +449,7 @@ export interface EmbeddingProviderProviderParameterInfo extends EmbeddingProvide
    * Hint for parameter usage.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // openai.parameters[0].hint
    * 'Add an (optional) organization ID'
    * ```
@@ -429,7 +464,7 @@ export interface EmbeddingProviderProviderParameterInfo extends EmbeddingProvide
  * may be truly arbitrary.
  *
  * @example
- * ```typescript
+ * ```ts
  * // nvidia.models[0]
  * {
  *   name: 'NV-Embed-QA',
@@ -454,7 +489,7 @@ export interface EmbeddingProviderModelInfo {
    * may be truly arbitrary.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // openai.models[0].name
    * 'text-embedding-3-small'
    *
@@ -469,7 +504,7 @@ export interface EmbeddingProviderModelInfo {
    * If not present, a `vectorDimension` parameter will be present in the `model.parameters` block.
    *
    * @example
-   * ```typescript
+   * ```ts
    * // openai.models[3].vectorDimension (text-embedding-ada-002)
    * 1536
    *
@@ -484,7 +519,7 @@ export interface EmbeddingProviderModelInfo {
    * Passed into the `parameters` block in {@link VectorizeServiceOptions} (except for `vectorDimension`).
    *
    * @example
-   * ```typescript
+   * ```ts
    * // openai.models[0].parameters[0] (text-embedding-3-small)
    * {
    *   name: 'vectorDimension',
@@ -497,4 +532,36 @@ export interface EmbeddingProviderModelInfo {
    * ```
    */
   parameters: EmbeddingProviderModelParameterInfo[],
+  /**
+   * Information about the model's API support status.
+   *
+   * @example
+   * ```ts
+   * // openai.models[0].apiModelSupport
+   * { status: 'SUPPORTED' }
+   * ```
+   */
+  apiModelSupport: EmbeddingProviderModelApiSupportInfo,
+}
+
+/**
+ * Information about the model's API support status and lifecycle.
+ *
+ * @field status - The current lifecycle status of the model
+ *
+ * @see EmbeddingProviderModelInfo
+ *
+ * @public
+ */
+export interface EmbeddingProviderModelApiSupportInfo {
+  /**
+   * The current lifecycle status of the model.
+   *
+   * @example
+   * ```ts
+   * // openai.models[0].apiModelSupport.status
+   * 'SUPPORTED'
+   * ```
+   */
+  status: ModelLifecycleStatus,
 }
