@@ -25,7 +25,7 @@ import type { CommandOptions } from '@/src/lib/index.js';
  * yet created).
  *
  * @example
- * ```typescript
+ * ```ts
  * // If using non-astra, this may be a common idiom:
  * const client = new DataAPIClient({ environment: 'dse' });
  * const db = client.db('<endpoint>', { token: '<token>' });

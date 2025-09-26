@@ -68,11 +68,20 @@ describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
     assert.ok(typeof embeddingProviders === 'object');
   });
 
-  // TODO
-  // it('should findRerankingProviders', async () => {
-  //   const { rerankingProviders } = await dbAdmin.findRerankingProviders();
-  //   assert.ok(typeof rerankingProviders === 'object');
-  // });
+  it('should findEmbeddingProviders w/ modelStatusFilter', async () => {
+    const { embeddingProviders } = await dbAdmin.findEmbeddingProviders({ filterModelStatus: 'DEPRECATED' });
+    assert.ok(typeof embeddingProviders === 'object');
+  });
+
+  it('(RERANKING) should findRerankingProviders', async () => {
+    const { rerankingProviders } = await dbAdmin.findRerankingProviders();
+    assert.ok(typeof rerankingProviders === 'object');
+  });
+
+  it('(RERANKING) should findRerankingProviders w/ modelStatusFilter', async () => {
+      const { rerankingProviders } = await dbAdmin.findRerankingProviders();
+      assert.ok(typeof rerankingProviders === 'object');
+  });
 
   it('(ASTRA) should timeout', async () => {
     await assert.rejects(() => dbAdmin.listKeyspaces({ timeout: 1 }), (e) => {
