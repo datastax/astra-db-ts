@@ -54,9 +54,9 @@ parallel('integration.documents.tables.ser-des.usecases.override-datatypes', ({ 
 
     const id = uuid.v4();
 
-    await table.insertOne({ text: key, int: 0, map: { a: id } });
+    await table.insertOne({ text: key, int: 0, map: new Map([[1n, { id }]]) });
     const result = await table.findOne({ text: key });
 
-    assert.deepStrictEqual(result, { text: key, int: 0, map: { a: id } });
+    assert.deepStrictEqual(result, { text: key, int: 0, map: [[1n, { id }]] });
   });
 });

@@ -21,7 +21,7 @@ import {
   DataAPIVector,
   UUID,
 } from '@/src/documents/index.js';
-import { EverythingTableSchema, it, parallel } from '@/tests/testlib/index.js';
+import { EmptyExampleUDT, EverythingTableSchema, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 
@@ -32,7 +32,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
     const doc = <const>{
       text: key,
       int: 0,
-      map: new Map([['key', uuid]]),
+      map: new Map([[123n, { id: uuid }]]),
     } satisfies EverythingTableSchema;
 
     const inserted = await table.insertOne(doc);
@@ -46,7 +46,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
 
     assert.ok(found.map);
     assert.deepStrictEqual([...found.map.keys()], [...doc.map.keys()]);
-    assert.ok(found.map.get('key')?.equals(doc.map.get('key')));
+    assert.deepStrictEqual(found.map.get(123n), { ...EmptyExampleUDT, id: uuid });
 
     for (const key of Object.keys(found)) {
       switch (key) {
@@ -62,8 +62,8 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
           assert.ok(Array.isArray(found.list));
           assert.strictEqual(found.list.length, 0);
           break;
-        case 'example_udt':
-          assert.strictEqual(found.example_udt, null);
+        case 'udt':
+          assert.deepStrictEqual(found.udt, EmptyExampleUDT);
           break;
         default:
           assert.strictEqual(found[key as keyof typeof found], null, key);
@@ -87,7 +87,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
       duration: new DataAPIDuration('1y1mo1d1h1m1s1ms1us1ns'),
       float: 123.456,
       inet: new DataAPIInet('0:0:0:0:0:0:0:1'),
-      list: [uuid, uuid],
+      list: [{}, { age: 3n }],
       set: new Set([uuid, uuid, uuid]),
       smallint: 123,
       time: DataAPITime.now(),
@@ -97,10 +97,10 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
       varint: 12312312312312312312312312312312n,
       vector: new DataAPIVector([.123123, .123, .12321, .123123, .2132]),
       boolean: true,
-      example_udt: {
-        description: 'find test UDT',
-        tags: ['find-tag1', 'find-tag2'],
-        metadata: new Map([['find-key1', 700], ['find-key2', 800]]),
+      udt: {
+        name: 'name',
+        id: UUID.v1(),
+        age: 324234234234234324234234234234235n,
       },
     } satisfies EverythingTableSchema;
 
@@ -140,7 +140,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
     assert.strictEqual(found.inet.toString(), doc.inet.toString());
 
     assert.ok(found.list);
-    assert.deepStrictEqual(found.list.map(u => u.toString()), doc.list.map(u => u.toString()));
+    assert.deepStrictEqual(found.list, [EmptyExampleUDT, { ...EmptyExampleUDT, age: 3n }]);
 
     assert.ok(found.set);
     assert.strictEqual(found.set.size, 1);
@@ -158,9 +158,9 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
     assert.ok(found.vector);
     assert.deepStrictEqual(found.vector.asArray(), doc.vector.asArray());
 
-    assert.ok(found.example_udt);
-    assert.strictEqual(found.example_udt.description, doc.example_udt.description);
-    assert.deepStrictEqual(found.example_udt.tags, doc.example_udt.tags);
-    assert.deepStrictEqual(found.example_udt.metadata, doc.example_udt.metadata);
+    assert.ok(found.udt);
+    assert.strictEqual(found.udt.name, doc.udt.name);
+    assert.deepStrictEqual(found.udt.id, doc.udt.id);
+    assert.strictEqual(found.udt.age, 324234234234234324234234234234235n);
   });
 });

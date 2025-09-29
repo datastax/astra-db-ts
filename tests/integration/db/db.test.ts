@@ -186,6 +186,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
             zipCode: 'int',
           },
         },
+        ifNotExists: true,
       });
 
       const types = await db.listTypes();
@@ -203,6 +204,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
           },
         },
         keyspace: Cfg.OtherKeyspace,
+        ifNotExists: true,
       });
 
       const types = await db.listTypes({ keyspace: Cfg.OtherKeyspace });
@@ -235,6 +237,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
         definition: {
           fields: { field1: 'text' },
         },
+        ifNotExists: true,
       });
 
       try {
@@ -254,6 +257,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
         definition: {
           fields: { field1: 'text' },
         },
+        ifNotExists: true,
       });
 
       await db.createType('type_7c', {
@@ -261,6 +265,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
           fields: { field2: 'int' },
         },
         keyspace: Cfg.OtherKeyspace,
+        ifNotExists: true,
       });
 
       const defaultTypes = await db.listTypes();
@@ -309,6 +314,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
         definition: {
           fields: { field1: 'text' },
         },
+        ifNotExists: true,
       });
 
       await db.dropType('type_4d', { keyspace: Cfg.OtherKeyspace, ifExists: true });
@@ -325,6 +331,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
         definition: {
           fields: { field1: 'text' },
         },
+        ifNotExists: true,
       });
 
       const res = await db.listTypes({ nameOnly: true });
@@ -341,6 +348,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
             count: 'int',
           },
         },
+        ifNotExists: true,
       });
 
       const res = await db.listTypes({ nameOnly: false });
@@ -366,6 +374,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
           fields: { field1: 'text' },
         },
         keyspace: Cfg.OtherKeyspace,
+        ifNotExists: true,
       });
 
       const defaultTypes = await db.listTypes();
@@ -380,6 +389,14 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
   });
 
   describe('(LONG) alterType', () => {
+    before(async () => {
+      await Promise.all([
+        db.dropType('alter_test_add', { ifExists: true }),
+        db.dropType('alter_test_rename', { ifExists: true }),
+        db.dropType('alter_test_keyspace', { ifExists: true, keyspace: Cfg.OtherKeyspace }),
+      ]);
+    });
+
     it('should add fields to UDT', async () => {
       await db.createType('alter_test_add', {
         definition: {
@@ -441,14 +458,14 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     });
 
     it('should alter UDT in different keyspace', async () => {
-      await db.createType('alter_keyspace_test', {
+      await db.createType('alter_test_keyspace', {
         definition: {
           fields: { field1: 'text' },
         },
         keyspace: Cfg.OtherKeyspace,
       });
 
-      await db.alterType('alter_keyspace_test', {
+      await db.alterType('alter_test_keyspace', {
         operation: {
           add: {
             fields: { field2: 'int' },
@@ -458,7 +475,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
       });
 
       const types = await db.listTypes({ keyspace: Cfg.OtherKeyspace });
-      const foundType = types.find(t => t.name === 'alter_keyspace_test');
+      const foundType = types.find(t => t.name === 'alter_test_keyspace');
       assert.ok(foundType);
       assert.ok(foundType.definition);
       assert.ok('field2' in foundType.definition.fields);

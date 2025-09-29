@@ -18,6 +18,7 @@ import type {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
+  ListTypeDefinition,
 } from '@/src/db/index.js';
 import type { RawTableCodecs } from '@/src/documents/tables/ser-des/codecs.js';
 import { TableCodecs } from '@/src/documents/tables/ser-des/codecs.js';
@@ -29,6 +30,7 @@ import { UnexpectedDataAPIResponseError } from '@/src/client/index.js';
 import { TableSerDesCfgHandler } from '@/src/documents/tables/ser-des/cfg-handler.js';
 import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
+import type { SomeRow } from "@/src/documents/index.js";
 
 /**
  * @beta
@@ -181,7 +183,7 @@ const deserialize: SerDesFn<TableDesCtx> = (value, ctx) => {
   }
 
   // Type-based deserializers
-  const type = resolveAbsType(ctx);
+  const type = resolveAbsType(value, ctx);
   const typeDes = type && ctx.deserializers.forType[type];
 
   if (typeDes && typeDes.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
@@ -194,51 +196,107 @@ const deserialize: SerDesFn<TableDesCtx> = (value, ctx) => {
 const codecs = TableSerDes.cfg.parse({ codecs: Object.values(TableCodecs.Defaults) });
 
 function populateSparseData(ctx: TableDesCtx) {
-  for (const key in ctx.tableSchema) {
-    if (Object.prototype.hasOwnProperty.call(ctx.rootObj, key)) {
-      continue;
-    }
+  for (const col in ctx.tableSchema) {
+    const colIsPresent = Object.prototype.hasOwnProperty.call(ctx.rootObj, col);
 
-    const type = resolveType(ctx.tableSchema[key]);
+    const typeDef = ctx.tableSchema[col] as any; // typeDef and type are linked, but we can't represent that in the type system :/
+    const type = resolveType(typeDef);
 
-    if (type === 'map') {
-      ctx.rootObj[key] = new Map();
-    } else if (type === 'set') {
-      ctx.rootObj[key] = new Set();
-    } else if (type === 'list') {
-      ctx.rootObj[key] = [];
-    } else {
-      ctx.rootObj[key] = null;
+    switch (type) {
+      case 'map':
+        if (!colIsPresent) {
+          ctx.rootObj[col] = {};
+        } else if (typeof typeDef === 'object' && typeDef.valueType.type === 'userDefined') {
+          const value = ctx.rootObj[col];
+
+          if (Array.isArray(value)) {
+            for (const kv of value) {
+              populateSparseUdt(kv[1], typeDef.valueType.definition);
+            }
+          } else {
+            for (const v of Object.values(value)) {
+              populateSparseUdt(v as SomeRow, typeDef.valueType.definition);
+            }
+          }
+        }
+        break;
+      case 'set':
+      case 'list':
+        if (!colIsPresent) {
+          ctx.rootObj[col] = [];
+        } else if (typeof typeDef === 'object' && typeDef.valueType.type === 'userDefined') {
+          ctx.rootObj[col].forEach((obj: any) => populateSparseUdt(obj, typeDef.valueType.definition));
+        }
+        break;
+      case 'userDefined':
+        ctx.rootObj[col] ??= {};
+        populateSparseUdt(ctx.rootObj[col], typeDef.definition);
+        break;
+      default:
+        if (!colIsPresent) {
+          ctx.rootObj[col] = null;
+        }
     }
   }
 }
 
-function resolveAbsType({ path, tableSchema }: TableDesCtx): string | undefined {
-  const column = tableSchema[path[0]];
-  const type = column ? resolveType(column) : undefined;
-
-  if (path.length === 1 || !column) {
-    return type;
-  }
-
-  if (type === 'map') {
-    if (typeof path[1] === 'number') {
-      if (path.length === 3) {
-        return (path[2] === 0 ? (column as any).keyType : (column as any).valueType);
-      }
-    }
-    else if (path.length === 2) {
-      return (column as any).valueType;
+function populateSparseUdt(obj: SomeRow, def: ListTypeDefinition) {
+  for (const col in def.fields) {
+    if (!Object.prototype.hasOwnProperty.call(obj, col)) {
+      obj[col] = null;
     }
   }
-  else if ((type === 'set' || type === 'list') && path.length === 2) {
-    return (column as any).valueType;
-  }
-
-  return undefined;
 }
 
-function resolveType(column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) {
+function resolveAbsType(value: unknown, { path, tableSchema }: TableDesCtx): string | undefined {
+  let typeDef: any = tableSchema[path[0]];
+  if (!typeDef) return undefined;
+
+  let type = resolveType(typeDef);
+  let depth = 1;
+
+  while (depth < path.length && typeDef) {
+    switch (type) {
+      case 'map':
+        if (path[depth + 1] === undefined) {
+          return (!Array.isArray(value))
+            ? typeDef.valueType
+            : undefined;
+        }
+
+        typeDef = (path[depth + 1] === 0)
+          ? typeDef.keyType
+          : typeDef.valueType;
+
+        type = resolveType(typeDef);
+        depth += 2;
+        break;
+      case 'list':
+      case 'set':
+        typeDef = typeDef.valueType;
+        type = resolveType(typeDef);
+        depth++;
+        break;
+      case 'userDefined':
+        typeDef = typeDef.definition.fields[path[depth]];
+        if (!typeDef) return undefined;
+
+        type = resolveType(typeDef);
+        depth++;
+        break;
+      default:
+        return type;
+    }
+  }
+
+  return type;
+}
+
+function resolveType(column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition | string) {
+  if (typeof column === 'string') {
+    return column;
+  }
+
   return (column.type === 'UNSUPPORTED')
     ? column.apiSupport.cqlDefinition
     : column.type;

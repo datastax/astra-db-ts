@@ -1400,8 +1400,6 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
         delete types[i].udtName;
         delete types[i].type;
       }
-    } else {
-      return types.map((type: any) => type.udtName);
     }
 
     return types;
@@ -1470,7 +1468,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     const command = {
       alterType: {
         name: name,
-        operation: options.operation,
+        ...options.operation, // TODO yes or no?
       },
     };
 

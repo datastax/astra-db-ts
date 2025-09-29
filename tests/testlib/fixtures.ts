@@ -21,7 +21,7 @@ import * as fetchH2 from 'fetch-h2';
 import { DataAPIClient } from '@/src/client/index.js';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
 import type { BaseClientEvent, DataAPIClientEventMap, LoggingConfig } from '@/src/lib/index.js';
-import type { InferTableSchema } from '@/src/db/index.js';
+import type { InferTableSchema, InferUDTSchema } from '@/src/db/index.js';
 import * as util from 'node:util';
 import { Table } from '@/src/documents/index.js';
 import { Db } from '@/src/db/db.js';
@@ -39,14 +39,21 @@ export interface TestObjectsOptions {
 
 export type EverythingTableSchema = InferTableSchema<typeof EverythingTableSchema>;
 export type EverythingTableSchemaWithVectorize = InferTableSchema<typeof EverythingTableSchemaWithVectorize>;
+export type ExampleUDTSchema = InferUDTSchema<typeof ExampleUDTSchema>;
 
 export const ExampleUDTSchema = Db.userDefinedTypeSchema({
   fields: {
-    description: 'text',
-    tags: { type: 'list', valueType: 'text' },
-    metadata: { type: 'map', keyType: 'text', valueType: 'int' },
+    name: 'text',
+    age: 'varint',
+    id: 'uuid',
   },
 });
+
+export const EmptyExampleUDT: ExampleUDTSchema = {
+  name: null,
+  age: null,
+  id: null,
+};
 
 export const EverythingTableSchema = Table.schema({
   columns: {
@@ -68,11 +75,11 @@ export const EverythingTableSchema = Table.schema({
     tinyint: 'tinyint',
     uuid: 'uuid',
     varint: 'varint',
-    map: { type: 'map', keyType: 'text', valueType: 'uuid' },
+    map: { type: 'map', keyType: 'varint', valueType: { type: 'userDefined', udtName: 'example_udt' } },
     set: { type: 'set', valueType: 'uuid' },
-    list: { type: 'list', valueType: 'uuid' },
+    list: { type: 'list', valueType: { type: 'userDefined', udtName: 'example_udt' } },
     vector: { type: 'vector', dimension: 5 },
-    example_udt: { type: 'userDefined', udtName: 'example_udt' },
+    udt: { type: 'userDefined', udtName: 'example_udt' },
   },
   primaryKey: {
     partitionBy: ['text'],
@@ -100,12 +107,12 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
     tinyint: 'tinyint',
     uuid: 'uuid',
     varint: 'varint',
-    map: { type: 'map', keyType: 'text', valueType: 'uuid' },
+    map: { type: 'map', keyType: 'varint', valueType: { type: 'userDefined', udtName: 'example_udt' } },
     set: { type: 'set', valueType: 'uuid' },
-    list: { type: 'list', valueType: 'uuid' },
+    list: { type: 'list', valueType: { type: 'userDefined', udtName: 'example_udt' } },
     vector1: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
     vector2: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
-    example_udt: { type: 'userDefined', udtName: 'example_udt' },
+    udt: { type: 'userDefined', udtName: 'example_udt' },
   },
   primaryKey: {
     partitionBy: ['text'],

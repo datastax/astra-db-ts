@@ -110,8 +110,4 @@ export type LooseCreateTypeFieldDefinition = LitUnion<DataAPICreatableScalarType
  *
  * @public
  */
-export type StrictCreateTypeFieldDefinition =
-  | TableScalarColumnDefinition
-  | TableMapColumnDefinition
-  | TableListColumnDefinition
-  | TableSetColumnDefinition;
+export type StrictCreateTypeFieldDefinition = TableScalarColumnDefinition;

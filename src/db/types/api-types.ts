@@ -151,19 +151,19 @@ interface CqlCollectionTypeMap<Def, TypeOverrides extends TableSchemaInferenceOv
 }
 
 type CqlMapType2TsType<Def, TypeOverrides extends TableSchemaInferenceOverrides['typeOverrides']> =
-  Def extends { keyType: infer KeyType extends string, valueType: infer ValueType extends string }
-    ? Map<CqlType2TSTypeInternal<KeyType, never, TypeOverrides> & {}, CqlType2TSTypeInternal<ValueType, never, TypeOverrides> & {}>
-    : TypeErr<`Invalid definition for 'map'; should be of format { type: 'map', keyType: <scalar>, valueType: <scalar> }`>;
+  Def extends { keyType: infer KeyType extends string, valueType: infer ValueType extends string | { type: 'userDefined' } }
+    ? Map<CqlType2TSTypeInternal<KeyType, never, TypeOverrides> & {}, CqlType2TSTypeInternal<NormalizeTypeFormat<ValueType>, ValueType, TypeOverrides> & {}>
+    : TypeErr<`Invalid definition for 'map'; should be of format { type: 'map', keyType: <scalar>, valueType: <scalar> | <udt> }`>;
 
 type CqlListType2TsType<Def, TypeOverrides extends TableSchemaInferenceOverrides['typeOverrides']> =
-  Def extends { valueType: infer ValueType extends string }
-    ? (CqlType2TSTypeInternal<ValueType, never, TypeOverrides> & {})[]
-    : TypeErr<`Invalid definition for 'list'; should be of format { type: 'list', valueType: <scalar> }`>;
+  Def extends { valueType: infer ValueType extends string | { type: 'userDefined' } }
+    ? (CqlType2TSTypeInternal<NormalizeTypeFormat<ValueType>, ValueType, TypeOverrides> & {})[]
+    : TypeErr<`Invalid definition for 'list'; should be of format { type: 'list', valueType: <scalar> | <udt> }`>;
 
 type CqlSetType2TsType<Def, TypeOverrides extends TableSchemaInferenceOverrides['typeOverrides']> =
-  Def extends { valueType: infer ValueType extends string }
-    ? Set<CqlType2TSTypeInternal<ValueType, never, TypeOverrides> & {}>
-    : TypeErr<`Invalid definition for 'set'; should be of format { type: 'set', valueType: <scalar> }`>;
+  Def extends { valueType: infer ValueType extends string | { type: 'userDefined' } }
+    ? Set<CqlType2TSTypeInternal<NormalizeTypeFormat<ValueType>, ValueType, TypeOverrides> & {}>
+    : TypeErr<`Invalid definition for 'set'; should be of format { type: 'set', valueType: <scalar> | <udt> }`>;
 
 type CqlVectorType2TsType<Def> =
   Def extends { service: unknown }

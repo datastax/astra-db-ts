@@ -267,8 +267,8 @@ export interface TableScalarColumnDefinition {
  */
 export interface TableMapColumnDefinition {
   type: 'map',
-  keyType: 'text' | 'ascii',
-  valueType: DataAPICreatableScalarTypes,
+  keyType: DataAPICreatableScalarTypes,
+  valueType: DataAPICreatableScalarTypes | TableUserDefinedTypeColumnDefinition,
 }
 
 /**
@@ -311,7 +311,7 @@ export interface TableMapColumnDefinition {
  */
 export interface TableListColumnDefinition {
   type: 'list',
-  valueType: DataAPICreatableScalarTypes,
+  valueType: DataAPICreatableScalarTypes | TableUserDefinedTypeColumnDefinition,
 }
 
 /**
@@ -354,7 +354,7 @@ export interface TableListColumnDefinition {
  */
 export interface TableSetColumnDefinition {
   type: 'set',
-  valueType: DataAPICreatableScalarTypes,
+  valueType: DataAPICreatableScalarTypes | TableUserDefinedTypeColumnDefinition,
 }
 
 /**
