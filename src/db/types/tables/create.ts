@@ -13,22 +13,14 @@
 // limitations under the License.
 
 import type { VectorizeServiceOptions } from '@/src/db/index.js';
-import type { CommandOptions } from '@/src/lib/index.js';
+import type { CommandOptions, LitUnion } from '@/src/lib/index.js';
 import type { TableOptions } from '@/src/db/types/tables/spawn.js';
+import type { DataAPICreatableScalarTypes } from '@/src/db/types/api-types.js';
 
 /**
  * Options for creating a new table (via {@link Db.createTable}).
  *
  * See {@link Db.createTable} & {@link Table} for more information.
- *
- * @field definition - The bespoke columns/primary-key definition for the table.
- * @field ifNotExists - Makes operation a no-op if the table already exists.
- * @field keyspace - Overrides the keyspace for the table (from the `Db`'s working keyspace).
- * @field embeddingApiKey - The embedding service's API-key/headers (for $vectorize)
- * @field timeoutDefaults - Default timeouts for all table operations
- * @field logging - Logging configuration overrides
- * @field serdes - Additional serialization/deserialization configuration
- * @field timeout - The timeout override for this method
  *
  * @public
  */
@@ -88,7 +80,7 @@ export interface CreateTableDefinition<Def extends CreateTableDefinition<Def> = 
  *
  * In this form, the key is the column name, and the value is the type of the scalar column.
  *
- * If you need to define a column with a more complex type (i.e. for maps, sets, lists, and vectors), you must use the strict column definition.
+ * If you need to define a column with a more complex type (i.e., for maps, sets, lists, and vectors), you must use the strict column definition.
  *
  * Plus, while it still provides autocomplete, the loose column definition does not statically enforce the type of the column, whereas the strict column definition does.
  *
@@ -127,37 +119,6 @@ export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumn
 /**
  * ##### Overview
  *
- * Represents the scalar types that can be used to define a column in a table.
- *
- * ##### Disclaimer
- *
- * _Note that there may be other scalar types not present in this union that have partial Data API support, but may not be created through the Data API (such as `timeuuid` or `varchar`)._
- *
- * @public
- */
-export type TableScalarType =
-  | 'ascii'
-  | 'bigint'
-  | 'blob'
-  | 'boolean'
-  | 'date'
-  | 'decimal'
-  | 'double'
-  | 'duration'
-  | 'float'
-  | 'int'
-  | 'inet'
-  | 'smallint'
-  | 'text'
-  | 'time'
-  | 'timestamp'
-  | 'tinyint'
-  | 'uuid'
-  | 'varint';
-
-/**
- * ##### Overview
- *
  * The loose column definition is a shorthand for the strict version, and follows the following example form:
  *
  * ```ts
@@ -169,15 +130,13 @@ export type TableScalarType =
  *
  * In this form, the key is the column name, and the value is the type of the scalar column.
  *
- * If you need to define a column with a more complex type (i.e. for maps, sets, lists, and vectors), you must use the strict column definition.
+ * If you need to define a column with a more complex type (i.e., for maps, sets, lists, and vectors), you must use the strict column definition.
  *
  * Plus, while it still provides autocomplete, the loose column definition does not statically enforce the type of the column, whereas the strict column definition does.
  *
  * @public
  */
-export type LooseCreateTableColumnDefinition =
-  | TableScalarType
-  | (string & Record<never, never>);
+export type LooseCreateTableColumnDefinition = LitUnion<DataAPICreatableScalarTypes>;
 
 /**
  * ##### Overview
@@ -222,7 +181,8 @@ export type StrictCreateTableColumnDefinition =
   | TableMapColumnDefinition
   | TableListColumnDefinition
   | TableSetColumnDefinition
-  | TableVectorColumnDefinition;
+  | TableVectorColumnDefinition
+  | TableUserDefinedTypeColumnDefinition;
 
 /**
  * ##### Overview
@@ -258,7 +218,7 @@ export type StrictCreateTableColumnDefinition =
  * @public
  */
 export interface TableScalarColumnDefinition {
-  type: TableScalarType,
+  type: DataAPICreatableScalarTypes,
 }
 
 /**
@@ -307,8 +267,8 @@ export interface TableScalarColumnDefinition {
  */
 export interface TableMapColumnDefinition {
   type: 'map',
-  keyType: 'text' | 'ascii',
-  valueType: TableScalarType,
+  keyType: DataAPICreatableScalarTypes,
+  valueType: DataAPICreatableScalarTypes | TableUserDefinedTypeColumnDefinition,
 }
 
 /**
@@ -351,7 +311,7 @@ export interface TableMapColumnDefinition {
  */
 export interface TableListColumnDefinition {
   type: 'list',
-  valueType: TableScalarType,
+  valueType: DataAPICreatableScalarTypes | TableUserDefinedTypeColumnDefinition,
 }
 
 /**
@@ -394,7 +354,7 @@ export interface TableListColumnDefinition {
  */
 export interface TableSetColumnDefinition {
   type: 'set',
-  valueType: TableScalarType,
+  valueType: DataAPICreatableScalarTypes | TableUserDefinedTypeColumnDefinition,
 }
 
 /**
@@ -450,6 +410,11 @@ export interface TableVectorColumnDefinition {
   type: 'vector',
   dimension: number,
   service?: VectorizeServiceOptions,
+}
+
+export interface TableUserDefinedTypeColumnDefinition {
+  type: 'userDefined',
+  udtName: string,
 }
 
 /**

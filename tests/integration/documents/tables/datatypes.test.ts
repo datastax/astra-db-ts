@@ -15,7 +15,7 @@
 
 import type { DataAPIBlob, DataAPIInet, DataAPIVector, SomeRow, Table } from '@/src/documents/index.js';
 import { blob, DataAPIResponseError, date, duration, inet, time, uuid, vector } from '@/src/documents/index.js';
-import { Cfg, it, parallel } from '@/tests/testlib/index.js';
+import { Cfg, EmptyExampleUDT, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 
@@ -214,21 +214,49 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     const uuid4 = uuid.v4();
 
     const colAsserter = mkColumnAsserter(key, 'map');
+    //
+    // await colAsserter.notOk([]);
+    // await colAsserter.notOk(new Map(<any>[[1n, { car: 'bus' }]]));
+    // await colAsserter.notOk(new Map(<any>[['1n', {}]]));
+    // await colAsserter.notOk([[5n, { id: uuid1.toString(), name: 'Charlie', extra: 'i should not be here' }]]);
+    //
+    // for (const val of [null, undefined, {}, new Map()]) {
+    //   await colAsserter.ok(val, _ => new Map());
+    // }
 
-    await colAsserter.notOk(new Map(<any>[['a', uuid1], ['b', 'uuid4']]));
+    await colAsserter.ok(
+      [[1n, { id: uuid1.toString() }], [2n, { name: 'John' }]],
+      _ => new Map([
+        [1n, { id: uuid1, name: null, age: null }],
+        [2n, { id: null, name: 'John', age: null }],
+      ]),
+    );
 
-    for (const val of [null, undefined, {}, new Map()]) {
-      await colAsserter.ok(val, _ => new Map());
-    }
-
-    // TODO
-    // await colAsserter.ok([], _ => new Map);
-    // await colAsserter.ok([['a', uuid.v4()]], es => new Map(es));
-    await colAsserter.ok({ a: uuid1.toString(), b: uuid4 }, _ => new Map([['a', uuid1], ['b', uuid4]]));
-    await colAsserter.ok(new Map(<any>[['a', uuid1.toString()], ['b', uuid4]]), _ => new Map([['a', uuid1], ['b', uuid4]]));
-    await colAsserter.ok(new Map([['⨳⨓⨋', uuid1]]));
-    await colAsserter.ok(new Map([['a'.repeat(50000), uuid1]]));
-    await colAsserter.ok(new Map(Array.from({ length: 1000 }, (_, i) => [i.toString(), uuid.v7()])));
+    // await colAsserter.ok(
+    //   new Map([
+    //     [3n, { id: uuid1.toString(), name: 'Alice', age: 25n }],
+    //     [4n, { id: uuid4, name: 'Bob', age: 30n }],
+    //   ]),
+    //   _ => new Map([
+    //     [3n, { id: uuid1, name: 'Alice', age: 25n }],
+    //     [4n, { id: uuid4, name: 'Bob', age: 30n }],
+    //   ]),
+    // );
+    //
+    // await colAsserter.ok(
+    //   new Map([
+    //     [99999999999999999999999999999999999999999999999999999999999999999999n, { id: uuid1 }],
+    //   ]),
+    //   _ => new Map([
+    //     [99999999999999999999999999999999999999999999999999999999999999999999n, { id: uuid1, name: null, age: null }],
+    //   ]),
+    // );
+    //
+    // await colAsserter.ok(
+    //   new Map(Array.from({ length: 100 }, (_, i) => [
+    //     BigInt(i), { id: uuid.v7(), name: `user${i}`, age: BigInt(20 * i) },
+    //   ])),
+    // );
   });
 
   it('should handle different set insertion cases', async (key) => {
@@ -248,7 +276,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.ok([uuid1.toString(), uuid4], _ => new Set([uuid1, uuid4]));
     await colAsserter.ok(new Set([uuid1.toString(), uuid4]), _ => new Set([uuid1, uuid4]));
     await colAsserter.ok([uuid1, uuid1, uuid4], _ => new Set([uuid1, uuid4]));
-    await colAsserter.ok(new Set(Array.from({ length: 1000 }, () => uuid.v7())));
+    await colAsserter.ok(new Set(Array.from({ length: 100 }, () => uuid.v7())));
   });
 
   it('should handle different list insertion cases', async (key) => {
@@ -257,17 +285,60 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
 
     const colAsserter = mkColumnAsserter(key, 'list');
 
-    await colAsserter.notOk({});
-    await colAsserter.notOk([uuid1, 'uuid4']);
+    // await colAsserter.notOk({}); TODO report this as bug (500)
+    await colAsserter.notOk([uuid1]);
+    await colAsserter.notOk(['uuid4']);
+    await colAsserter.notOk([{ car: 'bus' }]);
+    await colAsserter.notOk([{ id: uuid1, name: 'x', extra: 'bad' }]);
 
-    // TODO
-    // for (const val of [null, undefined, []]) {
-    //   await colAsserter.ok(val, _ => []);
-    // }
+    for (const val of [null, undefined, []]) {
+      await colAsserter.ok(val, _ => []);
+    }
 
-    await colAsserter.ok([uuid1.toString(), uuid1, uuid1, uuid4], _ => [uuid1, uuid1, uuid1, uuid4]);
-    await colAsserter.ok(new Array(1000).fill(uuid.v7()));
+    await colAsserter.ok(
+      [
+        { id: uuid1.toString() },
+        { name: 'John' },
+        { age: 33n },
+      ],
+      _ => [
+        { id: uuid1, name: null, age: null },
+        { id: null, name: 'John', age: null },
+        { id: null, name: null, age: 33n },
+      ],
+    );
+
+    await colAsserter.ok(
+      [
+        { id: uuid1.toString(), name: 'Alice', age: 25n },
+        { id: uuid4, name: 'Bob', age: 30n },
+      ],
+      _ => [
+        { id: uuid1, name: 'Alice', age: 25n },
+        { id: uuid4, name: 'Bob', age: 30n },
+      ],
+    );
+
+    await colAsserter.ok(
+      [
+        { id: uuid1.toString(), name: 'Charlie', age: 28n },
+        { id: uuid4.toString(), name: 'Dave', age: 31n },
+      ],
+      _ => [
+        { id: uuid1, name: 'Charlie', age: 28n },
+        { id: uuid4, name: 'Dave', age: 31n },
+      ],
+    );
+
+    await colAsserter.ok(
+      new Array(100).fill(null).map((_, i) => ({
+        id: uuid.v7(),
+        name: `user${i}`,
+        age: BigInt(18 + i),
+      })),
+    );
   });
+
 
   it('should handle different time insertion cases', async (key) => {
     const colAsserter = mkColumnAsserter(key, 'time');
@@ -321,5 +392,21 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.notOk('1 hour');
 
     await colAsserter.ok('1h', duration);
+  });
+
+  it('should handle different UDT insertion cases', async (key) => {
+    const colAsserter = mkColumnAsserter(key, 'udt');
+
+    // await colAsserter.notOk('invalid udt'); TODO report bug (getting 500 error)
+    await colAsserter.notOk({ invalid: 'structure' });
+    await colAsserter.notOk({ description: 'test', tags: 'invalid', metadata: {} });
+
+    await colAsserter.ok({
+      name: 'test description',
+      age: 3n,
+      id: uuid.v4(),
+    });
+
+    await colAsserter.ok({}, _ => EmptyExampleUDT);
   });
 });

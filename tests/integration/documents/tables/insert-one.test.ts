@@ -31,7 +31,7 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
     const inserted = await table.insertOne({
       text: key,
       int: 0,
-      map: new Map([[key, UUID.v4()]]),
+      map: new Map([[4n, {}]]),
     });
 
     assert.deepStrictEqual(inserted, {
@@ -43,7 +43,7 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
     const inserted = await table.insertOne({
       text: key,
       int: 0,
-      map: new Map([[key, UUID.v4()]]),
+      map: new Map(),
       ascii: 'highway_star',
       blob: new DataAPIBlob(Buffer.from('smoke_on_the_water')),
       bigint: 1231233n,
@@ -53,7 +53,7 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
       duration: new DataAPIDuration('1y1mo1d1h1m1s1ms1us1ns'),
       float: 123.456,
       inet: new DataAPIInet('::1'),
-      list: [UUID.v4(), UUID.v7()],
+      list: [{}, {}],
       set: new Set([UUID.v4(), UUID.v7(), UUID.v7()]),
       smallint: 123,
       time: DataAPITime.now(),
@@ -63,6 +63,10 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
       varint: 12312312312312312312312312312312n,
       vector: new DataAPIVector([.123123, .123, .12321, .123123, .2132]),
       boolean: true,
+      udt: {
+        name: 'ac',
+        age: 324234234234234324234234234234235n,
+      },
     });
 
     assert.deepStrictEqual(inserted, {
@@ -74,7 +78,7 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
     const inserted = await table.insertOne({
       text: key,
       int: 0,
-      map: { key: UUID.v4() },
+      map: [[4n, {}]],
       ascii: 'highway_star',
       blob: { $binary: Buffer.from('smoke_on_the_water').toString('base64') },
       bigint: 1231233,
@@ -83,8 +87,8 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
       duration: '1y1mo1d1h1m1s1ms1us1ns',
       float: 123.456,
       inet: '::1',
-      list: [UUID.v4(), UUID.v7()],
-      set: [UUID.v4(), UUID.v7(), UUID.v7()],
+      list: [],
+      set: [UUID.v4().toString(), UUID.v7().toString(), UUID.v7().toString()],
       smallint: 123,
       time: '12:34:56',
       timestamp: '2021-01-01T12:34:56.789Z',
@@ -93,6 +97,11 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
       varint: 12312312312312312312312312312312n,
       vector: [.123123, .123, .12321, .123123, .2132],
       boolean: true,
+      udt: {
+        name: 'ac',
+        age: 324234234234234324234234234234235n,
+        id: UUID.v6().toString(),
+      },
     } as any);
 
     assert.deepStrictEqual(inserted, {
@@ -104,7 +113,7 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
     const inserted1 = await table.insertOne({
       text: key,
       int: 0,
-      map: new Map([[key, UUID.v4()]]),
+      map: new Map([[123n, { age: 5n }]]),
     });
 
     assert.deepStrictEqual(inserted1, {

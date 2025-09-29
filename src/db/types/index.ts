@@ -26,10 +26,17 @@ export type * from './collections/vector.js';
 export type * from './tables/alter.js';
 export type * from './tables/create.js';
 export type * from './tables/drop.js';
-export type * from './tables/list-tables.js';
-export type * from './tables/infer.js';
+export type * from './tables/list.js';
+export type * from './tables/magic.js';
 export type * from './tables/spawn.js';
 
+export type * from './udts/alter.js';
+export type * from './udts/create.js';
+export type * from './udts/drop.js';
+export type * from './udts/list.js';
+export type * from './udts/magic.js';
+
+export type * from './api-types.js';
 export type * from './common.js';
 export type * from './command.js';
 export type * from './reranking.js';

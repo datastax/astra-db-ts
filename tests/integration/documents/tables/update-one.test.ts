@@ -37,7 +37,7 @@ import {
   DataAPIVector,
   UUID,
 } from '@/src/documents/index.js';
-import { Cfg, EverythingTableSchema, it, parallel } from '@/tests/testlib/index.js';
+import { Cfg, EmptyExampleUDT, EverythingTableSchema, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 
@@ -83,7 +83,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
       duration: new DataAPIDuration('0s'),
       float: 123.456,
       inet: new DataAPIInet('0:0:0:0:0:0:0:1'),
-      list: [uuid, uuid],
+      list: [{}, { age: 3n }],
       set: new Set([uuid, uuid, uuid]),
       smallint: 123,
       time: DataAPITime.now(),
@@ -93,6 +93,10 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
       varint: 12312312312312312312312312312312n,
       vector: new DataAPIVector([.123123, .123, .12321, .123123, .2132]),
       boolean: true,
+      udt: {
+        name: 'name',
+        id: UUID.v1(),
+      },
     } satisfies Partial<EverythingTableSchema>;
 
     await table.updateOne({ text: key, int: 0 }, {
@@ -134,7 +138,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
     assert.strictEqual(found.inet.toString(), doc.inet.toString());
 
     assert.ok(found.list);
-    assert.deepStrictEqual(found.list.map(u => u.toString()), doc.list.map(u => u.toString()));
+    assert.deepStrictEqual(found.list, [EmptyExampleUDT, { ...EmptyExampleUDT, age: 3n }]);
 
     assert.ok(found.set);
     assert.strictEqual(found.set.size, 1);
@@ -151,6 +155,11 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
 
     assert.ok(found.vector);
     assert.deepStrictEqual(found.vector.asArray(), doc.vector.asArray());
+
+    assert.ok(found.udt);
+    assert.strictEqual(found.udt.name, doc.udt.name);
+    assert.deepStrictEqual(found.udt.id, doc.udt.id);
+    assert.strictEqual(found.udt.age, null);
   });
 
   it('should not upsert w/ $unset/null-$set when no matching pk', async (key) => {

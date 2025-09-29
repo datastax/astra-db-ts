@@ -39,11 +39,11 @@ export const unitTestAsCodecClass = ({ $SerSym, $DesSym, CodecsClass, SerDesClas
 
   it('should function as a way to sneak ser/des implementations onto an existing class', () => {
     class Unsuspecting<T> {
-      constructor(public readonly value: T) {}
+      constructor(public readonly unwrap: T) {}
     }
 
     (Unsuspecting.prototype as any)[$SerSym] = function (ctx: BaseSerCtx<unknown>) {
-      return ctx.replace(this.value);
+      return ctx.replace(this.unwrap);
     };
 
     (Unsuspecting as any)[$DesSym] = function (_: string, ctx: BaseSerCtx<unknown>) {

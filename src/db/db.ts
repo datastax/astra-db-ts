@@ -33,9 +33,9 @@ import type { CollectionDescriptor, ListCollectionsOptions } from '@/src/db/type
 import type { RunCommandOptions } from '@/src/db/types/command.js';
 import type { TableOptions } from '@/src/db/types/tables/spawn.js';
 import type { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create.js';
-import type { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/infer.js';
+import type { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/magic.js';
 import type { DropTableOptions } from '@/src/db/types/tables/drop.js';
-import type { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/list-tables.js';
+import type { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/list.js';
 import type { AdminOptions } from '@/src/client/types/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import { InvalidEnvironmentError } from '@/src/db/errors.js';
@@ -48,6 +48,9 @@ import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
 import { HierarchicalLogger, TokenProvider } from '@/src/lib/index.js';
+import type { CreateTypeDefinition, CreateTypeOptions, DropTypeOptions } from '@/src/db/types/index.js';
+import type { ListTypesOptions, TypeDescriptor } from '@/src/db/types/udts/list.js';
+import type { AlterTypeOptions } from '@/src/db/types/udts/alter.js';
 
 /**
  * ##### Overview
@@ -132,6 +135,10 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   readonly #keyspace: KeyspaceRef;
   readonly #id?: string;
   readonly #region?: string;
+
+  public static userDefinedTypeSchema<const Def extends CreateTypeDefinition>(schema: Def): Def {
+    return schema;
+  }
 
   /**
    * ##### Overview
@@ -940,6 +947,87 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
   /**
    * ##### Overview
    *
+   * Creates a new user-defined type (UDT) in the database.
+   *
+   * This is a **blocking** command which performs actual I/O.
+   *
+   * @example
+   * ```ts
+   * // Basic UDT creation
+   * await db.createType('address', {
+   *   definition: {
+   *     fields: {
+   *       street: 'text',
+   *       city: 'text',
+   *       zipCode: 'int',
+   *     },
+   *   },
+   * });
+   *
+   * // With ifNotExists option in a different keyspace
+   * await db.createType('user_profile', {
+   *   definition: {
+   *     fields: {
+   *       name: 'text',
+   *       age: {
+   *         type: 'int',
+   *       },
+   *       tags: {
+   *         type: 'set',
+   *         valueType: 'text',
+   *       },
+   *     },
+   *   },
+   *   ifNotExists: true,
+   *   keyspace: 'my_keyspace',
+   * });
+   * ```
+   *
+   * ---
+   *
+   * ##### Idempotency
+   *
+   * Creating a UDT is idempotent if the `ifNotExists` option is set to `true`. Otherwise, an error will be thrown if a UDT with the same name already exists.
+   *
+   * > 🚨**Important:** When using `ifNotExists: true`, **only the existence of a UDT with the same name is checked.**
+   * >
+   * > If a UDT with that name already exists, but the fields you define differ from the existing UDT, **it won't give you an error**; instead, it'll silently succeed, and the original UDT schema will be retained.
+   *
+   * ---
+   *
+   * ##### Field Types
+   *
+   * UDT fields support the same types as table columns, including scalar types, collections (sets, lists, maps), and nested UDTs.
+   *
+   * @param name - The name of the UDT to create.
+   * @param options - Options for the UDT creation.
+   *
+   * @returns A promise that resolves when the UDT is created successfully.
+   *
+   * @see CreateTypeDefinition
+   * @see CreateTypeOptions
+   */
+  public async createType(name: string, options: CreateTypeOptions): Promise<void> {
+    const command = {
+      createType: {
+        name: name,
+        definition: options.definition,
+        options: {
+          ifNotExists: options.ifNotExists,
+        },
+      },
+    };
+
+    await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      extraLogInfo: { name, ifNotExists: options.ifNotExists ?? false },
+      keyspace: options?.keyspace,
+    });
+  }
+
+  /**
+   * ##### Overview
+   *
    * Drops a collection from the database, including all the contained documents.
    *
    * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
@@ -1017,6 +1105,56 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
    */
   public async dropTable(name: string, options?: DropTableOptions): Promise<void> {
     await this.#httpClient.executeCommand({ dropTable: { name, options: { ifExists: options?.ifExists } } }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      extraLogInfo: { name, ifExists: options?.ifExists ?? false },
+      keyspace: options?.keyspace,
+    });
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Drops a user-defined type (UDT) from the database.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // Uses db's working keyspace
+   * await db.dropType('address');
+   *
+   * // Overrides db's working keyspace
+   * await db.dropType('user_profile', {
+   *   keyspace: 'my_keyspace'
+   * });
+   * ```
+   *
+   * ---
+   *
+   * ##### Idempotency
+   *
+   * Dropping a UDT is entirely idempotent, _if_ the `ifExists` option is set to `true`, in which case, if the UDT doesn't exist, it will simply do nothing.
+   *
+   * If `ifExists` is `false` or unset, an error will be thrown if the UDT does not exist.
+   *
+   * ---
+   *
+   * ##### Dependencies
+   *
+   * > **🚨Important:** You cannot drop a UDT that is currently being used by any tables or other UDTs.
+   * >
+   * > Make sure to drop or alter any dependent objects before dropping the UDT, or the operation will fail.
+   *
+   * @param name - The name of the UDT to drop.
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves when the UDT is dropped successfully.
+   *
+   * @remarks Use with caution. Don't say I didn't warn you.
+   */
+  public async dropType(name: string, options?: DropTypeOptions): Promise<void> {
+    await this.#httpClient.executeCommand({ dropType: { name, options: { ifExists: options?.ifExists } } }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
       extraLogInfo: { name, ifExists: options?.ifExists ?? false },
       keyspace: options?.keyspace,
@@ -1193,6 +1331,152 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
       keyspace: options?.keyspace,
     });
     return resp.status!.tables;
+  }
+
+  /**
+   * ##### Overview (name-only overload)
+   *
+   * Lists the user-defined type names in the database.
+   *
+   * > **💡Tip:** If you want to include the UDT definitions in the response, set `nameOnly` to `false` (or omit it completely) to use the other `listTypes` overload.
+   *
+   * You can specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // ['address', 'user_profile']
+   * console.log(await db.listTypes({ nameOnly: true }));
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of UDT names.
+   */
+  public async listTypes(options: ListTypesOptions & { nameOnly: true }): Promise<string[]>
+
+  /**
+   * ##### Overview (full-info overload)
+   *
+   * Lists the user-defined types in the database.
+   *
+   * > **💡Tip:** If you want to use only the UDT names, set `nameOnly` to `true` to use the other `listTypes` overload.
+   *
+   * You can specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // [{ name: 'address', definition: { fields: { ... } } }, { name: 'user_profile', definition: { ... } }]
+   * console.log(await db.listTypes());
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of UDT info.
+   */
+  public async listTypes(options?: ListTypesOptions & { nameOnly?: false }): Promise<TypeDescriptor[]>
+
+  public async listTypes(options?: ListTypesOptions): Promise<string[] | TypeDescriptor[]> {
+    const explain = options?.nameOnly !== true;
+
+    const command = {
+      listTypes: {
+        options: { explain },
+      },
+    };
+
+    const resp = await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      extraLogInfo: { nameOnly: !explain },
+      keyspace: options?.keyspace,
+    });
+
+    const types = resp.status!.types;
+
+    if (explain) {
+      for (let i = 0, n = types.length; i < n; i++) {
+        types[i].name = types[i].udtName;
+        delete types[i].udtName;
+        delete types[i].type;
+      }
+    }
+
+    return types;
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Alters an existing user-defined type (UDT) in the database by adding new fields or renaming existing fields.
+   *
+   * You can specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // Add new fields to a UDT
+   * await db.alterType('address', {
+   *   operation: {
+   *     add: {
+   *       fields: {
+   *         country: 'text',
+   *         postalCode: 'int',
+   *       },
+   *     },
+   *   },
+   * });
+   *
+   * // Rename existing fields in a UDT
+   * await db.alterType('address', {
+   *   operation: {
+   *     rename: {
+   *       fields: {
+   *         street: 'streetAddress',
+   *         zipCode: 'postalCode',
+   *       },
+   *     },
+   *   },
+   * });
+   * ```
+   *
+   * ---
+   *
+   * ##### Operations
+   *
+   * Only one operation (`add` or `rename`) can be performed at a time per alter command.
+   *
+   * - **Add**: Adds new fields to the UDT. The field types follow the same rules as table column definitions.
+   * - **Rename**: Renames existing fields in the UDT. The mapping is from old field name to new field name.
+   *
+   * ---
+   *
+   * ##### Type Safety
+   *
+   * The method is generic and accepts a `UDTSchema` type parameter to provide type safety when renaming fields.
+   * The field names in the rename operation will be validated against the provided schema type.
+   *
+   * @param name - The name of the UDT to alter.
+   * @param options - The alteration options specifying the operation to perform.
+   *
+   * @returns A promise that resolves when the UDT is altered successfully.
+   *
+   * @see AlterTypeOptions
+   * @see AlterTypeOperations
+   */
+  public async alterType<UDTSchema extends SomeRow = SomeRow>(name: string, options: AlterTypeOptions<UDTSchema>): Promise<void> {
+    const command = {
+      alterType: {
+        name: name,
+        ...options.operation, // TODO yes or no?
+      },
+    };
+
+    await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      extraLogInfo: { name },
+      keyspace: options?.keyspace,
+    });
   }
 
   /**

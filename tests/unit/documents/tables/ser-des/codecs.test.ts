@@ -26,9 +26,9 @@ import { unitTestForName } from '@/tests/unit/documents/__common/ser-des/for-nam
 import fc from 'fast-check';
 import { desSchema } from '@/tests/testlib/utils.js';
 import { SerDesTarget } from '@/src/lib/index.js';
-import type { TableScalarType } from '@/src/db/index.js';
 import { DataAPIDate, DataAPITime, DataAPIVector } from '@/src/documents/index.js';
 import { BigNumber } from 'bignumber.js';
+import { DataAPICreatableScalarTypes } from "@/src/db/index.js";
 
 describe('unit.documents.tables.ser-des.codecs', () => {
   const serdes = new TableSerDes(TableSerDes.cfg.empty);
@@ -55,7 +55,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
   describe('implementations', () => {
     const tableKeyArb = arbs.nonProtoString().filter(Boolean);
 
-    for (const column of ['bigint', 'counter', 'varint'] as TableScalarType[]) {
+    for (const column of ['bigint', 'counter', 'varint'] as DataAPICreatableScalarTypes[]) {
       describe(column, () => {
         it('should deserialize integers into a BigInt', () => {
           fc.assert(
@@ -91,7 +91,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
       });
     }
 
-    for (const column of ['float', 'double'] as TableScalarType[]) {
+    for (const column of ['float', 'double'] as DataAPICreatableScalarTypes[]) {
       describe(column, () => {
         const doubleArb = fc.double().map((v: number) => v === 0 ? 0 : v); // -0 not guaranteed to be preserved
 
@@ -129,7 +129,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
       });
     }
 
-    for (const column of ['int', 'smallint', 'tinyint'] as TableScalarType[]) {
+    for (const column of ['int', 'smallint', 'tinyint'] as DataAPICreatableScalarTypes[]) {
       describe(column, () => {
         it('should deserialize integers as themselves', () => {
           fc.assert(
@@ -389,7 +389,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
             assert.strictEqual(seenMap.size, expectMap.size);
             assert.deepStrictEqual(serdes.deserialize({ [key]: obj }, schema), { [key]: expectMap });
             assert.strictEqual(seenMap.size, 0);
-          }),
+          }),{ seed: -1399328513, path: "0:0:0:0:0:1:1:0:0:0", endOnFailure: true }
         );
       });
 
@@ -416,7 +416,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
             });
 
             const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, codecs: [codec] });
-            const schema = desSchema({ [key]: { type: 'map', valueType: values.definition.type } });
+            const schema = desSchema({ [key]: { type: 'map', keyType: keys.definition.type, valueType: values.definition.type } });
 
             const arr = keys.map((k, i) => [k, values[i].jsonRep]);
             const expectMap = new Map(keys.map((k, i) => [k, values[i].jsRep]));
@@ -425,7 +425,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
             assert.deepStrictEqual(serdes.deserialize({ [key]: arr }, schema), { [key]: expectMap });
             assert.strictEqual(seenArray.filter(Boolean).length, 0);
             assert.strictEqual(i, expectMap.size);
-          }),
+          }),{ seed: -1856377880, path: "0:0:0:0:0:1:1:0:0", endOnFailure: true }
         );
       });
     });
