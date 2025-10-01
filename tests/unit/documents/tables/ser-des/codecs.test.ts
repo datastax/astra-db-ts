@@ -28,7 +28,7 @@ import { desSchema } from '@/tests/testlib/utils.js';
 import { SerDesTarget } from '@/src/lib/index.js';
 import { DataAPIDate, DataAPITime, DataAPIVector } from '@/src/documents/index.js';
 import { BigNumber } from 'bignumber.js';
-import { DataAPICreatableScalarTypes } from "@/src/db/index.js";
+import type { DataAPICreatableScalarTypes } from "@/src/db/index.js";
 
 describe('unit.documents.tables.ser-des.codecs', () => {
   const serdes = new TableSerDes(TableSerDes.cfg.empty);
@@ -389,14 +389,16 @@ describe('unit.documents.tables.ser-des.codecs', () => {
             assert.strictEqual(seenMap.size, expectMap.size);
             assert.deepStrictEqual(serdes.deserialize({ [key]: obj }, schema), { [key]: expectMap });
             assert.strictEqual(seenMap.size, 0);
-          }),{ seed: -1399328513, path: "0:0:0:0:0:1:1:0:0:0", endOnFailure: true }
+          }),
         );
       });
 
       it('should recurse over an association list when deserializing', () => {
+        const anyUniqueKVsArb = anyKVsArb.filter(([ks]) => new Set(ks.map((k) => JSON.stringify(k))).size === ks.length);
+
         fc.assert(
-          fc.property(tableKeyArb, anyKVsArb, (key, [keys, values]) => {
-            const seenArray = keys.map((k, i) => [k, values[i].jsonRep]);
+          fc.property(tableKeyArb, anyUniqueKVsArb, (key, [keys, values]) => {
+            const seenArray = keys.map((k, i) => [k.jsonRep, values[i].jsonRep]);
             let i = 0;
 
             const codec = TableCodecs.custom({
@@ -418,14 +420,14 @@ describe('unit.documents.tables.ser-des.codecs', () => {
             const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, codecs: [codec] });
             const schema = desSchema({ [key]: { type: 'map', keyType: keys.definition.type, valueType: values.definition.type } });
 
-            const arr = keys.map((k, i) => [k, values[i].jsonRep]);
-            const expectMap = new Map(keys.map((k, i) => [k, values[i].jsRep]));
+            const arr = keys.map((k, i) => [k.jsonRep, values[i].jsonRep]);
+            const expectMap = new Map(keys.map((k, i) => [k.jsRep, values[i].jsRep]));
 
             assert.strictEqual(seenArray.length, expectMap.size);
             assert.deepStrictEqual(serdes.deserialize({ [key]: arr }, schema), { [key]: expectMap });
             assert.strictEqual(seenArray.filter(Boolean).length, 0);
             assert.strictEqual(i, expectMap.size);
-          }),{ seed: -1856377880, path: "0:0:0:0:0:1:1:0:0", endOnFailure: true }
+          }),
         );
       });
     });

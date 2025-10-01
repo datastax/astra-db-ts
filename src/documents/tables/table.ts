@@ -14,10 +14,9 @@
 
 import type {
   CommandEventMap,
-  FoundRow,
+  FoundRow, ListIndexOptions,
   SomePKey,
   SomeRow,
-  TableIndexColumn,
   TableCreateIndexOptions,
   TableCreateVectorIndexOptions,
   TableDeleteManyOptions,
@@ -25,6 +24,7 @@ import type {
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
+  TableIndexColumn, TableIndexDescriptor,
   TableInsertManyOptions,
   TableInsertManyResult,
   TableInsertOneOptions,
@@ -41,7 +41,7 @@ import type {
   CreateTableDefinition,
   Db,
   DropTableOptions,
-  ListTableDefinition, ListTablesOptions,
+  ListTableDefinition,
   TableOptions,
   WithKeyspace,
 } from '@/src/db/index.js';
@@ -55,8 +55,6 @@ import type { TableCreateTextIndexOptions } from '@/src/documents/tables/types/i
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import { NonErrorError } from '@/src/lib/errors.js';
-import List = Mocha.reporters.List;
-import { ListIndexOptions, TableIndexDescriptor } from "@/src/documents/tables/types/indexes/list-indexes.js";
 
 const jbi = JBI({ storeAsString: true });
 
@@ -178,7 +176,7 @@ const jbi = JBI({ storeAsString: true });
  * await db.table<User>('users').insertOne({
  *   id: '123',
  *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
- *   vector: vector([1, 2, 3]), // or new DataAPIVector([...])
+ *   vector: vector([1, 2, 3]), // or new DataAPIVector([...]),
  * });
  * ```
  *

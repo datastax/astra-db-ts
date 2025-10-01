@@ -63,11 +63,11 @@ const fromTableColumn = (def: StrictCreateTableColumnDefinition, minLengthForNon
     case 'timestamp':
       return arbs.validDate();
     case 'map':
-      return arbs.map(fromTableColumn({ type: def.valueType }), minLengthForNonScalar);
+      return arbs.map(fromTableColumn((typeof def.valueType === 'string') ? { type: def.valueType } : def.valueType), minLengthForNonScalar);
     case 'set':
-      return arbs.set(fromTableColumn({ type: def.valueType }), minLengthForNonScalar);
+      return arbs.set(fromTableColumn((typeof def.valueType === 'string') ? { type: def.valueType } : def.valueType), minLengthForNonScalar);
     case 'list':
-      return fc.array(fromTableColumn({ type: def.valueType }), { minLength: minLengthForNonScalar });
+      return fc.array(fromTableColumn((typeof def.valueType === 'string') ? { type: def.valueType } : def.valueType), { minLength: minLengthForNonScalar });
     default:
       throw new Error(`Unexpected type: ${def.type}`);
   }
