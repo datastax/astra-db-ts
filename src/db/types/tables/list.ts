@@ -32,7 +32,7 @@ export interface ListTablesOptions extends CommandOptions<{ timeout: 'tableAdmin
    *
    * If false, the full tables info is returned.
    *
-   * Defaults to true.
+   * Defaults to false.
    *
    * @example
    * ```typescript
@@ -43,7 +43,7 @@ export interface ListTablesOptions extends CommandOptions<{ timeout: 'tableAdmin
    * console.log(info); // [{ name: 'my_table', options: { ... } }]
    * ```
    *
-   * @defaultValue true
+   * @defaultValue false
    */
   nameOnly?: boolean,
 }

@@ -15,16 +15,15 @@
 
 import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { CqlType2TSType, CreateTableColumnDefinitions } from '@/src/db/index.js';
-import type { Table } from '@/src/documents/index.js';
+import type { DataAPIType2TSType, CreateTableColumnDefinitions } from '@/src/db/index.js';
+import type { Table, TableIndexDescriptor } from '@/src/documents/index.js';
 
 parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db }) => {
-  const listIndexes = (tableName: string) => db.command({ listIndexes: { options: { explain: true } } }, { table: tableName }).then((res) => res.status!.indexes);
-
   interface TestIndexCreationOptions<Def extends CreateTableColumnDefinitions[string]> {
     testColumnType: Def,
-    createIndex: (table: Table<{ col: CqlType2TSType<Def> }>, indexName: string, columnName: 'col', opts: { ifNotExists?: boolean }) => Promise<void>,
+    createIndex: (table: Table<{ col: DataAPIType2TSType<Def> }>, indexName: string, columnName: 'col', opts: { ifNotExists?: boolean }) => Promise<void>,
     testName: string,
+    indexType: TableIndexDescriptor['indexType'],
   }
 
   let indexCreationTestIndex = 0;
@@ -33,7 +32,7 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
     it(cfg.testName, async () => {
       const name = `create_index_table_test_${indexCreationTestIndex++}`;
 
-      const table = await db.createTable<{ col: CqlType2TSType<Def> }>(name, {
+      const table = await db.createTable<{ col: DataAPIType2TSType<Def> }>(name, {
         definition: {
           columns: {
             pkey: 'text',
@@ -49,11 +48,16 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
       await assert.rejects(() => createIndexFn());
       await assert.doesNotReject((() => createIndexFn(true)));
 
-      const indexes = await listIndexes(name);
+      const indexes = await table.listIndexes();
       assert.strictEqual(indexes.length, 1);
 
-      const index = indexes[0];
-      assert.strictEqual(index.name, `${name}_index`);
+      const indexNames = await table.listIndexes({ nameOnly: true });
+      assert.strictEqual(indexes.length, 1);
+
+      assert.strictEqual(indexes[0].name, `${name}_index`);
+      assert.strictEqual(indexes[0].indexType, cfg.indexType);
+      assert.strictEqual(typeof indexes[0].definition, 'object');
+      assert.strictEqual(indexNames[0], `${name}_index`);
 
       await db.dropTableIndex(`${name}_index`);
 
@@ -67,6 +71,7 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
   testIndexCreation({
     testName: 'should work when createIndex-ing a scalar',
     testColumnType: 'text',
+    indexType: 'regular',
     async createIndex(table, indexName, colName, opts) {
       await table.createIndex(indexName, colName, {
         options: {
@@ -81,6 +86,7 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
 
   testIndexCreation({
     testName: 'should work when createIndex-ing map entries',
+    indexType: 'regular',
     testColumnType: {
       type: 'map',
       keyType: 'text',
@@ -93,6 +99,7 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
 
   testIndexCreation({
     testName: 'should work when createIndex-ing map keys',
+    indexType: 'regular',
     testColumnType: {
       type: 'map',
       keyType: 'text',
@@ -105,6 +112,7 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
 
   testIndexCreation({
     testName: 'should work when createIndex-ing map values',
+    indexType: 'regular',
     testColumnType: {
       type: 'map',
       keyType: 'text',
@@ -117,6 +125,7 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
 
   testIndexCreation({
     testName: 'should work when createIndex-ing list values',
+    indexType: 'regular',
     testColumnType: {
       type: 'list',
       valueType: 'inet',
@@ -128,6 +137,7 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
 
   testIndexCreation({
     testName: 'should work when createIndex-ing set values',
+    indexType: 'regular',
     testColumnType: {
       type: 'set',
       valueType: 'timestamp',
@@ -139,6 +149,7 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
 
   testIndexCreation({
     testName: 'should work when createVectorIndex-ing',
+    indexType: 'vector',
     testColumnType: {
       type: 'vector',
       dimension: 3,
@@ -148,12 +159,12 @@ parallel('integration.documents.tables.indexes', { drop: 'tables:after' }, ({ db
     },
   });
 
-  // TODO
-  // testIndexCreation({
-  //   testName: 'should work when createTextIndex-ing',
-  //   testColumnType: 'text',
-  //   async createIndexFn(table, indexName, colName, opts) {
-  //     await table.createTextIndex(indexName, colName, opts);
-  //   },
-  // });
+  testIndexCreation({
+    testName: 'should work when createTextIndex-ing',
+    indexType: 'text',
+    testColumnType: 'text',
+    async createIndex(table, indexName, colName, opts) {
+      await table.createTextIndex(indexName, colName, opts);
+    },
+  });
 });

@@ -268,10 +268,9 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.notOk({});
     await colAsserter.notOk(new Set([uuid1, 'uuid4']));
 
-    // TODO
-    // for (const val of [null, undefined, [], new Set()]) {
-    //   await colAsserter.ok(val, _ => new Set());
-    // }
+    for (const val of [null, undefined, [], new Set()]) {
+      await colAsserter.ok(val, _ => new Set());
+    }
 
     await colAsserter.ok([uuid1.toString(), uuid4], _ => new Set([uuid1, uuid4]));
     await colAsserter.ok(new Set([uuid1.toString(), uuid4]), _ => new Set([uuid1, uuid4]));

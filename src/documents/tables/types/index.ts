@@ -21,6 +21,7 @@ export type * from './indexes/create-index.js';
 export type * from './indexes/create-vector-index.js';
 export type * from './indexes/create-text-index.js';
 export type * from './indexes/drop-index.js';
+export type * from './indexes/list-indexes.js';
 export type * from './insert/insert-many.js';
 export type * from './insert/insert-one.js';
 export type * from './update/update-one.js';
