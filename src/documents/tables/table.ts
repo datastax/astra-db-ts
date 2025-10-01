@@ -14,10 +14,9 @@
 
 import type {
   CommandEventMap,
-  FoundRow,
+  FoundRow, ListIndexOptions,
   SomePKey,
   SomeRow,
-  TableCreateIndexColumn,
   TableCreateIndexOptions,
   TableCreateVectorIndexOptions,
   TableDeleteManyOptions,
@@ -25,6 +24,7 @@ import type {
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
+  TableIndexColumn, TableIndexDescriptor,
   TableInsertManyOptions,
   TableInsertManyResult,
   TableInsertOneOptions,
@@ -176,7 +176,7 @@ const jbi = JBI({ storeAsString: true });
  * await db.table<User>('users').insertOne({
  *   id: '123',
  *   friends: new Map([['Alice', uuid.v4()]]), // or UUID.v4()
- *   vector: vector([1, 2, 3]), // or new DataAPIVector([...])
+ *   vector: vector([1, 2, 3]), // or new DataAPIVector([...]),
  * });
  * ```
  *
@@ -1077,7 +1077,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomePKey = Partial<Foun
    *
    * @returns A promise which resolves once the index is created.
    */
-  public async createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void> {
+  public async createIndex(name: string, column: TableIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void> {
     const includeOptions = !!options?.options && Object.keys(options.options).length > 0;
     
     await this.#httpClient.executeCommand({
@@ -1170,6 +1170,61 @@ export class Table<WSchema extends SomeRow, PKey extends SomePKey = Partial<Foun
     });
   }
   /* c8 ignore end */
+
+  /**
+   * ##### Overview (name-only overload)
+   *
+   * Lists the names for all the indexes associated with the table.
+   *
+   * > **💡Tip:** If you want to include the indexes' definitions in the response, set `nameOnly` to `false` (or omit it completely) to use the other `listIndexes` overload.
+   *
+   * @example
+   * ```typescript
+   * // ['users_idx', 'posts_idx']
+   * console.log(await table.listIndexes({ nameOnly: true }));
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of index names.
+   */
+  public async listIndexes(options: ListIndexOptions & { nameOnly: true }): Promise<string[]>
+
+  /**
+   * ##### Overview (full-info overload)
+   *
+   * Lists all the indexes associated with the table.
+   *
+   * > **💡Tip:** If you want to use only the index names, set `nameOnly` to `true` to use the other `listIndexes` overload.
+   *
+   * @example
+   * ```typescript
+   * // [{ name: 'users_idx', definition: { ... }, indexType: 'regular' }, ...]
+   * console.log(await table.listIndexes());
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of index info.
+   */
+  public async listIndexes(options?: ListIndexOptions & { nameOnly?: false }): Promise<TableIndexDescriptor[]>
+
+  public async listIndexes(options?: ListIndexOptions): Promise<string[] | TableIndexDescriptor[]> {
+    const explain = options?.nameOnly !== true;
+
+    const command = {
+      listIndexes: {
+        options: { explain },
+      },
+    };
+
+    const resp = await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      extraLogInfo: { nameOnly: !explain },
+      keyspace: options?.keyspace,
+    });
+    return resp.status!.indexes;
+  }
 
   /**
    * ##### Overview

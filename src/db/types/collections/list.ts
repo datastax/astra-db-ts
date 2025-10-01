@@ -33,7 +33,7 @@ export interface ListCollectionsOptions extends CommandOptions<{ timeout: 'colle
    *
    * If false, the full collections info is returned.
    *
-   * Defaults to true.
+   * Defaults to false.
    *
    * @example
    * ```typescript
@@ -44,7 +44,7 @@ export interface ListCollectionsOptions extends CommandOptions<{ timeout: 'colle
    * console.log(info); // [{ name: 'my_coll', options: { ... } }]
    * ```
    *
-   * @defaultValue true
+   * @defaultValue false
    */
   nameOnly?: boolean,
 }

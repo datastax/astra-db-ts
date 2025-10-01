@@ -78,6 +78,11 @@ export interface AddColumnOperation {
     columns: CreateTableColumnDefinitions;
 }
 
+// @public
+export interface AddFieldOperation {
+    fields: CreateTableColumnDefinitions;
+}
+
 // @public (undocumented)
 export type AdditionalHeaders = OneOrMany<HeadersProvider | Record<string, string | undefined>>;
 
@@ -210,6 +215,19 @@ export interface AlterTableOptions<Schema extends SomeRow> extends CommandOption
     timeout: 'tableAdminTimeoutMs';
 }> {
     operation: AlterTableOperations<Schema>;
+}
+
+// @public
+export interface AlterTypeOperations<Schema extends SomeRow> {
+    add?: AddFieldOperation;
+    rename?: RenameFieldOperation<Schema>;
+}
+
+// @public
+export interface AlterTypeOptions<Schema extends SomeRow> extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}>, WithKeyspace {
+    operation: AlterTypeOperations<Schema>;
 }
 
 // @public (undocumented)
@@ -967,12 +985,6 @@ export class CommandWarningsEvent extends CommandEvent {
 // @public
 export type ContainsDate<Schema> = IsDate<Schema[keyof Schema]>;
 
-// Warning: (ae-forgotten-export) The symbol "CqlType2TSTypeInternal" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "PickCqlType" needs to be exported by the entry point index.d.ts
-//
-// @public
-export type CqlType2TSType<Def extends CreateTableColumnDefinitions[string], Overrides extends TableSchemaTypeOverrides = Record<never, never>> = CqlType2TSTypeInternal<PickCqlType<Def>, Def, Overrides>;
-
 // @public
 export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & CommandOptions<{
     timeout: 'databaseAdminTimeoutMs';
@@ -1023,6 +1035,19 @@ export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = Cre
     // (undocumented)
     definition: Def;
     // (undocumented)
+    ifNotExists?: boolean;
+}
+
+// @public
+export interface CreateTypeDefinition {
+    readonly fields: Record<string, LooseCreateTypeFieldDefinition | StrictCreateTypeFieldDefinition>;
+}
+
+// @public
+export interface CreateTypeOptions extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}>, WithKeyspace {
+    definition: CreateTypeDefinition;
     ifNotExists?: boolean;
 }
 
@@ -1121,6 +1146,11 @@ export interface DataAPIClientOptions {
 
 // @public (undocumented)
 export type DataAPICodec<Class extends CollectionCodecClass & TableCodecClass> = InstanceType<Class>;
+
+// Warning: (ae-forgotten-export) The symbol "CqlScalarTypeMap" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type DataAPICreatableScalarTypes = Exclude<keyof CqlScalarTypeMap, 'counter' | 'timeuuid' | 'varchar'>;
 
 // @public
 export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
@@ -1334,6 +1364,17 @@ export class DataAPITimeoutError extends DataAPIError {
     readonly timeout: Partial<TimeoutDescriptor>;
 }
 
+// Warning: (ae-forgotten-export) The symbol "CqlType2TSTypeInternal" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "NormalizeTypeFormat" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type DataAPIType2TSType<Def extends CreateTableColumnDefinitions[string], TypeOverrides extends TableSchemaInferenceOverrides['typeOverrides'] = Record<never, never>> = CqlType2TSTypeInternal<NormalizeTypeFormat<Def>, Def, TypeOverrides>;
+
+// Warning: (ae-forgotten-export) The symbol "CqlCollectionTypeMap" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type DataAPITypes = keyof CqlScalarTypeMap | keyof CqlCollectionTypeMap<any, any>;
+
 // @public
 export class DataAPIVector implements DataAPICodec<typeof DataAPIVector> {
     // Warning: (ae-incompatible-release-tags) The symbol "[$DeserializeForCollection]" is marked as @public, but its signature references "CollectionDesCtx" which is marked as @beta
@@ -1392,6 +1433,7 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     admin(options: AdminOptions & {
         environment: Exclude<DataAPIEnvironment, 'astra'>;
     }): DataAPIDbAdmin;
+    alterType<UDTSchema extends SomeRow = SomeRow>(name: string, options: AlterTypeOptions<UDTSchema>): Promise<void>;
     collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema>;
     // @deprecated
     collections: 'ERROR: `.collections` has been removed. Use `.listCollections` with `.map` instead';
@@ -1399,9 +1441,11 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     createCollection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CreateCollectionOptions<WSchema>): Promise<Collection<WSchema, RSchema>>;
     createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
     createTable<WSchema extends SomeRow, PKeys extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>;
+    createType(name: string, options: CreateTypeOptions): Promise<void>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void>;
+    dropType(name: string, options?: DropTypeOptions): Promise<void>;
     readonly endpoint: string;
     get _httpClient(): OpaqueHttpClient;
     get id(): string;
@@ -1421,11 +1465,19 @@ export class Db extends HierarchicalLogger<CommandEventMap> {
     listTables(options?: ListTablesOptions & {
         nameOnly?: false;
     }): Promise<TableDescriptor[]>;
+    listTypes(options: ListTypesOptions & {
+        nameOnly: true;
+    }): Promise<string[]>;
+    listTypes(options?: ListTypesOptions & {
+        nameOnly?: false;
+    }): Promise<TypeDescriptor[]>;
     get region(): string;
     table<WSchema extends SomeRow, PKeys extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema>;
     useKeyspace(keyspace: string): void;
     // @deprecated
     useNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
+    // (undocumented)
+    static userDefinedTypeSchema<const Def extends CreateTypeDefinition>(schema: Def): Def;
 }
 
 // @public
@@ -1441,12 +1493,8 @@ export abstract class DbAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     }>): Promise<void>;
     // @deprecated
     dropNamespace: 'ERROR: The `namespace` terminology has been removed, and replaced with `keyspace` throughout the client';
-    findEmbeddingProviders(options?: CommandOptions<{
-        timeout: 'databaseAdminTimeoutMs';
-    }>): Promise<FindEmbeddingProvidersResult>;
-    findRerankingProviders(options?: CommandOptions<{
-        timeout: 'databaseAdminTimeoutMs';
-    }>): Promise<FindRerankingProvidersResult>;
+    findEmbeddingProviders(options?: FindEmbeddingProvidersOptions): Promise<FindEmbeddingProvidersResult>;
+    findRerankingProviders(options?: FindRerankingProvidersOptions): Promise<FindRerankingProvidersResult>;
     // @internal (undocumented)
     protected abstract _getDataAPIHttpClient(): DataAPIHttpClient<'admin'>;
     abstract listKeyspaces(options?: CommandOptions<{
@@ -1558,6 +1606,13 @@ export interface DropTableOptions extends CommandOptions<{
 }
 
 // @public
+export interface DropTypeOptions extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}>, WithKeyspace {
+    ifExists?: boolean;
+}
+
+// @public
 export interface DropVectorizeOperation<Schema extends SomeRow> {
     columns: (keyof Schema & string)[];
 }
@@ -1588,12 +1643,19 @@ export interface EmbeddingProviderInfo {
     displayName: string;
     models: EmbeddingProviderModelInfo[];
     parameters: EmbeddingProviderProviderParameterInfo[];
-    supportedAuthentication: Record<string, EmbeddingProviderAuthInfo>;
+    supportedAuthentication: Record<LitUnion<'HEADER' | 'SHARED_SECRET' | 'NONE'>, EmbeddingProviderAuthInfo>;
     url: string;
 }
 
 // @public
+export interface EmbeddingProviderModelApiSupportInfo {
+    // Warning: (ae-forgotten-export) The symbol "ModelLifecycleStatus" needs to be exported by the entry point index.d.ts
+    status: ModelLifecycleStatus;
+}
+
+// @public
 export interface EmbeddingProviderModelInfo {
+    apiModelSupport: EmbeddingProviderModelApiSupportInfo;
     name: string;
     parameters: EmbeddingProviderModelParameterInfo[];
     vectorDimension: number | null;
@@ -1794,6 +1856,13 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
 }
 
 // @public
+export interface FindEmbeddingProvidersOptions extends CommandOptions<{
+    timeout: 'databaseAdminTimeoutMs';
+}> {
+    filterModelStatus?: ModelLifecycleStatus | '';
+}
+
+// @public
 export interface FindEmbeddingProvidersResult {
     embeddingProviders: Record<string, EmbeddingProviderInfo>;
 }
@@ -1806,8 +1875,15 @@ export interface FindPage<T> {
 }
 
 // @public
+export interface FindRerankingProvidersOptions extends CommandOptions<{
+    timeout: 'databaseAdminTimeoutMs';
+}> {
+    filterModelStatus?: ModelLifecycleStatus | '';
+}
+
+// @public
 export interface FindRerankingProvidersResult {
-    rerankingProviders: Record<string, any>;
+    rerankingProviders: Record<string, RerankingProviderInfo>;
 }
 
 // @public
@@ -2083,15 +2159,20 @@ export type InferrableTableSchema = CreateTableDefinition | ((..._: any[]) => Pr
 // Warning: (ae-forgotten-export) The symbol "InferTablePKFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTablePrimaryKey<T extends InferrableTableSchema, Overrides extends TableSchemaTypeOverrides = Record<never, never>> = T extends CreateTableDefinition ? InferTablePKFromDefinition<T, Overrides> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
+export type InferTablePrimaryKey<T extends InferrableTableSchema, Overrides extends TableSchemaInferenceOverrides = EmptyObj> = T extends CreateTableDefinition ? InferTablePKFromDefinition<T, Overrides> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
 
-// Warning: (ae-forgotten-export) The symbol "InferTableSchemaFromDefinition" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "InferSchemaFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTableReadSchema<T extends InferrableTableSchema, Overrides extends TableSchemaTypeOverrides = Record<never, never>> = T extends CreateTableDefinition ? FoundRow<InferTableSchemaFromDefinition<T, Overrides>> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
+export type InferTableReadSchema<T extends InferrableTableSchema, Overrides extends TableSchemaInferenceOverrides = EmptyObj> = T extends CreateTableDefinition ? FoundRow<InferSchemaFromDefinition<T, Overrides>> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
 
 // @public
-export type InferTableSchema<T extends InferrableTableSchema, Overrides extends TableSchemaTypeOverrides = Record<never, never>> = T extends CreateTableDefinition ? InferTableSchemaFromDefinition<T, Overrides> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
+export type InferTableSchema<T extends InferrableTableSchema, Overrides extends TableSchemaInferenceOverrides = EmptyObj> = T extends CreateTableDefinition ? InferSchemaFromDefinition<T, Overrides> : Record<never, never> extends Overrides ? T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never : 'ERROR: Can not provide TypeOverrides if not inferring the type from a CreateTableDefinition';
+
+// @public (undocumented)
+export type InferUDTSchema<Def extends CreateTypeDefinition, Overrides extends UDTSchemaInferenceOverrides = Record<never, never>> = {
+    -readonly [FieldName in keyof Def['fields']]: FieldName extends keyof Overrides['fieldOverrides'] ? Overrides['fieldOverrides'][FieldName] : DataAPIType2TSType<Def['fields'][FieldName], Overrides['typeOverrides']>;
+};
 
 // @public
 export class InvalidEnvironmentError extends Error {
@@ -2131,7 +2212,7 @@ export interface LexicalDoc {
 export const LIB_NAME = "astra-db-ts";
 
 // @public
-export const LIB_VERSION = "2.0.1";
+export const LIB_VERSION = "2.1.0";
 
 // @public
 export interface ListAstraDatabasesOptions extends CommandOptions<{
@@ -2151,6 +2232,13 @@ export interface ListCollectionsOptions extends CommandOptions<{
 }
 
 // @public
+export interface ListIndexOptions extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}>, WithKeyspace {
+    nameOnly?: boolean;
+}
+
+// @public
 export type ListTableColumnDefinitions = Record<string, ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition>;
 
 // @public
@@ -2163,7 +2251,7 @@ export interface ListTableDefinition {
 
 // @public
 export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition & {
-    apiSupport?: ListTableUnsupportedColumnApiSupport;
+    apiSupport?: TableUnsupportedColumnApiSupport;
 };
 
 // @public
@@ -2177,25 +2265,23 @@ export interface ListTablesOptions extends CommandOptions<{
 }
 
 // @public
-export interface ListTableUnsupportedColumnApiSupport {
+export interface ListTableUnsupportedColumnDefinition {
     // (undocumented)
-    cqlDefinition: string;
+    apiSupport: TableUnsupportedColumnApiSupport;
     // (undocumented)
-    createTable: boolean;
-    // (undocumented)
-    filter: boolean;
-    // (undocumented)
-    insert: boolean;
-    // (undocumented)
-    read: boolean;
+    type: 'UNSUPPORTED';
 }
 
 // @public
-export interface ListTableUnsupportedColumnDefinition {
-    // (undocumented)
-    apiSupport: ListTableUnsupportedColumnApiSupport;
-    // (undocumented)
-    type: 'UNSUPPORTED';
+export interface ListTypeDefinition {
+    readonly fields: Record<string, StrictCreateTypeFieldDefinition>;
+}
+
+// @public
+export interface ListTypesOptions extends CommandOptions<{
+    timeout: 'tableAdminTimeoutMs';
+}>, WithKeyspace {
+    nameOnly?: boolean;
 }
 
 // @public
@@ -2217,7 +2303,10 @@ export type LoggingOutput = 'event' | 'stdout' | 'stderr' | 'stdout:verbose' | '
 export const LoggingOutputs: readonly ["event", "stdout", "stderr", "stdout:verbose", "stderr:verbose"];
 
 // @public
-export type LooseCreateTableColumnDefinition = TableScalarType | (string & Record<never, never>);
+export type LooseCreateTableColumnDefinition = LitUnion<DataAPICreatableScalarTypes>;
+
+// @public
+export type LooseCreateTypeFieldDefinition = LitUnion<DataAPICreatableScalarTypes>;
 
 // @public
 export type MaybeBuffer = typeof globalThis extends {
@@ -2366,6 +2455,11 @@ export interface Ref<T> {
 }
 
 // @public
+export interface RenameFieldOperation<Schema extends SomeRow> {
+    fields: Partial<Record<keyof Schema & string, string>>;
+}
+
+// @public
 export class RerankedResult<TRaw> {
     constructor(document: TRaw, scores: Record<string, number>);
     readonly document: TRaw;
@@ -2382,6 +2476,42 @@ export class RerankingAPIKeyHeaderProvider extends StaticHeadersProvider<'rerank
 // @public (undocumented)
 export type RerankingHeadersProvider = HeadersProvider<'reranking'>;
 
+// @public
+export interface RerankingProviderAuthInfo {
+    enabled: boolean;
+    tokens: RerankingProviderTokenInfo[];
+}
+
+// @public
+export interface RerankingProviderInfo {
+    displayName: string;
+    isDefault: boolean;
+    models: RerankingProviderModelInfo[];
+    parameters?: Record<string, unknown>;
+    supportedAuthentication: Record<LitUnion<'HEADER' | 'SHARED_SECRET' | 'NONE'>, RerankingProviderAuthInfo>;
+}
+
+// @public
+export interface RerankingProviderModelApiSupportInfo {
+    status: ModelLifecycleStatus;
+}
+
+// @public
+export interface RerankingProviderModelInfo {
+    apiModelSupport: RerankingProviderModelApiSupportInfo;
+    isDefault: boolean;
+    name: string;
+    parameters?: Record<string, unknown>;
+    properties: Record<string, unknown> | null;
+    url: string;
+}
+
+// @public
+export interface RerankingProviderTokenInfo {
+    accepted: string;
+    forwarded: string;
+}
+
 // @public (undocumented)
 export interface RerankServiceOptions {
     // (undocumented)
@@ -2393,6 +2523,9 @@ export interface RerankServiceOptions {
     // (undocumented)
     provider: string;
 }
+
+// @public (undocumented)
+export type ResolveUDTSchema<DefOrSchema extends SomeRow> = DefOrSchema extends CreateTypeDefinition ? InferUDTSchema<DefOrSchema> : DefOrSchema;
 
 // @public
 export type RootAdminOptions = Omit<AdminOptions, 'logging' | 'timeoutDefaults'>;
@@ -2498,14 +2631,17 @@ export class StaticTokenProvider extends TokenProvider {
 }
 
 // @public
-export type StrictCreateTableColumnDefinition = TableScalarColumnDefinition | TableMapColumnDefinition | TableListColumnDefinition | TableSetColumnDefinition | TableVectorColumnDefinition;
+export type StrictCreateTableColumnDefinition = TableScalarColumnDefinition | TableMapColumnDefinition | TableListColumnDefinition | TableSetColumnDefinition | TableVectorColumnDefinition | TableUserDefinedTypeColumnDefinition;
+
+// @public
+export type StrictCreateTypeFieldDefinition = TableScalarColumnDefinition;
 
 // @public
 export class Table<WSchema extends SomeRow, PKey extends SomePKey = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalLogger<CommandEventMap> {
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, rootOpts: ParsedRootClientOpts, opts: TableOptions | undefined);
     alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<WSchema>): Promise<Table<NewWSchema, PKey, NewRSchema>>;
-    createIndex(name: string, column: TableCreateIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void>;
+    createIndex(name: string, column: TableIndexColumn<WSchema>, options?: TableCreateIndexOptions): Promise<void>;
     createTextIndex(name: string, column: keyof WSchema, options?: TableCreateTextIndexOptions): Promise<void>;
     createVectorIndex(name: string, column: keyof WSchema, options?: TableCreateVectorIndexOptions): Promise<void>;
     definition(options?: CommandOptions<{
@@ -2520,6 +2656,12 @@ export class Table<WSchema extends SomeRow, PKey extends SomePKey = Partial<Foun
     insertMany(rows: readonly WSchema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<PKey>>;
     insertOne(row: WSchema, options?: TableInsertOneOptions): Promise<TableInsertOneResult<PKey>>;
     readonly keyspace: string;
+    listIndexes(options: ListIndexOptions & {
+        nameOnly: true;
+    }): Promise<string[]>;
+    listIndexes(options?: ListIndexOptions & {
+        nameOnly?: false;
+    }): Promise<TableIndexDescriptor[]>;
     readonly name: string;
     static schema<const Def extends CreateTableDefinition<Def>>(schema: Def): Def;
     updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, options?: TableUpdateOneOptions): Promise<void>;
@@ -2572,9 +2714,6 @@ export class TableCodecs {
     // (undocumented)
     static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts | TableCodecClass): RawTableCodecs;
 }
-
-// @public (undocumented)
-export type TableCreateIndexColumn<WSchema> = keyof WSchema | Partial<Record<(keyof WSchema & string), `$${string}`>>;
 
 // @public
 export interface TableCreateIndexOptions extends CommandOptions<{
@@ -2693,6 +2832,14 @@ export type TableFindOneOptions = GenericFindOneOptions;
 // @public
 export type TableFindOptions = GenericFindOptions;
 
+// @public (undocumented)
+export type TableIndexColumn<WSchema> = keyof WSchema | Partial<Record<(keyof WSchema & string), '$keys' | '$values'>>;
+
+// @public
+export type TableIndexDescriptor = (TableRegularIndexDescriptor | TableTextIndexDescriptor | TableVectorIndexDescriptor | TableUnknownIndexDescriptor) & ({
+    name: string;
+});
+
 // @public
 export interface TableIndexOptions {
     ascii?: boolean;
@@ -2733,17 +2880,17 @@ export interface TableListColumnDefinition {
     // (undocumented)
     type: 'list';
     // (undocumented)
-    valueType: TableScalarType;
+    valueType: DataAPICreatableScalarTypes | TableUserDefinedTypeColumnDefinition;
 }
 
 // @public
 export interface TableMapColumnDefinition {
     // (undocumented)
-    keyType: 'text' | 'ascii';
+    keyType: DataAPICreatableScalarTypes;
     // (undocumented)
     type: 'map';
     // (undocumented)
-    valueType: TableScalarType;
+    valueType: DataAPICreatableScalarTypes | TableUserDefinedTypeColumnDefinition;
 }
 
 // @beta (undocumented)
@@ -2763,19 +2910,28 @@ export interface TableOptions extends WithKeyspace {
 export type TablePrimaryKeyDefinition<PKCols extends string> = PKCols | FullCreateTablePrimaryKeyDefinition<PKCols>;
 
 // @public
-export interface TableScalarColumnDefinition {
+export interface TableRegularIndexDescriptor {
     // (undocumented)
-    type: TableScalarType;
+    column: TableIndexColumn<SomeRow>;
+    // (undocumented)
+    definition: TableIndexOptions;
+    // (undocumented)
+    indexType: 'regular';
 }
 
 // @public
-export type TableScalarType = 'ascii' | 'bigint' | 'blob' | 'boolean' | 'date' | 'decimal' | 'double' | 'duration' | 'float' | 'int' | 'inet' | 'smallint' | 'text' | 'time' | 'timestamp' | 'tinyint' | 'uuid' | 'varint';
+export interface TableScalarColumnDefinition {
+    // (undocumented)
+    type: DataAPICreatableScalarTypes;
+}
 
-// Warning: (ae-forgotten-export) The symbol "CqlNonGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "CqlGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
-//
 // @public
-export type TableSchemaTypeOverrides = Partial<Record<LitUnion<keyof CqlNonGenericType2TSTypeDict | keyof CqlGenericType2TSTypeDict<any, any>>, unknown>>;
+export interface TableSchemaInferenceOverrides {
+    // (undocumented)
+    columnOverrides?: Record<string, unknown>;
+    // (undocumented)
+    typeOverrides?: Partial<Record<LitUnion<DataAPITypes>, unknown>>;
+}
 
 // @beta (undocumented)
 export interface TableSerCtx extends BaseSerCtx<TableSerCtx> {
@@ -2796,7 +2952,17 @@ export interface TableSetColumnDefinition {
     // (undocumented)
     type: 'set';
     // (undocumented)
-    valueType: TableScalarType;
+    valueType: DataAPICreatableScalarTypes | TableUserDefinedTypeColumnDefinition;
+}
+
+// @public
+export interface TableTextIndexDescriptor {
+    // (undocumented)
+    column: TableIndexColumn<SomeRow>;
+    // (undocumented)
+    definition: TableTextIndexOptions;
+    // (undocumented)
+    indexType: 'text';
 }
 
 // @public
@@ -2809,6 +2975,36 @@ export interface TableTextIndexOptions {
 export type TableTypeCodecOpts = TypeCodecOpts<TableSerCtx, TableDesCtx>;
 
 // @public
+export interface TableUnknownIndexDescriptor {
+    // (undocumented)
+    column: 'UNKNOWN';
+    // (undocumented)
+    definition: {
+        apiSupport: {
+            cqlDefinition: string;
+            createIndex: boolean;
+            filter: boolean;
+        };
+    };
+    // (undocumented)
+    indexType: 'UNKNOWN';
+}
+
+// @public
+export interface TableUnsupportedColumnApiSupport {
+    // (undocumented)
+    cqlDefinition: string;
+    // (undocumented)
+    createTable: boolean;
+    // (undocumented)
+    filter: boolean;
+    // (undocumented)
+    insert: boolean;
+    // (undocumented)
+    read: boolean;
+}
+
+// @public
 export interface TableUpdateFilter<Schema extends SomeRow> {
     $set?: Partial<Schema> & SomeRow;
     $unset?: Record<string, '' | true | 1>;
@@ -2816,6 +3012,14 @@ export interface TableUpdateFilter<Schema extends SomeRow> {
 
 // @public
 export type TableUpdateOneOptions = Omit<GenericUpdateOneOptions, 'upsert' | 'sort' | 'vector' | 'vectorize'>;
+
+// @public (undocumented)
+export interface TableUserDefinedTypeColumnDefinition {
+    // (undocumented)
+    type: 'userDefined';
+    // (undocumented)
+    udtName: string;
+}
 
 // @public
 export interface TableVectorColumnDefinition {
@@ -2825,6 +3029,16 @@ export interface TableVectorColumnDefinition {
     service?: VectorizeServiceOptions;
     // (undocumented)
     type: 'vector';
+}
+
+// @public
+export interface TableVectorIndexDescriptor {
+    // (undocumented)
+    column: TableIndexColumn<SomeRow>;
+    // (undocumented)
+    definition: TableVectorIndexOptions;
+    // (undocumented)
+    indexType: 'vector';
 }
 
 // @public
@@ -2894,6 +3108,21 @@ export class TooManyDocumentsToCountError extends DataAPIError {
 export type TypeCodecOpts<SerCtx, DesCtx> = CustomCodecSerOpts<SerCtx> & {
     deserialize?: SerDesFn<DesCtx>;
 };
+
+// @public
+export interface TypeDescriptor {
+    apiSupport?: TableUnsupportedColumnApiSupport;
+    definition?: ListTypeDefinition;
+    name: string;
+}
+
+// @public (undocumented)
+export interface UDTSchemaInferenceOverrides {
+    // (undocumented)
+    fieldOverrides?: Record<string, unknown>;
+    // (undocumented)
+    typeOverrides?: Partial<Record<LitUnion<DataAPITypes>, unknown>>;
+}
 
 // @public
 export function unescapeFieldPath(path: string): string[];

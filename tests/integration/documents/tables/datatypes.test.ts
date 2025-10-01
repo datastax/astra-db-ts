@@ -214,15 +214,15 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     const uuid4 = uuid.v4();
 
     const colAsserter = mkColumnAsserter(key, 'map');
-    //
-    // await colAsserter.notOk([]);
-    // await colAsserter.notOk(new Map(<any>[[1n, { car: 'bus' }]]));
-    // await colAsserter.notOk(new Map(<any>[['1n', {}]]));
-    // await colAsserter.notOk([[5n, { id: uuid1.toString(), name: 'Charlie', extra: 'i should not be here' }]]);
-    //
-    // for (const val of [null, undefined, {}, new Map()]) {
-    //   await colAsserter.ok(val, _ => new Map());
-    // }
+
+    await colAsserter.notOk([]);
+    await colAsserter.notOk(new Map(<any>[[1n, { car: 'bus' }]]));
+    await colAsserter.notOk(new Map(<any>[['1n', {}]]));
+    await colAsserter.notOk([[5n, { id: uuid1.toString(), name: 'Charlie', extra: 'i should not be here' }]]);
+
+    for (const val of [null, undefined, {}, new Map()]) {
+      await colAsserter.ok(val, _ => new Map());
+    }
 
     await colAsserter.ok(
       [[1n, { id: uuid1.toString() }], [2n, { name: 'John' }]],
@@ -232,31 +232,31 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
       ]),
     );
 
-    // await colAsserter.ok(
-    //   new Map([
-    //     [3n, { id: uuid1.toString(), name: 'Alice', age: 25n }],
-    //     [4n, { id: uuid4, name: 'Bob', age: 30n }],
-    //   ]),
-    //   _ => new Map([
-    //     [3n, { id: uuid1, name: 'Alice', age: 25n }],
-    //     [4n, { id: uuid4, name: 'Bob', age: 30n }],
-    //   ]),
-    // );
-    //
-    // await colAsserter.ok(
-    //   new Map([
-    //     [99999999999999999999999999999999999999999999999999999999999999999999n, { id: uuid1 }],
-    //   ]),
-    //   _ => new Map([
-    //     [99999999999999999999999999999999999999999999999999999999999999999999n, { id: uuid1, name: null, age: null }],
-    //   ]),
-    // );
-    //
-    // await colAsserter.ok(
-    //   new Map(Array.from({ length: 100 }, (_, i) => [
-    //     BigInt(i), { id: uuid.v7(), name: `user${i}`, age: BigInt(20 * i) },
-    //   ])),
-    // );
+    await colAsserter.ok(
+      new Map([
+        [3n, { id: uuid1.toString(), name: 'Alice', age: 25n }],
+        [4n, { id: uuid4, name: 'Bob', age: 30n }],
+      ]),
+      _ => new Map([
+        [3n, { id: uuid1, name: 'Alice', age: 25n }],
+        [4n, { id: uuid4, name: 'Bob', age: 30n }],
+      ]),
+    );
+
+    await colAsserter.ok(
+      new Map([
+        [99999999999999999999999999999999999999999999999999999999999999999999n, { id: uuid1 }],
+      ]),
+      _ => new Map([
+        [99999999999999999999999999999999999999999999999999999999999999999999n, { id: uuid1, name: null, age: null }],
+      ]),
+    );
+
+    await colAsserter.ok(
+      new Map(Array.from({ length: 100 }, (_, i) => [
+        BigInt(i), { id: uuid.v7(), name: `user${i}`, age: BigInt(20 * i) },
+      ])),
+    );
   });
 
   it('should handle different set insertion cases', async (key) => {
@@ -268,10 +268,9 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.notOk({});
     await colAsserter.notOk(new Set([uuid1, 'uuid4']));
 
-    // TODO
-    // for (const val of [null, undefined, [], new Set()]) {
-    //   await colAsserter.ok(val, _ => new Set());
-    // }
+    for (const val of [null, undefined, [], new Set()]) {
+      await colAsserter.ok(val, _ => new Set());
+    }
 
     await colAsserter.ok([uuid1.toString(), uuid4], _ => new Set([uuid1, uuid4]));
     await colAsserter.ok(new Set([uuid1.toString(), uuid4]), _ => new Set([uuid1, uuid4]));

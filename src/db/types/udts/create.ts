@@ -13,12 +13,7 @@
 // limitations under the License.
 
 import type { CommandOptions, LitUnion } from '@/src/lib/index.js';
-import type {
-  DataAPICreatableScalarTypes,
-  TableListColumnDefinition,
-  TableMapColumnDefinition,
-  TableScalarColumnDefinition, TableSetColumnDefinition, WithKeyspace,
-} from '@/src/db/index.js';
+import type { DataAPICreatableScalarTypes, TableScalarColumnDefinition, WithKeyspace } from '@/src/db/index.js';
 
 /**
  * Options for creating a new user-defined type (via {@link Db.createType}).

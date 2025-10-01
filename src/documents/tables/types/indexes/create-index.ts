@@ -17,7 +17,7 @@ import type { CommandOptions } from '@/src/lib/index.js';
 /**
  * @public
  */
-export type TableCreateIndexColumn<WSchema> = keyof WSchema | Partial<Record<(keyof WSchema & string), `$${string}`>>;
+export type TableIndexColumn<WSchema> = keyof WSchema | Partial<Record<(keyof WSchema & string), '$keys' | '$values'>>;
 
 /**
  * Options for creating a new index via {@link Table.createIndex}
