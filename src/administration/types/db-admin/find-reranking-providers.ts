@@ -113,7 +113,7 @@ export interface RerankingProviderInfo {
    * Possible methods include `'HEADER'`, `'SHARED_SECRET'`, and `'NONE'`.
    *
    * - `'HEADER'`: Authentication using direct API keys passed through headers on every Data API call.
-   * - `'SHARED_SECRET'`: Authentication tied to a collections at collections creation time using the Astra KMS.
+   * - `'SHARED_SECRET'`: Authentication tied to a collection at collections creation time using the Astra KMS.
    * - `'NONE'`: For when a client doesn't need authentication to use (e.g. nvidia).
    *
    * @example

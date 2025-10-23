@@ -741,7 +741,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   /**
    * @internal
    */
-  protected async _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[FindAndRerankPage<RerankedResult<TRaw>>, boolean]> {
+  protected override async _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[FindAndRerankPage<RerankedResult<TRaw>>, boolean]> {
     return this._internal.fetchNextPageRaw(extra, tm, FindAndRerankCursor.InternalNextPageOptions);
   }
 

@@ -83,7 +83,7 @@ export interface FLCNextPageOptions<Opts extends FLCOptions> {
 /**
  * @internal
  */
-export class FLCInternal<TRaw extends SomeDoc, Page extends FLCPage<TRaw>, Opts extends FLCOptions> {
+export class FLCInternal<TRaw extends SomeDoc, TRawPage extends FLCPage<TRaw>, Opts extends FLCOptions> {
   readonly _httpClient: DataAPIHttpClient;
   readonly _serdes: SerDes;
   readonly _parent: Table<SomeRow> | Collection;
@@ -126,20 +126,22 @@ export class FLCInternal<TRaw extends SomeDoc, Page extends FLCPage<TRaw>, Opts 
     return this._cloneFLC({ mapping });
   }
 
-  public withInitialPageState<RC extends FindLikeCursor>(pageState?: string): RC {
+  public withInitialPageState<RC extends FindLikeCursor>(pageState?: string | null): RC {
     if (this._instance.state !== 'idle') {
       throw new CursorError('Cannot set an initial page state on a running/closed cursor', this._instance);
     }
 
+    return this._cloneFLC<RC>({ initialPage: this.mkInitialPage(pageState) });
+  }
+
+  public mkInitialPage(pageState?: string | null): FLCPage<TRaw> | undefined {
     if (pageState === null) {
       throw new CursorError('Cannot set an initial page state to `null`. If you want an unset page state, set it to `undefined` instead.', this._instance);
     }
 
-    const initialPage = (pageState !== undefined)
+    return (pageState !== undefined)
       ? { nextPageState: pageState, result: [] }
       : undefined;
-
-    return this._cloneFLC<RC>({ initialPage });
   }
 
   public withOption<RC extends FindLikeCursor, K extends keyof Opts & string>(key: K, value: Opts[K]): RC {
@@ -171,21 +173,33 @@ export class FLCInternal<TRaw extends SomeDoc, Page extends FLCPage<TRaw>, Opts 
     return this._instance._currentPage?.sortVector ?? null;
   }
 
+  // TODO clean up this entire method, so much logic here that shouldn't be
   public async fetchNextPageMapped<T, TPage extends FLCPage<T>>(opts: FLCNextPageOptions<Opts>): Promise<TPage> {
     if (this._instance._currentPage && this._instance._currentPage.result.length !== 0) {
       throw new CursorError('Cannot fetch next page when the current page (the buffer) is not empty', this._instance);
     }
 
-    const nextPage = (await this.fetchNextPageRaw({ method: '.fetchNextPage' }, undefined, opts))[0];
+    if (this._instance.state === 'closed') {
+      return { nextPageState: null, result: [] as T[], sortVector: undefined } as TPage;
+    }
+
+    const [nextPage, isNextPage] = (await this.fetchNextPageRaw({ method: '.fetchNextPage' }, undefined, opts));
+    this._instance._currentPage = nextPage; // TODO _currentPage should really live in FLCInternal
 
     const result = this._instance._mapping
       ? nextPage.result.map(r => this._instance._mapping!(r))
-      : nextPage.result;
+      : nextPage.result.slice();
+
+    this._instance.consumeBuffer(); // fetchNextPageMapped consume all rows by returning them immediately
+
+    if (!isNextPage) {
+      this._instance.close();
+    }
 
     return { ...nextPage, result } as unknown as TPage;
   }
 
-  public async fetchNextPageRaw(extra: Record<string, unknown>, tm: TimeoutManager | undefined, opts: FLCNextPageOptions<Opts>): Promise<[Page, boolean]> {
+  public async fetchNextPageRaw(extra: Record<string, unknown>, tm: TimeoutManager | undefined, opts: FLCNextPageOptions<Opts>): Promise<[TRawPage, boolean]> {
     const command = {
       [opts.commandName]: {
         filter: this._filter[0],
@@ -220,6 +234,6 @@ export class FLCInternal<TRaw extends SomeDoc, Page extends FLCPage<TRaw>, Opts 
       page.result[i] = this._serdes.deserialize(page.result[i], raw, SerDesTarget.Record);
     }
 
-    return [opts.mapPage(page, raw) as Page, !!raw.data?.nextPageState];
+    return [opts.mapPage(page, raw) as TRawPage, !!raw.data?.nextPageState];
   }
 }

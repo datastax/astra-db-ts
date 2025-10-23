@@ -172,7 +172,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T, initialPage?: FindPage<TRaw>) {
     super(options ?? {}, mapping);
     this._internal = new FLCInternal(this, parent, serdes, filter, options);
-    this._currentPage = initialPage;
+    this._currentPage = initialPage ?? this._internal.mkInitialPage(options?.initialPageState);
   }
 
   /**
@@ -652,7 +652,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
   /**
    * @internal
    */
-  protected async _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[FindPage<TRaw>, boolean]> {
+  protected override async _fetchNextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<[FindPage<TRaw>, boolean]> {
     return this._internal.fetchNextPageRaw(extra, tm, FindCursor.InternalNextPageOptions);
   }
 

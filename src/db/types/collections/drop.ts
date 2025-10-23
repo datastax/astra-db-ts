@@ -16,7 +16,7 @@ import type { CommandOptions } from '@/src/lib/index.js';
 import type { WithKeyspace } from '@/src/db/index.js';
 
 /**
- * Options for dropping a collections.
+ * Options for dropping a collection.
  *
  * @field keyspace - Overrides the keyspace for the collections.
  * @field timeout - The timeout override for this method

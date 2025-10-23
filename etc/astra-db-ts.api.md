@@ -2212,7 +2212,7 @@ export interface LexicalDoc {
 export const LIB_NAME = "astra-db-ts";
 
 // @public
-export const LIB_VERSION = "2.1.0";
+export const LIB_VERSION = "2.1.1";
 
 // @public
 export interface ListAstraDatabasesOptions extends CommandOptions<{

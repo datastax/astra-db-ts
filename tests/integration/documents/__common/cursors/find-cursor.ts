@@ -59,7 +59,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
     };
 
     const docs = [{ [textKey]: '0', int: 0 }, { [textKey]: '1', int: 1 }, { [textKey]: '2', int: 2 }];
-    const docs_ = Array.from({ length: 100 }, (_, i) => <const>{ [textKey]: (i < 10 ? '0' : '') + `${i}`, int: i });
+    const docs_ = Array.from({ length: 95 }, (_, i) => <const>{ [textKey]: (i < 10 ? '0' : '') + `${i}`, int: i });
 
     before(async () => {
       await source.insertMany(docs);
@@ -573,7 +573,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         let pageState = undefined;
 
         while (pageState !== null) {
-          const page = await source_.find({}).initialPageState(pageState).map(d => d.int).map(i => i + 5).fetchNextPage();
+          const page = await source_.find({}, { initialPageState: pageState }).map(d => d.int).map(i => i + 5).fetchNextPage();
           actual.push(...page.result);
           pageState = page.nextPageState;
         }
@@ -585,6 +585,36 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         const cursor = source_.find({});
         await cursor.next();
         await assert.rejects(() => cursor.fetchNextPage(), (e) => e instanceof CursorError && e.message === 'Cannot fetch next page when the current page (the buffer) is not empty');
+      });
+
+      it('should work with a lot of documents', async () => {
+        let initialPageState: string | undefined | null = undefined;
+        let totalResults = 0;
+        const expectedCounts = [20, 20, 20, 20, 15];
+
+        const autoCursor = source_.find({});
+
+        for (const expectedCount of expectedCounts) {
+          const manualPage = await source_.find({}, { initialPageState }).fetchNextPage();
+          assert.equal(manualPage.result.length, expectedCount);
+
+          const autoPage = await autoCursor.fetchNextPage();
+          assert.equal(autoPage.result.length, expectedCount);
+
+          assert.equal(manualPage.nextPageState, autoPage.nextPageState);
+
+          totalResults += manualPage.result.length;
+
+          if (expectedCount === 15) {
+            assert.equal(manualPage.nextPageState, null);
+          } else {
+            assert.notEqual(initialPageState, manualPage.nextPageState);
+          }
+
+          initialPageState = manualPage.nextPageState;
+        }
+
+        assert.equal(totalResults, 95);
       });
     });
 

@@ -24,7 +24,7 @@ const dbAdmin = db.admin({ environment: 'dse' });
   // The list of namespaces will now include 'my_keyspace'
   console.log(await dbAdmin.listKeyspaces());
 
-  // Creates a collections in the 'my_keyspace' namespace
+  // Creates a collection in the 'my_keyspace' namespace
   const collection = await db.createCollection('my_coll');
 
   // Example of document manipulation in the newly created namespace

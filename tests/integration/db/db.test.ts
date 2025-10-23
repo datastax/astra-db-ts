@@ -21,14 +21,14 @@ import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constant
 
 parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
   describe('(LONG) createCollection', () => {
-    it('should create a collections', async () => {
+    it('should create a collection', async () => {
       const res = await db.createCollection('coll_1c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.name, 'coll_1c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
     });
 
-    it('should create a collections in another keyspace', async () => {
+    it('should create a collection in another keyspace', async () => {
       const res = await db.createCollection('coll_2c', { keyspace: Cfg.OtherKeyspace, indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.name, 'coll_2c');
@@ -122,7 +122,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
   });
 
   describe('(LONG) dropCollection', () => {
-    it('should drop a collections', async () => {
+    it('should drop a collection', async () => {
       await db.createCollection('coll_1d', { indexing: { deny: ['*'] } });
       await db.dropCollection('coll_1d');
       const collections = await db.listCollections();
@@ -130,7 +130,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
       assert.strictEqual(collection, undefined);
     });
 
-    it('should drop a collections in non-default keyspace', async () => {
+    it('should drop a collection in non-default keyspace', async () => {
       await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, keyspace: Cfg.OtherKeyspace });
       await db.dropCollection('coll_3d', { keyspace: Cfg.OtherKeyspace });
       const collections = await db.listCollections();
@@ -138,7 +138,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
       assert.strictEqual(collection, undefined);
     });
 
-    it('should not drop a collections in different keyspace', async () => {
+    it('should not drop a collection in different keyspace', async () => {
       await db.createCollection('coll_4d', { indexing: { deny: ['*'] } });
       await db.dropCollection('coll_4d', { keyspace: Cfg.OtherKeyspace });
       const collections = await db.listCollections();
@@ -498,7 +498,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     });
 
     // TODO
-    // it('should execute a collections-level command', async () => {
+    // it('should execute a collection-level command', async () => {
     //   const uuid = UUID.v4();
     //   const collection = db.collection(Cfg.DefaultCollectionName);
     //   await collection.insertOne({ _id: uuid });
@@ -506,7 +506,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     //   assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
     // });
     //
-    // it('should execute a collections-level command in different keyspace', async () => {
+    // it('should execute a collection-level command in different keyspace', async () => {
     //   const uuid = UUID.v4();
     //   const collection = db.collection(Cfg.DefaultCollectionName, { keyspace: Cfg.OtherKeyspace });
     //   await collection.insertOne({ _id: uuid });
