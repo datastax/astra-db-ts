@@ -90,7 +90,7 @@ const opts = new Args('test.ts')
       if (v) {
         opts.Environment = 'dse';
         process.env.CLIENT_DB_TOKEN = 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh';
-        process.env.CLIENT_DB_URL = 'http://localhost:8181';
+        process.env.CLIENT_DB_URL = 'http://127.0.0.1:8181';
       }
     }
   })
