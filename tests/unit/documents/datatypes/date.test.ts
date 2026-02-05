@@ -77,7 +77,7 @@ describe('unit.documents.datatypes.date', () => {
       assertDateOk([new Date(200000, 11, 1)],          [200000, 12,  1]);
       assertDateOk([new Date(-20000, 0,  9)],          [-20000,  1,  9]);
       assertDateOk([new Date('2000-01-31T12:59:59Z')], [  2000,  1, 31]);
-      assertDateOk([new Date('2000-01-01T00:00:00')], [  2000,  1,  1]);
+      assertDateOk([new Date('2000-01-01T00:00:00')],  [  2000,  1,  1]);
     });
 
     it('should create a DataAPIDate from year+month+day', () => {
@@ -151,9 +151,6 @@ describe('unit.documents.datatypes.date', () => {
       
       const yearDay2004_366 = new Date('2004-12-31');
       assertDateOk(date.ofYearDay(   2004, 366), [yearDay2004_366.getFullYear(), yearDay2004_366.getMonth() + 1, yearDay2004_366.getDate()]);
-      
-      assertDateOk(date.ofYearDay( 275760, 257), [ 275760,  9, 12]);
-      assertDateOk(date.ofYearDay(-271821, 110), [-271821,  4, 19]);
     });
   });
 

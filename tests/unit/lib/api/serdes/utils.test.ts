@@ -26,7 +26,7 @@ describe('unit.lib.api.serdes.utils', () => {
       const jbi = withJbiNullProtoFix(JBI);
 
       assert.deepStrictEqual(Object.getPrototypeOf(JBI.parse('{ "a": 3 }')), null);
-      assert.deepStrictEqual(Object.getPrototypeOf(jbi.parse('{ "a": 3 }')), Object.create(null));
+      assert.deepStrictEqual(Object.getPrototypeOf(Object.getPrototypeOf(jbi.parse('{ "a": 3 }'))), null);
 
       const values = [
         {},
