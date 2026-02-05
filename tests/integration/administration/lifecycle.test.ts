@@ -204,7 +204,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
       const fullDbInfo4 = await asyncDbAdmin.info();
       assert.strictEqual(fullDbInfo4.status, 'MAINTENANCE');
-      assert.deepStrictEqual(fullDbInfo4.keyspaces, ['my_keyspace', 'other_keyspace']);
+      assert.deepStrictEqual(fullDbInfo4.keyspaces.sort(), ['my_keyspace', 'other_keyspace']);
     }
 
     {

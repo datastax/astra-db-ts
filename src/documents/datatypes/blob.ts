@@ -247,5 +247,5 @@ const arrayBufferToBase64 = forJSEnv<[ArrayBuffer], string>({
 });
 
 function bufferToArrayBuffer(b: Buffer): ArrayBuffer {
-  return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
+  return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer; // should never be a SharedArrayBuffer
 }

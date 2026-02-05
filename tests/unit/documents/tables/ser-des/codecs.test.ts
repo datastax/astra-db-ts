@@ -457,7 +457,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
             const codec = TableCodecs.custom({
               deserializeGuard(val, ctx) {
                 if (ctx.path.length === 2) {
-                  assert.strictEqual(ctx.path.at(-1), i++);
+                  assert.strictEqual(ctx.path[ctx.path.length - 1], i++);
                   seenSet.delete(val);
                 }
                 return false;

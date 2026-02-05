@@ -1,4 +1,4 @@
-name: Run unit tests
+name: Run basic checks
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  unit-tests:
+  checks:
     runs-on: ubuntu-latest
     
     strategy:
@@ -27,5 +27,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      - name: Run unit tests
-        run: npm run test -- -u
+      - name: Run checks
+        run: npx tsx scripts/check.ts

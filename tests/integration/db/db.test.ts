@@ -268,6 +268,8 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
         ifNotExists: true,
       });
 
+      await new Promise(resolve => setTimeout(resolve, 1000)); // may help fix an occasional issue where otherType is not found
+
       const defaultTypes = await db.listTypes();
       const otherTypes = await db.listTypes({ keyspace: Cfg.OtherKeyspace });
 

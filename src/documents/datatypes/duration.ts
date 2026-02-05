@@ -1255,7 +1255,7 @@ const parseDurationStr = (str: string, fromDataAPI: boolean): MDN => {
   const builder = new DataAPIDurationBuilder(undefined, true).negate(isNegative);
 
   if (durationStr.startsWith('P')) {
-    if (durationStr.at(-1) === 'W') {
+    if (durationStr.endsWith('W')) {
       return parseISOWeekDuration(durationStr, builder);
     }
     if (durationStr.includes('-')) {

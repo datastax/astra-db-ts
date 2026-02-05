@@ -96,7 +96,7 @@ parallel('integration.lib.logging.bubbling', () => {
         }
       });
 
-      assert.deepStrictEqual(testStates.at(-1), mkTestState());
+      assert.deepStrictEqual(testStates[testStates.length - 1], mkTestState());
 
       if (errorRef.ref) {
         throw NonErrorError.asError(errorRef.ref);
@@ -118,7 +118,7 @@ parallel('integration.lib.logging.bubbling', () => {
             });
 
             emitter.on(eventName, (e: BaseClientEvent) => {
-              const { emittedEvents, requestId, emittedEventsOrder } = testStates.at(-1)!;
+              const { emittedEvents, requestId, emittedEventsOrder } = testStates[testStates.length - 1];
 
               try {
                 if (eventName in emittedEvents) {
@@ -130,7 +130,7 @@ parallel('integration.lib.logging.bubbling', () => {
                 if (requestId !== undefined) {
                   assert.strictEqual(e.requestId, requestId); // ensure that the requestId is always the same for events generated from a single request
                 } else {
-                  testStates.at(-1)!.requestId = e.requestId;
+                  testStates[testStates.length - 1].requestId = e.requestId;
                 }
 
                 spec.plugin?.[emitterName]?.(e);

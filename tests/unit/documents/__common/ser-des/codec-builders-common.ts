@@ -57,7 +57,6 @@ export const unitTestCodecBuilderCommon = ({ $DesSym, CodecsClass, ...cfg }: Cod
   it('should convert class into opts: { deserialize: [$DesSym] }', () => {
     fc.assert(
       fc.property(fc.anything(), (anything) => {
-        // @ts-expect-error - ts being stupid
         const clazz = class { static [$DesSym] = anything; };
         const codecs = cfg.mkRawCodecs(clazz);
         assert.strictEqual(codecs.length, 1);

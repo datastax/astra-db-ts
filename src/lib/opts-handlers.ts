@@ -78,7 +78,8 @@ export class OptionsHandler<Types extends OptionsHandlerTypes> {
   }
 
   public parseWithin<Field extends string>(obj: Partial<Record<Field, Types['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Types['Parsed'] {
-    return this.parse(obj?.[splitWithIncludesCheck(field, '.').at(-1) as Field], field);
+    const split = splitWithIncludesCheck(field, '.');
+    return this.parse(obj?.[split[split.length - 1] as Field], field);
   }
 }
 

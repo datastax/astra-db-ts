@@ -27,7 +27,7 @@ export const backgroundTestState: GlobalAsyncSuitesSpec = {
     throw new Error('Can\'t use `describe` in `background` blocks');
   },
   it(name, testFn, skipped) {
-    this.suites.at(-1)!.tests.push({ name, testFn, skipped });
+    this.suites[this.suites.length - 1].tests.push({ name, testFn, skipped });
   },
 };
 

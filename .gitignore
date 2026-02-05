@@ -146,3 +146,4 @@ tmp-lib-check
 .direnv
 .mocha
 .bob
+.secrets

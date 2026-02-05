@@ -124,7 +124,6 @@ export const unitTestAsCodecClass = ({ $SerSym, $DesSym, CodecsClass, SerDesClas
 
   it('should throw an error if $SerSym is not on the class prototype', () => {
     class NoSer {
-      // @ts-expect-error - ts being stupid
       static [$DesSym] = () => {};
     }
     assert.throws(() => CodecsClass.asCodecClass(NoSer), {
@@ -148,9 +147,7 @@ export const unitTestAsCodecClass = ({ $SerSym, $DesSym, CodecsClass, SerDesClas
     });
 
     class SerNotOnProto {
-      // @ts-expect-error - ts being stupid
       static [$DesSym] = () => {};
-      // @ts-expect-error - ts being stupid
       [$SerSym] = () => {};
     }
     assert.throws(() => CodecsClass.asCodecClass(SerNotOnProto), {

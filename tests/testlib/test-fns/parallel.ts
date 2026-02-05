@@ -27,7 +27,7 @@ export const parallelTestState: GlobalAsyncSuitesSpec  = {
   suites: [mkDefaultSuite()],
   inBlock: false,
   describe(name, fn, opts, skipped, fixtures) {
-    if (this.suites.at(-1)?.name) {
+    if (this.suites[this.suites.length - 1].name) {
       throw new Error('`describe` is not reentrant in `parallel` blocks');
     }
 
@@ -42,7 +42,7 @@ export const parallelTestState: GlobalAsyncSuitesSpec  = {
     return null;
   },
   it(name, testFn, skipped) {
-    this.suites.at(-1)!.tests.push({ name, testFn, skipped });
+    this.suites[this.suites.length - 1].tests.push({ name, testFn, skipped });
   },
 };
 
