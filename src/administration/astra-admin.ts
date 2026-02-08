@@ -417,7 +417,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     }, {
       id: (resp) => resp.headers.location,
       target: 'ACTIVE',
-      legalStates: ['INITIALIZING', 'PENDING'],
+      legalStates: ['INITIALIZING', 'PENDING', 'ASSOCIATING'],
       defaultPollInterval: 10000,
       timeoutManager: tm,
       options,
