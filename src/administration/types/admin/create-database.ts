@@ -77,6 +77,10 @@ export interface AstraDatabaseConfig {
    * If omitted, Astra will automatically provide a keyspace named `default_keyspace`.
    */
   keyspace?: string,
+  /**
+   * The PCU group to attach the database to once it is created.
+   */
+  pcuGroupUUID?: string,
 }
 
 /**
