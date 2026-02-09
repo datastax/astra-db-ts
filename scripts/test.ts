@@ -5,9 +5,8 @@ import 'zx/globals';
 import { Steps } from './utils/steps.js';
 import { RawTestCfg } from '../tests/testlib/index.js';
 import { Args } from './utils/arg-parse.js';
-import { loadEnvFile } from 'node:process';
 
-loadEnvFile();
+dotenv.config();
 
 dotenv.config();
 
@@ -172,7 +171,7 @@ function PrepareTest() {
 
 function RunTests() {
   return async () => ({
-    exitCode: await $({stdio: 'inherit'})`${_buildCommand()}`.nothrow().exitCode,
+    exitCode: await $({ stdio: 'inherit' })`${_buildCommand()}`.nothrow().exitCode,
   });
 
   function _buildCommand(): string[] {
