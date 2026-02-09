@@ -20,8 +20,6 @@ import { array, boolean, exact, object, oneOf, optional, positiveInteger, string
 import { jsonTryParse } from '@/src/lib/utils.js';
 import { FilterBuilder, VecWhitelistBuilder } from '@/tests/testlib/config-builders.js';
 
-process.loadEnvFile();
-
 const RawTestCfgDecoder = exact({
   DbEnvironment: optional(string),
 

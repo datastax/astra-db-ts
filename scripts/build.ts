@@ -188,7 +188,7 @@ function CleanupDist(): Step {
     const numDeleted = await _deleteEmptyFilesImpl(path, targetContent);
 
     if (numDeleted < 10) {
-      throw new Error(`Failsafe triggered: Only ${numDeleted} empty files deleted. Please check the deletion logic—the "empty" JS file output may have changed for ${path.split('/').at(-1)}.`);
+      throw new Error(`Failsafe triggered: Only ${numDeleted} empty files deleted. Please check the deletion logic—the "empty" JS file output may have changed for ${path.split('/')[path.split('/').length - 1]}.`);
     }
   }
 

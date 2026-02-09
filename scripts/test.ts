@@ -5,9 +5,8 @@ import 'zx/globals';
 import { Steps } from './utils/steps.js';
 import { RawTestCfg } from '../tests/testlib/index.js';
 import { Args } from './utils/arg-parse.js';
-import { loadEnvFile } from 'node:process';
 
-loadEnvFile();
+dotenv.config();
 
 const testCmd = 'mocha --import=tsx/esm -r tsconfig-paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs --exit ';
 
@@ -170,7 +169,7 @@ function PrepareTest() {
 
 function RunTests() {
   return async () => ({
-    exitCode: await $({stdio: 'inherit'})`${_buildCommand()}`.nothrow().exitCode,
+    exitCode: await $({ stdio: 'inherit' })`${_buildCommand()}`.nothrow().exitCode,
   });
 
   function _buildCommand(): string[] {
