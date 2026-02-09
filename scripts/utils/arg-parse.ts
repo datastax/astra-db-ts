@@ -96,7 +96,7 @@ export class Args<Opts extends Record<string, any> = {}> {
     return this as any;
   }
 
-  public stringArray<const Key extends string, const Opt extends BasicOpt<string[]>>(key: Key, opt: Opt): WithBasicOpt<Opts, Key, { default: [] }, string[]> {
+  public stringArray<const Key extends string, const Opt extends BasicOpt<string[]>>(key: Key, opt: Opt): WithBasicOpt<Opts, Key, { default: string[] }, string[]> {
     this._options.push({
       key,
       flags: opt.flags,
