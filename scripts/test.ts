@@ -3,9 +3,11 @@
 
 import 'zx/globals';
 import { Steps } from './utils/steps.js';
-import 'dotenv/config';
 import { RawTestCfg } from '../tests/testlib/index.js';
 import { Args } from './utils/arg-parse.js';
+import { loadEnvFile } from 'node:process';
+
+loadEnvFile();
 
 const testCmd = 'mocha --import=tsx/esm -r tsconfig-paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs --exit ';
 
@@ -109,7 +111,7 @@ const opts = new Args('test.ts')
 // Required for tests
 process.env.CLIENT_DYNAMIC_JS_ENV_CHECK = '1'
 
-const { exitCode } = await new Steps()
+const {exitCode} = await new Steps()
   .do(PrepareTest())
   .do(RunTests())
   .run();
@@ -168,7 +170,7 @@ function PrepareTest() {
 
 function RunTests() {
   return async () => ({
-    exitCode: await $({ stdio: 'inherit' })`${_buildCommand()}`.nothrow().exitCode,
+    exitCode: await $({stdio: 'inherit'})`${_buildCommand()}`.nothrow().exitCode,
   });
 
   function _buildCommand(): string[] {

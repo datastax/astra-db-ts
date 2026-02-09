@@ -32,7 +32,7 @@ import type {
   GenericReplaceOneOptions,
   GenericUpdateManyOptions,
   GenericUpdateOneOptions,
-  GenericUpdateResult,
+  GenericUpdateResult, Projection,
   SomeDoc,
   SomeId,
   SomeRow,
@@ -302,10 +302,10 @@ export class CommandImpls<ID> {
     return this._serdes.deserialize(resp.data!.document, resp, SerDesTarget.Record);
   }
 
-  public async distinct(key: string, filter: SomeDoc, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
+  public async distinct(key: string, filter: SomeDoc, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>, baseProjection: Projection): Promise<any[]> {
     const projection = pullSafeProjection4Distinct(key);
     /* c8 ignore next: not sure why this is being flagged as not run during tests, but it is */
-    const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 }, timeout: options?.timeout }, mkCursor);
+    const cursor = this.find(filter, { projection: { ...baseProjection, [projection]: 1 }, timeout: options?.timeout }, mkCursor);
 
     const seen = new Set<unknown>();
     const ret = [];

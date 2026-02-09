@@ -58,7 +58,7 @@ describe('unit.documents.utils', () => {
       eq(              'null', null                );
       eq(            'Object', {}                  );
       eq( 'Object[NullProto]', Object.create(null) );
-      eq(             'Array', []                  );
+      eq(      'Array[Empty]', []                  );
       eq(             'Array', [1, 2, 3]           );
       eq(          'function', () => {}            );
       eq(     'DataAPIVector', vector([1, 2, 3])   );

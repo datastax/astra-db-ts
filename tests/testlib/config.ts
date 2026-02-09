@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import * as process from 'node:process';
-import dotenv from 'dotenv';
 import type { BaseClientEvent, DataAPIEnvironment } from '@/src/lib/index.js';
 import { DEFAULT_KEYSPACE } from '@/src/lib/index.js';
 import type { DecoderType } from 'decoders';
@@ -21,7 +20,7 @@ import { array, boolean, exact, object, oneOf, optional, positiveInteger, string
 import { jsonTryParse } from '@/src/lib/utils.js';
 import { FilterBuilder, VecWhitelistBuilder } from '@/tests/testlib/config-builders.js';
 
-dotenv.config();
+process.loadEnvFile();
 
 const RawTestCfgDecoder = exact({
   DbEnvironment: optional(string),

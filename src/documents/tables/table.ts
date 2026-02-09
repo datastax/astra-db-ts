@@ -12,9 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
-  CommandEventMap,
-  FoundRow, ListIndexOptions,
+import {
+  CollectionDistinctOptions,
+  CollectionFilter, CollectionFindCursor,
+  CommandEventMap, Flatten,
+  FoundRow, ListIndexOptions, SomeDoc,
   SomePKey,
   SomeRow,
   TableCreateIndexOptions,
@@ -30,7 +32,7 @@ import type {
   TableInsertOneOptions,
   TableInsertOneResult,
   TableUpdateFilter,
-  TableUpdateOneOptions,
+  TableUpdateOneOptions, ToDotNotation,
   WithSim,
 } from '@/src/documents/index.js';
 import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
@@ -55,6 +57,7 @@ import type { TableCreateTextIndexOptions } from '@/src/documents/tables/types/i
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { InternalLogger } from '@/src/lib/logging/internal-logger.js';
 import { NonErrorError } from '@/src/lib/errors.js';
+import { TableDistinctOptions } from "@/src/documents/tables/types/find/distinct.js";
 
 const jbi = JBI({ storeAsString: true });
 

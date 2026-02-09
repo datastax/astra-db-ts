@@ -1144,7 +1144,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @see CollectionDistinctOptions
    */
   public async distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: CollectionDistinctOptions): Promise<Flatten<(SomeDoc & ToDotNotation<RSchema>)[Key]>[]> {
-    return this.#commands.distinct(key, filter, options, CollectionFindCursor);
+    return this.#commands.distinct(key, filter, options, CollectionFindCursor, { _id: 0 });
   }
 
   /**
