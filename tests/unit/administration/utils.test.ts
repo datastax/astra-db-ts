@@ -15,7 +15,8 @@
 
 import { DemoAstraEndpoint, describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { extractAstraEnvironment } from '@/src/administration/utils.js';
+import { extractAstraEnvironment, idFromDbLike } from '@/src/administration/utils.js';
+import type { Db } from '@/src/index.js';
 
 describe('unit.administration.utils', () => {
   describe('extractAstraEnvironment', () => {
@@ -25,6 +26,18 @@ describe('unit.administration.utils', () => {
       assert.strictEqual(extractAstraEnvironment('|apps.astra-test.datastax.com|'), 'test');
       assert.throws(() => extractAstraEnvironment('|apps.astra-car.datastax.com|'));
       assert.throws(() => extractAstraEnvironment('astra-dev'));
+    });
+
+    describe('idFromDbLike', () => {
+      it('should extract ID from string', () => {
+        const id = 'a6a1d8d6-31bc-4af8-be57-377566f345bf';
+        assert.strictEqual(idFromDbLike(id), id);
+      });
+
+      it('should extract ID from Db instance', () => {
+        const mockDb = { id: 'a6a1d8d6-31bc-4af8-be57-377566f345bf' } as Db;
+        assert.strictEqual(idFromDbLike(mockDb), 'a6a1d8d6-31bc-4af8-be57-377566f345bf');
+      });
     });
   });
 });
