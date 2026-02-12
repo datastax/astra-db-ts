@@ -1,0 +1,25 @@
+name: Run unit tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  CLIENT_DB_URL: https://abcdefa-1234-5678-90ab-cdef12345678-fake-region-123.apps.astra.datastax.com
+  CLIENT_DB_TOKEN: AstraCS:fake_token:fake_token
+  CLIENT_EMBEDDING_API_KEY: fake_embedding_api_key
+
+jobs:
+  test-compilation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run compilation tests
+        uses: datastax/astra-client-docs-tests/actions/test-compilation@master
+        with:
+          clients: 'typescript'
+          args: '-A typescript=.'
