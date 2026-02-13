@@ -1,3 +1,5 @@
+name: Compile against documentation examples
+
 on:
   merge_group:
     branches: [ master ]
