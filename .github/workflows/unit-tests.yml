@@ -1,7 +1,7 @@
 name: Run unit tests
 
 on:
-#  pull_request:
+  pull_request:
   merge_group:
 
 env:

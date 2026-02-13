@@ -1,13 +1,14 @@
 name: Run integration tests against HCD
 
 on:
-  pull_request:
+  merge_group:
+    branches: [ master ]
 
 permissions:
   id-token: write
 
 jobs:
-  test:
+  test-integration-hcd:
     env:
       CLIENT_EMBEDDING_API_KEY: ${{ secrets.CLIENT_EMBEDDING_API_KEY }}
     runs-on: ubuntu-latest
