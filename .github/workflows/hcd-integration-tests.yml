@@ -1,8 +1,9 @@
 name: Run integration tests against HCD
 
 on:
+  pull_request:
+    types: [ auto_merge_enabled ]
   workflow_dispatch:
-  merge_group:
 
 permissions:
   id-token: write

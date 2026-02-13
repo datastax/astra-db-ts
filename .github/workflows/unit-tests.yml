@@ -2,8 +2,8 @@ name: Run unit tests
 
 on:
   pull_request:
+    types: [ opened, synchronize, auto_merge_enabled ]
   workflow_dispatch:
-  merge_group:
 
 env:
   CLIENT_DB_URL: https://abcdefa-1234-5678-90ab-cdef12345678-fake-region-123.apps.astra.datastax.com
@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: ${{ github.event_name == 'pull_request' && fromJson('["24.x"]') || fromJson('["18.x","24.x"]') }}
+        node-version: ${{ github.event.action == 'auto_merge_enabled' && fromJson('["18.x","24.x"]') || fromJson('["24.x"]') }}
 
     steps:
       - name: Checkout code
