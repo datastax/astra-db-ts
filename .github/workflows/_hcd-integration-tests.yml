@@ -2,10 +2,6 @@ name: Run integration tests against HCD
 
 on:
   workflow_call:
-    inputs:
-      client_embedding_api_key:
-        type: string
-        required: true
   workflow_dispatch:
 
 permissions:
@@ -15,7 +11,7 @@ jobs:
   test-integration-hcd:
     runs-on: ubuntu-latest
     env:
-      CLIENT_EMBEDDING_API_KEY: ${{ inputs.client_embedding_api_key || secrets.CLIENT_EMBEDDING_API_KEY }}
+      CLIENT_EMBEDDING_API_KEY: ${{ secrets.CLIENT_EMBEDDING_API_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

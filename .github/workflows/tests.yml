@@ -21,15 +21,13 @@ jobs:
     name: Run docs compilation tests
     if: github.event_name == 'merge_group'
     uses: ./.github/workflows/_docs-compile-tests.yml
-    with:
-      docs_repo_token: ${{ secrets.DOC_GITHUB_PAT_CROSS_ORG }}
+    secrets: inherit
 
   run-hcd-integration-tests:
     name: Run HCD integration tests
     if: github.event_name == 'merge_group'
     uses: ./.github/workflows/_hcd-integration-tests.yml
-    with:
-      client_embedding_api_key: ${{ secrets.CLIENT_EMBEDDING_API_KEY }}
+    secrets: inherit
 
   can-enqueue:
     name: Can enqueue

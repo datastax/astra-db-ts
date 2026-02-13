@@ -2,10 +2,6 @@ name: Compile against documentation examples
 
 on:
   workflow_call:
-    inputs:
-      docs_repo_token:
-        type: string
-        required: true
   workflow_dispatch:
 
 jobs:
@@ -39,4 +35,4 @@ jobs:
         with:
           clients: 'typescript'
           args: -A typescript="${{ steps.pack.outputs.tar_file }}"
-          docs-repo-token: ${{ inputs.docs_repo_token || secrets.DOC_GITHUB_PAT_CROSS_ORG }}
+          docs-repo-token: ${{ secrets.DOC_GITHUB_PAT_CROSS_ORG }}
