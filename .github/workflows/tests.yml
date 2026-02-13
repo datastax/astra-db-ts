@@ -4,9 +4,6 @@ on:
   merge_group:
   pull_request:
 
-#permissions:
-#  actions: read
-
 jobs:
   run-checks:
     name: Run checks
