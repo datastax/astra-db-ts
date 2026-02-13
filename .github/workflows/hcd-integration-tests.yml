@@ -4,16 +4,17 @@ on:
   pull_request:
     types: [ auto_merge_enabled ]
   workflow_dispatch:
+    merge_group:
 
 permissions:
   id-token: write
 
 jobs:
   test-integration-hcd:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
     env:
       CLIENT_EMBEDDING_API_KEY: ${{ secrets.CLIENT_EMBEDDING_API_KEY }}
-    runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

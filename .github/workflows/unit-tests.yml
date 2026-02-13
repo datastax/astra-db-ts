@@ -4,6 +4,7 @@ on:
   pull_request:
     types: [ opened, synchronize, auto_merge_enabled ]
   workflow_dispatch:
+  merge_group:
 
 env:
   CLIENT_DB_URL: https://abcdefa-1234-5678-90ab-cdef12345678-fake-region-123.apps.astra.datastax.com
@@ -13,23 +14,22 @@ env:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
-
+    if: ${{ github.event_name == 'pull_request' }}
     strategy:
       matrix:
         node-version: ${{ github.event.action == 'auto_merge_enabled' && fromJson('["18.x","24.x"]') || fromJson('["24.x"]') }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run unit tests
         run: npx tsx scripts/test.ts -u

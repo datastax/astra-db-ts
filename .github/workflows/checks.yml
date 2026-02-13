@@ -4,15 +4,15 @@ on:
   pull_request:
     types: [ opened, synchronize, auto_merge_enabled ]
   workflow_dispatch:
+  merge_group:
 
 jobs:
   checks:
     runs-on: ubuntu-latest
-
+    if: ${{ github.event_name == 'pull_request' }}
     strategy:
       matrix:
         node-version: ${{ github.event.action == 'auto_merge_enabled' && fromJson('["18.x","24.x"]') || fromJson('["24.x"]') }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
