@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CollectionArrayUpdate, CollectionPush, SomeDoc, SomeRow } from '@/src/documents/index.js';
+import type { CollectionArrayUpdate, CollectionPush, SomeDoc, SomeRow } from '@/src/documents/index.js';
 
 /**
  * Represents the update filter to specify how to update a row.

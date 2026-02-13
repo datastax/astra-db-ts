@@ -16,7 +16,9 @@ jobs:
     strategy:
       matrix:
         node-version: [ 18.x, 24.x ]
-    
+
+    if: ${{ github.event_name == 'merge_group' || matrix.node-version != '18.x' }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
