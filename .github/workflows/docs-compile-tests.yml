@@ -1,7 +1,5 @@
 on:
-  push:
-    branches: [ master ]
-  pull_request:
+  merge_group:
     branches: [ master ]
 
 jobs:
@@ -28,8 +26,7 @@ jobs:
       - name: Pack TypeScript client
         id: pack
         run: |
-          TAR_FILE=$(npm pack)
-          echo "tar_file=$PWD/$TAR_FILE" >> $GITHUB_OUTPUT
+          echo "tar_file=$PWD/$(npm pack)" >> $GITHUB_OUTPUT
 
       - name: Run compilation tests
         uses: datastax/astra-client-docs-tests/.github/actions/test-compilation@master
