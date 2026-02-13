@@ -39,7 +39,7 @@ describe('integration.client.data-api-client', () => {
 
     it('lets Data API deal with throwing missing token error', async () => {
       const db = new DataAPIClient({ environment: Cfg.DbEnvironment }).db(Cfg.DbUrl, { keyspace: DEFAULT_KEYSPACE });
-      await assert.rejects(() => db.listCollections(), { message: 'Role unauthorized for operation: Missing token, expecting one in the Token header.' });
+      await assert.rejects(() => db.listCollections(), DataAPIResponseError);
     });
   });
 

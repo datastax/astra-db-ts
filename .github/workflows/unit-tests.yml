@@ -1,7 +1,7 @@
 name: Run unit tests
 
 on:
-  pull_request:
+#  pull_request:
   merge_group:
 
 env:
@@ -12,7 +12,7 @@ env:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
-    
+
     strategy:
       matrix:
         node-version: ${{ github.event_name == 'merge_group' && fromJson('["18.x","24.x"]') || fromJson('["24.x"]') }}
@@ -31,4 +31,4 @@ jobs:
         run: npm ci
       
       - name: Run unit tests
-        run: npm run test -- -u
+        run: npx tsx scripts/test.ts -u

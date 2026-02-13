@@ -97,7 +97,7 @@ const TestCfgDecoder = RawTestCfgDecoder
     DefaultKeyspace: DEFAULT_KEYSPACE,
     OtherKeyspace: 'other_keyspace',
 
-    VectorizeVectorLength: 4096,
+    VectorizeVectorLength: 1024,
   })));
 
 export const Cfg = TestCfgDecoder.verify(jsonTryParse(process.env.CLIENT_TEST_CONFIG!, {}));

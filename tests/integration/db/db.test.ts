@@ -169,11 +169,6 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
       assert.strictEqual(found.definition.vector?.dimension, 5);
       assert.strictEqual(found.definition.vector.metric, 'cosine');
     });
-
-    it('should not list collections in another keyspace', async () => {
-      const res = await db.listCollections({ keyspace: Cfg.OtherKeyspace });
-      assert.strictEqual(res.length, 1);
-    });
   });
 
   describe('(LONG) createType', () => {

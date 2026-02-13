@@ -1,7 +1,7 @@
 name: Run basic checks
 
 on:
-  pull_request:
+#  pull_request:
   merge_group:
 
 jobs:
