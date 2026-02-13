@@ -1,0 +1,55 @@
+name: Execute all tests
+
+on:
+  merge_group:
+  pull_request:
+
+#permissions:
+#  actions: read
+
+jobs:
+  run-checks:
+    uses: ./.github/workflows/_checks.yml
+    with:
+      node_versions: ${{ github.event_name == 'merge_group' && '"24.x","18.x"' || '"24.x"' }}
+
+  run-unit-tests:
+    uses: ./.github/workflows/_unit-tests.yml
+    with:
+      node_versions: ${{ github.event_name == 'merge_group' && '"24.x","18.x"' || '"24.x"' }}
+
+  run-docs-compile-tests:
+    if: github.event_name == 'merge_group'
+    uses: ./.github/workflows/_docs-compile-tests.yml
+
+  run-hcd-integration-tests:
+    if: github.event_name == 'merge_group'
+    uses: ./.github/workflows/_hcd-integration-tests.yml
+
+  can_enqueue:
+    needs: [run-checks, run-unit-tests]
+    if: always() && github.event_name != 'merge_group'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check outcomes
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS_JSON" | jq -e 'to_entries | map(.value.result == "success" or .value.result == "skipped") | all'
+
+  can_merge:
+    needs: [run-checks, run-unit-tests, run-docs-compile-tests, run-hcd-integration-tests]
+    if: always() && github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check outcomes
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS_JSON" | jq -e 'to_entries | map(.value.result == "success" or .value.result == "skipped") | all'
+
+  view_status:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Immediate success
+        run: 'exit'

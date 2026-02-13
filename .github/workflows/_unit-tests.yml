@@ -1,10 +1,17 @@
 name: Run unit tests
 
 on:
-  pull_request:
-    types: [ opened, synchronize, auto_merge_enabled ]
+  workflow_call:
+    inputs:
+      node_versions:
+        type: string
+        required: true
   workflow_dispatch:
-  merge_group:
+    inputs:
+      node_versions:
+        description: 'Comma-separated list of Node versions e.g. "18.x","24.x"'
+        default: '"24.x"'
+        required: false
 
 env:
   CLIENT_DB_URL: https://abcdefa-1234-5678-90ab-cdef12345678-fake-region-123.apps.astra.datastax.com
@@ -14,10 +21,11 @@ env:
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' }}
+
     strategy:
       matrix:
-        node-version: ${{ github.event.action == 'auto_merge_enabled' && fromJson('["18.x","24.x"]') || fromJson('["24.x"]') }}
+        node-version: ${{ fromJSON(format('[{0}]', inputs.node_versions)) }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
