@@ -10,6 +10,8 @@ dotenv.config();
 
 dotenv.config();
 
+dotenv.config();
+
 const testCmd = 'mocha --import=tsx/esm -r tsconfig-paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs --exit ';
 
 const opts = new Args('test.ts')
