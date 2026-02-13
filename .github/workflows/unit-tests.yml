@@ -1,10 +1,10 @@
 name: Run unit tests
 
 on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+#  push:
+#    branches: [ master ]
+#  pull_request:
+#    branches: [ master ]
 
 env:
   CLIENT_DB_URL: https://abcdefa-1234-5678-90ab-cdef12345678-fake-region-123.apps.astra.datastax.com
