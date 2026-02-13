@@ -1,8 +1,8 @@
 name: Compile against documentation examples
 
 on:
+  workflow_dispatch:
   merge_group:
-    branches: [ master ]
 
 jobs:
   test-compilation:
