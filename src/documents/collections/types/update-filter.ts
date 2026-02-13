@@ -20,7 +20,7 @@ import type { IsDate, IsNum } from '@/src/documents/types/utils.js';
  *
  * @example
  * ```typescript
- * const updateFilter: UpdateFilter<SomeDoc> = {
+ * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
  *   $set: {
  *     'customer.name': 'Jim B.'
  *   },
@@ -54,7 +54,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $set: {
    *     'customer.name': 'Jim B.'
    *   }
@@ -67,7 +67,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $setOnInsert: {
    *     'customer.name': 'Jim B.'
    *   }
@@ -80,7 +80,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $unset: {
    *     'customer.phone': ''
    *   }
@@ -93,7 +93,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $inc: {
    *     'customer.age': 1
    *   }
@@ -106,7 +106,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $push: {
    *     'items': 'Extended warranty - 5 years'
    *   }
@@ -119,7 +119,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $pop: {
    *     'items': -1
    *   }
@@ -132,7 +132,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $rename: {
    *     'customer.name': 'client.name'
    *   }
@@ -145,7 +145,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $currentDate: {
    *     'purchase_date': true
    *   }
@@ -158,7 +158,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $min: {
    *     'customer.age': 18
    *   }
@@ -171,7 +171,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $max: {
    *     'customer.age': 65
    *   }
@@ -184,7 +184,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $mul: {
    *     'customer.age': 1.1
    *   }
@@ -197,7 +197,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
    *
    * @example
    * ```typescript
-   * const updateFilter: UpdateFilter<SomeDoc> = {
+   * const updateFilter: CollectionUpdateFilter<SomeDoc> = {
    *   $addToSet: {
    *     'items': 'Extended warranty - 5 years'
    *   }
