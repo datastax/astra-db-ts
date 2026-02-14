@@ -67,9 +67,9 @@ if [ "$action" = "create" ]; then
   npm i "$lib_dir"
 
   echo "import * as $ from '@datastax/astra-db-ts';
-import dotenv from 'dotenv';
+import { dotenv } from 'zx';
 
-dotenv.configDotenv({ path: '../../../.env' });
+dotenv.config('../../../.env');
 
 const client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT as any });
 const db = client.db(process.env.CLIENT_DB_URL!);

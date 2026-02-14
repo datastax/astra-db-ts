@@ -18,7 +18,7 @@ import {
   DevOpsAPIResponseError,
   DevOpsAPITimeoutError,
 } from '@/src/administration/errors.js';
-import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
+import type { AstraAdminBlockingOptions, AstraDatabaseStatus } from '@/src/administration/types/index.js';
 import { HttpMethods } from '@/src/lib/api/constants.js';
 import type { HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types.js';
 import { jsonTryParse } from '@/src/lib/utils.js';
@@ -44,7 +44,7 @@ export interface DevOpsAPIRequestInfo {
 interface LongRunningRequestInfo {
   id: string | ((resp: DevopsAPIResponse) => string),
   target: string,
-  legalStates: string[],
+  legalStates: AstraDatabaseStatus[],
   defaultPollInterval: number,
   options: AstraAdminBlockingOptions | undefined,
   timeoutManager: TimeoutManager,

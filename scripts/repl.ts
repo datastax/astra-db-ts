@@ -3,9 +3,9 @@
 import 'zx/globals';
 import { Args } from './utils/arg-parse.js';
 import { Steps } from './utils/steps.js';
-import 'dotenv/config';
 import { chalk } from 'zx';
 
+dotenv.config();
 $.nothrow = true;
 
 const opts = new Args('repl.ts')
@@ -103,7 +103,7 @@ function LaunchRepl() {
 
   function _buildReplScript(cfg: Config): string {
     return `
-      require('./node_modules/dotenv/config');
+      require('zx').dotenv.config();
 
       const $ = require('./dist/cjs/index.js');
       const sp = require('synchronized-promise');

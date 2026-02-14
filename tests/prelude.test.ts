@@ -75,7 +75,9 @@ before(async () => {
   const createTCPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
       await db.createCollection(Cfg.DefaultCollectionName, {
-        vector: (keyspace === DEFAULT_KEYSPACE) ? { dimension: 5, metric: 'cosine' } : { dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+        vector: (keyspace === DEFAULT_KEYSPACE) ?
+          { dimension: 5, metric: 'cosine' } :
+          { dimension: Cfg.VectorizeVectorLength, service: { provider: 'openai', modelName: 'text-embedding-3-small' } },
         keyspace,
       }).then(c => c.deleteMany({}));
 

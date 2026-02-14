@@ -1,0 +1,38 @@
+name: Compile against documentation examples
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  test-compilation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build TypeScript client
+        run: npm run build
+
+      - name: Pack TypeScript client
+        id: pack
+        run: |
+          echo "tar_file=$PWD/$(npm pack)" >> $GITHUB_OUTPUT
+
+      - name: Run compilation tests
+        uses: datastax/astra-client-docs-tests/.github/actions/test-compilation@master
+        with:
+          clients: 'typescript'
+          args: -A typescript="${{ steps.pack.outputs.tar_file }}"
+          docs-repo-token: ${{ secrets.DOC_GITHUB_PAT_CROSS_ORG }}

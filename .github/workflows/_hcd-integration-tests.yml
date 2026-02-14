@@ -1,0 +1,41 @@
+name: Run integration tests against HCD
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+
+jobs:
+  test-integration-hcd:
+    runs-on: ubuntu-latest
+    env:
+      CLIENT_EMBEDDING_API_KEY: ${{ secrets.CLIENT_EMBEDDING_API_KEY }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure AWS credentials from OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::559669398656:role/astra-db-ts-ecr-ro-user
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Start HCD + Data API
+        run: npx tsx scripts/startgate.ts -d -hcd
+
+      - name: Run tests
+        run: npx tsx scripts/test.ts -local -F RERANKING -F unit.

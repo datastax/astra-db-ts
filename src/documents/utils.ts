@@ -61,6 +61,10 @@ export const betterTypeOf = (value: unknown): string => {
     return 'null';
   }
 
+  if (Array.isArray(value) && value.length === 0) {
+    return 'Array[Empty]';
+  }
+
   if (typeof value === 'object') {
     return value.constructor?.name ?? 'Object[NullProto]';
   }

@@ -14,7 +14,8 @@
 
 import type {
   CommandEventMap,
-  FoundRow, ListIndexOptions,
+  FoundRow,
+  ListIndexOptions,
   SomePKey,
   SomeRow,
   TableCreateIndexOptions,
@@ -24,16 +25,19 @@ import type {
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
-  TableIndexColumn, TableIndexDescriptor,
+  TableIndexColumn,
+  TableIndexDescriptor,
   TableInsertManyOptions,
   TableInsertManyResult,
   TableInsertOneOptions,
   TableInsertOneResult,
   TableUpdateFilter,
   TableUpdateOneOptions,
-  WithSim,
+  WithSim} from '@/src/documents/index.js';
+import {
+  TableFindCursor,
+  TableInsertManyError,
 } from '@/src/documents/index.js';
-import { TableFindCursor, TableInsertManyError } from '@/src/documents/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import type {

@@ -110,8 +110,8 @@ export const EverythingTableSchemaWithVectorize = Table.schema({
     map: { type: 'map', keyType: 'varint', valueType: { type: 'userDefined', udtName: 'example_udt' } },
     set: { type: 'set', valueType: 'uuid' },
     list: { type: 'list', valueType: { type: 'userDefined', udtName: 'example_udt' } },
-    vector1: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
-    vector2: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'upstageAI', modelName: 'solar-embedding-1-large' } },
+    vector1: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'openai', modelName: 'text-embedding-3-small' } },
+    vector2: { type: 'vector', dimension: Cfg.VectorizeVectorLength, service: { provider: 'openai', modelName: 'text-embedding-3-small' } },
     udt: { type: 'userDefined', udtName: 'example_udt' },
   },
   primaryKey: {
@@ -173,7 +173,7 @@ export function initMemoizedTestObjects(opts?: TestObjectsOptions) {
   const objs = initTestObjects(opts);
 
   Object.values(objs)
-    .filter(o => '_httpClient' in o)
+    .filter(o => o !== null && '_httpClient' in o)
     .forEach(memoizeRequests);
 
   return objs;

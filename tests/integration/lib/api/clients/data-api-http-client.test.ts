@@ -55,7 +55,7 @@ describe('integration.lib.api.clients.data-api-http-client', ({ db }) => {
       assert.ok(resp.status?.insertedIds[0]);
     });
 
-    it('should error on DataAPIResponseError token', async () => {
+    it('(ASTRA) should error on DataAPIResponseError token', async () => {
       const { client } = initTestObjects();
       const httpClient = client.db(Cfg.DbUrl, { token: 'invalid-token' })._httpClient;
 

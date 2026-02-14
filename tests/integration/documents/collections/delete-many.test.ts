@@ -46,7 +46,7 @@ parallel('integration.documents.collections.delete-many', { truncate: 'colls:bef
       assert.ok(e instanceof CollectionDeleteManyError);
       assert.ok(e.cause instanceof DataAPIResponseError);
       assert.strictEqual(e.cause.errorDescriptors.length, 1);
-      assert.strictEqual(e.cause.errorDescriptors[0].errorCode, 'INVALID_FILTER_EXPRESSION');
+      assert.strictEqual(e.cause.errorDescriptors[0].errorCode, 'FILTER_INVALID_EXPRESSION');
       assert.deepStrictEqual(e.partialResult, { deletedCount: 0 });
       return true;
     });

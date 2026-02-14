@@ -917,8 +917,6 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *
    * Finds documents in a collection through a retrieval process that uses a reranker model to combine results from a vector similarity search and a lexical-based search (aka a "hybrid search").
    *
-   * **Disclaimer: this method is currently in preview/beta in this release of the client.**
-   *
    * @example
    * ```ts
    * // With vectorize
@@ -936,8 +934,6 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    *   console.log(cursor.document, cursor.scores);
    * }
    * ```
-   *
-   * @beta
    */
   public findAndRerank<T extends SomeDoc = RSchema, TRaw extends T = T>(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<T>, TRaw> {
     return this.#commands.findAndRerank(filter, options, CollectionFindAndRerankCursor) as CollectionFindAndRerankCursor<RerankedResult<T>, TRaw>;
@@ -1144,7 +1140,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @see CollectionDistinctOptions
    */
   public async distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: CollectionDistinctOptions): Promise<Flatten<(SomeDoc & ToDotNotation<RSchema>)[Key]>[]> {
-    return this.#commands.distinct(key, filter, options, CollectionFindCursor);
+    return this.#commands.distinct(key, filter, options, CollectionFindCursor, { _id: 0 });
   }
 
   /**

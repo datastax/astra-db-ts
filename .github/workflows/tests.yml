@@ -1,0 +1,52 @@
+name: Tests
+
+on:
+  merge_group:
+  pull_request:
+
+jobs:
+  run-checks:
+    name: Run checks
+    uses: ./.github/workflows/_checks.yml
+    with:
+      node_versions: ${{ github.event_name == 'merge_group' && '"24.x","18.x"' || '"24.x"' }}
+
+  run-unit-tests:
+    name: Run unit tests
+    uses: ./.github/workflows/_unit-tests.yml
+    with:
+      node_versions: ${{ github.event_name == 'merge_group' && '"24.x","18.x"' || '"24.x"' }}
+
+  run-docs-compilation-tests:
+    name: Run docs compilation tests
+    needs: [run-checks, run-unit-tests]
+    if: github.event_name == 'merge_group'
+    uses: ./.github/workflows/_docs-compile-tests.yml
+    secrets: inherit
+
+  run-hcd-integration-tests:
+    name: Run HCD integration tests
+    needs: [run-checks, run-unit-tests]
+    if: github.event_name == 'merge_group'
+    uses: ./.github/workflows/_hcd-integration-tests.yml
+    secrets: inherit
+
+  can-enqueue:
+    name: Can enqueue
+    needs: [run-checks, run-unit-tests]
+    if: always() && github.event_name != 'merge_group'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check outcomes
+        run: |
+          echo '${{ toJSON(needs) }}' | jq -e 'to_entries | map(.value.result == "success" or .value.result == "skipped") | all'
+
+  can-merge:
+    name: Can merge
+    needs: [run-checks, run-unit-tests, run-docs-compilation-tests, run-hcd-integration-tests]
+    if: always() && github.event_name == 'merge_group'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check outcomes
+        run: |
+          echo '${{ toJSON(needs) }}' | jq -e 'to_entries | map(.value.result == "success" or .value.result == "skipped") | all'

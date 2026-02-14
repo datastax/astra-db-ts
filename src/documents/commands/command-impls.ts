@@ -32,7 +32,7 @@ import type {
   GenericReplaceOneOptions,
   GenericUpdateManyOptions,
   GenericUpdateOneOptions,
-  GenericUpdateResult,
+  GenericUpdateResult, Projection,
   SomeDoc,
   SomeId,
   SomeRow,
@@ -66,7 +66,7 @@ export class CommandImpls<ID> {
   public async insertOne(_document: SomeDoc, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | nullish): Promise<GenericInsertOneResult<ID>> {
     const document = this._serdes.serialize(_document, SerDesTarget.Record);
 
-    const command = mkBasicCmd('insertOne', {
+    const command = this._mkBasicCmd('insertOne', {
       document: document[0],
     });
 
@@ -98,7 +98,7 @@ export class CommandImpls<ID> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
     const update = this._serdes.serialize(_update, SerDesTarget.Update);
 
-    const command = mkCmdWithSortProj('updateOne', options, {
+    const command = this._mkCmdWithSortProj('updateOne', options, {
       filter: filter[0],
       update: update[0],
       options: {
@@ -118,7 +118,7 @@ export class CommandImpls<ID> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
     const update = this._serdes.serialize(_update, SerDesTarget.Update);
 
-    const command = mkBasicCmd('updateMany', {
+    const command = this._mkBasicCmd('updateMany', {
       filter: filter[0],
       update: update[0],
       options: {
@@ -153,7 +153,7 @@ export class CommandImpls<ID> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
     const replacement = this._serdes.serialize(_replacement, SerDesTarget.Record);
 
-    const command = mkCmdWithSortProj('findOneAndReplace', options, {
+    const command = this._mkCmdWithSortProj('findOneAndReplace', options, {
       filter: filter[0],
       replacement: replacement[0],
       options: {
@@ -174,7 +174,7 @@ export class CommandImpls<ID> {
   public async deleteOne(_filter: Filter, options?: GenericDeleteOneOptions): Promise<GenericDeleteOneResult> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
-    const command = mkCmdWithSortProj('deleteOne', options, {
+    const command = this._mkCmdWithSortProj('deleteOne', options, {
       filter: filter[0],
     });
 
@@ -191,7 +191,7 @@ export class CommandImpls<ID> {
   public async deleteMany(_filter: Filter, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | nullish, mkError: (e: unknown, result: GenericDeleteManyResult) => Error): Promise<GenericDeleteManyResult> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
-    const command = mkBasicCmd('deleteMany', {
+    const command = this._mkBasicCmd('deleteMany', {
       filter: filter[0],
     });
 
@@ -230,7 +230,7 @@ export class CommandImpls<ID> {
   public async findOne<Schema>(_filter: Filter, options?: GenericFindOneOptions): Promise<Schema | null> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
-    const command = mkCmdWithSortProj('findOne', options, {
+    const command = this._mkCmdWithSortProj('findOne', options, {
       filter: filter[0],
       options: {
         includeSimilarity: options?.includeSimilarity,
@@ -249,7 +249,7 @@ export class CommandImpls<ID> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
     const replacement = this._serdes.serialize(_replacement, SerDesTarget.Record);
 
-    const command = mkCmdWithSortProj('findOneAndReplace', options, {
+    const command = this._mkCmdWithSortProj('findOneAndReplace', options, {
       filter: filter[0],
       replacement: replacement[0],
       options: {
@@ -269,7 +269,7 @@ export class CommandImpls<ID> {
   public async findOneAndDelete<Schema extends SomeDoc>(_filter: Filter, options?: GenericFindOneAndDeleteOptions): Promise<Schema | null> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
-    const command = mkCmdWithSortProj('findOneAndDelete', options, {
+    const command = this._mkCmdWithSortProj('findOneAndDelete', options, {
       filter: filter[0],
     });
 
@@ -285,7 +285,7 @@ export class CommandImpls<ID> {
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
     const update = this._serdes.serialize(_update, SerDesTarget.Update);
 
-    const command = mkCmdWithSortProj('findOneAndUpdate', options, {
+    const command = this._mkCmdWithSortProj('findOneAndUpdate', options, {
       filter: filter[0],
       update: update[0],
       options: {
@@ -302,10 +302,10 @@ export class CommandImpls<ID> {
     return this._serdes.deserialize(resp.data!.document, resp, SerDesTarget.Record);
   }
 
-  public async distinct(key: string, filter: SomeDoc, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
+  public async distinct(key: string, filter: SomeDoc, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>, baseProjection: Projection): Promise<any[]> {
     const projection = pullSafeProjection4Distinct(key);
     /* c8 ignore next: not sure why this is being flagged as not run during tests, but it is */
-    const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 }, timeout: options?.timeout }, mkCursor);
+    const cursor = this.find(filter, { projection: { ...baseProjection, [projection]: 1 }, timeout: options?.timeout }, mkCursor);
 
     const seen = new Set<unknown>();
     const ret = [];
@@ -343,7 +343,7 @@ export class CommandImpls<ID> {
 
     const [filter, bigNumsPresent] = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
-    const command = mkBasicCmd('countDocuments', {
+    const command = this._mkBasicCmd('countDocuments', {
       filter: filter,
     });
 
@@ -365,7 +365,7 @@ export class CommandImpls<ID> {
   }
 
   public async estimatedDocumentCount(options?: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }>): Promise<number> {
-    const command = mkBasicCmd('estimatedDocumentCount', {});
+    const command = this._mkBasicCmd('estimatedDocumentCount', {});
 
     const resp = await this._httpClient.executeCommand(command, {
       timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
@@ -373,22 +373,25 @@ export class CommandImpls<ID> {
 
     return resp.status?.count;
   }
+
+  private _mkBasicCmd(name: string, body: SomeDoc) {
+    return { [name]: body };
+  };
+
+  private _mkCmdWithSortProj(name: string, options: { sort?: SomeDoc, projection?: SomeDoc } | nullish, body: SomeDoc) {
+    const command = this._mkBasicCmd(name, body);
+
+    if (options) {
+      if (options.sort && Object.keys(options.sort).length > 0) {
+        // body.sort = options.sort;
+        body.sort = this._serdes.serialize(options.sort, SerDesTarget.Sort)[0];
+      }
+
+      if (options.projection && Object.keys(options.projection).length > 0) {
+        body.projection = options.projection;
+      }
+    }
+
+    return command;
+  };
 }
-
-const mkBasicCmd = (name: string, body: SomeDoc) => ({ [name]: body });
-
-const mkCmdWithSortProj = (name: string, options: { sort?: SomeDoc, projection?: SomeDoc } | nullish, body: SomeDoc) => {
-  const command = mkBasicCmd(name, body);
-
-  if (options) {
-    if (options.sort && Object.keys(options.sort).length > 0) {
-      body.sort = options.sort;
-    }
-
-    if (options.projection && Object.keys(options.projection).length > 0) {
-      body.projection = options.projection;
-    }
-  }
-
-  return command;
-};
