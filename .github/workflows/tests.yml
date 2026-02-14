@@ -19,12 +19,14 @@ jobs:
 
   run-docs-compilation-tests:
     name: Run docs compilation tests
+    needs: [run-checks, run-unit-tests]
     if: github.event_name == 'merge_group'
     uses: ./.github/workflows/_docs-compile-tests.yml
     secrets: inherit
 
   run-hcd-integration-tests:
     name: Run HCD integration tests
+    needs: [run-checks, run-unit-tests]
     if: github.event_name == 'merge_group'
     uses: ./.github/workflows/_hcd-integration-tests.yml
     secrets: inherit
