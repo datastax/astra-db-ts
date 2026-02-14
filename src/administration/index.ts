@@ -15,6 +15,8 @@
 
 export * from './astra-admin.js';
 export * from './astra-db-admin.js';
+export * from './astra-clone-admin.js';
+
 export * from './data-api-db-admin.js';
 export * from './db-admin.js';
 export * from './errors.js';
