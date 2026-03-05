@@ -14,11 +14,8 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { HttpClient } from '@/src/lib/api/clients/index.js';
-import {
-  DevOpsAPIResponseError,
-  DevOpsAPITimeoutError,
-} from '@/src/administration/errors.js';
-import type { AstraAdminBlockingOptions, AstraDatabaseStatus } from '@/src/administration/types/index.js';
+import { DevOpsAPIResponseError, DevOpsAPITimeoutError } from '@/src/administration/errors.js';
+import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
 import { HttpMethods } from '@/src/lib/api/constants.js';
 import type { HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types.js';
 import { jsonTryParse } from '@/src/lib/utils.js';
@@ -35,7 +32,7 @@ export interface DevOpsAPIRequestInfo {
   method: HttpMethodStrings,
   data?: Record<string, any>,
   params?: Record<string, string>,
-  methodName: `${'admin' | 'dbAdmin'}.${string}`,
+  methodName: `${'admin' | 'dbAdmin' | 'dbCloneAdmin'}.${string}`,
 }
 
 /**
@@ -44,7 +41,7 @@ export interface DevOpsAPIRequestInfo {
 interface LongRunningRequestInfo {
   id: string | ((resp: DevopsAPIResponse) => string),
   target: string,
-  legalStates: AstraDatabaseStatus[],
+  legalStates: string[],
   defaultPollInterval: number,
   options: AstraAdminBlockingOptions | undefined,
   timeoutManager: TimeoutManager,

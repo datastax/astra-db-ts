@@ -48,6 +48,7 @@ import stableStringify from 'safe-stable-stringify';
 import type { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one.js';
 import type { GenericInsertManyResult } from '@/src/documents/commands/types/insert/insert-many.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
+import { isNullish } from "@/src/lib/utils.js";
 
 /**
  * @internal
@@ -189,6 +190,10 @@ export class CommandImpls<ID> {
   }
 
   public async deleteMany(_filter: Filter, options: CommandOptions<{ timeout: 'generalMethodTimeoutMs' }> | nullish, mkError: (e: unknown, result: GenericDeleteManyResult) => Error): Promise<GenericDeleteManyResult> {
+    if (isNullish(_filter)) {
+      throw new Error('deleteMany filter cannot be null or undefined; to delete all documents, pass an empty object as the filter');
+    }
+
     const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
     const command = this._mkBasicCmd('deleteMany', {

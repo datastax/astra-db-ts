@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { AstraFullDatabaseInfo, AstraDatabaseRegionInfo } from '@/src/administration/types/admin/database-info.js';
+import type { AstraDatabaseRegionInfo, AstraFullDatabaseInfo } from '@/src/administration/types/admin/database-info.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 import type { SomeDoc } from '@/src/documents/index.js';
+
+import type { AstraDbLike } from '@/src/administration/types/admin/clone-database.js';
+
 
 /**
  * @internal
@@ -56,4 +59,16 @@ export const buildAstraDatabaseAdminInfo = (raw: SomeDoc, environment: 'dev' | '
     regions: regions,
     raw: raw,
   };
+};
+
+/**
+ * Extracts the database ID from a DbLike value (either a Db instance or a string ID).
+ * 
+ * @param db - The database reference (Db instance or string ID)
+ * @returns The database ID as a string
+ * 
+ * @internal
+ */
+export const idFromDbLike = (db: AstraDbLike): string => {
+  return (typeof db === 'string') ? db : db.id;
 };
