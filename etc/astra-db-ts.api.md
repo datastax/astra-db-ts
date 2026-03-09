@@ -4,17 +4,9 @@
 
 ```ts
 
-import { BigNumber } from 'bignumber.js';
-import { CollectionSerDesConfig as CollectionSerDesConfig_2 } from '../../documents/collections/ser-des/ser-des.js';
+import { BigNumber as BigNumber_2 } from 'bignumber.js';
 import { Decoder } from 'decoders';
 import type { DecoderType } from 'decoders';
-import { Monoid as Monoid_2 } from '../../lib/opts-handlers.js';
-import { Monoid as Monoid_3 } from '../../../lib/opts-handlers.js';
-import { ParsedLoggingConfig as ParsedLoggingConfig_2 } from '../../lib/logging/cfg-handler.js';
-import { ParsedSerDesConfig } from '../../lib/api/ser-des/cfg-handler.js';
-import { ParsedTimeoutDescriptor } from '../../lib/api/timeouts/cfg-handler.js';
-import { ParsedTokenProvider as ParsedTokenProvider_2 } from '../../lib/token-providers/token-provider.js';
-import { TableSerDesConfig as TableSerDesConfig_2 } from '../../documents/tables/ser-des/ser-des.js';
 
 // @public (undocumented)
 export const $DeserializeForCollection: unique symbol;
@@ -312,6 +304,7 @@ export interface AstraDatabaseConfig {
     cloudProvider: AstraDatabaseCloudProvider;
     keyspace?: string;
     name: string;
+    pcuGroupUUID?: string;
     region: string;
 }
 
@@ -323,7 +316,7 @@ export interface AstraDatabaseRegionInfo {
 }
 
 // @public
-export type AstraDatabaseStatus = LitUnion<'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING'>;
+export type AstraDatabaseStatus = LitUnion<'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING' | 'ASSOCIATING'>;
 
 // @public
 export type AstraDatabaseStatusFilter = AstraDatabaseStatus | 'ALL' | 'NONTERMINATED';
@@ -474,7 +467,7 @@ export interface BaseSerDesCtx {
     target: SerDesTarget;
 }
 
-export { BigNumber }
+export { BigNumber_2 as BigNumber }
 
 // @public
 export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
@@ -503,7 +496,6 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     drop(options?: Omit<DropCollectionOptions, keyof WithKeyspace>): Promise<void>;
     estimatedDocumentCount(options?: CollectionEstimatedDocumentCountOptions): Promise<number>;
     find<T extends SomeDoc = WithSim<RSchema>, TRaw extends T = T>(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<T, TRaw>;
-    // @beta
     findAndRerank<T extends SomeDoc = RSchema, TRaw extends T = T>(filter: CollectionFilter<WSchema>, options?: CollectionFindAndRerankOptions): CollectionFindAndRerankCursor<RerankedResult<T>, TRaw>;
     findOne<TRaw extends SomeDoc = WithSim<RSchema>>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions): Promise<TRaw | null>;
     findOneAndDelete<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
@@ -2212,7 +2204,7 @@ export interface LexicalDoc {
 export const LIB_NAME = "astra-db-ts";
 
 // @public
-export const LIB_VERSION = "2.1.1";
+export const LIB_VERSION = "2.1.2";
 
 // @public
 export interface ListAstraDatabasesOptions extends CommandOptions<{
@@ -2910,6 +2902,12 @@ export interface TableOptions extends WithKeyspace {
 export type TablePrimaryKeyDefinition<PKCols extends string> = PKCols | FullCreateTablePrimaryKeyDefinition<PKCols>;
 
 // @public
+export type TablePullAll<Schema> = CollectionArrayUpdate<Schema>;
+
+// @public
+export type TablePush<Schema> = CollectionPush<Schema>;
+
+// @public
 export interface TableRegularIndexDescriptor {
     // (undocumented)
     column: TableIndexColumn<SomeRow>;
@@ -3006,6 +3004,10 @@ export interface TableUnsupportedColumnApiSupport {
 
 // @public
 export interface TableUpdateFilter<Schema extends SomeRow> {
+    // (undocumented)
+    $pullAll?: TablePullAll<Schema> & SomeDoc;
+    // (undocumented)
+    $push?: TablePush<Schema> & SomeDoc;
     $set?: Partial<Schema> & SomeRow;
     $unset?: Record<string, '' | true | 1>;
 }

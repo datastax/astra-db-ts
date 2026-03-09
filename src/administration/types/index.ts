@@ -17,7 +17,6 @@ export type * from './admin/create-database.js';
 export type * from './admin/drop-database.js';
 export type * from './admin/database-info.js';
 export type * from './admin/list-databases.js';
-export type * from './admin/clone-database.js';
 
 export type * from './admin/find-available-regions.js';
 export type * from './db-admin/astra-create-keyspace.js';

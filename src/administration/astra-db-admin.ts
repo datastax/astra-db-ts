@@ -14,7 +14,6 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type { CreateAstraKeyspaceOptions, DropAstraKeyspaceOptions } from '@/src/administration/types/index.js';
-import { AstraDbCloneAdmin } from '@/src/administration/astra-clone-admin.js';
 
 import { DbAdmin } from '@/src/administration/db-admin.js';
 import type { CommandOptions, OpaqueHttpClient } from '@/src/lib/index.js';
@@ -72,7 +71,6 @@ export class AstraDbAdmin extends DbAdmin {
   readonly #dataApiHttpClient: DataAPIHttpClient<'admin'>;
   readonly #db: Db;
   readonly #environment: 'dev' | 'test' | 'prod';
-  readonly #cloneAdmin: AstraDbCloneAdmin;
 
   /**
    * Use {@link Db.admin} or {@link AstraAdmin.dbAdmin} to obtain an instance of this class.
@@ -97,8 +95,6 @@ export class AstraDbAdmin extends DbAdmin {
 
     this.#dataApiHttpClient = (db._httpClient as DataAPIHttpClient).forDbAdmin(this, adminOpts);
     this.#db = db;
-
-    this.#cloneAdmin = new AstraDbCloneAdmin(this, loggingConfig);
 
     Object.defineProperty(this, $CustomInspect, {
       value: () => `AstraDbAdmin()`,
@@ -133,22 +129,6 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public override db(): Db {
     return this.#db;
-  }
-
-
-  /**
-   * Returns a clone admin instance for managing database cloning operations.
-   * 
-   * @example
-   * ```typescript
-   * const cloneAdmin = dbAdmin.cloneAdmin();
-   * const operationId = await cloneAdmin.cloneFrom('source-db-id');
-   * ```
-   * 
-   * @returns A new AstraDbCloneAdmin instance for this database
-   */
-  public cloneAdmin(): AstraDbCloneAdmin {
-    return this.#cloneAdmin;
   }
 
   /**

@@ -15,9 +15,7 @@
 import type { AstraDatabaseRegionInfo, AstraFullDatabaseInfo } from '@/src/administration/types/admin/database-info.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 import type { SomeDoc } from '@/src/documents/index.js';
-
-import type { AstraDbLike } from '@/src/administration/types/admin/clone-database.js';
-
+import type { Db } from "@/src/db/index.js";
 
 /**
  * @internal
@@ -69,6 +67,6 @@ export const buildAstraDatabaseAdminInfo = (raw: SomeDoc, environment: 'dev' | '
  * 
  * @internal
  */
-export const idFromDbLike = (db: AstraDbLike): string => {
+export const idFromDbLike = (db: Db | string): string => {
   return (typeof db === 'string') ? db : db.id;
 };

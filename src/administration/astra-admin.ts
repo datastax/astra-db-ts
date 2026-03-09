@@ -14,11 +14,11 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type {
+  AstraAvailableRegionInfo,
   AstraDatabaseConfig,
+  AstraFindAvailableRegionsOptions,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
-  AstraAvailableRegionInfo, AstraFindAvailableRegionsOptions,
-  AstraDbLike,
 } from '@/src/administration/types/index.js';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
 import { Db } from '@/src/db/db.js';
@@ -454,7 +454,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @remarks Use with caution. Wear a harness. Don't say I didn't warn you.
    */
-  public async dropDatabase(db: AstraDbLike, options?: AstraDropDatabaseOptions): Promise<void> {
+  public async dropDatabase(db: Db | string, options?: AstraDropDatabaseOptions): Promise<void> {
     const id = idFromDbLike(db);
 
     const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);

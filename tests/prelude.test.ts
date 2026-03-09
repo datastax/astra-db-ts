@@ -109,6 +109,13 @@ before(async () => {
     })
     .awaitAll();
 
+  const allTypes = TEST_KEYSPACES
+    .map(async (keyspace) => {
+      const types = await db.listTypes({ keyspace, nameOnly: true });
+      return [keyspace, types] as const;
+    })
+    .awaitAll();
+
   const delCollections = allCollections.then((allColls) => allColls
     .map(async ([keyspace, colls]) => {
       await colls
@@ -131,8 +138,20 @@ before(async () => {
     .awaitAll(),
   );
 
+  const delUdts = allTypes.then((allTypes) => allTypes
+    .map(async ([keyspace, types]) => {
+      await types
+        .filter(t => TEST_KEYSPACES.includes(keyspace) ? t !== 'example_udt' : true)
+        .tap(t => console.warn(`deleting UDT '${keyspace}.${t}'`))
+        .map(t => db.dropType(t, { keyspace }))
+        .awaitAll();
+    })
+    .awaitAll(),
+  );
+
   await spinner('Deleting all collections...', () => delCollections);
   await spinner('Deleting all tables...', () => delTables);
+  await spinner('Deleting all UDTs...', () => delUdts);
   await spinner('Creating UDTs...', () => createUDTPromises);
   await spinner('Creating all collections and tables...', () => createTCPromises);
 });

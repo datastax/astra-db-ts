@@ -23,6 +23,7 @@ import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { NonErrorError } from '@/src/lib/errors.js';
 import { HeadersProvider } from '@/src/lib/index.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import { uuid } from "@/src/documents/index.js";
 
 /**
  * @internal
@@ -32,7 +33,7 @@ export interface DevOpsAPIRequestInfo {
   method: HttpMethodStrings,
   data?: Record<string, any>,
   params?: Record<string, string>,
-  methodName: `${'admin' | 'dbAdmin' | 'dbCloneAdmin'}.${string}`,
+  methodName: `${'admin' | 'dbAdmin' | 'devopsApiHttpClient'}.${string}`,
 }
 
 /**
@@ -78,40 +79,40 @@ export class DevOpsAPIHttpClient extends HttpClient {
     });
   }
 
-  public async request(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started = 0): Promise<DevopsAPIResponse> {
-    return this._executeRequest(req, timeoutManager, started, this.logger.internal.generateAdminCommandRequestId());
+  public async request(req: DevOpsAPIRequestInfo, tm: TimeoutManager, started = 0): Promise<DevopsAPIResponse> {
+    return this._executeRequest(req, tm, started, this.logger.internal.generateAdminCommandRequestId());
   }
 
   public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<DevopsAPIResponse> {
     const isLongRunning = info.options?.blocking !== false;
     const timeoutManager = info.timeoutManager;
 
+    const started = performance.now();
     const requestId = this.logger.internal.generateAdminCommandRequestId();
 
     this.logger.internal.adminCommandStarted?.(requestId, this.baseUrl, req, isLongRunning, timeoutManager.initial());
 
-    const started = performance.now();
+    const awaitStatus = await this._mkAwaitStatusFn(info, timeoutManager, started, requestId);
     const resp = await this._executeRequest(req, timeoutManager, started, requestId);
 
     const id = (typeof info.id === 'function')
       ? info.id(resp)
       : info.id;
 
-    await this._awaitStatus(id, req, info, started, requestId);
+    await awaitStatus?.(id, req);
 
     this.logger.internal.adminCommandSucceeded?.(requestId, this.baseUrl, req, isLongRunning, resp, started);
-
     return resp;
   }
 
-  private async _executeRequest(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started: number, requestId: string): Promise<DevopsAPIResponse> {
+  private async _executeRequest(req: DevOpsAPIRequestInfo, tm: TimeoutManager, started: number, requestId: string): Promise<DevopsAPIResponse> {
     const isLongRunning = started !== 0;
 
     try {
       const url = this.baseUrl + req.path;
 
       if (!isLongRunning) {
-        this.logger.internal.adminCommandStarted?.(requestId, this.baseUrl, req, isLongRunning, timeoutManager.initial());
+        this.logger.internal.adminCommandStarted?.(requestId, this.baseUrl, req, isLongRunning, tm.initial());
       }
 
       started ||= performance.now();
@@ -122,7 +123,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         params: req.params,
         data: JSON.stringify(req.data),
         forceHttp1: true,
-        timeoutManager,
+        timeoutManager: tm,
       });
 
       const data = resp.body ? jsonTryParse(resp.body, undefined) : undefined;
@@ -147,49 +148,76 @@ export class DevOpsAPIHttpClient extends HttpClient {
     }
   }
 
-  private async _awaitStatus(id: string, req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo, started: number, requestId: string): Promise<void> {
+  private async _mkAwaitStatusFn(info: LongRunningRequestInfo, tm: TimeoutManager, started: number, requestId: string): Promise<((id: string, req: DevOpsAPIRequestInfo) => Promise<void>) | undefined> {
     if (info.options?.blocking === false) {
-      return;
+      return undefined;
     }
 
-    const pollInterval = info.options?.pollInterval || info.defaultPollInterval;
-    let waiting = false;
+    if (!await this._canPoll(info, tm, started, requestId)) {
+      throw new Error('Given token does not have permissions to poll for status updates; please use `blocking: false` to skip polling, or provide a token with the necessary permissions. No changes to the database have been made.');
+    }
 
-    for (let i = 1; i++;) {
-      /* c8 ignore next 3: exceptional case that can't be manually reproduced */
-      if (waiting) {
-        continue;
+    const pollInterval = info.options?.pollInterval || info.defaultPollInterval; // out here so TS doesn't throw a fit
+
+    return async (id, req) => {
+      let waiting = false;
+
+      for (let i = 1; i++;) {
+        /* c8 ignore next 3: exceptional case that can't be manually reproduced */
+        if (waiting) {
+          continue;
+        }
+        waiting = true;
+
+        this.logger.internal.adminCommandPolling?.(requestId, this.baseUrl, req, started, pollInterval, i);
+
+        const resp = await this.request({
+          method: HttpMethods.Get,
+          path: `/databases/${id}`,
+          methodName: req.methodName,
+        }, info.timeoutManager, started);
+
+        if (resp.data?.status === info.target) {
+          break;
+        }
+
+        /* c8 ignore start: exceptional case that can't be manually reproduced */
+        if (!info.legalStates.includes(resp.data?.status)) {
+          const okStates = [info.target, ...info.legalStates];
+          const error = new Error(`Created database is not in any legal state [${okStates.join(',')}]; current state: ${resp.data?.status}`);
+
+          this.logger.internal.adminCommandFailed?.(requestId, this.baseUrl, req, true, error, started);
+          throw error;
+        }
+        /* c8 ignore end */
+
+        await new Promise<void>((resolve) => {
+          setTimeout(() => {
+            waiting = false;
+            resolve();
+          }, pollInterval);
+        });
       }
-      waiting = true;
+    };
+  }
 
-      this.logger.internal.adminCommandPolling?.(requestId, this.baseUrl, req, started, pollInterval, i);
+  private async _canPoll(info: LongRunningRequestInfo, tm: TimeoutManager, started: number, requestId: string): Promise<boolean> {
+    try {
+      const id = (typeof info.id === 'string') // in case of something like createDatabase
+        ? info.id
+        : uuid.v4().toString();
 
-      const resp = await this.request({
+      await this._executeRequest({
         method: HttpMethods.Get,
         path: `/databases/${id}`,
-        methodName: req.methodName,
-      }, info.timeoutManager, started);
-
-      if (resp.data?.status === info.target) {
-        break;
+        methodName: 'devopsApiHttpClient._canPoll',
+      }, tm, started, requestId);
+    } catch (e) {
+      if (e instanceof DevOpsAPIResponseError) {
+        return e.status === 404;
       }
-
-      /* c8 ignore start: exceptional case that can't be manually reproduced */
-      if (!info.legalStates.includes(resp.data?.status)) {
-        const okStates = [info.target, ...info.legalStates];
-        const error = new Error(`Created database is not in any legal state [${okStates.join(',')}]; current state: ${resp.data?.status}`);
-
-        this.logger.internal.adminCommandFailed?.(requestId, this.baseUrl, req, true, error, started);
-        throw error;
-      }
-      /* c8 ignore end */
-
-      await new Promise<void>((resolve) => {
-        setTimeout(() => {
-          waiting = false;
-          resolve();
-        }, pollInterval);
-      });
+      throw e;
     }
+    return true;
   }
 }

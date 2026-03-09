@@ -14,6 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
+import type { AstraDbAdmin } from '@/src/administration/index.js';
 import { DevOpsAPIResponseError } from '@/src/administration/index.js';
 import { background, Cfg, initTestObjects, it } from '@/tests/testlib/index.js';
 import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
@@ -47,6 +48,11 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       timeout: 720000,
     });
     const asyncDb = asyncDbAdmin.db();
+
+    async function awaitStatus(admin: AstraDbAdmin, info: any) {
+      const awaitStatus = await admin._httpClient._mkAwaitStatusFn(info, admin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }), 0, 'test-request-id');
+      return awaitStatus?.(admin.id, {} as any);
+    }
 
     {
       assert.ok(asyncDb.id);
@@ -82,7 +88,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         assert.strictEqual(event.requestMethod, HttpMethods.Post);
         assert.strictEqual(event.isLongRunning, true);
         assert.strictEqual(event.requestParams, undefined);
-        assert.deepStrictEqual(event.timeout, { databaseAdminTimeoutMs: 720000, requestTimeoutMs: 60000 });
+        assert.deepStrictEqual(event.timeout, {databaseAdminTimeoutMs: 720000, requestTimeoutMs: 60000});
       });
 
       client.once('adminCommandPolling', (event) => {
@@ -133,14 +139,14 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
+      await awaitStatus(asyncDbAdmin, {
         target: 'ACTIVE',
         legalStates: ['PENDING', 'INITIALIZING'],
         defaultPollInterval: 10000,
         id: null!,
         options: undefined,
         timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
-      }, 0);
+      });
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -184,14 +190,14 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.createKeyspace('other_keyspace');
-      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
+      await awaitStatus(asyncDbAdmin, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
-        defaultPollInterval: 1000,
+        defaultPollInterval: 10000,
         id: null!,
         options: undefined,
         timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
-      }, 0);
+      });
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -209,14 +215,14 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.dropKeyspace('other_keyspace', { blocking: true });
-      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
+      await awaitStatus(asyncDbAdmin, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
         id: null!,
         options: undefined,
         timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
-      }, 0);
+      });
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -236,14 +242,14 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await admin.dropDatabase(syncDb, { timeout: 1440000 });
-      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
+      await awaitStatus(asyncDbAdmin, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
-        defaultPollInterval: 10000,
+        defaultPollInterval: 1000,
         id: null!,
         options: undefined,
         timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
-      }, 0);
+      });
     }
 
     for (const [dbAdmin, dbType] of [[syncDbAdmin, 'sync'], [asyncDbAdmin, 'async']] as const) {
