@@ -39,11 +39,6 @@ import { CursorError } from '@/src/documents/cursors/cursor-error.js';
 /**
  * @internal
  */
-export type SerializedFilter = [filter: unknown, bigNumsPresent: boolean];
-
-/**
- * @internal
- */
 type FindLikeCursor = FindCursor<any> | FindAndRerankCursor<any>;
 
 /**
@@ -65,7 +60,7 @@ type FLCPage<T> = FindPage<T> | FindAndRerankPage<T>;
  * @internal
  */
 interface CloneFLCOptions<Opts extends FLCOptions> {
-  filter?: SerializedFilter,
+  filter?: Filter,
   options?: Opts,
   mapping?: (doc: SomeDoc) => unknown,
   initialPage?: FLCPage<SomeDoc>,
@@ -88,10 +83,10 @@ export class FLCInternal<TRaw extends SomeDoc, TRawPage extends FLCPage<TRaw>, O
   readonly _serdes: SerDes;
   readonly _parent: Table<SomeRow> | Collection;
   readonly _options: Opts;
-  readonly _filter: SerializedFilter;
+  readonly _filter: Filter;
   readonly _instance: FindLikeCursor;
 
-  constructor(instance: FindLikeCursor, parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: Opts) {
+  constructor(instance: FindLikeCursor, parent: Table<SomeRow> | Collection, serdes: SerDes, filter: Filter, options?: Opts) {
     this._httpClient = parent._httpClient;
     this._serdes = serdes;
     this._parent = parent;
@@ -104,14 +99,14 @@ export class FLCInternal<TRaw extends SomeDoc, TRawPage extends FLCPage<TRaw>, O
     if (this._instance.state !== 'idle') {
       throw new CursorError(`Cannot set a new filter on a running/closed cursor`, this._instance);
     }
-    return this._cloneFLC({ filter: filter && this._serdes.serialize(filter, SerDesTarget.Filter) });
+    return this._cloneFLC({ filter });
   }
 
   public withSort<RC extends FindLikeCursor>(sort?: Sort | HybridSort): RC {
     if (this._instance.state !== 'idle') {
       throw new CursorError(`Cannot set a new sort on a running/closed cursor`, this._instance);
     }
-    return this._cloneFLC({ options: { ...this._options, sort: sort && this._serdes.serialize(sort, SerDesTarget.Sort)[0] } });
+    return this._cloneFLC({ options: { ...this._options, sort }});
   }
 
   public withMap<RC extends FindLikeCursor>(map: (doc: any) => unknown): RC {
@@ -200,11 +195,14 @@ export class FLCInternal<TRaw extends SomeDoc, TRawPage extends FLCPage<TRaw>, O
   }
 
   public async fetchNextPageRaw(extra: Record<string, unknown>, tm: TimeoutManager | undefined, opts: FLCNextPageOptions<Opts>): Promise<[TRawPage, boolean]> {
+    const sort = this._serdes.serialize(this._options.sort, SerDesTarget.Sort);
+    const filter = this._serdes.serialize(this._filter, SerDesTarget.Filter);
+
     const command = {
       [opts.commandName]: {
-        filter: this._filter[0],
+        filter: filter[0],
         projection: this._options.projection,
-        sort: this._options.sort,
+        sort: sort[0],
         options: {
           ...Object.fromEntries(Object.entries(this._options).filter(([key]) => opts.commandOptions.includes(key as any))),
           pageState: this._instance._currentPage?.nextPageState,
@@ -214,7 +212,7 @@ export class FLCInternal<TRaw extends SomeDoc, TRawPage extends FLCPage<TRaw>, O
 
     const raw = await this._httpClient.executeCommand(command, {
       timeoutManager: tm ?? this._httpClient.tm.single('generalMethodTimeoutMs', this._options),
-      bigNumsPresent: this._filter[1],
+      bigNumsPresent: filter[1] || sort[1],
       extraLogInfo: extra,
     });
     this._options.includeSortVector = false;

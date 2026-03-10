@@ -27,7 +27,6 @@ import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type { SerializedFilter } from '@/src/documents/cursors/flc-internal.js';
 import { FLCInternal } from '@/src/documents/cursors/flc-internal.js';
 import type { RawDataAPIResponse } from '@/src/lib/index.js';
 
@@ -194,7 +193,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    *
    * @internal
    */
-  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T, initialPage?: FindAndRerankPage<RerankedResult<TRaw>>) {
+  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: Filter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T, initialPage?: FindAndRerankPage<RerankedResult<TRaw>>) {
     super(options ?? {}, mapping);
     this._internal = new FLCInternal(this, parent, serdes, filter, options);
     this._currentPage = initialPage;

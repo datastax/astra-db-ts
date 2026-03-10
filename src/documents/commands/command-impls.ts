@@ -225,11 +225,11 @@ export class CommandImpls<ID> {
   }
 
   public find<Cursor extends FindCursor<SomeDoc>>(filter: Filter, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
-    return new cursor(this._parent, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
+    return new cursor(this._parent, this._serdes, filter, options);
   }
 
   public findAndRerank<Cursor extends FindAndRerankCursor<SomeDoc>>(filter: Filter, options: GenericFindAndRerankOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindAndRerankCursor<SomeDoc>>) => Cursor): Cursor {
-    return new cursor(this._parent, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
+    return new cursor(this._parent, this._serdes, filter, options);
   }
 
   public async findOne<Schema>(_filter: Filter, options?: GenericFindOneOptions): Promise<Schema | null> {
@@ -388,7 +388,6 @@ export class CommandImpls<ID> {
 
     if (options) {
       if (options.sort && Object.keys(options.sort).length > 0) {
-        // body.sort = options.sort;
         body.sort = this._serdes.serialize(options.sort, SerDesTarget.Sort)[0];
       }
 

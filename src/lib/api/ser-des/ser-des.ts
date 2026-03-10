@@ -142,7 +142,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     }
 
     const ctx = this.adaptSerCtx(this._mkCtx(obj, target, {
-      mutatingInPlace: this._cfg.mutateInPlace === true,
+      mutatingInPlace: this._cfg.mutateInPlace === true && target === SerDesTarget.Record, // prevents some potential footguns when reusing filter/sort/etc. objects
       serializers: this._serializers,
     }));
 

@@ -28,7 +28,6 @@ import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type { SerializedFilter } from '@/src/documents/cursors/flc-internal.js';
 import { FLCInternal } from '@/src/documents/cursors/flc-internal.js';
 
 /**
@@ -169,7 +168,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    *
    * @internal
    */
-  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T, initialPage?: FindPage<TRaw>) {
+  public constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: Filter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T, initialPage?: FindPage<TRaw>) {
     super(options ?? {}, mapping);
     this._internal = new FLCInternal(this, parent, serdes, filter, options);
     this._currentPage = initialPage ?? this._internal.mkInitialPage(options?.initialPageState);
@@ -390,7 +389,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
    * @returns A new cursor with the new projection set.
    */
   public project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw> {
-    return this._internal.withPreMapOption('projection', structuredClone(projection));
+    return this._internal.withPreMapOption('projection', projection);
   }
 
   /**
