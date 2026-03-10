@@ -14,14 +14,15 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type {
+  AstraAvailableRegionInfo,
   AstraDatabaseConfig,
+  AstraFindAvailableRegionsOptions,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
-  AstraAvailableRegionInfo, AstraFindAvailableRegionsOptions,
 } from '@/src/administration/types/index.js';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
 import { Db } from '@/src/db/db.js';
-import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils.js';
+import { buildAstraDatabaseAdminInfo, idFromDbLike } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { CommandOptions, OpaqueHttpClient } from '@/src/lib/index.js';
@@ -454,7 +455,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    * @remarks Use with caution. Wear a harness. Don't say I didn't warn you.
    */
   public async dropDatabase(db: Db | string, options?: AstraDropDatabaseOptions): Promise<void> {
-    const id = typeof db === 'string' ? db : db.id;
+    const id = idFromDbLike(db);
 
     const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
