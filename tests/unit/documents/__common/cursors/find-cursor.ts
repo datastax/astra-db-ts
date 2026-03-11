@@ -28,7 +28,6 @@ import { describe, it } from '@/tests/testlib/index.js';
 import { UUID } from '@/src/documents/datatypes/uuid.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import { SerDesTarget } from '@/src/lib/index.js';
 
 interface FindCursorTestConfig extends Omit<AbstractCursorTestConfig, 'DeltaAsserter'> {
   CursorImpl: typeof CollectionFindCursor | typeof TableFindCursor,
@@ -57,29 +56,27 @@ export const unitTestFindCursor = ({ CursorImpl, parent, ...cfg }: FindCursorTes
 
   describe('methods', () => {
     describe('filter', () => {
-      it('should create a new cursor with a new pre-serialized filter', () => {
+      it('should create a new cursor with a new filter', () => {
         const cursor = new CursorImpl(parent, cfg.serdes, [{}, false]);
         const uuid = UUID.v4();
 
-        const newFilter = cfg.serdes.serialize({ uuid }, SerDesTarget.Filter);
+        const newFilter = { uuid };
 
         CursorInternalDeltaAsserter
-          .captureImmutDelta(cursor._internal, () => cursor.filter({ uuid })._internal)
+          .captureImmutDelta(cursor._internal, () => cursor.filter(newFilter)._internal)
           .assertDelta({ _filter: newFilter });
       });
     });
 
     describe('sort', () => {
-      it('should create a new cursor with a new pre-serialized sort', () => {
+      it('should create a new cursor with a new sort', () => {
         fc.assert(
           fc.property(arbs.record(fc.anything()), arbs.record(fc.anything()), (sort, oldOptions) => {
             const cursor = new CursorImpl(parent, cfg.serdes, [{}, false], oldOptions);
 
-            const newSort = cfg.serdes.serialize(sort, SerDesTarget.Sort)[0];
-
             CursorInternalDeltaAsserter
               .captureImmutDelta(cursor._internal, () => cursor.sort(sort as Sort)._internal)
-              .assertDelta({ _options: { ...oldOptions, sort: newSort } });
+              .assertDelta({ _options: { ...oldOptions, sort } });
           }),
         );
       });
