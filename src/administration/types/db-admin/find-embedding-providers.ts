@@ -112,7 +112,7 @@ export interface EmbeddingProviderInfo {
    * 'https://{endpointName}.{regionName}.{cloudName}.endpoints.huggingface.cloud/embeddings'
    * ```
    */
-  url: string,
+  url: string | null,
   /**
    * Supported methods of authentication for the provider.
    *
@@ -120,6 +120,14 @@ export interface EmbeddingProviderInfo {
    *
    * - `HEADER`: Authentication using direct API keys passed through headers on every Data API call.
    * See {@link EmbeddingHeadersProvider} for more info.
+   * ```ts
+   * const collections = await db.collections('my_coll', {
+   *   // Not tied to the collections; can be different every time.
+   *   embeddingApiKey: 'sk-...',
+   * });
+   * ```
+   *
+   * - `SHARED_SECRET`: Authentication tied to a collection at collections creation time using the Astra KMS.
    * ```ts
    * const collections = await db.createCollection('my_coll', {
    *   vector: {
@@ -132,14 +140,6 @@ export interface EmbeddingProviderInfo {
    *       },
    *     },
    *   },
-   * });
-   * ```
-   *
-   * - `SHARED_SECRET`: Authentication tied to a collection at collections creation time using the Astra KMS.
-   * ```ts
-   * const collections = await db.collections('my_coll', {
-   *   // Not tied to the collections; can be different every time.
-   *   embeddingApiKey: 'sk-...',
    * });
    * ```
    *
@@ -386,7 +386,7 @@ export interface EmbeddingProviderModelParameterInfo {
    * {}
    * ```
    */
-  validation: Record<string, unknown>[],
+  validation: Record<string, unknown>,
   /**
    * Any additional help text/information about the parameter.
    *
