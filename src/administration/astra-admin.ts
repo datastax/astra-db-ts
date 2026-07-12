@@ -399,7 +399,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns The AstraDbAdmin instance for the newly created database.
    */
-  public async createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin> {
+  public async createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin> { // TODO move name out of config
     const definition = {
       capacityUnits: 1,
       tier: 'serverless',
