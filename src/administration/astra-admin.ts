@@ -19,6 +19,8 @@ import type {
   AstraFindAvailableRegionsOptions,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
+  AstraPCUGroupDescriptor,
+  ListAstraPCUGroupsOptions,
 } from '@/src/administration/types/index.js';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
 import { Db } from '@/src/db/db.js';
@@ -481,6 +483,10 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       delete definition.dbType;
     }
 
+    if (definition.pcuGroupUUID) {
+      await this._validatePCUGroupExists(options, definition);
+    }
+
     const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
     const resp = await this.#httpClient.requestLongRunning({
@@ -500,6 +506,24 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     const endpoint = buildAstraEndpoint(resp.headers.location, definition.region);
     const db = this.db(endpoint, { ...options?.dbOptions, keyspace: definition.keyspace });
     return new AstraDbAdmin(db, this.#defaultOpts, AdminOptsHandler.empty, this.#defaultOpts.adminOptions.adminToken, endpoint);
+  }
+
+  private async _validatePCUGroupExists(options: CreateAstraDatabaseOptions | undefined, definition: Record<string, any>) {
+    try {
+      const groups = await this.listPCUGroups({ timeout: options?.timeout }); // technically this should use a multi-call tm but honestly it probably doesn't matter
+      const group = groups.find(g => g.id === definition.pcuGroupUUID);
+
+      if (!group) {
+        throw new Error(`Requested PCU Group ID '${definition.pcuGroupUUID}' not found for cloud provider/region ('${definition.cloudProvider}' / '${definition.region}'). Aborting database creation.`);
+      }
+
+      if (group.cloudProvider.toLowerCase() !== definition.cloudProvider.toLowerCase() || group.region.toLowerCase() !== definition.region.toLowerCase()) {
+        throw new Error(`Requested PCU Group ID '${definition.pcuGroupUUID}' is in another cloud provider and region ('${group.cloudProvider}' / '${group.region}'). Aborting database creation.`);
+      }
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      return;
+    }
   }
 
   /**
@@ -609,6 +633,43 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       reservedForQualifiedUsers: region.reservedForQualifiedUsers,
       zone: region.zone,
     }));
+  }
+
+  /**
+   * Get a list of the PCU Groups pertaining to the current org.
+   *
+   * Query the DevOps API to get a listing of the PCU Groups
+   * for subsequent use in database creation. The return value can be limited
+   * to a specific combination of cloud provider and region, or include every
+   * PCU Group in the org.
+   *
+   * @param options - The options to filter the PCU groups by, or adjust the timeout.
+   * @returns A promise that resolves to an array of PCU groups.
+   */
+  public async listPCUGroups(options?: ListAstraPCUGroupsOptions): Promise<AstraPCUGroupDescriptor[]> {
+    if (options?.region !== undefined && options?.cloudProvider === undefined) {
+      throw new Error("If 'region' is provided, 'cloudProvider' must also be provided.");
+    }
+
+    const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
+
+    const resp = await this.#httpClient.request({
+      method: HttpMethods.Post,
+      path: '/pcus/actions/get',
+      data: {},
+      methodName: 'admin.listPCUGroups',
+    }, tm);
+
+    const pcuGroups = resp.data as AstraPCUGroupDescriptor[];
+
+    if (options?.cloudProvider) {
+      return pcuGroups.filter(pg =>
+        pg.cloudProvider.toLowerCase() === options.cloudProvider!.toLowerCase() &&
+        (!options.region || pg.region.toLowerCase() === options.region.toLowerCase()),
+      );
+    }
+
+    return pcuGroups;
   }
 
   public get _httpClient(): OpaqueHttpClient {

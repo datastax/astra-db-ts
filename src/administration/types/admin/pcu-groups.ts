@@ -1,0 +1,61 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import type { CommandOptions } from '@/src/lib/index.js';
+import type { AstraDatabaseCloudProvider } from './admin-common.js';
+
+export interface AstraPCUGroupTypeDetailsDescriptor {
+  vCpu?: number,
+  memory?: string,
+  diskCache?: string,
+}
+
+export interface AstraPCUGroupTypeDescriptor {
+  type: string,
+  region?: string,
+  cloudProvider?: AstraDatabaseCloudProvider,
+  details?: AstraPCUGroupTypeDetailsDescriptor,
+}
+
+export interface AstraPCUGroupDescriptor {
+  id: string,
+  orgId?: string,
+  title?: string,
+  cloudProvider: AstraDatabaseCloudProvider,
+  region: string,
+  instanceType?: string,
+  pcuType?: AstraPCUGroupTypeDescriptor,
+  provisionType?: string,
+  min?: number,
+  max?: number,
+  description?: string,
+  createdAt?: string,
+  updatedAt?: string,
+  createdBy?: string,
+  updatedBy?: string,
+  status?: string,
+  reserved?: number,
+}
+
+export interface ListAstraPCUGroupsOptions extends CommandOptions<{ timeout: 'databaseAdminTimeoutMs' }> {
+  /**
+   * Filter the returned PCU groups by cloud provider.
+   */
+  cloudProvider?: AstraDatabaseCloudProvider,
+  /**
+   * Filter the returned PCU groups by region.
+   * If provided, `cloudProvider` must also be specified.
+   */
+  region?: string,
+}

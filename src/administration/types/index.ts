@@ -19,6 +19,7 @@ export type * from './admin/database-info.js';
 export type * from './admin/list-databases.js';
 
 export type * from './admin/find-available-regions.js';
+export type * from './admin/pcu-groups.js';
 export type * from './db-admin/astra-create-keyspace.js';
 export type * from './db-admin/astra-drop-keyspace.js';
 export type * from './db-admin/local-create-keyspace.js';
