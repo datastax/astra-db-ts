@@ -399,7 +399,76 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns The AstraDbAdmin instance for the newly created database.
    */
-  public async createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin> { // TODO move name out of config
+  public async createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin>;
+
+  /**
+   * Creates a new database with the given name and configuration.
+   *
+   * **NB. this is a long-running operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
+   * default polling interval is 10 seconds. Expect it to take roughly 2 min to complete.
+   *
+   * Note that **the `name` field is non-unique** and thus creating a database, even with the same options, is **not
+   * idempotent**.
+   *
+   * You may also provide options for the implicit {@link Db} instance that will be created with the database, which
+   * will override any default options set when creating the {@link DataAPIClient} through a deep merge (i.e. unset
+   * properties in the options object will just default to the default options).
+   *
+   * See {@link CreateAstraDatabaseOptions} for complete information about the options available for this operation.
+   *
+   * @example
+   * ```typescript
+   * const newDbAdmin1 = await admin.createDatabase('my_database_1', {
+   *   cloudProvider: 'GCP',
+   *   region: 'us-east1',
+   * });
+   *
+   * // Prints '[]' as there are no collections in the database yet
+   * console.log(newDbAdmin1.db().listCollections());
+   *
+   * const newDbAdmin2 = await admin.createDatabase('my_database_2', {
+   *   cloudProvider: 'GCP',
+   *   region: 'us-east1',
+   *   keyspace: 'my_keyspace',
+   * }, {
+   *   blocking: false,
+   *   dbOptions: {
+   *     useHttp2: false,
+   *     token: '<weaker-token>',
+   *   },
+   * });
+   *
+   * // Can't do much else as the database is still initializing
+   * console.log(newDbAdmin2.db().id);
+   * ```
+   *
+   * @remarks
+   * Note that if you choose not to block, the returned {@link AstraDbAdmin} object will not be very useful until the
+   * operation completes, which is up to the caller to determine.
+   *
+   * @param name - The name for the new database.
+   * @param config - The configuration for the new database.
+   * @param options - The options for the blocking behavior of the operation.
+   *
+   * @returns The AstraDbAdmin instance for the newly created database.
+   */
+  public async createDatabase(name: string, config: Omit<AstraDatabaseConfig, 'name'>, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin>;
+
+  public async createDatabase(nameOrConfig: string | AstraDatabaseConfig, configOrOptions?: Omit<AstraDatabaseConfig, 'name'> | CreateAstraDatabaseOptions, maybeOptions?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin> {
+    let config: AstraDatabaseConfig;
+    let options: CreateAstraDatabaseOptions | undefined;
+
+    if (typeof nameOrConfig === 'string') {
+      config = {
+        ...(configOrOptions as Omit<AstraDatabaseConfig, 'name'>),
+        name: nameOrConfig,
+      };
+      options = maybeOptions;
+    } else {
+      config = nameOrConfig;
+      options = configOrOptions as CreateAstraDatabaseOptions | undefined;
+    }
+
     const definition = {
       capacityUnits: 1,
       tier: 'serverless',
