@@ -469,13 +469,17 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       options = configOrOptions as CreateAstraDatabaseOptions | undefined;
     }
 
-    const definition = {
+    const definition: Record<string, any> = {
       capacityUnits: 1,
       tier: 'serverless',
       dbType: 'vector',
       keyspace: config.keyspace || DEFAULT_KEYSPACE,
       ...config,
     };
+
+    if (definition.dbType === 'nonvector') {
+      delete definition.dbType;
+    }
 
     const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
