@@ -16,7 +16,7 @@ import type { CommandOptions } from '@/src/lib/index.js';
 import type { AstraDatabaseCloudProvider } from './admin-common.js';
 
 export interface AstraPCUGroupTypeDetailsDescriptor {
-  vCpu?: number,
+  vCPU?: number,
   memory?: string,
   diskCache?: string,
 }

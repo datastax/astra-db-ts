@@ -24,7 +24,7 @@ import type {
 } from '@/src/administration/types/index.js';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
 import { Db } from '@/src/db/db.js';
-import { buildAstraDatabaseAdminInfo, idFromDbLike } from '@/src/administration/utils.js';
+import { buildAstraDatabaseAdminInfo, buildAstraPCUTypeDescriptor, idFromDbLike } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { CommandOptions, OpaqueHttpClient } from '@/src/lib/index.js';
@@ -632,6 +632,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       name: region.name,
       reservedForQualifiedUsers: region.reservedForQualifiedUsers,
       zone: region.zone,
+      pcuTypes: region.pcu_types?.map(buildAstraPCUTypeDescriptor),
     }));
   }
 
@@ -660,7 +661,10 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       methodName: 'admin.listPCUGroups',
     }, tm);
 
-    const pcuGroups = resp.data as AstraPCUGroupDescriptor[];
+    const pcuGroups = (resp.data as AstraPCUGroupDescriptor[]).map((pg) => ({
+      ...pg,
+      pcuType: pg.pcuType ? buildAstraPCUTypeDescriptor(pg.pcuType) : undefined,
+    }));
 
     if (options?.cloudProvider) {
       return pcuGroups.filter(pg =>

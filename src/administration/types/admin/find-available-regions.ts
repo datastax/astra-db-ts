@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type { AstraDatabaseCloudProvider } from './admin-common.js';
+import type { AstraPCUGroupTypeDescriptor } from './pcu-groups.js';
 import type { CommandOptions } from '@/src/lib/index.js';
 
 /**
@@ -155,4 +156,8 @@ export interface AstraAvailableRegionInfo {
    * ```
    */
   zone: AstraRegionZone,
+  /**
+   * The list of PCU types available in this region.
+   */
+  pcuTypes?: AstraPCUGroupTypeDescriptor[],
 }

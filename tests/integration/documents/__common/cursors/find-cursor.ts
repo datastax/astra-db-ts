@@ -468,7 +468,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
       it('should sort documents', async () => {
         const cursor = memoizedSource_.find({}).sort({ [textKey]: 1 });
         const res = await cursor.toArray();
-        assert.deepStrictEqual(res, [...docs_].slice(0, 20).sort(sortByText));
+        assert.deepStrictEqual(res, [...docs_].slice(0, 50).sort(sortByText));
       });
 
       it('should only return one page of docs with a sort', async () => {
@@ -590,7 +590,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
       it('should work with a lot of documents', async () => {
         let initialPageState: string | undefined | null = undefined;
         let totalResults = 0;
-        const expectedCounts = [20, 20, 20, 20, 15];
+        const expectedCounts = [50, 45];
 
         const autoCursor = source_.find({});
 

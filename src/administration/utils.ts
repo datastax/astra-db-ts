@@ -16,6 +16,7 @@ import type { AstraDatabaseRegionInfo, AstraFullDatabaseInfo } from '@/src/admin
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 import type { SomeDoc } from '@/src/documents/index.js';
 import type { Db } from "@/src/db/index.js";
+import type { AstraPCUGroupTypeDescriptor, AstraPCUGroupTypeDetailsDescriptor } from '@/src/administration/types/index.js';
 
 /**
  * @internal
@@ -70,3 +71,20 @@ export const buildAstraDatabaseAdminInfo = (raw: SomeDoc, environment: 'dev' | '
 export const idFromDbLike = (db: Db | string): string => {
   return (typeof db === 'string') ? db : db.id;
 };
+
+/**
+ * @internal
+ */
+export const buildAstraPCUTypeDescriptor = (raw: any): AstraPCUGroupTypeDescriptor => ({
+  ...raw,
+  cloudProvider: raw.provider,
+  details: raw.details ? buildAstraPCUTypeDetailsDescriptor(raw.details) : undefined,
+});
+
+/**
+ * @internal
+ */
+const buildAstraPCUTypeDetailsDescriptor = (raw: any): AstraPCUGroupTypeDetailsDescriptor => ({
+  ...raw,
+  diskCache: raw.disk_cache,
+});
