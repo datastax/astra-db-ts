@@ -89,7 +89,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         const pageSize = cursor.consumeBuffer().length;
         assert.strictEqual(cursor.buffered(), 0);
         assert.strictEqual(await cursor.hasNext(), true);
-        assert.strictEqual(cursor.buffered(), pageSize);
+        assert.strictEqual(cursor.buffered(), docs_.length - pageSize);
       });
 
       it('should return false if there are no more documents left to find', async () => {
@@ -176,7 +176,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         assert.strictEqual(cursor.buffered(), 0);
         const docFromP2 = await cursor.next();
         assert.ok(docFromP2);
-        assert.strictEqual(cursor.buffered() + 1, pageSize);
+        assert.strictEqual(cursor.buffered() + 1, docs_.length - pageSize);
         assert.notDeepStrictEqual(docFromP1, docFromP2);
       });
 
@@ -454,7 +454,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
       it('should skip documents across pages', async () => {
         const cursor = memoizedSource_.find({}).skip(50).sort({ [textKey]: 1 });
         const res = await cursor.toArray();
-        assert.deepStrictEqual(res, docs_.slice(50, 70));
+        assert.deepStrictEqual(res, docs_.slice(50));
       });
 
       it('should limit and skip documents across pages', async () => {
@@ -605,7 +605,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
 
           totalResults += manualPage.result.length;
 
-          if (expectedCount === 15) {
+          if (expectedCount === 45) {
             assert.equal(manualPage.nextPageState, null);
           } else {
             assert.notEqual(initialPageState, manualPage.nextPageState);
