@@ -81,6 +81,19 @@ export interface AstraDatabaseConfig {
    * The PCU group to attach the database to once it is created.
    */
   pcuGroupUUID?: string,
+  /**
+   * The database tier (e.g. 'serverless'). Defaults to `'serverless'`.
+   */
+  tier?: string,
+  /**
+   * The number of capacity units for the database. Defaults to `1`.
+   */
+  capacityUnits?: number,
+  /**
+   * The type of database: `'vector'` (default), `'nonvector'`.
+   * Note that `'nonvector'` maps to the field being absent in serialized (JSON) form.
+   */
+  dbType?: 'vector' | 'nonvector',
 }
 
 /**

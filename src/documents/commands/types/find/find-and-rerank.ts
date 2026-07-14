@@ -14,6 +14,7 @@
 
 import type { DataAPIVector, Projection } from '@/src/documents/index.js';
 import type { CommandOptions } from '@/src/lib/index.js';
+import type { RerankServiceOptions } from '@/src/db/index.js';
 
 /**
  * @public
@@ -117,4 +118,15 @@ export interface GenericFindAndRerankOptions extends CommandOptions<{ timeout: '
    * See {@link FindAndRerankCursor.includeSortVector} for more details and examples.
    */
   includeSortVector?: boolean,
+  /**
+   * Overrides the rerank service configuration for this query.
+   *
+   * Allows specifying a different provider or model to use during the reranking step, even if reranking
+   * is not enabled by default for the collection. This is an all-or-nothing override, completely
+   * replacing the collection's reranking definition for the duration of the query (except that
+   * `authentication` and `parameters` are optional).
+   *
+   * See {@link FindAndRerankCursor.rerankOverride} for more details and examples.
+   */
+  rerank?: RerankServiceOptions,
 }

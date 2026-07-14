@@ -19,10 +19,12 @@ import type {
   AstraFindAvailableRegionsOptions,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
+  AstraPCUGroupDescriptor,
+  ListAstraPCUGroupsOptions,
 } from '@/src/administration/types/index.js';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
 import { Db } from '@/src/db/db.js';
-import { buildAstraDatabaseAdminInfo, idFromDbLike } from '@/src/administration/utils.js';
+import { buildAstraDatabaseAdminInfo, buildAstraPCUTypeDescriptor, idFromDbLike } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { CommandOptions, OpaqueHttpClient } from '@/src/lib/index.js';
@@ -399,14 +401,91 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
    *
    * @returns The AstraDbAdmin instance for the newly created database.
    */
-  public async createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin> {
-    const definition = {
+  public async createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin>;
+
+  /**
+   * Creates a new database with the given name and configuration.
+   *
+   * **NB. this is a long-running operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
+   * default polling interval is 10 seconds. Expect it to take roughly 2 min to complete.
+   *
+   * Note that **the `name` field is non-unique** and thus creating a database, even with the same options, is **not
+   * idempotent**.
+   *
+   * You may also provide options for the implicit {@link Db} instance that will be created with the database, which
+   * will override any default options set when creating the {@link DataAPIClient} through a deep merge (i.e. unset
+   * properties in the options object will just default to the default options).
+   *
+   * See {@link CreateAstraDatabaseOptions} for complete information about the options available for this operation.
+   *
+   * @example
+   * ```typescript
+   * const newDbAdmin1 = await admin.createDatabase('my_database_1', {
+   *   cloudProvider: 'GCP',
+   *   region: 'us-east1',
+   * });
+   *
+   * // Prints '[]' as there are no collections in the database yet
+   * console.log(newDbAdmin1.db().listCollections());
+   *
+   * const newDbAdmin2 = await admin.createDatabase('my_database_2', {
+   *   cloudProvider: 'GCP',
+   *   region: 'us-east1',
+   *   keyspace: 'my_keyspace',
+   * }, {
+   *   blocking: false,
+   *   dbOptions: {
+   *     useHttp2: false,
+   *     token: '<weaker-token>',
+   *   },
+   * });
+   *
+   * // Can't do much else as the database is still initializing
+   * console.log(newDbAdmin2.db().id);
+   * ```
+   *
+   * @remarks
+   * Note that if you choose not to block, the returned {@link AstraDbAdmin} object will not be very useful until the
+   * operation completes, which is up to the caller to determine.
+   *
+   * @param name - The name for the new database.
+   * @param config - The configuration for the new database.
+   * @param options - The options for the blocking behavior of the operation.
+   *
+   * @returns The AstraDbAdmin instance for the newly created database.
+   */
+  public async createDatabase(name: string, config: Omit<AstraDatabaseConfig, 'name'>, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin>;
+
+  public async createDatabase(nameOrConfig: string | AstraDatabaseConfig, configOrOptions?: Omit<AstraDatabaseConfig, 'name'> | CreateAstraDatabaseOptions, maybeOptions?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin> {
+    let config: AstraDatabaseConfig;
+    let options: CreateAstraDatabaseOptions | undefined;
+
+    if (typeof nameOrConfig === 'string') {
+      config = {
+        ...(configOrOptions as Omit<AstraDatabaseConfig, 'name'>),
+        name: nameOrConfig,
+      };
+      options = maybeOptions;
+    } else {
+      config = nameOrConfig;
+      options = configOrOptions as CreateAstraDatabaseOptions | undefined;
+    }
+
+    const definition: Record<string, any> = {
       capacityUnits: 1,
       tier: 'serverless',
       dbType: 'vector',
       keyspace: config.keyspace || DEFAULT_KEYSPACE,
       ...config,
     };
+
+    if (definition.dbType === 'nonvector') {
+      delete definition.dbType;
+    }
+
+    if (definition.pcuGroupUUID) {
+      await this._validatePCUGroupExists(options, definition);
+    }
 
     const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
@@ -427,6 +506,24 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     const endpoint = buildAstraEndpoint(resp.headers.location, definition.region);
     const db = this.db(endpoint, { ...options?.dbOptions, keyspace: definition.keyspace });
     return new AstraDbAdmin(db, this.#defaultOpts, AdminOptsHandler.empty, this.#defaultOpts.adminOptions.adminToken, endpoint);
+  }
+
+  private async _validatePCUGroupExists(options: CreateAstraDatabaseOptions | undefined, definition: Record<string, any>) {
+    try {
+      const groups = await this.listPCUGroups({ timeout: options?.timeout }); // technically this should use a multi-call tm but honestly it probably doesn't matter
+      const group = groups.find(g => g.id === definition.pcuGroupUUID);
+
+      if (!group) {
+        throw new Error(`Requested PCU Group ID '${definition.pcuGroupUUID}' not found for cloud provider/region ('${definition.cloudProvider}' / '${definition.region}'). Aborting database creation.`);
+      }
+
+      if (group.cloudProvider.toLowerCase() !== definition.cloudProvider.toLowerCase() || group.region.toLowerCase() !== definition.region.toLowerCase()) {
+        throw new Error(`Requested PCU Group ID '${definition.pcuGroupUUID}' is in another cloud provider and region ('${group.cloudProvider}' / '${group.region}'). Aborting database creation.`);
+      }
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      return;
+    }
   }
 
   /**
@@ -535,7 +632,48 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
       name: region.name,
       reservedForQualifiedUsers: region.reservedForQualifiedUsers,
       zone: region.zone,
+      pcuTypes: region.pcu_types?.map(buildAstraPCUTypeDescriptor),
     }));
+  }
+
+  /**
+   * Get a list of the PCU Groups pertaining to the current org.
+   *
+   * Query the DevOps API to get a listing of the PCU Groups
+   * for subsequent use in database creation. The return value can be limited
+   * to a specific combination of cloud provider and region, or include every
+   * PCU Group in the org.
+   *
+   * @param options - The options to filter the PCU groups by, or adjust the timeout.
+   * @returns A promise that resolves to an array of PCU groups.
+   */
+  public async listPCUGroups(options?: ListAstraPCUGroupsOptions): Promise<AstraPCUGroupDescriptor[]> {
+    if (options?.region !== undefined && options?.cloudProvider === undefined) {
+      throw new Error("If 'region' is provided, 'cloudProvider' must also be provided.");
+    }
+
+    const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
+
+    const resp = await this.#httpClient.request({
+      method: HttpMethods.Post,
+      path: '/pcus/actions/get',
+      data: {},
+      methodName: 'admin.listPCUGroups',
+    }, tm);
+
+    const pcuGroups = (resp.data as AstraPCUGroupDescriptor[]).map((pg) => ({
+      ...pg,
+      pcuType: pg.pcuType ? buildAstraPCUTypeDescriptor(pg.pcuType) : undefined,
+    }));
+
+    if (options?.cloudProvider) {
+      return pcuGroups.filter(pg =>
+        pg.cloudProvider.toLowerCase() === options.cloudProvider!.toLowerCase() &&
+        (!options.region || pg.region.toLowerCase() === options.region.toLowerCase()),
+      );
+    }
+
+    return pcuGroups;
   }
 
   public get _httpClient(): OpaqueHttpClient {

@@ -23,6 +23,7 @@ import type {
   SomeRow,
   Table,
 } from '@/src/documents/index.js';
+import type { RerankServiceOptions } from '@/src/db/index.js';
 import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
@@ -521,6 +522,36 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   /**
    * ##### Overview
    *
+   * Overrides the rerank service configuration for this query.
+   *
+   * Allows specifying a different provider or model to use during the reranking step, even if reranking
+   * is not enabled by default for the collection. This is an all-or-nothing override, completely
+   * replacing the collection's reranking definition for the duration of the query (except that
+   * `authentication` and `parameters` are optional).
+   *
+   * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with the new rerank override.
+   *
+   * @example
+   * ```ts
+   * const cursor = collection.findAndRerank({})
+   *   .sort({ $hybrid: 'old man' })
+   *   .rerank({
+   *     provider: 'nvidia',
+   *     modelName: 'nvidia/llama-3.2-nv-rerankqa-1b-v2'
+   *   });
+   * ```
+   *
+   * @param rerank - The rerank service configuration override.
+   *
+   * @returns A new cursor with the new rerank override set.
+   */
+  public rerankOverride(rerank: RerankServiceOptions): this {
+    return this._internal.withOption('rerank', rerank);
+  }
+
+  /**
+   * ##### Overview
+   *
    * Sets the projection for the cursor, overwriting any previous projection.
    *
    * > **🚨Important:** This method does **NOT** mutate the cursor; it returns a new cursor with a new projection.
@@ -703,7 +734,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    */
   private static InternalNextPageOptions = <const>{
     commandName: 'findAndRerank',
-    commandOptions: ['limit', 'hybridLimits', 'rerankOn', 'rerankQuery', 'includeScores', 'includeSortVector'],
+    commandOptions: ['limit', 'hybridLimits', 'rerankOn', 'rerankQuery', 'includeScores', 'includeSortVector', 'rerank'],
     mapPage<TRaw extends SomeDoc>(page: FindAndRerankPage<SomeDoc>, raw: RawDataAPIResponse) {
       for (let i = 0, n = page.result.length; i < n; i++) {
         page.result[i] = new RerankedResult(page.result[i], raw.status?.documentResponses?.[i]?.scores ?? {});

@@ -89,7 +89,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         const pageSize = cursor.consumeBuffer().length;
         assert.strictEqual(cursor.buffered(), 0);
         assert.strictEqual(await cursor.hasNext(), true);
-        assert.strictEqual(cursor.buffered(), pageSize);
+        assert.strictEqual(cursor.buffered(), docs_.length - pageSize);
       });
 
       it('should return false if there are no more documents left to find', async () => {
@@ -176,7 +176,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         assert.strictEqual(cursor.buffered(), 0);
         const docFromP2 = await cursor.next();
         assert.ok(docFromP2);
-        assert.strictEqual(cursor.buffered() + 1, pageSize);
+        assert.strictEqual(cursor.buffered() + 1, docs_.length - pageSize);
         assert.notDeepStrictEqual(docFromP1, docFromP2);
       });
 
@@ -454,7 +454,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
       it('should skip documents across pages', async () => {
         const cursor = memoizedSource_.find({}).skip(50).sort({ [textKey]: 1 });
         const res = await cursor.toArray();
-        assert.deepStrictEqual(res, docs_.slice(50, 70));
+        assert.deepStrictEqual(res, docs_.slice(50));
       });
 
       it('should limit and skip documents across pages', async () => {
@@ -468,7 +468,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
       it('should sort documents', async () => {
         const cursor = memoizedSource_.find({}).sort({ [textKey]: 1 });
         const res = await cursor.toArray();
-        assert.deepStrictEqual(res, [...docs_].slice(0, 20).sort(sortByText));
+        assert.deepStrictEqual(res, [...docs_].slice(0, 50).sort(sortByText));
       });
 
       it('should only return one page of docs with a sort', async () => {
@@ -590,7 +590,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
       it('should work with a lot of documents', async () => {
         let initialPageState: string | undefined | null = undefined;
         let totalResults = 0;
-        const expectedCounts = [20, 20, 20, 20, 15];
+        const expectedCounts = [50, 45];
 
         const autoCursor = source_.find({});
 
@@ -605,7 +605,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
 
           totalResults += manualPage.result.length;
 
-          if (expectedCount === 15) {
+          if (expectedCount === 45) {
             assert.equal(manualPage.nextPageState, null);
           } else {
             assert.notEqual(initialPageState, manualPage.nextPageState);

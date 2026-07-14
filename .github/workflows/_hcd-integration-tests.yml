@@ -28,7 +28,7 @@ jobs:
       - name: Configure AWS credentials from OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::559669398656:role/astra-db-ts-ecr-ro-user
+          role-to-assume: arn:aws:iam::559669398656:role/data-api-clients-ecr-ro-user
           aws-region: us-west-2
 
       - name: Login to Amazon ECR
