@@ -254,6 +254,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     // @internal
     constructor(rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions);
     createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin>;
+    createDatabase(name: string, config: Omit<AstraDatabaseConfig, 'name'>, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin>;
     db(endpoint: string, options?: DbOptions): Db;
     db(id: string, region: string, options?: DbOptions): Db;
     dbAdmin(endpoint: string, options?: DbOptions): AstraDbAdmin;
@@ -266,6 +267,7 @@ export class AstraAdmin extends HierarchicalLogger<AdminCommandEventMap> {
     // (undocumented)
     get _httpClient(): OpaqueHttpClient;
     listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraFullDatabaseInfo[]>;
+    listPCUGroups(options?: ListAstraPCUGroupsOptions): Promise<AstraPCUGroupDescriptor[]>;
 }
 
 // @public
@@ -278,6 +280,7 @@ export interface AstraAvailableRegionInfo {
     displayName: string;
     enabled: boolean;
     name: string;
+    pcuTypes?: AstraPCUGroupTypeDescriptor[];
     reservedForQualifiedUsers: boolean;
     zone: AstraRegionZone;
 }
@@ -301,11 +304,14 @@ export type AstraDatabaseCloudProviderFilter = AstraDatabaseCloudProvider | 'ALL
 
 // @public
 export interface AstraDatabaseConfig {
+    capacityUnits?: number;
     cloudProvider: AstraDatabaseCloudProvider;
+    dbType?: 'vector' | 'nonvector';
     keyspace?: string;
     name: string;
     pcuGroupUUID?: string;
     region: string;
+    tier?: string;
 }
 
 // @public
@@ -376,6 +382,66 @@ export interface AstraNoBlockingOptions {
 export interface AstraPartialDatabaseInfo extends AstraBaseDatabaseInfo {
     apiEndpoint: string;
     region: string;
+}
+
+// @public (undocumented)
+export interface AstraPCUGroupDescriptor {
+    // (undocumented)
+    cloudProvider: AstraDatabaseCloudProvider;
+    // (undocumented)
+    createdAt?: string;
+    // (undocumented)
+    createdBy?: string;
+    // (undocumented)
+    description?: string;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    instanceType?: string;
+    // (undocumented)
+    max?: number;
+    // (undocumented)
+    min?: number;
+    // (undocumented)
+    orgId?: string;
+    // (undocumented)
+    pcuType?: AstraPCUGroupTypeDescriptor;
+    // (undocumented)
+    provisionType?: string;
+    // (undocumented)
+    region: string;
+    // (undocumented)
+    reserved?: number;
+    // (undocumented)
+    status?: string;
+    // (undocumented)
+    title?: string;
+    // (undocumented)
+    updatedAt?: string;
+    // (undocumented)
+    updatedBy?: string;
+}
+
+// @public (undocumented)
+export interface AstraPCUGroupTypeDescriptor {
+    // (undocumented)
+    cloudProvider?: AstraDatabaseCloudProvider;
+    // (undocumented)
+    details?: AstraPCUGroupTypeDetailsDescriptor;
+    // (undocumented)
+    region?: string;
+    // (undocumented)
+    type: string;
+}
+
+// @public (undocumented)
+export interface AstraPCUGroupTypeDetailsDescriptor {
+    // (undocumented)
+    diskCache?: string;
+    // (undocumented)
+    memory?: string;
+    // (undocumented)
+    vCPU?: number;
 }
 
 // @public
@@ -1636,7 +1702,7 @@ export interface EmbeddingProviderInfo {
     models: EmbeddingProviderModelInfo[];
     parameters: EmbeddingProviderProviderParameterInfo[];
     supportedAuthentication: Record<LitUnion<'HEADER' | 'SHARED_SECRET' | 'NONE'>, EmbeddingProviderAuthInfo>;
-    url: string;
+    url: string | null;
 }
 
 // @public
@@ -1660,7 +1726,7 @@ export interface EmbeddingProviderModelParameterInfo {
     name: string;
     required: boolean;
     type: string;
-    validation: Record<string, unknown>[];
+    validation: Record<string, unknown>;
 }
 
 // @public
@@ -1780,10 +1846,9 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     // @internal
     [$CustomInspect](): string;
     // Warning: (ae-forgotten-export) The symbol "SerDes" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-forgotten-export) The symbol "SerializedFilter" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T, initialPage?: FindAndRerankPage<RerankedResult<TRaw>>);
+    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: Filter, options?: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => T, initialPage?: FindAndRerankPage<RerankedResult<TRaw>>);
     clone(): this;
     // (undocumented)
     _currentPage?: FindAndRerankPage<RerankedResult<TRaw>>;
@@ -1805,6 +1870,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
     map<R>(map: (doc: T) => R): FindAndRerankCursor<R, TRaw>;
     project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RerankedResult<RRaw>, RRaw>;
     rerankOn(rerankOn: string): this;
+    rerankOverride(rerank: RerankServiceOptions): this;
     rerankQuery(rerankQuery: string): this;
     sort(sort: HybridSort): this;
     // @internal (undocumented)
@@ -1823,7 +1889,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Abst
     // @internal
     [$CustomInspect](): string;
     // @internal
-    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: SerializedFilter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T, initialPage?: FindPage<TRaw>);
+    constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: Filter, options?: GenericFindOptions, mapping?: (doc: TRaw) => T, initialPage?: FindPage<TRaw>);
     clone(): this;
     // @internal (undocumented)
     _currentPage?: FindPage<TRaw>;
@@ -1947,6 +2013,7 @@ export interface GenericFindAndRerankOptions extends CommandOptions<{
     includeSortVector?: boolean;
     limit?: number;
     projection?: Projection;
+    rerank?: RerankServiceOptions;
     rerankOn?: string;
     rerankQuery?: string;
     sort?: HybridSort;
@@ -2204,7 +2271,7 @@ export interface LexicalDoc {
 export const LIB_NAME = "astra-db-ts";
 
 // @public
-export const LIB_VERSION = "2.1.2";
+export const LIB_VERSION = "2.2.1";
 
 // @public
 export interface ListAstraDatabasesOptions extends CommandOptions<{
@@ -2214,6 +2281,14 @@ export interface ListAstraDatabasesOptions extends CommandOptions<{
     limit?: number;
     provider?: AstraDatabaseCloudProviderFilter;
     startingAfter?: string;
+}
+
+// @public (undocumented)
+export interface ListAstraPCUGroupsOptions extends CommandOptions<{
+    timeout: 'databaseAdminTimeoutMs';
+}> {
+    cloudProvider?: AstraDatabaseCloudProvider;
+    region?: string;
 }
 
 // @public
