@@ -1416,7 +1416,8 @@ const validateDuration = (months: number, days: number, nanoseconds: bigint): vo
     throw new TypeError(`Invalid duration (${months}, ${days}, ${nanoseconds}); all parts (months, days, nanoseconds) must be integer`);
   }
 
-  if (months > 2147483647 || days > 2147483647 || nanoseconds > 9223372036854775807n) {
+  if (months > 2147483647 || days > 2147483647 || nanoseconds > 9223372036854775807n 
+    || months <- 2147483647 || days <- 2147483647 || nanoseconds <- 9223372036854775807n) {
     throw new RangeError(`Invalid duration (${months}, ${days}, ${nanoseconds}); months and days must be in range [-2147483647, 2147483647], nanoseconds must be in range [-9223372036854775807, 9223372036854775807]`);
   }
 };
