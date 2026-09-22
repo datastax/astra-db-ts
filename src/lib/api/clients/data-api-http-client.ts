@@ -241,8 +241,8 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
       bigNumsPresent: options.bigNumsPresent,
     };
 
-    const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
-    const collectionPath = info.tOrC ? `/${info.tOrC}` : '';
+    const keyspacePath = info.keyspace ? `/${encodeURIComponent(info.keyspace)}` : '';
+    const collectionPath = info.tOrC ? `/${encodeURIComponent(info.tOrC)}` : '';
     info.url += keyspacePath + collectionPath;
 
     const requestId = this.logger.internal.generateCommandRequestId();
