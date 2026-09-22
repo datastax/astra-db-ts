@@ -195,7 +195,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.ok([.5, .5, .5, .5, .5], vector);
   });
 
-  it('should handle different vectorize insertion cases', async (key) => {
+  it('(VECTORIZE) should handle different vectorize insertion cases', async (key) => {
     const dummyVec = vector(Array.from({ length: Cfg.VectorizeVectorLength }, () => .5));
 
     const colAsserter = mkColumnAsserter(key, 'vector1', {

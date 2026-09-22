@@ -131,7 +131,7 @@ parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
     });
   });
 
-  it('should insert w/ vectorize', async (key) => {
+  it('(VECTORIZE) should insert w/ vectorize', async (key) => {
     const inserted = await table_.insertOne({
       text: key,
       int: 0,

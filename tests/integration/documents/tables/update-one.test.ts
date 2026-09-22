@@ -182,7 +182,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
     await assert.rejects(() => table.updateOne({ text: key, int: { $in: [1, 2, 3] } }, { $set: { tinyint: 3 } }), DataAPIResponseError);
   });
 
-  it('should upsert w/ vectorize', async (key) => {
+  it('(VECTORIZE) should upsert w/ vectorize', async (key) => {
     const vector = Array.from({ length: Cfg.VectorizeVectorLength }, () => .1);
 
     await table_.updateOne({ text: key, int: 0 }, {
