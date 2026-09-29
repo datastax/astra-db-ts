@@ -24,10 +24,14 @@ import {
   RUNNING_INT_TESTS,
 } from '@/tests/testlib/index.js';
 import type { InferTableSchema } from '@/src/db/index.js';
-import { spinner } from 'zx';
+import { spinner as _spinner } from 'zx';
 import * as readline from 'node:readline';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, Cfg.OtherKeyspace];
+
+const spinner = !(process.stdout.isTTY)
+  ? (msg: string, _: any) => console.log(msg)
+  : _spinner;
 
 before(async () => {
   if (Cfg.SkipPrelude) {

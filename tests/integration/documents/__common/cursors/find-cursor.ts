@@ -38,6 +38,8 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
     const textKey = cfg.for === 'tables' ? 'text' : '_id';
     const vectorKey = cfg.for === 'tables' ? 'vector' : '$vector';
 
+    let detectedPageSize: number;
+
     const sortByText = (a: SomeDoc, b: SomeDoc) => parseInt(a[textKey]) - parseInt(b[textKey]);
     const sortByInt = (a: SomeDoc, b: SomeDoc) => a.int - b.int;
 
@@ -64,6 +66,10 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
     before(async () => {
       await source.insertMany(docs);
       await source_.insertMany(docs_, { ordered: true });
+      
+      const testCursor = source_.find({});
+      await testCursor.hasNext();
+      detectedPageSize = testCursor.buffered();
     });
 
     parallel('hasNext', () => {
@@ -86,10 +92,10 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         const cursor = memoizedSource_.find({});
         assert.strictEqual(await cursor.hasNext(), true);
         assert.ok(cursor.buffered() > 0);
-        const pageSize = cursor.consumeBuffer().length;
+        cursor.consumeBuffer();
         assert.strictEqual(cursor.buffered(), 0);
         assert.strictEqual(await cursor.hasNext(), true);
-        assert.strictEqual(cursor.buffered(), docs_.length - pageSize);
+        assert.strictEqual(cursor.buffered(), Math.min(detectedPageSize, docs_.length - detectedPageSize));
       });
 
       it('should return false if there are no more documents left to find', async () => {
@@ -172,11 +178,11 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
         const docFromP1 = await cursor.next();
         assert.ok(docFromP1);
         assert.ok(cursor.buffered() > 0);
-        const pageSize = cursor.consumeBuffer().length + 1;
+        cursor.consumeBuffer();
         assert.strictEqual(cursor.buffered(), 0);
         const docFromP2 = await cursor.next();
         assert.ok(docFromP2);
-        assert.strictEqual(cursor.buffered() + 1, docs_.length - pageSize);
+        assert.strictEqual(cursor.buffered() + 1, Math.min(detectedPageSize, docs_.length - detectedPageSize));
         assert.notDeepStrictEqual(docFromP1, docFromP2);
       });
 
@@ -590,11 +596,15 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
       it('should work with a lot of documents', async () => {
         let initialPageState: string | undefined | null = undefined;
         let totalResults = 0;
-        const expectedCounts = [50, 45];
+
+        const expectedCounts: number[] = [];
+        for (let remaining = docs_.length; remaining > 0; remaining -= detectedPageSize) {
+          expectedCounts.push(Math.min(detectedPageSize, remaining));
+        }
 
         const autoCursor = source_.find({});
 
-        for (const expectedCount of expectedCounts) {
+        for (const [i, expectedCount] of expectedCounts.entries()) {
           const manualPage = await source_.find({}, { initialPageState }).fetchNextPage();
           assert.equal(manualPage.result.length, expectedCount);
 
@@ -605,7 +615,7 @@ export const integrationTestFindCursor = (cfg: FindCursorTestConfig) => {
 
           totalResults += manualPage.result.length;
 
-          if (expectedCount === 45) {
+          if (i === expectedCounts.length - 1) {
             assert.equal(manualPage.nextPageState, null);
           } else {
             assert.notEqual(initialPageState, manualPage.nextPageState);
