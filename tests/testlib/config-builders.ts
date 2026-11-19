@@ -107,7 +107,7 @@ class LimitWhitelist {
       throw new Error(`Invalid number of args for whitelist operator ${whitelist.split(':')[0]}; expected 1 arg, got ${args.length} (full whitelist: ${whitelist})`);
     }
 
-    this._limit = +args[1];
+    this._limit = +args[0];
   }
 
   public test(test: FinalVectorizeTestBranch) {

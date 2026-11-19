@@ -16,14 +16,12 @@ import assert from 'assert';
 import type { Collection } from '@/src/documents/index.js';
 import { UUID } from '@/src/documents/index.js';
 import * as fs from 'fs';
-import { Cfg, describe, it, parallel } from '@/tests/testlib/index.js';
+import { Cfg, describe, initTestObjects, it, parallel } from '@/tests/testlib/index.js';
 import type { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches.js';
 import { branchOnModel } from '@/tests/testlib/vectorize/vec-test-branches.js';
 import type { VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups.js';
 import { createTestGroups } from '@/tests/testlib/vectorize/vec-test-groups.js';
 import type { Db } from '@/src/db/index.js';
-import sp from 'synchronized-promise';
-import type { DbAdmin } from '@/src/administration/index.js';
 
 export type VectorizeTestSpec = Record<string, {
     headers?: Record<`x-${string}`, string>
@@ -35,7 +33,7 @@ export type VectorizeTestSpec = Record<string, {
     warmupErr?: string,
   }>;
 
-const createTestBranches = (dbAdmin: DbAdmin): FinalVectorizeTestBranch[] => {
+const createTestBranches = async (): Promise<FinalVectorizeTestBranch[]> => {
   if (!fs.existsSync('vectorize_test_spec.json')) {
     return [];
   }
@@ -46,12 +44,14 @@ const createTestBranches = (dbAdmin: DbAdmin): FinalVectorizeTestBranch[] => {
     return [];
   }
 
-  const { embeddingProviders } = sp.default(() => dbAdmin.findEmbeddingProviders())();
+  const { embeddingProviders } = await initTestObjects().dbAdmin.findEmbeddingProviders();
 
   return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
     .filter(Cfg.VectorizeWhitelist.test);
 };
+
+const testBranches = await createTestBranches();
 
 const createVectorizeProvidersTest = (db: Db, batchIdx: number) => (group: VectorizeTestGroup) => {
   it(`has a working lifecycle (${group.groupName})`, async () => {
@@ -117,9 +117,8 @@ const createVectorizeProvidersTest = (db: Db, batchIdx: number) => (group: Vecto
   });
 };
 
-describe('(VECTORIZE) (LONG) integration.documents.vectorize', ({ db, dbAdmin }) => {
-  const tests = createTestBranches(dbAdmin);
-  const groups = createTestGroups(tests);
+describe('(VECTORIZE) (LONG) integration.documents.vectorize', ({ db }) => {
+  const groups = createTestGroups(testBranches);
 
   for (let i = 0, n = groups.length; i < n; i += 6) {
     parallel('(VECTORIZE) generated tests', { drop: 'colls:after' }, () => {
