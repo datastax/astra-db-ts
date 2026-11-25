@@ -84,6 +84,13 @@ describe('unit.documents.datatypes.uuid', () => {
     const exact = UUID.v1(12345);
     const parsed = new UUID(exact.toString());
     assert.strictEqual(parsed.getTimestamp()?.valueOf(), 12345);
+
+    const exactModern = UUID.v1(1700000000000);
+    const parsedModern = new UUID(exactModern.toString());
+    assert.strictEqual(parsedModern.getTimestamp()?.valueOf(), 1700000000000);
+
+    const parsedTimeuuid = uuid('c8f0e2a0-1234-11ef-9c3a-0242ac120002');
+    assert.strictEqual(parsedTimeuuid.getTimestamp()?.toISOString(), '2024-05-14T20:58:59.060Z');
   });
 
   it('should work with v4s', () => {
