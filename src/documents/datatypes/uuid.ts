@@ -229,13 +229,13 @@ export const uuid = Object.assign(
   },
 );
 
-const MAGIC_NUMBER = 1221929280000000 * 100;
+const MAGIC_NUMBER = 122192928000000000n;
 
 function uuidV1Timestamp(uuid: UUID): Date | undefined {
   const arr = uuid.toString().split('-');
   const timeStr = [arr[2].substring(1), arr[1], arr[0]].join('');
-  const timeInt = parseInt(timeStr, 16);
-  return new Date(~~((timeInt - MAGIC_NUMBER) / 10000));
+  const timeInt = BigInt(`0x${timeStr}`);
+  return new Date(Number((timeInt - MAGIC_NUMBER) / 10000n));
 }
 
 function uuidV7Timestamp(uuid: UUID): Date | undefined {
